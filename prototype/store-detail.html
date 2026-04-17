@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>光谷自习室 - 门店详情</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F6EF7',
+                        'primary-light': '#E8EDFF',
+                        'primary-dark': '#3A56D4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #F5F6FA;
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeInUp 0.5s ease-out forwards; }
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.2s; opacity: 0; }
+        .delay-3 { animation-delay: 0.3s; opacity: 0; }
+    </style>
+</head>
+<body>
+    <!-- iOS Status Bar -->
+    <div class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 pt-2 pb-1" style="max-width: 430px; margin: 0 auto;">
+        <span class="text-white text-sm font-semibold">9:41</span>
+        <div class="w-[120px] h-[34px] bg-black rounded-full mx-auto"></div>
+        <div class="flex items-center gap-1.5 text-white text-xs">
+            <i class="fas fa-signal text-[11px]"></i>
+            <i class="fas fa-wifi text-[11px]"></i>
+            <i class="fas fa-battery-full text-[11px]"></i>
+        </div>
+    </div>
+
+    <!-- Back Navigation -->
+    <div class="fixed top-12 left-4 z-40">
+        <button class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg active:bg-white/40 transition">
+            <i class="fas fa-chevron-left text-white text-sm"></i>
+        </button>
+    </div>
+    <div class="fixed top-12 right-4 z-40">
+        <button class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg active:bg-white/40 transition">
+            <i class="fas fa-share-nodes text-white text-sm"></i>
+        </button>
+    </div>
+
+    <!-- Hero Image -->
+    <div class="relative h-56">
+        <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=400&fit=crop"
+             alt="光谷自习室"
+             class="w-full h-full object-cover">
+        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-transparent"></div>
+        <!-- Image count indicator -->
+        <div class="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full">
+            <i class="fas fa-image mr-1"></i>1/12
+        </div>
+    </div>
+
+    <!-- Store Info Card -->
+    <div class="mx-4 -mt-6 relative z-10 bg-white rounded-2xl p-4 shadow-sm animate-in delay-1">
+        <div class="flex items-start justify-between">
+            <h1 class="text-lg font-bold text-[#2D3436]">光谷自习室</h1>
+            <span class="bg-red-50 text-red-500 text-xs font-medium px-2 py-0.5 rounded-full">营业中</span>
+        </div>
+        <div class="flex items-center mt-2 gap-1">
+            <div class="flex items-center">
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                <i class="fas fa-star-half-stroke text-yellow-400 text-xs"></i>
+            </div>
+            <span class="text-sm font-semibold text-[#2D3436] ml-1">4.8</span>
+            <span class="text-xs text-[#B2BEC3]">（328条评价）</span>
+        </div>
+        <div class="mt-3 flex items-start gap-2">
+            <i class="fas fa-location-dot text-primary text-xs mt-0.5"></i>
+            <div class="flex-1">
+                <p class="text-sm text-[#636E72] leading-relaxed">茂名市茂南区光谷大道88号3楼</p>
+                <span class="text-xs text-primary mt-0.5 inline-block">距您1.2km</span>
+            </div>
+            <i class="fas fa-chevron-right text-[#B2BEC3] text-xs mt-1"></i>
+        </div>
+        <div class="mt-3 flex items-center gap-2">
+            <i class="fas fa-clock text-[#B2BEC3] text-xs"></i>
+            <p class="text-sm text-[#636E72]">营业时间 08:00 - 22:00</p>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2">
+            <span class="bg-primary/10 text-primary text-xs px-2.5 py-1 rounded-full">静音区</span>
+            <span class="bg-primary/10 text-primary text-xs px-2.5 py-1 rounded-full">键盘区</span>
+            <span class="bg-primary/10 text-primary text-xs px-2.5 py-1 rounded-full">VIP区</span>
+            <span class="bg-green-50 text-green-600 text-xs px-2.5 py-1 rounded-full">免费WiFi</span>
+            <span class="bg-orange-50 text-orange-500 text-xs px-2.5 py-1 rounded-full">充电插座</span>
+        </div>
+    </div>
+
+    <!-- Environment Photos -->
+    <div class="mx-4 mt-4 animate-in delay-2">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-[#2D3436]">环境照片</h2>
+            <span class="text-xs text-[#B2BEC3]">共12张 <i class="fas fa-chevron-right text-[10px] ml-0.5"></i></span>
+        </div>
+        <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
+            <div class="flex-shrink-0 w-40 h-28 rounded-xl overflow-hidden shadow-sm">
+                <img src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=400&h=280&fit=crop"
+                     alt="自习室环境" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-shrink-0 w-40 h-28 rounded-xl overflow-hidden shadow-sm">
+                <img src="https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=400&h=280&fit=crop"
+                     alt="自习室环境" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-shrink-0 w-40 h-28 rounded-xl overflow-hidden shadow-sm relative">
+                <img src="https://images.unsplash.com/photo-1577720643272-265f09367456?w=400&h=280&fit=crop"
+                     alt="自习室环境" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <span class="text-white text-sm font-semibold">+9</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seat Stats -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm animate-in delay-3">
+        <h2 class="text-base font-bold text-[#2D3436] mb-3">座位概况</h2>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-blue-50 rounded-xl p-3 flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chair text-primary"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold text-[#2D3436]">86</p>
+                    <p class="text-xs text-[#B2BEC3]">总座位</p>
+                </div>
+            </div>
+            <div class="bg-green-50 rounded-xl p-3 flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold text-green-600">32</p>
+                    <p class="text-xs text-[#B2BEC3]">可用</p>
+                </div>
+            </div>
+            <div class="bg-red-50 rounded-xl p-3 flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user text-red-400"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold text-[#2D3436]">48</p>
+                    <p class="text-xs text-[#B2BEC3]">已占</p>
+                </div>
+            </div>
+            <div class="bg-orange-50 rounded-xl p-3 flex items-center gap-3">
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-wrench text-orange-400"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold text-[#2D3436]">6</p>
+                    <p class="text-xs text-[#B2BEC3]">维护中</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spacer for bottom bar -->
+    <div class="h-24"></div>
+
+    <!-- Bottom Action Bar -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 z-40" style="max-width: 430px; margin: 0 auto;">
+        <div class="flex items-center gap-4">
+            <button id="favBtn" class="w-12 h-12 border border-gray-200 rounded-full flex items-center justify-center active:bg-gray-50 transition" onclick="toggleFav()">
+                <i class="far fa-heart text-[#636E72] text-lg" id="favIcon"></i>
+            </button>
+            <a href="seat-select.html" class="flex-1 bg-primary text-white rounded-full py-3 text-center font-semibold text-base shadow-lg shadow-primary/25 active:bg-primary-dark transition block">
+                立即预约
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function toggleFav() {
+            const icon = document.getElementById('favIcon');
+            if (icon.classList.contains('far')) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                icon.style.color = '#ef4444';
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                icon.style.color = '#636E72';
+            }
+        }
+    </script>
+</body>
+</html>

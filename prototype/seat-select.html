@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>选择座位 - 光谷自习室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F6EF7',
+                        'primary-light': '#E8EDFF',
+                        'primary-dark': '#3A56D4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #F5F6FA;
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        .seat {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .seat-available {
+            background: #E8F5E9;
+            border: 1.5px solid #66BB6A;
+            color: #388E3C;
+        }
+        .seat-available:active {
+            transform: scale(0.92);
+        }
+        .seat-selected {
+            background: #4F6EF7;
+            border: 1.5px solid #3A56D4;
+            color: white;
+            box-shadow: 0 2px 8px rgba(79, 110, 247, 0.35);
+        }
+        .seat-occupied {
+            background: #F0F0F0;
+            border: 1.5px solid #E0E0E0;
+            color: #BDBDBD;
+            cursor: not-allowed;
+        }
+        .seat-vip {
+            background: #FFF3E0;
+            border: 1.5px solid #FFB74D;
+            color: #F57C00;
+        }
+        .seat-vip:active {
+            transform: scale(0.92);
+        }
+        .section-label {
+            background: linear-gradient(135deg, #E8EDFF, #F0F3FF);
+            border-left: 3px solid #4F6EF7;
+        }
+        .floor-btn.active {
+            background: #4F6EF7;
+            color: white;
+        }
+        .tab-btn.active {
+            background: #4F6EF7;
+            color: white;
+        }
+        .desk {
+            background: #FAFBFC;
+            border: 1px dashed #E0E5EC;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- iOS Status Bar -->
+    <div class="bg-white">
+        <div class="flex items-center justify-between px-6 pt-2 pb-1">
+            <span class="text-sm font-semibold text-[#2D3436]">9:41</span>
+            <div class="w-[120px] h-[34px] bg-black rounded-full"></div>
+            <div class="flex items-center gap-1.5 text-xs text-[#2D3436]">
+                <i class="fas fa-signal text-[11px]"></i>
+                <i class="fas fa-wifi text-[11px]"></i>
+                <i class="fas fa-battery-full text-[11px]"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="bg-white h-12 flex items-center px-4 border-b border-gray-50">
+        <a href="store-detail.html" class="w-9 h-9 flex items-center justify-center -ml-1">
+            <i class="fas fa-chevron-left text-[#2D3436] text-base"></i>
+        </a>
+        <h1 class="flex-1 text-center text-base font-semibold text-[#2D3436] -ml-9">选择座位</h1>
+    </div>
+
+    <!-- Seat Type Tabs -->
+    <div class="bg-white px-4 pt-3 pb-2">
+        <div class="flex gap-2 overflow-x-auto" style="-ms-overflow-style: none; scrollbar-width: none;">
+            <button class="tab-btn active flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium bg-gray-100 text-[#636E72] transition" onclick="switchTab(this)">
+                全部
+            </button>
+            <button class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium bg-gray-100 text-[#636E72] transition" onclick="switchTab(this)">
+                <i class="fas fa-volume-xmark mr-1 text-[10px]"></i>静音区 ¥6/h
+            </button>
+            <button class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium bg-gray-100 text-[#636E72] transition" onclick="switchTab(this)">
+                <i class="fas fa-keyboard mr-1 text-[10px]"></i>键盘区 ¥8/h
+            </button>
+            <button class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium bg-gray-100 text-[#636E72] transition" onclick="switchTab(this)">
+                <i class="fas fa-crown mr-1 text-[10px]"></i>VIP区 ¥12/h
+            </button>
+        </div>
+    </div>
+
+    <!-- Floor Selector -->
+    <div class="bg-white px-4 py-3 border-b border-gray-50">
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-[#636E72]">楼层</span>
+            <button class="floor-btn active px-4 py-1.5 rounded-lg text-xs font-medium transition" onclick="switchFloor(this)">3楼</button>
+            <button class="floor-btn px-4 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-[#636E72] transition" onclick="switchFloor(this)">4楼</button>
+            <button class="floor-btn px-4 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-[#636E72] transition" onclick="switchFloor(this)">5楼</button>
+        </div>
+    </div>
+
+    <!-- Seat Map -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm">
+        <!-- Room Layout -->
+        <div class="mb-4">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-6 h-1 bg-primary rounded-full"></div>
+                <span class="text-xs font-semibold text-[#2D3436]">光谷自习室 · 3楼平面图</span>
+            </div>
+
+            <!-- Window indicator -->
+            <div class="bg-blue-50 rounded-lg p-1.5 mb-4 text-center">
+                <span class="text-[10px] text-blue-400"><i class="fas fa-border-all mr-1"></i>靠窗座位</span>
+            </div>
+
+            <!-- 静音区 Section -->
+            <div class="section-label rounded-lg p-2.5 mb-4">
+                <div class="flex items-center justify-between mb-2.5">
+                    <span class="text-xs font-semibold text-primary"><i class="fas fa-volume-xmark mr-1"></i>静音区</span>
+                    <span class="text-[10px] text-[#B2BEC3]">A排-A排</span>
+                </div>
+                <!-- Desk Row A - Left side -->
+                <div class="flex items-center justify-center gap-1 mb-1">
+                    <div class="seat seat-available" onclick="selectSeat(this, 'A-01', '静音区', '靠窗', '6')">A1</div>
+                    <div class="seat seat-occupied">A2</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'A-03', '静音区', '靠窗', '6')">A3</div>
+                    <div class="seat seat-selected" onclick="selectSeat(this, 'A-04', '静音区', '靠窗', '6')">A4</div>
+                    <div class="seat seat-occupied">A5</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'A-06', '静音区', '靠窗', '6')">A6</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'A-07', '静音区', '靠窗', '6')">A7</div>
+                </div>
+                <div class="desk mx-2 h-5 flex items-center justify-center mb-1">
+                    <span class="text-[9px] text-[#B2BEC3]">A排桌面</span>
+                </div>
+                <div class="flex items-center justify-center gap-1 mb-1">
+                    <div class="seat seat-available" onclick="selectSeat(this, 'A-08', '静音区', '中间', '6')">A8</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'A-09', '静音区', '中间', '6')">A9</div>
+                    <div class="seat seat-occupied">A10</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'A-11', '静音区', '中间', '6')">A11</div>
+                    <div class="seat seat-selected" onclick="selectSeat(this, 'A-12', '静音区', '靠窗', '6')">A12</div>
+                    <div class="seat seat-occupied">A13</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'A-14', '静音区', '中间', '6')">A14</div>
+                </div>
+            </div>
+
+            <!-- 键盘区 Section -->
+            <div class="section-label rounded-lg p-2.5 mb-4" style="border-left-color: #FF9800; background: linear-gradient(135deg, #FFF8E1, #FFFDF5);">
+                <div class="flex items-center justify-between mb-2.5">
+                    <span class="text-xs font-semibold text-orange-500"><i class="fas fa-keyboard mr-1"></i>键盘区</span>
+                    <span class="text-[10px] text-[#B2BEC3]">B排-C排</span>
+                </div>
+                <div class="flex items-center justify-center gap-1 mb-1">
+                    <div class="seat seat-available" onclick="selectSeat(this, 'B-01', '键盘区', '靠窗', '8')" style="background:#FFF3E0;border-color:#FFB74D;color:#F57C00;">B1</div>
+                    <div class="seat seat-occupied">B2</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'B-03', '键盘区', '靠窗', '8')" style="background:#FFF3E0;border-color:#FFB74D;color:#F57C00;">B3</div>
+                    <div class="seat seat-occupied">B4</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'B-05', '键盘区', '靠窗', '8')" style="background:#FFF3E0;border-color:#FFB74D;color:#F57C00;">B5</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'B-06', '键盘区', '靠窗', '8')" style="background:#FFF3E0;border-color:#FFB74D;color:#F57C00;">B6</div>
+                    <div class="seat seat-occupied">B7</div>
+                </div>
+                <div class="desk mx-2 h-5 flex items-center justify-center mb-1" style="border-color:#FFE0B2;">
+                    <span class="text-[9px] text-[#B2BEC3]">B排桌面</span>
+                </div>
+                <div class="flex items-center justify-center gap-1 mb-1">
+                    <div class="seat seat-available" onclick="selectSeat(this, 'B-08', '键盘区', '中间', '8')" style="background:#FFF3E0;border-color:#FFB74D;color:#F57C00;">B8</div>
+                    <div class="seat seat-occupied">B9</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'B-10', '键盘区', '中间', '8')" style="background:#FFF3E0;border-color:#FFB74D;color:#F57C00;">B10</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'B-11', '键盘区', '中间', '8')" style="background:#FFF3E0;border-color:#FFB74D;color:#F57C00;">B11</div>
+                    <div class="seat seat-occupied">B12</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'B-13', '键盘区', '中间', '8')" style="background:#FFF3E0;border-color:#FFB74D;color:#F57C00;">B13</div>
+                    <div class="seat seat-available" onclick="selectSeat(this, 'B-14', '键盘区', '中间', '8')" style="background:#FFF3E0;border-color:#FFB74D;color:#F57C00;">B14</div>
+                </div>
+            </div>
+
+            <!-- VIP区 Section -->
+            <div class="section-label rounded-lg p-2.5" style="border-left-color: #9C27B0; background: linear-gradient(135deg, #F3E5F5, #FAFAFE);">
+                <div class="flex items-center justify-between mb-2.5">
+                    <span class="text-xs font-semibold text-purple-500"><i class="fas fa-crown mr-1"></i>VIP专区</span>
+                    <span class="text-[10px] text-[#B2BEC3]">D排</span>
+                </div>
+                <div class="flex items-center justify-center gap-1 mb-1">
+                    <div class="seat seat-vip" onclick="selectSeat(this, 'D-01', 'VIP区', '独立', '12')">D1</div>
+                    <div class="seat seat-occupied">D2</div>
+                    <div class="seat seat-vip" onclick="selectSeat(this, 'D-03', 'VIP区', '独立', '12')">D3</div>
+                    <div class="seat seat-vip" onclick="selectSeat(this, 'D-04', 'VIP区', '独立', '12')">D4</div>
+                    <div class="seat seat-occupied">D5</div>
+                    <div class="seat seat-vip" onclick="selectSeat(this, 'D-06', 'VIP区', '独立', '12')">D6</div>
+                </div>
+                <div class="desk mx-2 h-5 flex items-center justify-center mb-1" style="border-color:#E1BEE7;">
+                    <span class="text-[9px] text-[#B2BEC3]">VIP桌面（带隔断）</span>
+                </div>
+                <div class="flex items-center justify-center gap-1">
+                    <div class="seat seat-vip" onclick="selectSeat(this, 'D-07', 'VIP区', '独立', '12')">D7</div>
+                    <div class="seat seat-occupied">D8</div>
+                    <div class="seat seat-vip" onclick="selectSeat(this, 'D-09', 'VIP区', '独立', '12')">D9</div>
+                    <div class="seat seat-occupied">D10</div>
+                    <div class="seat seat-vip" onclick="selectSeat(this, 'D-11', 'VIP区', '独立', '12')">D11</div>
+                    <div class="seat seat-vip" onclick="selectSeat(this, 'D-12', 'VIP区', '独立', '12')">D12</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex items-center justify-center gap-5 pt-3 border-t border-gray-50">
+            <div class="flex items-center gap-1.5">
+                <div class="w-4 h-4 rounded bg-[#E8F5E9] border border-[#66BB6A]"></div>
+                <span class="text-[10px] text-[#636E72]">可选</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <div class="w-4 h-4 rounded bg-primary border border-primary-dark"></div>
+                <span class="text-[10px] text-[#636E72]">已选</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <div class="w-4 h-4 rounded bg-gray-100 border border-gray-200"></div>
+                <span class="text-[10px] text-[#636E72]">已占</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <div class="w-4 h-4 rounded bg-[#FFF3E0] border border-[#FFB74D]"></div>
+                <span class="text-[10px] text-[#636E72]">VIP</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spacer for bottom bar -->
+    <div class="h-40"></div>
+
+    <!-- Selected Seat Detail -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]" style="max-width: 430px; margin: 0 auto;">
+        <div id="selectedInfo" class="mb-3">
+            <div class="flex items-center gap-2 mb-1">
+                <div class="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                    <i class="fas fa-chair text-primary text-[10px]"></i>
+                </div>
+                <span class="text-sm font-semibold text-[#2D3436]" id="seatName">A-12号</span>
+                <span class="text-xs text-[#B2BEC3]">·</span>
+                <span class="text-xs text-[#636E72]" id="seatZone">静音区</span>
+                <span class="text-xs text-[#B2BEC3]">·</span>
+                <span class="text-xs text-[#636E72]" id="seatPos">靠窗</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-xs text-[#636E72]"><i class="far fa-clock mr-1"></i>10:00-12:00 · 2小时</span>
+                <span class="text-base font-bold text-primary" id="seatPrice">¥12.00</span>
+            </div>
+        </div>
+        <a href="order-confirm.html" class="block w-full bg-primary text-white rounded-full py-3 text-center font-semibold text-base shadow-lg shadow-primary/25 active:bg-primary-dark transition">
+            确认选座
+        </a>
+    </div>
+
+    <script>
+        let currentSelected = null;
+
+        function selectSeat(el, name, zone, pos, pricePerHour) {
+            if (el.classList.contains('seat-occupied')) return;
+
+            // Remove previous selection
+            if (currentSelected) {
+                currentSelected.classList.remove('seat-selected');
+                if (currentSelected.classList.contains('seat-vip')) {
+                    // stays vip style
+                } else {
+                    currentSelected.classList.add('seat-available');
+                }
+            }
+
+            // If clicking the same seat, deselect
+            if (currentSelected === el) {
+                currentSelected = null;
+                return;
+            }
+
+            // Select new seat
+            el.classList.remove('seat-available');
+            el.classList.add('seat-selected');
+            currentSelected = el;
+
+            document.getElementById('seatName').textContent = name + '号';
+            document.getElementById('seatZone').textContent = zone;
+            document.getElementById('seatPos').textContent = pos;
+            document.getElementById('seatPrice').textContent = '¥' + (pricePerHour * 2) + '.00';
+        }
+
+        function switchTab(btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.style.background = '#F5F6FA';
+                b.style.color = '#636E72';
+            });
+            btn.classList.add('active');
+            btn.style.background = '#4F6EF7';
+            btn.style.color = 'white';
+        }
+
+        function switchFloor(btn) {
+            document.querySelectorAll('.floor-btn').forEach(b => {
+                b.classList.remove('active');
+                b.style.background = '#F5F6FA';
+                b.style.color = '#636E72';
+            });
+            btn.classList.add('active');
+        }
+    </script>
+</body>
+</html>

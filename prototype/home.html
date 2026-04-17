@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>去K书 - 首页</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #F5F6FA;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    /* Hide scrollbar for cleaner mini-program look */
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Banner carousel */
+    .carousel-container {
+      position: relative;
+      overflow: hidden;
+    }
+    .carousel-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    .carousel-slide.active {
+      opacity: 1;
+    }
+
+    /* Smooth button press */
+    .press-effect:active {
+      transform: scale(0.96);
+      transition: transform 0.1s;
+    }
+
+    /* Badge pulse */
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
+    .badge-pulse {
+      animation: pulse-dot 2s infinite;
+    }
+
+    /* Activity card image */
+    .activity-card img {
+      transition: transform 0.3s ease;
+    }
+    .activity-card:active img {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== iOS STATUS BAR ==================== -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-white h-11 flex items-center justify-between px-6">
+    <!-- Left: Time -->
+    <span class="font-semibold text-sm text-[#2D3436]">9:41</span>
+    <!-- Center: Dynamic Island -->
+    <div class="w-[120px] h-[34px] bg-black rounded-full mt-1"></div>
+    <!-- Right: Icons -->
+    <div class="flex items-center gap-1.5 text-sm text-[#2D3436]">
+      <i class="fa-solid fa-signal text-xs"></i>
+      <i class="fa-solid fa-wifi text-xs"></i>
+      <i class="fa-solid fa-battery-full text-xs"></i>
+    </div>
+  </div>
+
+  <!-- ==================== CUSTOM NAV BAR ==================== -->
+  <div class="fixed top-11 left-0 right-0 z-40 bg-white h-12 flex items-center justify-between px-4 shadow-sm">
+    <!-- Left: Location -->
+    <div class="flex items-center gap-1 press-effect cursor-pointer">
+      <i class="fa-solid fa-location-dot text-primary text-sm"></i>
+      <span class="text-sm font-medium text-[#2D3436]">茂名市</span>
+      <i class="fa-solid fa-chevron-down text-[10px] text-[#636E72] ml-0.5"></i>
+    </div>
+    <!-- Center: Search -->
+    <div class="flex-1 mx-3 max-w-[200px]">
+      <div class="bg-gray-100 rounded-full px-3 py-1.5 flex items-center gap-2 cursor-pointer press-effect">
+        <i class="fa-solid fa-magnifying-glass text-gray-400 text-xs"></i>
+        <span class="text-sm text-gray-400">搜索自习室</span>
+      </div>
+    </div>
+    <!-- Right: Bell -->
+    <div class="relative press-effect cursor-pointer p-1">
+      <i class="fa-solid fa-bell text-[#2D3436] text-lg"></i>
+      <span class="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full badge-pulse"></span>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="pt-[92px] pb-24">
+
+    <!-- ===== BANNER CAROUSEL ===== -->
+    <div class="mx-4 mt-3 rounded-2xl overflow-hidden h-40 carousel-container shadow-sm">
+      <!-- Slide 1 -->
+      <div class="carousel-slide active">
+        <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=400&fit=crop"
+             alt="自习室" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+          <div>
+            <p class="text-white font-bold text-lg leading-tight">新用户首单立减20元</p>
+            <p class="text-white/70 text-xs mt-1">限时优惠，先到先得</p>
+          </div>
+          <button class="bg-white text-primary text-xs font-semibold px-4 py-1.5 rounded-full shadow-sm press-effect">
+            立即领取
+          </button>
+        </div>
+      </div>
+      <!-- Slide 2 (hidden) -->
+      <div class="carousel-slide">
+        <img src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop"
+             alt="自习室" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+          <div>
+            <p class="text-white font-bold text-lg leading-tight">充值100送30</p>
+            <p class="text-white/70 text-xs mt-1">更多充值优惠等你来</p>
+          </div>
+          <button class="bg-white text-primary text-xs font-semibold px-4 py-1.5 rounded-full shadow-sm press-effect">
+            了解详情
+          </button>
+        </div>
+      </div>
+      <!-- Slide 3 (hidden) -->
+      <div class="carousel-slide">
+        <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=400&fit=crop"
+             alt="自习室" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+          <div>
+            <p class="text-white font-bold text-lg leading-tight">邀请好友得课时</p>
+            <p class="text-white/70 text-xs mt-1">每邀一位好友获得2小时</p>
+          </div>
+          <button class="bg-white text-primary text-xs font-semibold px-4 py-1.5 rounded-full shadow-sm press-effect">
+            去邀请
+          </button>
+        </div>
+      </div>
+      <!-- Dot Indicators -->
+      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+        <span class="carousel-dot w-5 h-1.5 rounded-full bg-primary transition-all duration-300"></span>
+        <span class="carousel-dot w-1.5 h-1.5 rounded-full bg-white/60 transition-all duration-300"></span>
+        <span class="carousel-dot w-1.5 h-1.5 rounded-full bg-white/60 transition-all duration-300"></span>
+      </div>
+    </div>
+
+    <!-- ===== QUICK ENTRY GRID ===== -->
+    <div class="grid grid-cols-4 mt-5 px-4 gap-3">
+      <!-- 钱包充值 -->
+      <div class="flex flex-col items-center press-effect cursor-pointer">
+        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+          <i class="fa-solid fa-wallet text-primary text-lg"></i>
+        </div>
+        <span class="text-xs mt-1.5 text-gray-600">钱包充值</span>
+      </div>
+      <!-- 卡券套餐 -->
+      <div class="flex flex-col items-center press-effect cursor-pointer">
+        <div class="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center">
+          <i class="fa-solid fa-ticket text-orange-500 text-lg"></i>
+        </div>
+        <span class="text-xs mt-1.5 text-gray-600">卡券套餐</span>
+      </div>
+      <!-- 美团兑换 -->
+      <div class="flex flex-col items-center press-effect cursor-pointer">
+        <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
+          <i class="fa-solid fa-gift text-green-500 text-lg"></i>
+        </div>
+        <span class="text-xs mt-1.5 text-gray-600">美团兑换</span>
+      </div>
+      <!-- 个人码 -->
+      <div class="flex flex-col items-center press-effect cursor-pointer">
+        <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center">
+          <i class="fa-solid fa-qrcode text-purple-500 text-lg"></i>
+        </div>
+        <span class="text-xs mt-1.5 text-gray-600">个人码</span>
+      </div>
+    </div>
+
+    <!-- ===== MY QR CODE CARD ===== -->
+    <div class="mx-4 mt-4 bg-gradient-to-r from-primary to-[#6C5CE7] rounded-2xl p-4 flex items-center justify-between shadow-sm press-effect cursor-pointer">
+      <div>
+        <p class="text-white font-bold text-base">我的学习码</p>
+        <p class="text-white/70 text-xs mt-1">到店出示即可核销</p>
+        <p class="text-white/90 text-xs mt-2.5 font-medium">立即查看 <i class="fa-solid fa-chevron-right text-[10px] ml-0.5"></i></p>
+      </div>
+      <div class="w-16 h-16 border-2 border-dashed border-white/40 rounded-lg flex items-center justify-center bg-white/10">
+        <i class="fa-solid fa-qrcode text-white text-2xl"></i>
+      </div>
+    </div>
+
+    <!-- ===== HOT ACTIVITIES SECTION ===== -->
+    <div class="mt-5">
+      <!-- Section Header -->
+      <div class="flex items-center justify-between px-4 mb-2">
+        <span class="font-bold text-base text-[#2D3436]">热门活动</span>
+        <span class="text-xs text-[#B2BEC3] cursor-pointer press-effect">查看更多 <i class="fa-solid fa-chevron-right text-[10px]"></i></span>
+      </div>
+      <!-- Activity Cards Grid -->
+      <div class="grid grid-cols-2 gap-3 mx-4">
+        <!-- Card 1 -->
+        <div class="activity-card bg-white rounded-xl overflow-hidden shadow-sm press-effect cursor-pointer">
+          <div class="h-24 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=200&fit=crop"
+                 alt="沉浸式学习" class="w-full h-full object-cover">
+          </div>
+          <div class="p-2.5">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight">沉浸式学习挑战赛</p>
+            <p class="text-xs text-[#636E72] mt-1 line-clamp-1">累计学习24小时赢好礼</p>
+            <p class="text-[10px] text-[#B2BEC3] mt-1.5">已有326人参与</p>
+          </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="activity-card bg-white rounded-xl overflow-hidden shadow-sm press-effect cursor-pointer">
+          <div class="h-24 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=200&fit=crop"
+                 alt="学霸训练营" class="w-full h-full object-cover">
+          </div>
+          <div class="p-2.5">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight">学霸训练营</p>
+            <p class="text-xs text-[#636E72] mt-1 line-clamp-1">每日打卡赢取学习基金</p>
+            <p class="text-[10px] text-[#B2BEC3] mt-1.5">已有189人参与</p>
+          </div>
+        </div>
+        <!-- Card 3 -->
+        <div class="activity-card bg-white rounded-xl overflow-hidden shadow-sm press-effect cursor-pointer">
+          <div class="h-24 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=200&fit=crop"
+                 alt="周末冲刺班" class="w-full h-full object-cover">
+          </div>
+          <div class="p-2.5">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight">周末冲刺班</p>
+            <p class="text-xs text-[#636E72] mt-1 line-clamp-1">周六日8小时高效学习</p>
+            <p class="text-[10px] text-[#B2BEC3] mt-1.5">已有512人参与</p>
+          </div>
+        </div>
+        <!-- Card 4 -->
+        <div class="activity-card bg-white rounded-xl overflow-hidden shadow-sm press-effect cursor-pointer">
+          <div class="h-24 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=400&h=200&fit=crop"
+                 alt="早起鸟计划" class="w-full h-full object-cover">
+          </div>
+          <div class="p-2.5">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight">早起鸟计划</p>
+            <p class="text-xs text-[#636E72] mt-1 line-clamp-1">早8点前签到享折扣</p>
+            <p class="text-[10px] text-[#B2BEC3] mt-1.5">已有278人参与</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== BOTTOM TAB BAR ==================== -->
+  <div class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100">
+    <div class="flex items-stretch justify-around pt-2">
+      <!-- Tab 1: 首页 (active) -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-solid fa-house text-primary text-lg"></i>
+        <span class="text-primary text-[10px] mt-1 font-medium">首页</span>
+      </div>
+      <!-- Tab 2: 预约 -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-regular fa-calendar-check text-gray-400 text-lg"></i>
+        <span class="text-gray-400 text-[10px] mt-1">预约</span>
+      </div>
+      <!-- Tab 3: 订单 -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-regular fa-receipt text-gray-400 text-lg"></i>
+        <span class="text-gray-400 text-[10px] mt-1">订单</span>
+      </div>
+      <!-- Tab 4: 我的 -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-regular fa-user text-gray-400 text-lg"></i>
+        <span class="text-gray-400 text-[10px] mt-1">我的</span>
+      </div>
+    </div>
+    <!-- Bottom Safe Area -->
+    <div class="h-[34px] bg-white"></div>
+  </div>
+
+  <!-- ==================== CAROUSEL SCRIPT ==================== -->
+  <script>
+    (function () {
+      const slides = document.querySelectorAll('.carousel-slide');
+      const dots = document.querySelectorAll('.carousel-dot');
+      let current = 0;
+      let timer = null;
+
+      function goTo(index) {
+        slides[current].classList.remove('active');
+        dots[current].classList.remove('bg-primary', 'w-5');
+        dots[current].classList.add('bg-white/60', 'w-1.5');
+
+        current = index;
+
+        slides[current].classList.add('active');
+        dots[current].classList.remove('bg-white/60', 'w-1.5');
+        dots[current].classList.add('bg-primary', 'w-5');
+      }
+
+      function next() {
+        goTo((current + 1) % slides.length);
+      }
+
+      function startAutoplay() {
+        timer = setInterval(next, 3500);
+      }
+
+      function stopAutoplay() {
+        clearInterval(timer);
+      }
+
+      // Dot click
+      dots.forEach((dot, i) => {
+        dot.addEventListener('click', () => {
+          stopAutoplay();
+          goTo(i);
+          startAutoplay();
+        });
+      });
+
+      // Touch swipe support
+      let startX = 0;
+      const container = document.querySelector('.carousel-container');
+      container.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        stopAutoplay();
+      }, { passive: true });
+      container.addEventListener('touchend', (e) => {
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) {
+            goTo((current + 1) % slides.length);
+          } else {
+            goTo((current - 1 + slides.length) % slides.length);
+          }
+        }
+        startAutoplay();
+      }, { passive: true });
+
+      startAutoplay();
+    })();
+  </script>
+
+</body>
+</html>

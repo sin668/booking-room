@@ -1,0 +1,39 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+.eggs/
+
+# Node.js
+node_modules/
+br-app/dist/
+
+# IDE & Tools
+.vscode/
+.idea/
+*.swp
+*.swo
+.claude/settings.local.json
+.omc/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+htmlcov/
+.coverage
+coverage/

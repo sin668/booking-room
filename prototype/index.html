@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>去K书 - 自习室预约小程序 原型展示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F6EF7',
+                        'primary-light': '#E8EDFF',
+                        dark: '#1a1a2e',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #0f0f1a;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+
+        .phone-frame {
+            width: 280px;
+            height: 606px;
+            border-radius: 36px;
+            background: #000;
+            padding: 4px;
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.1),
+                0 20px 60px rgba(0,0,0,0.5),
+                0 0 40px rgba(79,110,247,0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .phone-frame:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow:
+                0 0 0 1px rgba(79,110,247,0.3),
+                0 30px 80px rgba(0,0,0,0.6),
+                0 0 60px rgba(79,110,247,0.25);
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 32px;
+            overflow: hidden;
+            background: #f5f6fa;
+        }
+
+        .phone-screen {
+            overflow: hidden;
+            position: relative;
+        }
+        .phone-screen iframe {
+            width: 393px;
+            height: 852px;
+            border: none;
+            transform-origin: top left;
+            transform: scale(calc(272 / 393));
+            pointer-events: auto;
+        }
+
+        .phone-notch {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 24px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 10;
+        }
+
+        .page-label {
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .section-divider {
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, #4F6EF7, #6C5CE7);
+            border-radius: 2px;
+            margin: 0 auto;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .grid-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 40px;
+            padding: 40px 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 20px 28px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="hero-gradient py-16 px-6">
+        <div class="max-w-6xl mx-auto text-center">
+            <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 mb-6">
+                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                <span class="text-sm text-white/70">High-Fidelity Prototype</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                <span class="bg-gradient-to-r from-[#4F6EF7] to-[#a78bfa] bg-clip-text text-transparent">去K书</span>
+                <span class="text-white/90 ml-2">自习室预约</span>
+            </h1>
+            <p class="text-white/50 text-lg mb-8 max-w-xl mx-auto">
+                共享自习室预约微信小程序 · 高保真原型设计 · 13个核心界面
+            </p>
+
+            <!-- Stats -->
+            <div class="flex justify-center gap-6 flex-wrap">
+                <div class="stat-card">
+                    <div class="text-2xl font-bold text-[#4F6EF7]">13</div>
+                    <div class="text-xs text-white/40 mt-1">界面总数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-2xl font-bold text-[#6C5CE7]">4</div>
+                    <div class="text-xs text-white/40 mt-1">主Tab页</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-2xl font-bold text-[#00B894]">9</div>
+                    <div class="text-xs text-white/40 mt-1">二级页面</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-2xl font-bold text-[#FDCB6E]">393×852</div>
+                    <div class="text-xs text-white/40 mt-1">iPhone 17 Pro</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-2xl font-bold text-[#E17055]">15</div>
+                    <div class="text-xs text-white/40 mt-1">总页面数</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section: Auth -->
+    <section class="px-6 py-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-[#07C160]/20 flex items-center justify-center">
+                    <i class="fas fa-right-to-bracket text-[#07C160] text-sm"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-white/90">登录 / 注册</h2>
+                <span class="badge bg-[#07C160]/20 text-[#07C160]">Auth</span>
+            </div>
+            <p class="text-white/30 text-sm mb-8 ml-11">用户入口：手机号验证码登录、微信授权、账号注册</p>
+
+            <div class="grid-container">
+                <!-- Login -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="login.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">登录 / 注册</div>
+                        <div class="text-white/30 text-xs mt-1">login.html</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
+
+    <!-- Section: Main Tabs -->
+    <section class="px-6 py-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-[#4F6EF7]/20 flex items-center justify-center">
+                    <i class="fas fa-layer-group text-[#4F6EF7] text-sm"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-white/90">主要页面</h2>
+                <span class="badge bg-[#4F6EF7]/20 text-[#4F6EF7]">Bottom Tab</span>
+            </div>
+            <p class="text-white/30 text-sm mb-8 ml-11">应用底部 Tab Bar 对应的 4 个核心页面</p>
+
+            <div class="grid-container">
+                <!-- Home -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="home.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">首页</div>
+                        <div class="text-white/30 text-xs mt-1">home.html</div>
+                    </div>
+                </div>
+
+                <!-- Booking -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="booking.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">预约</div>
+                        <div class="text-white/30 text-xs mt-1">booking.html</div>
+                    </div>
+                </div>
+
+                <!-- Orders -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="orders.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">订单</div>
+                        <div class="text-white/30 text-xs mt-1">orders.html</div>
+                    </div>
+                </div>
+
+                <!-- Profile -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="profile.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">我的</div>
+                        <div class="text-white/30 text-xs mt-1">profile.html</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
+
+    <!-- Section: Booking Flow -->
+    <section class="px-6 py-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-[#00B894]/20 flex items-center justify-center">
+                    <i class="fas fa-route text-[#00B894] text-sm"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-white/90">预约流程</h2>
+                <span class="badge bg-[#00B894]/20 text-[#00B894]">Booking Flow</span>
+            </div>
+            <p class="text-white/30 text-sm mb-8 ml-11">从浏览门店到完成支付的完整预约链路</p>
+
+            <!-- Flow arrows -->
+            <div class="flex items-center justify-center gap-2 mb-8 text-white/20 text-xs">
+                <span class="bg-white/5 px-3 py-1 rounded-full">预约页</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">门店详情</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">选择座位</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">确认订单</span>
+            </div>
+
+            <div class="grid-container">
+                <!-- Store Detail -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="store-detail.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">门店详情</div>
+                        <div class="text-white/30 text-xs mt-1">store-detail.html</div>
+                    </div>
+                </div>
+
+                <!-- Seat Select -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="seat-select.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">选择座位</div>
+                        <div class="text-white/30 text-xs mt-1">seat-select.html</div>
+                    </div>
+                </div>
+
+                <!-- Order Confirm -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="order-confirm.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">确认订单</div>
+                        <div class="text-white/30 text-xs mt-1">order-confirm.html</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
+
+    <!-- Section: Profile Sub-pages -->
+    <section class="px-6 py-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-[#FDCB6E]/20 flex items-center justify-center">
+                    <i class="fas fa-user-circle text-[#FDCB6E] text-sm"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-white/90">个人中心</h2>
+                <span class="badge bg-[#FDCB6E]/20 text-[#FDCB6E]">Profile</span>
+            </div>
+            <p class="text-white/30 text-sm mb-8 ml-11">用户个人信息、支付、卡券、学习相关功能</p>
+
+            <div class="grid-container">
+                <!-- Coupon -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="coupon.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">卡券包</div>
+                        <div class="text-white/30 text-xs mt-1">coupon.html</div>
+                    </div>
+                </div>
+
+                <!-- Recharge -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="recharge.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">钱包充值</div>
+                        <div class="text-white/30 text-xs mt-1">recharge.html</div>
+                    </div>
+                </div>
+
+                <!-- Ranking -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="ranking.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">排行榜</div>
+                        <div class="text-white/30 text-xs mt-1">ranking.html</div>
+                    </div>
+                </div>
+
+                <!-- Study Record -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="study-record.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">学习记录</div>
+                        <div class="text-white/30 text-xs mt-1">study-record.html</div>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="settings.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">设置</div>
+                        <div class="text-white/30 text-xs mt-1">settings.html</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
+
+    <!-- Section: Other Pages -->
+    <section class="px-6 py-12 pb-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-[#E17055]/20 flex items-center justify-center">
+                    <i class="fas fa-puzzle-piece text-[#E17055] text-sm"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-white/90">其他功能</h2>
+                <span class="badge bg-[#E17055]/20 text-[#E17055]">Other</span>
+            </div>
+            <p class="text-white/30 text-sm mb-8 ml-11">核销、反馈等辅助功能页面</p>
+
+            <div class="grid-container">
+                <!-- QR Code -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="qrcode.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">个人二维码</div>
+                        <div class="text-white/30 text-xs mt-1">qrcode.html</div>
+                    </div>
+                </div>
+
+                <!-- Feedback -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="feedback.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">意见反馈</div>
+                        <div class="text-white/30 text-xs mt-1">feedback.html</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 py-8 text-center">
+        <p class="text-white/20 text-xs">去K书 · 自习室预约小程序 · High-Fidelity Prototype · Built with Tailwind CSS + FontAwesome</p>
+        <p class="text-white/10 text-xs mt-2">iPhone 17 Pro · 393×852 · iOS Design Guidelines</p>
+    </footer>
+
+</body>
+</html>

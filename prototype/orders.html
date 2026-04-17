@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>去K书 - 我的订单</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #F5F6FA;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    /* Hide scrollbar for cleaner mini-program look */
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Smooth button press */
+    .press-effect:active {
+      transform: scale(0.96);
+      transition: transform 0.1s;
+    }
+
+    /* Green pulsing dot for active order */
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+      50% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+    }
+    .pulse-green {
+      animation: pulse-green 2s infinite;
+    }
+
+    /* Tab active indicator transition */
+    .tab-item {
+      position: relative;
+      transition: color 0.2s ease;
+    }
+    .tab-item::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 2px;
+      background: #4F6EF7;
+      border-radius: 1px;
+      transition: width 0.25s ease;
+    }
+    .tab-item.active::after {
+      width: 24px;
+    }
+
+    /* Order card entrance animation */
+    .order-card {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: card-enter 0.4s ease forwards;
+    }
+    .order-card:nth-child(1) { animation-delay: 0.05s; }
+    .order-card:nth-child(2) { animation-delay: 0.12s; }
+    .order-card:nth-child(3) { animation-delay: 0.19s; }
+    .order-card:nth-child(4) { animation-delay: 0.26s; }
+
+    @keyframes card-enter {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cancelled card dimming */
+    .card-cancelled {
+      opacity: 0.65;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== iOS STATUS BAR ==================== -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-white h-11 flex items-center justify-between px-6">
+    <!-- Left: Time -->
+    <span class="font-semibold text-sm text-[#2D3436]">9:41</span>
+    <!-- Center: Dynamic Island -->
+    <div class="w-[120px] h-[34px] bg-black rounded-full mt-1"></div>
+    <!-- Right: Icons -->
+    <div class="flex items-center gap-1.5 text-sm text-[#2D3436]">
+      <i class="fa-solid fa-signal text-xs"></i>
+      <i class="fa-solid fa-wifi text-xs"></i>
+      <i class="fa-solid fa-battery-full text-xs"></i>
+    </div>
+  </div>
+
+  <!-- ==================== NAV BAR ==================== -->
+  <div class="fixed top-11 left-0 right-0 z-40 bg-white h-12 flex items-center justify-center shadow-sm">
+    <span class="font-semibold text-base text-[#2D3436]">我的订单</span>
+  </div>
+
+  <!-- ==================== ORDER TABS ==================== -->
+  <div class="fixed top-[92px] left-0 right-0 z-30 bg-white border-b border-gray-100">
+    <div class="flex px-2 h-11" id="orderTabs">
+      <div class="tab-item active flex items-center justify-center flex-1 cursor-pointer" data-tab="all" onclick="switchTab(this)">
+        <span class="text-primary font-semibold text-sm">全部</span>
+      </div>
+      <div class="tab-item flex items-center justify-center flex-1 cursor-pointer" data-tab="ongoing" onclick="switchTab(this)">
+        <span class="text-gray-500 text-sm">进行中</span>
+        <span class="ml-1 bg-primary text-white text-[10px] font-medium px-1.5 py-0 rounded-full leading-[18px]">1</span>
+      </div>
+      <div class="tab-item flex items-center justify-center flex-1 cursor-pointer" data-tab="completed" onclick="switchTab(this)">
+        <span class="text-gray-500 text-sm">已完成</span>
+      </div>
+      <div class="tab-item flex items-center justify-center flex-1 cursor-pointer" data-tab="cancelled" onclick="switchTab(this)">
+        <span class="text-gray-500 text-sm">已取消</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="pt-[136px] pb-24">
+
+    <!-- ===== ORDER LIST ===== -->
+    <div id="orderList" class="space-y-3">
+
+      <!-- ===== ORDER CARD 1 - 进行中 ===== -->
+      <div class="order-card mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm relative" data-status="ongoing">
+        <!-- Green pulsing dot indicator -->
+        <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-[1px] w-1 h-10 bg-green-400 rounded-r-full pulse-green"></div>
+        <!-- Top row: Store name + status badge -->
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-[15px] text-[#2D3436]">光谷自习室</span>
+          <span class="bg-green-50 text-green-600 px-2.5 py-0.5 rounded-full text-xs font-medium">进行中</span>
+        </div>
+        <!-- Divider -->
+        <div class="border-t border-gray-50 my-3"></div>
+        <!-- Seat info -->
+        <div class="flex items-center gap-1.5">
+          <i class="fa-solid fa-couch text-[#B2BEC3] text-xs"></i>
+          <span class="text-sm text-[#636E72]">A-12号座位 · 静音区</span>
+        </div>
+        <!-- Time -->
+        <div class="flex items-center gap-1.5 mt-2">
+          <i class="fa-regular fa-clock text-[#B2BEC3] text-xs"></i>
+          <span class="text-sm text-[#636E72]">2024-04-16 10:00 - 12:00</span>
+        </div>
+        <!-- Duration + Price row -->
+        <div class="flex items-center justify-between mt-2">
+          <span class="text-xs text-[#B2BEC3]">2小时</span>
+          <span class="text-primary font-semibold text-base">¥12.00</span>
+        </div>
+        <!-- Bottom row: progress + action -->
+        <div class="flex items-center justify-between mt-3">
+          <!-- Left: Progress -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-[#636E72]">已学习 45分钟</span>
+            <div class="bg-primary/20 rounded-full h-1.5 w-20">
+              <div class="bg-primary rounded-full h-1.5 w-8"></div>
+            </div>
+          </div>
+          <!-- Right: Action button -->
+          <button class="text-xs text-primary border border-primary rounded-full px-3 py-1 press-effect">查看座位</button>
+        </div>
+      </div>
+
+      <!-- ===== ORDER CARD 2 - 已完成 ===== -->
+      <div class="order-card mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm" data-status="completed">
+        <!-- Top row -->
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-[15px] text-[#2D3436]">光谷自习室</span>
+          <span class="bg-gray-100 text-gray-500 px-2.5 py-0.5 rounded-full text-xs font-medium">已完成</span>
+        </div>
+        <!-- Divider -->
+        <div class="border-t border-gray-50 my-3"></div>
+        <!-- Seat info -->
+        <div class="flex items-center gap-1.5">
+          <i class="fa-solid fa-couch text-[#B2BEC3] text-xs"></i>
+          <span class="text-sm text-[#636E72]">B-05号座位 · 键盘区</span>
+        </div>
+        <!-- Time -->
+        <div class="flex items-center gap-1.5 mt-2">
+          <i class="fa-regular fa-clock text-[#B2BEC3] text-xs"></i>
+          <span class="text-sm text-[#636E72]">2024-04-15 14:00 - 18:00</span>
+        </div>
+        <!-- Duration + Price row -->
+        <div class="flex items-center justify-between mt-2">
+          <span class="text-xs text-[#B2BEC3]">4小时</span>
+          <span class="text-primary font-semibold text-base">¥24.00</span>
+        </div>
+        <!-- Bottom row -->
+        <div class="flex items-center justify-between mt-3">
+          <span class="text-green-500 text-xs flex items-center gap-1">
+            <i class="fa-solid fa-circle-check text-xs"></i> 学习完成
+          </span>
+          <button class="text-xs text-primary border border-primary rounded-full px-3 py-1 press-effect">再来一单</button>
+        </div>
+      </div>
+
+      <!-- ===== ORDER CARD 3 - 已完成 ===== -->
+      <div class="order-card mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm" data-status="completed">
+        <!-- Top row -->
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-[15px] text-[#2D3436]">大学城自习室</span>
+          <span class="bg-gray-100 text-gray-500 px-2.5 py-0.5 rounded-full text-xs font-medium">已完成</span>
+        </div>
+        <!-- Divider -->
+        <div class="border-t border-gray-50 my-3"></div>
+        <!-- Seat info -->
+        <div class="flex items-center gap-1.5">
+          <i class="fa-solid fa-couch text-[#B2BEC3] text-xs"></i>
+          <span class="text-sm text-[#636E72]">C-03号座位 · VIP区</span>
+        </div>
+        <!-- Time -->
+        <div class="flex items-center gap-1.5 mt-2">
+          <i class="fa-regular fa-clock text-[#B2BEC3] text-xs"></i>
+          <span class="text-sm text-[#636E72]">2024-04-14 08:00 - 12:00</span>
+        </div>
+        <!-- Duration + Price row -->
+        <div class="flex items-center justify-between mt-2">
+          <span class="text-xs text-[#B2BEC3]">4小时</span>
+          <span class="text-primary font-semibold text-base">¥36.00</span>
+        </div>
+        <!-- Bottom row -->
+        <div class="flex items-center justify-between mt-3">
+          <span class="text-green-500 text-xs flex items-center gap-1">
+            <i class="fa-solid fa-circle-check text-xs"></i> 学习完成
+          </span>
+          <button class="text-xs text-primary border border-primary rounded-full px-3 py-1 press-effect">再来一单</button>
+        </div>
+      </div>
+
+      <!-- ===== ORDER CARD 4 - 已取消 ===== -->
+      <div class="order-card card-cancelled mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm" data-status="cancelled">
+        <!-- Top row -->
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-[15px] text-[#2D3436]">光谷自习室</span>
+          <span class="bg-red-50 text-red-400 px-2.5 py-0.5 rounded-full text-xs font-medium">已取消</span>
+        </div>
+        <!-- Divider -->
+        <div class="border-t border-gray-50 my-3"></div>
+        <!-- Seat info -->
+        <div class="flex items-center gap-1.5">
+          <i class="fa-solid fa-couch text-[#B2BEC3] text-xs"></i>
+          <span class="text-sm text-[#636E72]">A-08号座位 · 静音区</span>
+        </div>
+        <!-- Time -->
+        <div class="flex items-center gap-1.5 mt-2">
+          <i class="fa-regular fa-clock text-[#B2BEC3] text-xs"></i>
+          <span class="text-sm text-[#636E72]">2024-04-13 18:00 - 22:00</span>
+        </div>
+        <!-- Cancel reason -->
+        <div class="mt-2">
+          <span class="text-xs text-gray-400">取消原因：临时有事</span>
+        </div>
+        <!-- Bottom row -->
+        <div class="flex items-center justify-end mt-3">
+          <button class="text-xs text-primary border border-primary rounded-full px-3 py-1 press-effect">重新预约</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== EMPTY STATE ===== -->
+    <div id="emptyState" class="hidden py-20 flex flex-col items-center justify-center">
+      <i class="fa-solid fa-receipt text-gray-200 text-5xl"></i>
+      <p class="text-gray-400 text-sm mt-4">暂无相关订单</p>
+    </div>
+
+  </main>
+
+  <!-- ==================== BOTTOM TAB BAR ==================== -->
+  <div class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100">
+    <div class="flex items-stretch justify-around pt-2">
+      <!-- Tab 1: 首页 -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-regular fa-house text-gray-400 text-lg"></i>
+        <span class="text-gray-400 text-[10px] mt-1">首页</span>
+      </div>
+      <!-- Tab 2: 预约 -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-regular fa-calendar-check text-gray-400 text-lg"></i>
+        <span class="text-gray-400 text-[10px] mt-1">预约</span>
+      </div>
+      <!-- Tab 3: 订单 (ACTIVE) -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-solid fa-receipt text-primary text-lg"></i>
+        <span class="text-primary text-[10px] mt-1 font-medium">订单</span>
+      </div>
+      <!-- Tab 4: 我的 -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-regular fa-user text-gray-400 text-lg"></i>
+        <span class="text-gray-400 text-[10px] mt-1">我的</span>
+      </div>
+    </div>
+    <!-- Bottom Safe Area -->
+    <div class="h-[34px] bg-white"></div>
+  </div>
+
+  <!-- ==================== TAB SWITCHING SCRIPT ==================== -->
+  <script>
+    function switchTab(el) {
+      const tabs = document.querySelectorAll('#orderTabs .tab-item');
+      const cards = document.querySelectorAll('#orderList .order-card');
+      const emptyState = document.getElementById('emptyState');
+      const orderList = document.getElementById('orderList');
+      const selectedTab = el.dataset.tab;
+
+      // Update tab styles
+      tabs.forEach(tab => {
+        tab.classList.remove('active');
+        const span = tab.querySelector('span:first-child');
+        if (span) {
+          span.classList.remove('text-primary', 'font-semibold');
+          span.classList.add('text-gray-500');
+        }
+      });
+
+      el.classList.add('active');
+      const activeSpan = el.querySelector('span:first-child');
+      if (activeSpan) {
+        activeSpan.classList.remove('text-gray-500');
+        activeSpan.classList.add('text-primary', 'font-semibold');
+      }
+
+      // Filter cards
+      let visibleCount = 0;
+      cards.forEach(card => {
+        if (selectedTab === 'all' || card.dataset.status === selectedTab) {
+          card.style.display = '';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Show/hide empty state
+      if (visibleCount === 0) {
+        orderList.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+      } else {
+        orderList.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+      }
+    }
+  </script>
+
+</body>
+</html>

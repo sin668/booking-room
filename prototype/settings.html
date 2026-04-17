@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>设置 - 去K书</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #F5F6FA;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .press-effect:active { transform: scale(0.98); transition: transform 0.1s; }
+
+    /* Toggle switch */
+    .toggle-switch {
+      width: 44px; height: 26px;
+      background: #d1d5db;
+      border-radius: 13px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .toggle-switch.active { background: #4F6EF7; }
+    .toggle-switch::after {
+      content: '';
+      width: 22px; height: 22px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px; left: 2px;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .toggle-switch.active::after { transform: translateX(18px); }
+
+    /* Avatar camera overlay */
+    .avatar-wrapper:hover .avatar-overlay,
+    .avatar-wrapper:active .avatar-overlay {
+      opacity: 1;
+    }
+    .avatar-overlay {
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    /* Logout button pulse */
+    @keyframes logoutPulse {
+      0%, 100% { box-shadow: 0 4px 14px rgba(225, 112, 85, 0.2); }
+      50% { box-shadow: 0 4px 20px rgba(225, 112, 85, 0.35); }
+    }
+    .logout-btn { animation: logoutPulse 3s ease-in-out infinite; }
+
+    /* Modal */
+    .modal-mask {
+      transition: opacity 0.25s;
+    }
+    .modal-sheet {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== iOS STATUS BAR ==================== -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-white h-11 flex items-center justify-between px-6">
+    <span class="font-semibold text-sm text-[#2D3436]">9:41</span>
+    <div class="w-[120px] h-[34px] bg-black rounded-full mt-1"></div>
+    <div class="flex items-center gap-1.5 text-sm text-[#2D3436]">
+      <i class="fa-solid fa-signal text-xs"></i>
+      <i class="fa-solid fa-wifi text-xs"></i>
+      <i class="fa-solid fa-battery-full text-xs"></i>
+    </div>
+  </div>
+
+  <!-- ==================== NAV BAR ==================== -->
+  <div class="fixed top-11 left-0 right-0 z-40 bg-white h-12 flex items-center justify-between px-4 border-b border-gray-100">
+    <div class="press-effect cursor-pointer w-8 h-8 flex items-center justify-center -ml-1">
+      <i class="fa-solid fa-chevron-left text-[#2D3436] text-sm"></i>
+    </div>
+    <span class="font-semibold text-sm text-[#2D3436]">设置</span>
+    <div class="w-8"></div>
+  </div>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="pt-[92px] pb-8">
+
+    <!-- ===== AVATAR & NAME CARD ===== -->
+    <div class="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm">
+      <div class="flex items-center gap-4">
+        <!-- Avatar -->
+        <div class="avatar-wrapper relative cursor-pointer press-effect">
+          <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face"
+               alt="头像"
+               class="w-[60px] h-[60px] rounded-full object-cover">
+          <div class="avatar-overlay absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
+            <i class="fa-solid fa-camera text-white text-sm"></i>
+          </div>
+        </div>
+        <!-- Name & ID -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-base text-[#2D3436]">学习达人</span>
+            <span class="bg-yellow-400 text-yellow-900 text-[10px] px-1.5 py-0.5 rounded-full font-medium">VIP</span>
+          </div>
+          <p class="text-xs text-[#B2BEC3] mt-1">ID: QKS20240168</p>
+        </div>
+        <!-- Edit -->
+        <div class="press-effect cursor-pointer">
+          <i class="fa-solid fa-pen text-primary text-sm"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 个人资料 ===== -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl overflow-hidden shadow-sm">
+      <div class="px-4 pt-3 pb-1">
+        <span class="text-xs text-gray-400 font-medium">个人资料</span>
+      </div>
+
+      <!-- 昵称 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <span class="text-sm text-[#2D3436] flex-1">昵称</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm text-[#636E72]">学习达人</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- 手机号 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <span class="text-sm text-[#2D3436] flex-1">手机号</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm text-[#636E72]">138****6688</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- 性别 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <span class="text-sm text-[#2D3436] flex-1">性别</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm text-[#636E72]">男</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- 生日 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <span class="text-sm text-[#2D3436] flex-1">生日</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm text-[#636E72]">1998-06-15</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- 个性签名 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <span class="text-sm text-[#2D3436] flex-1">个性签名</span>
+        <div class="flex items-center gap-1.5 max-w-[160px]">
+          <span class="text-sm text-[#636E72] truncate">越努力越幸运</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs flex-shrink-0"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 账号安全 ===== -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl overflow-hidden shadow-sm">
+      <div class="px-4 pt-3 pb-1">
+        <span class="text-xs text-gray-400 font-medium">账号与安全</span>
+      </div>
+
+      <!-- 修改密码 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-lock text-orange-500 text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">修改密码</span>
+        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+      </div>
+
+      <!-- 微信绑定 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <div class="w-8 h-8 rounded-lg bg-[#07C160]/10 flex items-center justify-center mr-3">
+          <i class="fa-brands fa-weixin text-[#07C160] text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">微信绑定</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs text-green-500 bg-green-50 px-2 py-0.5 rounded-full">已绑定</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- 实名认证 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-id-card text-primary text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">实名认证</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">已认证</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- 注销账号 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-user-xmark text-red-400 text-sm"></i>
+        </div>
+        <span class="text-sm text-red-400 flex-1">注销账号</span>
+        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+      </div>
+    </div>
+
+    <!-- ===== 通知设置 ===== -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl overflow-hidden shadow-sm">
+      <div class="px-4 pt-3 pb-1">
+        <span class="text-xs text-gray-400 font-medium">通知设置</span>
+      </div>
+
+      <!-- 预约提醒 -->
+      <div class="flex items-center px-4 py-3.5">
+        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-bell text-blue-500 text-sm"></i>
+        </div>
+        <div class="flex-1">
+          <span class="text-sm text-[#2D3436]">预约提醒</span>
+          <p class="text-[10px] text-[#B2BEC3] mt-0.5">预约开始前15分钟推送提醒</p>
+        </div>
+        <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+      </div>
+
+      <!-- 活动通知 -->
+      <div class="flex items-center px-4 py-3.5">
+        <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-bullhorn text-purple-500 text-sm"></i>
+        </div>
+        <div class="flex-1">
+          <span class="text-sm text-[#2D3436]">活动通知</span>
+          <p class="text-[10px] text-[#B2BEC3] mt-0.5">接收优惠活动和限时促销</p>
+        </div>
+        <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+      </div>
+
+      <!-- 学习报告 -->
+      <div class="flex items-center px-4 py-3.5">
+        <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-chart-line text-green-500 text-sm"></i>
+        </div>
+        <div class="flex-1">
+          <span class="text-sm text-[#2D3436]">学习周报</span>
+          <p class="text-[10px] text-[#B2BEC3] mt-0.5">每周一推送上周学习总结</p>
+        </div>
+        <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+      </div>
+
+      <!-- 到店提醒 -->
+      <div class="flex items-center px-4 py-3.5">
+        <div class="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-location-dot text-yellow-500 text-sm"></i>
+        </div>
+        <div class="flex-1">
+          <span class="text-sm text-[#2D3436]">到店打卡提醒</span>
+          <p class="text-[10px] text-[#B2BEC3] mt-0.5">到达门店附近时自动提醒</p>
+        </div>
+        <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+      </div>
+    </div>
+
+    <!-- ===== 通用设置 ===== -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl overflow-hidden shadow-sm">
+      <div class="px-4 pt-3 pb-1">
+        <span class="text-xs text-gray-400 font-medium">通用</span>
+      </div>
+
+      <!-- 深色模式 -->
+      <div class="flex items-center px-4 py-3.5">
+        <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-moon text-indigo-500 text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">深色模式</span>
+        <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+      </div>
+
+      <!-- 语言 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <div class="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-language text-cyan-500 text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">语言</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm text-[#636E72]">简体中文</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- 默认门店 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <div class="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-store text-teal-500 text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">默认门店</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm text-[#636E72]">光谷自习室</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- 清除缓存 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer" onclick="handleClearCache()">
+        <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-broom text-gray-500 text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">清除缓存</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm text-[#B2BEC3]" id="cacheSize">23.6 MB</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 关于 ===== -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl overflow-hidden shadow-sm">
+      <div class="px-4 pt-3 pb-1">
+        <span class="text-xs text-gray-400 font-medium">关于</span>
+      </div>
+
+      <!-- 版本号 -->
+      <div class="flex items-center px-4 py-3.5">
+        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-circle-info text-primary text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">当前版本</span>
+        <span class="text-sm text-[#B2BEC3]">v2.1.0</span>
+      </div>
+
+      <!-- 用户协议 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-file-contract text-gray-500 text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">用户协议</span>
+        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+      </div>
+
+      <!-- 隐私政策 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-shield-halved text-gray-500 text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">隐私政策</span>
+        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+      </div>
+
+      <!-- 检查更新 -->
+      <div class="flex items-center px-4 py-3.5 press-effect cursor-pointer">
+        <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center mr-3">
+          <i class="fa-solid fa-rotate text-green-500 text-sm"></i>
+        </div>
+        <span class="text-sm text-[#2D3436] flex-1">检查更新</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs text-green-500 bg-green-50 px-2 py-0.5 rounded-full">已是最新</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LOGOUT BUTTON ===== -->
+    <div class="mx-4 mt-6 mb-4">
+      <button onclick="showLogoutModal()" class="logout-btn w-full h-12 bg-white text-red-400 rounded-2xl text-sm font-semibold shadow-sm press-effect flex items-center justify-center gap-2">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        退出登录
+      </button>
+    </div>
+
+    <!-- Bottom copyright -->
+    <p class="text-center text-[10px] text-[#B2BEC3] mt-2 mb-6">去K书 v2.1.0 · © 2024 All Rights Reserved</p>
+
+  </main>
+
+  <!-- ==================== LOGOUT CONFIRM MODAL ==================== -->
+  <div id="logoutModal" class="modal-mask fixed inset-0 z-[100] bg-black/40 hidden flex items-end justify-center" style="backdrop-filter: blur(2px);" onclick="if(event.target===this)hideLogoutModal()">
+    <div class="modal-sheet bg-white rounded-t-3xl w-full p-6 pb-10">
+      <!-- Handle bar -->
+      <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+      <h3 class="text-center font-bold text-lg text-[#2D3436] mb-2">确认退出登录？</h3>
+      <p class="text-center text-sm text-[#636E72] mb-6">退出后需要重新登录才能使用预约功能</p>
+      <div class="flex gap-3">
+        <button onclick="hideLogoutModal()" class="flex-1 h-11 bg-gray-100 text-[#636E72] rounded-xl text-sm font-semibold press-effect">
+          取消
+        </button>
+        <button onclick="confirmLogout()" id="logoutConfirmBtn" class="flex-1 h-11 bg-red-400 text-white rounded-xl text-sm font-semibold press-effect flex items-center justify-center gap-2">
+          <span>确认退出</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CACHE CLEARED TOAST ==================== -->
+  <div id="cacheToast" class="fixed top-[72px] left-1/2 -translate-x-1/2 z-[100] bg-[#2D3436] text-white text-xs px-4 py-2 rounded-full shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
+    <i class="fa-solid fa-check-circle text-green-400 mr-1"></i>
+    缓存已清除
+  </div>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script>
+    function showLogoutModal() {
+      const modal = document.getElementById('logoutModal');
+      modal.classList.remove('hidden');
+      // Trigger sheet animation
+      requestAnimationFrame(() => {
+        modal.querySelector('.modal-sheet').style.transform = 'translateY(0)';
+      });
+    }
+
+    function hideLogoutModal() {
+      document.getElementById('logoutModal').classList.add('hidden');
+    }
+
+    function confirmLogout() {
+      const btn = document.getElementById('logoutConfirmBtn');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 退出中...';
+      btn.disabled = true;
+      setTimeout(() => {
+        hideLogoutModal();
+        btn.innerHTML = '<span>确认退出</span>';
+        btn.disabled = false;
+        // Redirect to login in real app
+        window.location.href = 'login.html';
+      }, 1200);
+    }
+
+    function handleClearCache() {
+      const sizeEl = document.getElementById('cacheSize');
+      const toast = document.getElementById('cacheToast');
+      sizeEl.textContent = '0 MB';
+      toast.style.opacity = '1';
+      setTimeout(() => {
+        toast.style.opacity = '0';
+      }, 2000);
+    }
+  </script>
+
+</body>
+</html>

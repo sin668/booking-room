@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>学习记录</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #F5F6FA; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif; }
+    .studied { background-color: #E8F5E9; color: #2E7D32; font-weight: 600; }
+    .today { background-color: #4F6EF7; color: white; font-weight: 600; border-radius: 50%; }
+  </style>
+</head>
+<body class="max-w-[375px] mx-auto min-h-screen pb-6">
+
+  <!-- iOS Status Bar -->
+  <div class="bg-white pt-2 pb-0 px-4 flex items-center justify-between text-xs font-semibold" style="padding-top: env(safe-area-inset-top, 8px);">
+    <span>9:41</span>
+    <div class="flex items-center gap-1">
+      <i class="fas fa-signal text-[10px]"></i>
+      <i class="fas fa-wifi text-[10px]"></i>
+      <i class="fas fa-battery-full text-[10px]"></i>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <div class="bg-white px-4 py-3 flex items-center relative">
+    <i class="fas fa-chevron-left text-[#2D3436] text-base"></i>
+    <span class="absolute left-1/2 -translate-x-1/2 text-[#2D3436] font-semibold text-base">学习记录</span>
+  </div>
+
+  <!-- Summary Card -->
+  <div class="mx-4 mt-4 bg-gradient-to-r from-primary to-purple-600 rounded-2xl p-4 text-white">
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-white/10 rounded-xl p-3">
+        <p class="text-white/60 text-[10px]">本月学习</p>
+        <p class="text-xl font-bold mt-1">32<span class="text-sm font-normal ml-0.5">h</span></p>
+      </div>
+      <div class="bg-white/10 rounded-xl p-3">
+        <p class="text-white/60 text-[10px]">本月预约</p>
+        <p class="text-xl font-bold mt-1">15<span class="text-sm font-normal ml-0.5">次</span></p>
+      </div>
+      <div class="bg-white/10 rounded-xl p-3">
+        <p class="text-white/60 text-[10px]">最长连续</p>
+        <p class="text-xl font-bold mt-1">7<span class="text-sm font-normal ml-0.5">天</span></p>
+      </div>
+      <div class="bg-white/10 rounded-xl p-3">
+        <p class="text-white/60 text-[10px]">累计学习</p>
+        <p class="text-xl font-bold mt-1">128<span class="text-sm font-normal ml-0.5">h</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Calendar -->
+  <div class="mx-4 mt-4 bg-white rounded-2xl p-4">
+    <!-- Month Selector -->
+    <div class="flex items-center justify-between mb-4">
+      <button class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
+        <i class="fas fa-chevron-left text-[#636E72] text-[10px]"></i>
+      </button>
+      <span class="text-[#2D3436] text-sm font-semibold">2024年4月</span>
+      <button class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
+        <i class="fas fa-chevron-right text-[#636E72] text-[10px]"></i>
+      </button>
+    </div>
+
+    <!-- Weekday Headers -->
+    <div class="grid grid-cols-7 gap-1 text-center mb-2">
+      <span class="text-[#B2BEC3] text-[10px]">日</span>
+      <span class="text-[#B2BEC3] text-[10px]">一</span>
+      <span class="text-[#B2BEC3] text-[10px]">二</span>
+      <span class="text-[#B2BEC3] text-[10px]">三</span>
+      <span class="text-[#B2BEC3] text-[10px]">四</span>
+      <span class="text-[#B2BEC3] text-[10px]">五</span>
+      <span class="text-[#B2BEC3] text-[10px]">六</span>
+    </div>
+
+    <!-- Calendar Days -->
+    <div class="grid grid-cols-7 gap-1 text-center">
+      <!-- Row 1: March 31 - April 6 -->
+      <span class="text-[#B2BEC3] text-xs py-1.5 relative">31</span>
+      <span class="text-xs py-1.5 relative">1
+        <span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-green-500 rounded-full"></span>
+      </span>
+      <span class="text-xs py-1.5 relative studied rounded-full">2</span>
+      <span class="text-xs py-1.5 relative">3</span>
+      <span class="text-xs py-1.5 relative studied rounded-full">4</span>
+      <span class="text-xs py-1.5 relative">5</span>
+      <span class="text-xs py-1.5 relative studied rounded-full">6</span>
+
+      <!-- Row 2: April 7-13 -->
+      <span class="text-xs py-1.5 relative">7</span>
+      <span class="text-xs py-1.5 relative studied rounded-full">8</span>
+      <span class="text-xs py-1.5 relative">9</span>
+      <span class="text-xs py-1.5 relative studied rounded-full">10</span>
+      <span class="text-xs py-1.5 relative studied rounded-full">11</span>
+      <span class="text-xs py-1.5 relative">12</span>
+      <span class="text-xs py-1.5 relative studied rounded-full">13</span>
+
+      <!-- Row 3: April 14-20 -->
+      <span class="text-xs py-1.5 relative">14</span>
+      <span class="text-xs py-1.5 relative studied rounded-full">15</span>
+      <span class="text-xs py-1.5 today w-6 h-6 mx-auto leading-6">16</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">17</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">18</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">19</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">20</span>
+
+      <!-- Row 4: April 21-27 -->
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">21</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">22</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">23</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">24</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">25</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">26</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">27</span>
+
+      <!-- Row 5: April 28-30 -->
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">28</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">29</span>
+      <span class="text-xs py-1.5 relative text-[#B2BEC3]">30</span>
+    </div>
+
+    <!-- Legend -->
+    <div class="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+      <div class="flex items-center gap-1">
+        <span class="w-3 h-3 bg-green-100 rounded-full"></span>
+        <span class="text-[#B2BEC3] text-[10px]">已学习</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <span class="w-3 h-3 bg-primary rounded-full"></span>
+        <span class="text-[#B2BEC3] text-[10px]">今天</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Record List -->
+  <div class="mx-4 mt-4">
+    <p class="text-[#2D3436] text-sm font-medium mb-3">最近记录</p>
+    <div class="space-y-3">
+      <!-- Record 1 -->
+      <div class="bg-white rounded-xl p-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 bg-primary-light rounded-lg flex items-center justify-center">
+              <i class="fas fa-book-open text-primary text-xs"></i>
+            </div>
+            <div>
+              <p class="text-[#2D3436] text-sm font-medium">光谷自习室</p>
+              <p class="text-[#B2BEC3] text-[10px] mt-0.5">A-12座位</p>
+            </div>
+          </div>
+          <p class="text-primary font-semibold text-sm">¥12</p>
+        </div>
+        <div class="flex items-center gap-3 mt-2 pt-2 border-t border-gray-50">
+          <div class="flex items-center gap-1">
+            <i class="fas fa-calendar text-[#B2BEC3] text-[10px]"></i>
+            <span class="text-[#636E72] text-[10px]">4/16 10:00-12:00</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <i class="fas fa-clock text-[#B2BEC3] text-[10px]"></i>
+            <span class="text-[#636E72] text-[10px]">2小时</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Record 2 -->
+      <div class="bg-white rounded-xl p-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 bg-primary-light rounded-lg flex items-center justify-center">
+              <i class="fas fa-book-open text-primary text-xs"></i>
+            </div>
+            <div>
+              <p class="text-[#2D3436] text-sm font-medium">光谷自习室</p>
+              <p class="text-[#B2BEC3] text-[10px] mt-0.5">B-05座位</p>
+            </div>
+          </div>
+          <p class="text-primary font-semibold text-sm">¥24</p>
+        </div>
+        <div class="flex items-center gap-3 mt-2 pt-2 border-t border-gray-50">
+          <div class="flex items-center gap-1">
+            <i class="fas fa-calendar text-[#B2BEC3] text-[10px]"></i>
+            <span class="text-[#636E72] text-[10px]">4/15 14:00-18:00</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <i class="fas fa-clock text-[#B2BEC3] text-[10px]"></i>
+            <span class="text-[#636E72] text-[10px]">4小时</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Record 3 -->
+      <div class="bg-white rounded-xl p-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 bg-primary-light rounded-lg flex items-center justify-center">
+              <i class="fas fa-book-open text-primary text-xs"></i>
+            </div>
+            <div>
+              <p class="text-[#2D3436] text-sm font-medium">大学城自习室</p>
+              <p class="text-[#B2BEC3] text-[10px] mt-0.5">C-03座位</p>
+            </div>
+          </div>
+          <p class="text-primary font-semibold text-sm">¥36</p>
+        </div>
+        <div class="flex items-center gap-3 mt-2 pt-2 border-t border-gray-50">
+          <div class="flex items-center gap-1">
+            <i class="fas fa-calendar text-[#B2BEC3] text-[10px]"></i>
+            <span class="text-[#636E72] text-[10px]">4/14 08:00-12:00</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <i class="fas fa-clock text-[#B2BEC3] text-[10px]"></i>
+            <span class="text-[#636E72] text-[10px]">4小时</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Record 4 -->
+      <div class="bg-white rounded-xl p-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 bg-primary-light rounded-lg flex items-center justify-center">
+              <i class="fas fa-book-open text-primary text-xs"></i>
+            </div>
+            <div>
+              <p class="text-[#2D3436] text-sm font-medium">光谷自习室</p>
+              <p class="text-[#B2BEC3] text-[10px] mt-0.5">A-08座位</p>
+            </div>
+          </div>
+          <p class="text-primary font-semibold text-sm">¥12</p>
+        </div>
+        <div class="flex items-center gap-3 mt-2 pt-2 border-t border-gray-50">
+          <div class="flex items-center gap-1">
+            <i class="fas fa-calendar text-[#B2BEC3] text-[10px]"></i>
+            <span class="text-[#636E72] text-[10px]">4/13 09:00-11:00</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <i class="fas fa-clock text-[#B2BEC3] text-[10px]"></i>
+            <span class="text-[#636E72] text-[10px]">2小时</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

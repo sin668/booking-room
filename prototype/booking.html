@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>预约自习</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .seat-occupied {
+      position: relative;
+    }
+    .seat-occupied::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60%;
+      height: 1.5px;
+      background: #B2BEC3;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+</head>
+<body class="bg-[#F5F6FA] pb-24 max-w-md mx-auto relative">
+
+  <!-- iOS Status Bar -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-white h-11 flex items-center justify-between px-6 max-w-md mx-auto">
+    <span class="text-sm font-semibold text-gray-900">9:41</span>
+    <div class="w-[120px] h-[34px] bg-black rounded-full mt-1"></div>
+    <div class="flex items-center gap-1.5">
+      <i class="fa-solid fa-signal text-xs text-gray-900"></i>
+      <i class="fa-solid fa-wifi text-xs text-gray-900"></i>
+      <i class="fa-solid fa-battery-full text-xs text-gray-900"></i>
+    </div>
+  </div>
+
+  <!-- Nav Bar -->
+  <div class="sticky top-11 z-40 bg-white h-12 flex items-center justify-center">
+    <span class="text-base font-semibold text-gray-900">预约自习</span>
+  </div>
+
+  <!-- Content Area -->
+  <div class="pt-0">
+
+    <!-- Date Selector -->
+    <div class="mx-4 mt-3 flex gap-2 overflow-x-auto no-scrollbar">
+      <!-- Day 1 - active -->
+      <div class="flex-shrink-0 w-14 py-2 rounded-xl bg-primary text-white flex flex-col items-center cursor-pointer">
+        <span class="text-xs">周二</span>
+        <span class="text-lg font-bold leading-tight">15</span>
+        <span class="text-[10px] opacity-80">4月</span>
+      </div>
+      <!-- Day 2 -->
+      <div class="flex-shrink-0 w-14 py-2 rounded-xl bg-white text-gray-600 flex flex-col items-center cursor-pointer shadow-sm">
+        <span class="text-xs">周三</span>
+        <span class="text-lg font-bold leading-tight">16</span>
+        <span class="text-[10px] text-gray-400">4月</span>
+      </div>
+      <!-- Day 3 -->
+      <div class="flex-shrink-0 w-14 py-2 rounded-xl bg-white text-gray-600 flex flex-col items-center cursor-pointer shadow-sm">
+        <span class="text-xs">周四</span>
+        <span class="text-lg font-bold leading-tight">17</span>
+        <span class="text-[10px] text-gray-400">4月</span>
+      </div>
+      <!-- Day 4 -->
+      <div class="flex-shrink-0 w-14 py-2 rounded-xl bg-white text-gray-600 flex flex-col items-center cursor-pointer shadow-sm">
+        <span class="text-xs">周五</span>
+        <span class="text-lg font-bold leading-tight">18</span>
+        <span class="text-[10px] text-gray-400">4月</span>
+      </div>
+      <!-- Day 5 -->
+      <div class="flex-shrink-0 w-14 py-2 rounded-xl bg-white text-gray-600 flex flex-col items-center cursor-pointer shadow-sm">
+        <span class="text-xs">周六</span>
+        <span class="text-lg font-bold leading-tight">19</span>
+        <span class="text-[10px] text-gray-400">4月</span>
+      </div>
+      <!-- Day 6 -->
+      <div class="flex-shrink-0 w-14 py-2 rounded-xl bg-white text-gray-600 flex flex-col items-center cursor-pointer shadow-sm">
+        <span class="text-xs">周日</span>
+        <span class="text-lg font-bold leading-tight">20</span>
+        <span class="text-[10px] text-gray-400">4月</span>
+      </div>
+      <!-- Day 7 -->
+      <div class="flex-shrink-0 w-14 py-2 rounded-xl bg-white text-gray-600 flex flex-col items-center cursor-pointer shadow-sm">
+        <span class="text-xs">周一</span>
+        <span class="text-lg font-bold leading-tight">21</span>
+        <span class="text-[10px] text-gray-400">4月</span>
+      </div>
+    </div>
+
+    <!-- Time Slot Selector -->
+    <div class="mx-4 mt-4">
+      <span class="text-sm font-semibold text-gray-700">选择时段</span>
+      <div class="grid grid-cols-3 gap-2 mt-2">
+        <!-- 08:00-10:00 - available -->
+        <div class="py-2.5 rounded-xl text-sm text-center bg-white text-gray-600 border border-gray-200 cursor-pointer hover:border-primary/30 transition-colors">
+          08:00-10:00
+        </div>
+        <!-- 10:00-12:00 - selected -->
+        <div class="py-2.5 rounded-xl text-sm text-center bg-primary text-white cursor-pointer shadow-sm shadow-primary/20">
+          10:00-12:00
+        </div>
+        <!-- 12:00-14:00 - available -->
+        <div class="py-2.5 rounded-xl text-sm text-center bg-white text-gray-600 border border-gray-200 cursor-pointer hover:border-primary/30 transition-colors">
+          12:00-14:00
+        </div>
+        <!-- 14:00-16:00 - available -->
+        <div class="py-2.5 rounded-xl text-sm text-center bg-white text-gray-600 border border-gray-200 cursor-pointer hover:border-primary/30 transition-colors">
+          14:00-16:00
+        </div>
+        <!-- 16:00-18:00 - unavailable -->
+        <div class="py-2.5 rounded-xl text-sm text-center bg-gray-100 text-gray-300 line-through cursor-not-allowed">
+          16:00-18:00
+        </div>
+        <!-- 18:00-20:00 - available -->
+        <div class="py-2.5 rounded-xl text-sm text-center bg-white text-gray-600 border border-gray-200 cursor-pointer hover:border-primary/30 transition-colors">
+          18:00-20:00
+        </div>
+        <!-- 20:00-22:00 - available (spanning full width on last row) -->
+        <div class="py-2.5 rounded-xl text-sm text-center bg-white text-gray-600 border border-gray-200 cursor-pointer hover:border-primary/30 transition-colors">
+          20:00-22:00
+        </div>
+      </div>
+    </div>
+
+    <!-- Seat Type Filter -->
+    <div class="mx-4 mt-4 flex gap-2">
+      <div class="px-3 py-1 rounded-full text-xs bg-primary text-white cursor-pointer">
+        全部
+      </div>
+      <div class="px-3 py-1 rounded-full text-xs bg-white text-gray-500 cursor-pointer border border-gray-200 hover:border-primary/30 transition-colors">
+        静音区
+      </div>
+      <div class="px-3 py-1 rounded-full text-xs bg-white text-gray-500 cursor-pointer border border-gray-200 hover:border-primary/30 transition-colors">
+        键盘区
+      </div>
+      <div class="px-3 py-1 rounded-full text-xs bg-white text-gray-500 cursor-pointer border border-gray-200 hover:border-primary/30 transition-colors">
+        VIP区
+      </div>
+    </div>
+
+    <!-- Seat Map -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-semibold text-gray-800">
+          <i class="fa-solid fa-location-dot text-primary mr-1.5"></i>光谷自习室 · 3楼
+        </span>
+        <span class="text-xs text-gray-400">剩余 18 座</span>
+      </div>
+
+      <!-- Room Layout -->
+      <div class="flex flex-col items-center gap-2.5">
+
+        <!-- Front label -->
+        <div class="text-[10px] text-gray-400 tracking-widest mb-1">— 前 方 —</div>
+
+        <!-- Row 1 (6 seats) -->
+        <div class="flex gap-2">
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="A-01 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-gray-200 cursor-not-allowed seat-occupied flex items-center justify-center" title="A-02 已占"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="A-03 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-orange-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="A-04 VIP">
+            <i class="fa-solid fa-crown text-white text-[9px]"></i>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="A-05 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-gray-200 cursor-not-allowed seat-occupied flex items-center justify-center" title="A-06 已占"></div>
+        </div>
+
+        <!-- Row 2 (6 seats) -->
+        <div class="flex gap-2">
+          <div class="w-8 h-8 rounded-lg bg-gray-200 cursor-not-allowed seat-occupied flex items-center justify-center" title="B-01 已占"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="B-02 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-primary cursor-pointer flex items-center justify-center shadow-sm shadow-primary/30" title="B-03 已选">
+            <i class="fa-solid fa-check text-white text-xs"></i>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="B-04 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="B-05 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-orange-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="B-06 VIP">
+            <i class="fa-solid fa-crown text-white text-[9px]"></i>
+          </div>
+        </div>
+
+        <!-- Row 3 (6 seats) -->
+        <div class="flex gap-2">
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="C-01 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="C-02 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-gray-200 cursor-not-allowed seat-occupied flex items-center justify-center" title="C-03 已占"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="C-04 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-gray-200 cursor-not-allowed seat-occupied flex items-center justify-center" title="C-05 已占"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="C-06 可选"></div>
+        </div>
+
+        <!-- Aisle -->
+        <div class="w-full h-4 flex items-center justify-center">
+          <div class="flex-1 border-t border-dashed border-gray-200"></div>
+          <span class="px-2 text-[10px] text-gray-300">过道</span>
+          <div class="flex-1 border-t border-dashed border-gray-200"></div>
+        </div>
+
+        <!-- Row 4 (6 seats) -->
+        <div class="flex gap-2">
+          <div class="w-8 h-8 rounded-lg bg-orange-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="D-01 VIP">
+            <i class="fa-solid fa-crown text-white text-[9px]"></i>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="D-02 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="D-03 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-gray-200 cursor-not-allowed seat-occupied flex items-center justify-center" title="D-04 已占"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="D-05 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="D-06 可选"></div>
+        </div>
+
+        <!-- Row 5 (6 seats) -->
+        <div class="flex gap-2">
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="E-01 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-gray-200 cursor-not-allowed seat-occupied flex items-center justify-center" title="E-02 已占"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="E-03 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-green-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="E-04 可选"></div>
+          <div class="w-8 h-8 rounded-lg bg-orange-400 cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center" title="E-05 VIP">
+            <i class="fa-solid fa-crown text-white text-[9px]"></i>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-gray-200 cursor-not-allowed seat-occupied flex items-center justify-center" title="E-06 已占"></div>
+        </div>
+
+      </div>
+
+      <!-- Legend -->
+      <div class="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-gray-100">
+        <div class="flex items-center gap-1">
+          <div class="w-3 h-3 rounded bg-green-400"></div>
+          <span class="text-[10px] text-gray-500">可选</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <div class="w-3 h-3 rounded bg-primary"></div>
+          <span class="text-[10px] text-gray-500">已选</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <div class="w-3 h-3 rounded bg-gray-200"></div>
+          <span class="text-[10px] text-gray-500">已占</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <div class="w-3 h-3 rounded bg-orange-400"></div>
+          <span class="text-[10px] text-gray-500">VIP</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seat Info Panel -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm">
+      <!-- Divider accent -->
+      <div class="w-8 h-0.5 bg-primary rounded-full mb-3"></div>
+
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-sm font-bold text-gray-800">B-03号</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-primary-light text-primary font-medium">静音区</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-green-50 text-green-600 font-medium">靠窗</span>
+          </div>
+          <div class="flex items-center gap-1 text-xs text-gray-500">
+            <i class="fa-regular fa-clock text-[10px]"></i>
+            <span>时段 10:00-12:00（2小时）</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] text-gray-400">费用</span>
+          <div class="text-xl font-bold text-primary">¥12.00</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex gap-3 mt-4">
+        <button class="flex-shrink-0 px-5 py-3 rounded-full border border-gray-200 text-sm text-gray-600 font-medium hover:bg-gray-50 transition-colors">
+          换个座位
+        </button>
+        <button class="flex-1 py-3 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors shadow-sm shadow-primary/20">
+          立即预约
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Tab Bar -->
+  <div class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 max-w-md mx-auto">
+    <div class="flex items-center justify-around py-2 pb-5">
+      <!-- Tab 1: 首页 -->
+      <div class="flex flex-col items-center gap-0.5 cursor-pointer">
+        <i class="fa-regular fa-house text-lg text-gray-400"></i>
+        <span class="text-[10px] text-gray-400">首页</span>
+      </div>
+      <!-- Tab 2: 预约 (Active) -->
+      <div class="flex flex-col items-center gap-0.5 cursor-pointer">
+        <i class="fa-solid fa-calendar-check text-lg text-primary"></i>
+        <span class="text-[10px] text-primary font-medium">预约</span>
+      </div>
+      <!-- Tab 3: 订单 -->
+      <div class="flex flex-col items-center gap-0.5 cursor-pointer">
+        <i class="fa-regular fa-receipt text-lg text-gray-400"></i>
+        <span class="text-[10px] text-gray-400">订单</span>
+      </div>
+      <!-- Tab 4: 我的 -->
+      <div class="flex flex-col items-center gap-0.5 cursor-pointer">
+        <i class="fa-regular fa-user text-lg text-gray-400"></i>
+        <span class="text-[10px] text-gray-400">我的</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

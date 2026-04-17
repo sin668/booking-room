@@ -1,0 +1,28 @@
+schema: spec-driven 
+
+context: | 
+  技术栈：
+    - 微信小程序移动端(br-app)：uni-app（Vue3）、ailwindCSS、uView 2.0、Vuex
+    - WEB PC管理后台(br-admin)：Vue3、Element UI
+    - 服务后端(br-server)：Pythoen 3.12+、FastAPI、Uvicorn、Pydantic、pytest
+    - 数据库：PostgreSQL 18
+  架构模式：
+    - 前端：组件分层 (pages → components → api → utils) 
+    - 后端：分层架构 (api/routes → services → models/crud → schemas) 
+    - RBAC 权限控制必须在后端强制执行，不仅仅是前端隐藏
+  编码规范：
+    - 遵循 Clean Architecture 
+    - 使用 Domain-Driven Design 
+    - 所有核心逻辑需要单元测试，覆盖率目标 > 90% 
+    - API 需要集成测试
+  API 风格：RESTful，文档在 docs/api.md 
+  代码规范：参考 .eslintrc.js 
+  
+rules: 
+  proposal: 
+    - 必须包含回滚方案 
+    - 标注影响的模块范围 
+  specs: 
+    - 使用 Given/When/Then 格式描述测试场景
+  design:
+    - 必须包含复杂流程的序列图

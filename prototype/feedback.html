@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>意见反馈</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #F5F6FA; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif; }
+    .cat-selected { background-color: #4F6EF7; color: white; }
+    .cat-default { background-color: white; color: #636E72; }
+    textarea:focus { outline: none; }
+    textarea::placeholder { color: #B2BEC3; }
+    input::placeholder { color: #B2BEC3; }
+    input:focus { outline: none; }
+  </style>
+</head>
+<body class="max-w-[375px] mx-auto min-h-screen pb-6">
+
+  <!-- iOS Status Bar -->
+  <div class="bg-white pt-2 pb-0 px-4 flex items-center justify-between text-xs font-semibold" style="padding-top: env(safe-area-inset-top, 8px);">
+    <span>9:41</span>
+    <div class="flex items-center gap-1">
+      <i class="fas fa-signal text-[10px]"></i>
+      <i class="fas fa-wifi text-[10px]"></i>
+      <i class="fas fa-battery-full text-[10px]"></i>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <div class="bg-white px-4 py-3 flex items-center relative">
+    <i class="fas fa-chevron-left text-[#2D3436] text-base"></i>
+    <span class="absolute left-1/2 -translate-x-1/2 text-[#2D3436] font-semibold text-base">意见反馈</span>
+  </div>
+
+  <!-- Category Selection -->
+  <div class="mx-4 mt-4 flex flex-wrap gap-2">
+    <button onclick="selectCategory(this)" class="cat-selected px-3 py-1.5 rounded-full text-sm font-medium transition-all">功能建议</button>
+    <button onclick="selectCategory(this)" class="cat-default px-3 py-1.5 rounded-full text-sm font-medium transition-all">Bug反馈</button>
+    <button onclick="selectCategory(this)" class="cat-default px-3 py-1.5 rounded-full text-sm font-medium transition-all">服务投诉</button>
+    <button onclick="selectCategory(this)" class="cat-default px-3 py-1.5 rounded-full text-sm font-medium transition-all">其他</button>
+  </div>
+
+  <!-- Content Input -->
+  <div class="mx-4 mt-3 bg-white rounded-2xl p-4">
+    <textarea rows="4" placeholder="请详细描述您的问题或建议..." class="w-full bg-gray-50 rounded-xl p-3 text-sm text-[#2D3436] resize-none border-none"></textarea>
+    <div class="flex justify-end mt-1">
+      <span class="text-[#B2BEC3] text-[10px]">0/500</span>
+    </div>
+  </div>
+
+  <!-- Image Upload -->
+  <div class="mx-4 mt-3">
+    <p class="text-[#2D3436] text-sm font-medium mb-2">添加图片</p>
+    <div class="flex gap-2">
+      <!-- Add button -->
+      <div class="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary-light/30 transition-all">
+        <i class="fas fa-camera text-gray-400 text-lg"></i>
+        <span class="text-[#B2BEC3] text-[10px] mt-1">添加</span>
+      </div>
+      <!-- Uploaded image 1 -->
+      <div class="w-20 h-20 rounded-xl relative overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=160&h=160&fit=crop" class="w-full h-full object-cover" alt="">
+        <div class="absolute top-1 right-1 w-4 h-4 bg-black/50 rounded-full flex items-center justify-center">
+          <i class="fas fa-xmark text-white text-[8px]"></i>
+        </div>
+      </div>
+      <!-- Uploaded image 2 -->
+      <div class="w-20 h-20 rounded-xl relative overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=160&h=160&fit=crop" class="w-full h-full object-cover" alt="">
+        <div class="absolute top-1 right-1 w-4 h-4 bg-black/50 rounded-full flex items-center justify-center">
+          <i class="fas fa-xmark text-white text-[8px]"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Info -->
+  <div class="mx-4 mt-3 bg-white rounded-2xl p-4">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-phone text-[#B2BEC3] text-sm"></i>
+      <input type="text" placeholder="请输入手机号或微信号" class="flex-1 text-sm text-[#2D3436] placeholder-[#B2BEC3] bg-transparent border-none">
+    </div>
+  </div>
+
+  <!-- Submit Button -->
+  <div class="mx-4 mt-6">
+    <button class="bg-primary text-white rounded-full w-full py-3.5 text-sm font-semibold shadow-lg shadow-primary/30 active:bg-primary-dark transition-colors">
+      提交反馈
+    </button>
+  </div>
+
+  <!-- My Feedback History -->
+  <div class="mx-4 mt-6 mb-4">
+    <p class="text-[#2D3436] text-sm font-medium mb-3">我的反馈</p>
+    <div class="space-y-3">
+      <!-- Feedback 1 -->
+      <div class="bg-white rounded-xl p-4">
+        <div class="flex items-start justify-between">
+          <p class="text-[#2D3436] text-sm font-medium flex-1">座位预约后无法修改时间</p>
+          <span class="bg-green-50 text-green-600 text-[10px] font-medium px-2 py-0.5 rounded-full ml-2 flex-shrink-0">已回复</span>
+        </div>
+        <p class="text-[#636E72] text-xs mt-1.5 leading-relaxed">预约了下午的座位，临时有事想改成上午，但找不到修改的入口...</p>
+        <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-50">
+          <span class="text-[#B2BEC3] text-[10px]">2024-04-10</span>
+          <span class="text-primary text-[10px] font-medium">查看回复 <i class="fas fa-chevron-right text-[8px]"></i></span>
+        </div>
+      </div>
+
+      <!-- Feedback 2 -->
+      <div class="bg-white rounded-xl p-4">
+        <div class="flex items-start justify-between">
+          <p class="text-[#2D3436] text-sm font-medium flex-1">建议增加夜间学习时段</p>
+          <span class="bg-orange-50 text-orange-500 text-[10px] font-medium px-2 py-0.5 rounded-full ml-2 flex-shrink-0">处理中</span>
+        </div>
+        <p class="text-[#636E72] text-xs mt-1.5 leading-relaxed">很多同学晚上也需要自习，希望自习室能延长营业时间到晚上11点...</p>
+        <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-50">
+          <span class="text-[#B2BEC3] text-[10px]">2024-04-08</span>
+          <span class="text-[#B2BEC3] text-[10px]">等待处理</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectCategory(el) {
+      document.querySelectorAll('.mx-4 button').forEach(btn => {
+        btn.className = 'cat-default px-3 py-1.5 rounded-full text-sm font-medium transition-all';
+      });
+      el.className = 'cat-selected px-3 py-1.5 rounded-full text-sm font-medium transition-all';
+    }
+
+    // Textarea character count
+    const textarea = document.querySelector('textarea');
+    const charCount = document.querySelector('.text-\\[\\#B2BEC3\\].text-\\[10px\\]');
+    textarea.addEventListener('input', function() {
+      const len = this.value.length;
+      charCount.textContent = len + '/500';
+      if (len > 500) {
+        charCount.style.color = '#EF4444';
+      } else {
+        charCount.style.color = '#B2BEC3';
+      }
+    });
+  </script>
+</body>
+</html>

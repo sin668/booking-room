@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>卡券包</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #F5F6FA; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif; }
+    .coupon-card { position: relative; overflow: hidden; }
+    .coupon-card::before,
+    .coupon-card::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #F5F6FA;
+      border-radius: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .coupon-card::before { left: -8px; }
+    .coupon-card::after { right: -8px; }
+    .tab-active { color: #4F6EF7; border-bottom: 2px solid #4F6EF7; }
+    .tab-inactive { color: #636E72; border-bottom: 2px solid transparent; }
+  </style>
+</head>
+<body class="max-w-[375px] mx-auto min-h-screen">
+
+  <!-- iOS Status Bar -->
+  <div class="bg-white pt-2 pb-0 px-4 flex items-center justify-between text-xs font-semibold" style="padding-top: env(safe-area-inset-top, 8px);">
+    <span>9:41</span>
+    <div class="flex items-center gap-1">
+      <i class="fas fa-signal text-[10px]"></i>
+      <i class="fas fa-wifi text-[10px]"></i>
+      <i class="fas fa-battery-full text-[10px]"></i>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <div class="bg-white px-4 py-3 flex items-center relative">
+    <i class="fas fa-chevron-left text-[#2D3436] text-base"></i>
+    <span class="absolute left-1/2 -translate-x-1/2 text-[#2D3436] font-semibold text-base">卡券包</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="bg-white mt-px flex">
+    <button onclick="switchTab(0)" id="tab-0" class="flex-1 py-3 text-sm font-medium tab-active transition-all">
+      可使用<span class="ml-1 text-xs bg-primary text-white rounded-full px-1.5 py-0.5">3</span>
+    </button>
+    <button onclick="switchTab(1)" id="tab-1" class="flex-1 py-3 text-sm font-medium tab-inactive transition-all">
+      已使用
+    </button>
+    <button onclick="switchTab(2)" id="tab-2" class="flex-1 py-3 text-sm font-medium tab-inactive transition-all">
+      已过期
+    </button>
+  </div>
+
+  <!-- Tab Content: Available -->
+  <div id="content-0" class="px-4 mt-4 space-y-3">
+    <!-- Coupon 1 -->
+    <div class="coupon-card bg-white rounded-xl flex shadow-sm">
+      <div class="w-1.5 bg-red-500 rounded-l-xl flex-shrink-0"></div>
+      <div class="flex-1 p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-red-500 font-bold text-xl">满20减3</span>
+            <p class="text-[#636E72] text-xs mt-1">全场通用</p>
+          </div>
+          <button class="bg-primary text-white text-xs px-4 py-2 rounded-full font-medium">立即使用</button>
+        </div>
+        <p class="text-[#B2BEC3] text-xs mt-2">有效期至 2024-05-31</p>
+      </div>
+    </div>
+
+    <!-- Coupon 2 -->
+    <div class="coupon-card bg-white rounded-xl flex shadow-sm">
+      <div class="w-1.5 bg-orange-500 rounded-l-xl flex-shrink-0"></div>
+      <div class="flex-1 p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-orange-500 font-bold text-xl">新用户首单立减20</span>
+            <p class="text-[#636E72] text-xs mt-1">限首次预约</p>
+          </div>
+          <button class="bg-primary text-white text-xs px-4 py-2 rounded-full font-medium">立即使用</button>
+        </div>
+        <p class="text-[#B2BEC3] text-xs mt-2">有效期至 2024-06-30</p>
+      </div>
+    </div>
+
+    <!-- Coupon 3 -->
+    <div class="coupon-card bg-white rounded-xl flex shadow-sm">
+      <div class="w-1.5 bg-purple-500 rounded-l-xl flex-shrink-0"></div>
+      <div class="flex-1 p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-purple-500 font-bold text-xl">VIP专享8折</span>
+            <p class="text-[#636E72] text-xs mt-1">限VIP座位</p>
+          </div>
+          <button class="bg-primary text-white text-xs px-4 py-2 rounded-full font-medium">立即使用</button>
+        </div>
+        <p class="text-[#B2BEC3] text-xs mt-2">有效期至 2024-04-30</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Content: Used -->
+  <div id="content-1" class="hidden px-4 mt-4">
+    <div class="flex flex-col items-center justify-center py-20">
+      <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+        <i class="fas fa-ticket text-3xl text-[#B2BEC3]"></i>
+      </div>
+      <p class="text-[#B2BEC3] text-sm">暂无已使用的优惠券</p>
+    </div>
+  </div>
+
+  <!-- Tab Content: Expired -->
+  <div id="content-2" class="hidden px-4 mt-4">
+    <div class="flex flex-col items-center justify-center py-20">
+      <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+        <i class="fas fa-clock text-3xl text-[#B2BEC3]"></i>
+      </div>
+      <p class="text-[#B2BEC3] text-sm">暂无已过期的优惠券</p>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(index) {
+      for (let i = 0; i < 3; i++) {
+        const tab = document.getElementById('tab-' + i);
+        const content = document.getElementById('content-' + i);
+        if (i === index) {
+          tab.className = 'flex-1 py-3 text-sm font-medium tab-active transition-all';
+          content.className = 'px-4 mt-4 space-y-3';
+          if (index !== 0) content.className = 'px-4 mt-4';
+        } else {
+          tab.className = 'flex-1 py-3 text-sm font-medium tab-inactive transition-all';
+          content.className = 'hidden px-4 mt-4 space-y-3';
+          if (i !== 0) content.className = 'hidden px-4 mt-4';
+        }
+      }
+    }
+  </script>
+</body>
+</html>

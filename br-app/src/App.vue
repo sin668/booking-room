@@ -22,6 +22,8 @@ export default {
 </script>
 
 <style lang="scss">
+@import '@/static/icons/iconfont.css';
+
 page {
   background-color: $bg-color;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',

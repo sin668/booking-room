@@ -179,3 +179,119 @@ Authorization: Bearer <access_token>
 **错误码：**
 - 401: 未认证 / Token 已过期或失效
 - 404: 用户不存在
+
+---
+
+## 首页相关接口
+
+### GET /api/v1/banners
+
+获取当前生效的轮播图列表。无需认证。
+
+**响应 200：**
+```json
+[
+  {
+    "id": 1,
+    "image_url": "https://example.com/banner.jpg",
+    "title": "新用户首单立减20元",
+    "subtitle": "限时优惠，先到先得",
+    "cta_text": "立即领取",
+    "link_type": "page",
+    "link_value": "/pages/coupon/index",
+    "sort_order": 1
+  }
+]
+```
+
+仅返回 `is_active=true` 的轮播图，按 `sort_order` 升序排列。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 轮播图 ID |
+| image_url | string | 图片 URL |
+| title | string | 标题文字 |
+| subtitle | string \| null | 副标题 |
+| cta_text | string \| null | CTA 按钮文案 |
+| link_type | string | 跳转类型：none / page / room / url |
+| link_value | string \| null | 跳转目标 |
+| sort_order | integer | 排序权重（升序） |
+
+---
+
+### GET /api/v1/activities
+
+获取热门活动列表。无需认证。
+
+**响应 200：**
+```json
+[
+  {
+    "id": 1,
+    "title": "沉浸式学习挑战赛",
+    "description": "累计学习24小时赢好礼",
+    "cover_image": "https://example.com/activity.jpg",
+    "participant_count": 326
+  }
+]
+```
+
+仅返回 `is_active=true` 的活动，按 `sort_order` 升序排列。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 活动 ID |
+| title | string | 活动标题 |
+| description | string \| null | 活动描述 |
+| cover_image | string \| null | 封面图 URL |
+| participant_count | integer | 参与人数 |
+
+---
+
+### GET /api/v1/rooms
+
+获取自习室分页列表。无需认证。
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | integer | 1 | 页码（从 1 开始） |
+| page_size | integer | 10 | 每页数量（最大 50） |
+
+**响应 200：**
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "安静自习室·油城店",
+      "description": "宽敞明亮的沉浸式自习空间",
+      "cover_image": "https://example.com/room.jpg",
+      "address": "茂名市茂南区油城三路88号",
+      "business_hours": "07:00-23:00",
+      "status": "open",
+      "min_price": "8.00"
+    }
+  ],
+  "total": 10,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+仅返回 `status=open` 的自习室。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 自习室 ID |
+| name | string | 名称 |
+| description | string \| null | 描述 |
+| cover_image | string \| null | 封面图 URL |
+| address | string | 地址 |
+| business_hours | string \| null | 营业时间（如 "08:00-22:00"） |
+| status | string | 状态：open / closed |
+| min_price | decimal | 最低价格（单位：元） |
+
+**错误码：**
+- 422: page_size 超过最大值 50

@@ -23,6 +23,7 @@ br-app/dist/
 .idea/
 *.swp
 *.swo
+.claude/worktrees/
 .claude/settings.local.json
 .omc/
 

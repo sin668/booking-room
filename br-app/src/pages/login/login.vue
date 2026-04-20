@@ -8,7 +8,7 @@
       <!-- Logo & 品牌 -->
       <view class="brand">
         <view class="logo">
-          <text class="logo-icon">📖</text>
+          <view class="icon icon-book logo-icon" />
         </view>
         <text class="brand-title">去K书</text>
         <text class="brand-desc">专注学习，遇见更好的自己</text>
@@ -41,7 +41,7 @@
           <view class="input-wrap">
             <view class="area-code">
               <text class="area-code-text">+86</text>
-              <text class="area-code-arrow">▼</text>
+              <view class="icon icon-arrow-down area-code-arrow" />
             </view>
             <view class="input-divider"></view>
             <input
@@ -59,7 +59,7 @@
         <view class="field">
           <text class="field-label">密码</text>
           <view class="input-wrap">
-            <text class="input-icon">🔒</text>
+            <view class="icon icon-lock input-icon" />
             <input
               v-model="loginForm.password"
               :password="!showLoginPwd"
@@ -68,9 +68,7 @@
               placeholder-class="placeholder"
               class="input"
             />
-            <text class="pwd-toggle" @tap="showLoginPwd = !showLoginPwd">
-              {{ showLoginPwd ? '🙈' : '👁' }}
-            </text>
+            <view :class="['icon', showLoginPwd ? 'icon-eye-off' : 'icon-eye', 'pwd-toggle']" @tap="showLoginPwd = !showLoginPwd" />
           </view>
         </view>
 
@@ -117,7 +115,7 @@
         <view class="agreement">
           <view class="checkbox-wrap" @tap="loginAgreed = !loginAgreed">
             <view class="checkbox" :class="{ checked: loginAgreed }">
-              <text v-if="loginAgreed" class="check-mark">✓</text>
+              <view v-if="loginAgreed" class="icon icon-check check-mark" />
             </view>
           </view>
           <text class="agreement-text">
@@ -135,7 +133,7 @@
         <view class="field">
           <text class="field-label">昵称</text>
           <view class="input-wrap">
-            <text class="input-icon">👤</text>
+            <view class="icon icon-user input-icon" />
             <input
               v-model="regForm.nickname"
               type="text"
@@ -154,7 +152,7 @@
           <view class="input-wrap">
             <view class="area-code">
               <text class="area-code-text">+86</text>
-              <text class="area-code-arrow">▼</text>
+              <view class="icon icon-arrow-down area-code-arrow" />
             </view>
             <view class="input-divider"></view>
             <input
@@ -172,7 +170,7 @@
         <view class="field">
           <text class="field-label">验证码</text>
           <view class="input-wrap code-wrap">
-            <text class="input-icon">🛡</text>
+            <view class="icon icon-shield input-icon" />
             <input
               v-model="regForm.smsCode"
               type="number"
@@ -197,7 +195,7 @@
         <view class="field">
           <text class="field-label">设置密码</text>
           <view class="input-wrap">
-            <text class="input-icon">🔒</text>
+            <view class="icon icon-lock input-icon" />
             <input
               v-model="regForm.password"
               :password="!showRegPwd"
@@ -207,9 +205,7 @@
               class="input"
               @input="onPasswordInput"
             />
-            <text class="pwd-toggle" @tap="showRegPwd = !showRegPwd">
-              {{ showRegPwd ? '🙈' : '👁' }}
-            </text>
+            <view :class="['icon', showRegPwd ? 'icon-eye-off' : 'icon-eye', 'pwd-toggle']" @tap="showRegPwd = !showRegPwd" />
           </view>
           <!-- 密码强度 -->
           <view v-if="regForm.password" class="pwd-strength">
@@ -226,7 +222,7 @@
         <view class="field">
           <text class="field-label">确认密码</text>
           <view class="input-wrap">
-            <text class="input-icon">🔒</text>
+            <view class="icon icon-lock input-icon" />
             <input
               v-model="regForm.confirmPassword"
               :password="!showRegPwdConfirm"
@@ -235,9 +231,7 @@
               placeholder-class="placeholder"
               class="input"
             />
-            <text class="pwd-toggle" @tap="showRegPwdConfirm = !showRegPwdConfirm">
-              {{ showRegPwdConfirm ? '🙈' : '👁' }}
-            </text>
+            <view :class="['icon', showRegPwdConfirm ? 'icon-eye-off' : 'icon-eye', 'pwd-toggle']" @tap="showRegPwdConfirm = !showRegPwdConfirm" />
           </view>
         </view>
 
@@ -247,7 +241,7 @@
             邀请码 <text class="field-label-muted">（选填）</text>
           </text>
           <view class="input-wrap">
-            <text class="input-icon">🎁</text>
+            <view class="icon icon-gift input-icon" />
             <input
               v-model="regForm.inviteCode"
               type="text"
@@ -273,7 +267,7 @@
         <view class="agreement">
           <view class="checkbox-wrap" @tap="regAgreed = !regAgreed">
             <view class="checkbox" :class="{ checked: regAgreed }">
-              <text v-if="regAgreed" class="check-mark">✓</text>
+              <view v-if="regAgreed" class="icon icon-check check-mark" />
             </view>
           </view>
           <text class="agreement-text">
@@ -287,7 +281,7 @@
 
       <!-- 底部安全提示 -->
       <view class="footer-tip">
-        <text class="footer-tip-text">🛡 您的信息已加密传输，请放心使用</text>
+        <view class="footer-tip-text"><view class="icon icon-shield" style="font-size: 20rpx; margin-right: 4rpx;" />您的信息已加密传输，请放心使用</view>
       </view>
     </view>
   </view>
@@ -551,61 +545,63 @@ function openAgreement(type) {
 .deco {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60rpx);
+  filter: blur(80rpx);
   pointer-events: none;
 }
 .deco-1 {
-  width: 400rpx;
-  height: 400rpx;
-  background: rgba(79, 110, 247, 0.06);
-  top: 160rpx;
-  right: -120rpx;
+  width: 480rpx;
+  height: 480rpx;
+  background: rgba(79, 110, 247, 0.07);
+  top: 120rpx;
+  right: -160rpx;
 }
 .deco-2 {
-  width: 440rpx;
-  height: 440rpx;
-  background: rgba(108, 92, 231, 0.05);
-  top: 560rpx;
-  left: -140rpx;
+  width: 520rpx;
+  height: 520rpx;
+  background: rgba(108, 92, 231, 0.06);
+  top: 520rpx;
+  left: -180rpx;
 }
 
 .content {
   position: relative;
   z-index: 1;
   padding: 0 48rpx;
-  padding-top: 160rpx;
+  padding-top: 140rpx;
 }
 
 // 品牌
 .brand {
   text-align: center;
-  margin-bottom: 64rpx;
+  margin-bottom: 56rpx;
 }
 .logo {
-  width: 140rpx;
-  height: 140rpx;
-  border-radius: 48rpx;
+  width: 136rpx;
+  height: 136rpx;
+  border-radius: 36rpx;
   background: linear-gradient(135deg, $primary, $purple);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 24rpx;
-  box-shadow: $shadow-md;
+  margin: 0 auto 28rpx;
+  box-shadow: 0 12rpx 32rpx rgba(79, 110, 247, 0.3);
 }
 .logo-icon {
-  font-size: 56rpx;
+  font-size: 52rpx;
+  color: #fff;
 }
 .brand-title {
   display: block;
-  font-size: 44rpx;
+  font-size: 46rpx;
   font-weight: 700;
   color: $text-primary;
+  letter-spacing: 2rpx;
 }
 .brand-desc {
   display: block;
   font-size: 26rpx;
   color: $text-secondary;
-  margin-top: 8rpx;
+  margin-top: 10rpx;
 }
 
 // Tab 栏
@@ -613,20 +609,21 @@ function openAgreement(type) {
   position: relative;
   display: flex;
   background: $white;
-  border-radius: $radius-lg;
-  padding: 4rpx;
-  margin-bottom: 48rpx;
-  box-shadow: $shadow-sm;
+  border-radius: 20rpx;
+  padding: 6rpx;
+  margin-bottom: 44rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 .tab-indicator {
   position: absolute;
-  top: 4rpx;
-  left: 4rpx;
-  width: calc(50% - 8rpx);
-  height: calc(100% - 8rpx);
-  background: $primary;
-  border-radius: $radius-md;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  top: 6rpx;
+  left: 6rpx;
+  width: calc(50% - 12rpx);
+  height: calc(100% - 12rpx);
+  background: linear-gradient(135deg, $primary, $purple);
+  border-radius: 16rpx;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4rpx 12rpx rgba(79, 110, 247, 0.25);
 }
 .tab-indicator.tab-right {
   transform: translateX(100%);
@@ -644,7 +641,7 @@ function openAgreement(type) {
   font-size: 28rpx;
   font-weight: 600;
   color: $text-secondary;
-  transition: color 0.3s;
+  transition: color 0.35s;
 }
 .tab-item.active .tab-text {
   color: $white;
@@ -657,7 +654,7 @@ function openAgreement(type) {
 
 // 字段
 .field {
-  margin-bottom: 24rpx;
+  margin-bottom: 28rpx;
 }
 .field-label {
   display: block;
@@ -676,21 +673,27 @@ function openAgreement(type) {
   display: flex;
   align-items: center;
   background: $white;
-  border-radius: $radius-lg;
-  border: 2rpx solid $border-color;
-  padding: 0 24rpx;
-  height: 96rpx;
-  transition: border-color 0.2s;
+  border-radius: 20rpx;
+  border: 2rpx solid transparent;
+  padding: 0 28rpx;
+  height: 100rpx;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
 }
 .input-wrap:focus-within {
   border-color: $primary;
-  box-shadow: 0 0 0 6rpx rgba(79, 110, 247, 0.1);
+  box-shadow: 0 0 0 6rpx rgba(79, 110, 247, 0.08), 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
 }
 
 .input-icon {
-  font-size: 28rpx;
+  font-size: 30rpx;
   margin-right: 16rpx;
   flex-shrink: 0;
+  color: $text-muted;
+}
+
+.input-wrap:focus-within .input-icon {
+  color: $primary;
 }
 
 .input {
@@ -700,7 +703,7 @@ function openAgreement(type) {
   color: $text-primary;
 }
 .placeholder {
-  color: #ccc;
+  color: #c8c8c8;
 }
 
 .input-hint {
@@ -719,12 +722,13 @@ function openAgreement(type) {
 }
 .area-code-text {
   font-size: 28rpx;
-  font-weight: 500;
+  font-weight: 600;
   color: $text-primary;
 }
 .area-code-arrow {
   font-size: 16rpx;
   color: $text-muted;
+  margin-left: 4rpx;
 }
 .input-divider {
   width: 2rpx;
@@ -735,9 +739,15 @@ function openAgreement(type) {
 
 // 密码显隐
 .pwd-toggle {
-  font-size: 28rpx;
-  padding: 8rpx;
+  font-size: 30rpx;
+  padding: 12rpx;
   flex-shrink: 0;
+  color: $text-muted;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.pwd-toggle:active {
+  background: $bg-color;
 }
 
 // 验证码按钮
@@ -745,15 +755,16 @@ function openAgreement(type) {
   padding-right: 0;
 }
 .code-btn {
-  padding: 0 24rpx;
+  padding: 0 28rpx;
   height: 100%;
   display: flex;
   align-items: center;
   border-left: 2rpx solid $border-color;
   flex-shrink: 0;
+  transition: opacity 0.2s;
 }
 .code-btn.disabled {
-  opacity: 0.5;
+  opacity: 0.4;
 }
 .code-btn-text {
   font-size: 24rpx;
@@ -770,18 +781,19 @@ function openAgreement(type) {
   display: flex;
   align-items: center;
   gap: 12rpx;
-  margin-top: 8rpx;
+  margin-top: 10rpx;
   padding-left: 8rpx;
 }
 .strength-bars {
   display: flex;
-  gap: 6rpx;
+  gap: 8rpx;
 }
 .strength-bar {
-  width: 56rpx;
+  width: 60rpx;
   height: 6rpx;
   border-radius: 3rpx;
   background: $border-color;
+  transition: background 0.3s;
 }
 .strength-bar.active.weak {
   background: $danger;
@@ -795,41 +807,48 @@ function openAgreement(type) {
 .strength-text {
   font-size: 20rpx;
   color: $text-secondary;
+  min-width: 30rpx;
 }
 
 // 主按钮
 .btn-primary {
   width: 100%;
-  height: 96rpx;
+  height: 100rpx;
   background: linear-gradient(135deg, $primary, $purple);
   color: $white;
-  border-radius: $radius-lg;
+  border-radius: 20rpx;
   font-size: 30rpx;
   font-weight: 600;
   border: none;
-  margin-top: 16rpx;
-  box-shadow: $shadow-md;
+  margin-top: 20rpx;
+  box-shadow: 0 8rpx 24rpx rgba(79, 110, 247, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  letter-spacing: 2rpx;
 }
 .btn-primary::after {
   border: none;
 }
+.btn-primary:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 12rpx rgba(79, 110, 247, 0.25);
+}
 .btn-primary[disabled] {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 // 分割线
 .divider {
   display: flex;
   align-items: center;
-  gap: 20rpx;
-  margin: 48rpx 0;
+  gap: 24rpx;
+  margin: 44rpx 0;
 }
 .divider-line {
   flex: 1;
-  height: 2rpx;
+  height: 1rpx;
   background: $border-color;
 }
 .divider-text {
@@ -842,40 +861,45 @@ function openAgreement(type) {
 .social-login {
   display: flex;
   justify-content: center;
-  gap: 56rpx;
+  gap: 48rpx;
 }
 .social-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
+  gap: 10rpx;
+  transition: transform 0.2s;
+}
+.social-item:active {
+  transform: scale(0.92);
 }
 .social-icon {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 50%;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 .social-icon-text {
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: 700;
 }
 .social-wechat {
-  background: rgba(7, 193, 96, 0.1);
+  background: rgba(7, 193, 96, 0.08);
 }
 .social-wechat .social-icon-text {
   color: #07C160;
 }
 .social-apple {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.04);
 }
 .social-apple .social-icon-text {
   color: $text-primary;
 }
 .social-qq {
-  background: rgba(18, 183, 245, 0.1);
+  background: rgba(18, 183, 245, 0.08);
 }
 .social-qq .social-icon-text {
   color: #12B7F5;
@@ -896,46 +920,52 @@ function openAgreement(type) {
 }
 .checkbox-wrap {
   flex-shrink: 0;
-  margin-top: 2rpx;
+  margin-top: 4rpx;
 }
 .checkbox {
-  width: 28rpx;
-  height: 28rpx;
-  border-radius: 6rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 8rpx;
   border: 2rpx solid $border-color;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.25s;
 }
 .checkbox.checked {
   background: $primary;
   border-color: $primary;
+  box-shadow: 0 2rpx 8rpx rgba(79, 110, 247, 0.2);
 }
 .check-mark {
   color: $white;
-  font-size: 18rpx;
+  font-size: 20rpx;
   line-height: 1;
+  width: 1em;
+  height: 1em;
 }
 .agreement-text {
   font-size: 20rpx;
   color: $text-muted;
-  line-height: 32rpx;
+  line-height: 34rpx;
 }
 .agreement-link {
   font-size: 20rpx;
   color: $primary;
-  line-height: 32rpx;
+  line-height: 34rpx;
 }
 
 // 底部提示
 .footer-tip {
   text-align: center;
-  margin-top: 64rpx;
+  margin-top: 56rpx;
   padding-bottom: 48rpx;
 }
 .footer-tip-text {
   font-size: 20rpx;
   color: $text-muted;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

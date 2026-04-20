@@ -4,7 +4,10 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes.activity import router as activity_router
 from app.api.routes.auth import router as auth_router
+from app.api.routes.banner import router as banner_router
+from app.api.routes.study_room import router as study_room_router
 from app.api.routes.user import router as user_router
 from app.core.redis import close_redis, init_redis
 
@@ -38,6 +41,9 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(banner_router)
+app.include_router(activity_router)
+app.include_router(study_room_router)
 
 
 @app.get("/health", tags=["health"])

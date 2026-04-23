@@ -29,3 +29,15 @@ async def get_current_user_id(
     jwt_svc = JWTService(config=settings, redis=redis)
     user_id = await jwt_svc.get_current_user_id(credentials.credentials)
     return user_id
+
+
+from fastapi import Header
+
+
+async def get_current_admin(x_admin_token: str | None = Header(None)) -> None:
+    """Validate admin token from X-Admin-Token header."""
+    if not settings.ADMIN_TOKEN or x_admin_token != settings.ADMIN_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="无效的管理员凭证",
+        )

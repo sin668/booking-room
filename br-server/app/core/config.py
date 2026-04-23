@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     ALIYUN_SMS_TEMPLATE_CODE: str = "SMS_504980114"
     ALIYUN_CAPTCHA_SCENE_ID: str = ""
 
+    # Admin
+    ADMIN_TOKEN: str = ""
+
     # Cookie
     COOKIE_SECURE: bool = False
 

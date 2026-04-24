@@ -93,7 +93,13 @@
       queryParams.is_active = queryParams.is_active === 'true';
     }
 
-    return await getActivityList(queryParams);
+    const result = await getActivityList(queryParams);
+    return {
+      list: result.items,
+      itemCount: result.total,
+      pageCount: Math.ceil(result.total / queryParams.page_size) || 1,
+      page: result.page,
+    };
   };
 
   const actionColumn = reactive({

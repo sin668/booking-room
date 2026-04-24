@@ -149,8 +149,12 @@
   );
 
   async function handleUpload({ file, onFinish, onError }: { file: UploadFileInfo; onFinish: () => void; onError: () => void }) {
+    if (!file.file) {
+      onError();
+      return;
+    }
     try {
-      const result = await uploadFile(file.file!);
+      const result = await uploadFile(file.file);
       formValues.cover_image = result.url;
       onFinish();
     } catch {

@@ -10,6 +10,7 @@ from app.api.routes.activity import router as activity_router
 from app.api.routes.admin_activity import router as admin_activity_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.banner import router as banner_router
+from app.api.routes.seat import router as seat_router
 from app.api.routes.study_room import router as study_room_router
 from app.api.routes.upload import router as upload_router
 from app.api.routes.user import router as user_router
@@ -54,6 +55,7 @@ app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(banner_router)
 app.include_router(activity_router)
+app.include_router(seat_router)
 app.include_router(study_room_router)
 
 

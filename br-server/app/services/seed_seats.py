@@ -24,7 +24,7 @@ async def seed_seats_for_room(db: AsyncSession, room_id: int) -> int:
     for zone, config in ZONE_CONFIG.items():
         for row_idx in range(config["rows"]):
             for col_idx in range(config["cols_per_row"]):
-                seat_number = f"{config['prefix']}{col_idx + 1:02d}"
+                seat_number = f"{config['prefix']}{row_idx + 1}-{col_idx + 1:02d}"
                 position = config["position"] if row_idx == 0 else "中间"
                 seat = Seat(
                     room_id=room_id,

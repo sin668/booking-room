@@ -20,8 +20,35 @@ MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
 
 
+class BookingError(ValueError):
+    """Base exception for booking operations."""
+
+
+class SeatNotFoundError(BookingError):
+    pass
+
+
+class SeatMaintenanceError(BookingError):
+    pass
+
+
+class BookingConflictError(BookingError):
+    pass
+
+
+class InvalidTimeRangeError(BookingError):
+    pass
+
+
+class BookingNotFoundError(BookingError):
+    pass
+
+
+class BookingAlreadyCancelledError(BookingError):
+    pass
+
+
 def _calculate_hours(start_time: time, end_time: time) -> float:
-    """Calculate hours between two time values."""
     start_seconds = start_time.hour * 3600 + start_time.minute * 60 + start_time.second
     end_seconds = end_time.hour * 3600 + end_time.minute * 60 + end_time.second
     return (end_seconds - start_seconds) / 3600.0
@@ -47,20 +74,25 @@ def _build_booking_response(booking: Booking, seat: Seat, room: StudyRoom) -> Bo
 async def create_booking(
     db: AsyncSession, user_id: uuid.UUID, data: BookingCreate
 ) -> BookingResponse:
-    """Create a booking with conflict detection."""
+    """Create a booking with conflict detection.
+
+    Note: For MVP, conflict detection uses a SELECT without FOR UPDATE.
+    Under high concurrency, a database-level unique constraint on
+    (seat_id, date, start_time, end_time) should be added as a safety net.
+    See proposal.md risks section for details.
+    """
     seat_result = await db.execute(select(Seat).where(Seat.id == data.seat_id))
     seat = seat_result.scalar_one_or_none()
 
     if seat is None:
-        raise ValueError("座位不存在")
+        raise SeatNotFoundError("座位不存在")
 
     if seat.status == "maintenance":
-        raise ValueError("该座位正在维护中")
+        raise SeatMaintenanceError("该座位正在维护中")
 
     if data.end_time <= data.start_time:
-        raise ValueError("结束时间必须晚于开始时间")
+        raise InvalidTimeRangeError("结束时间必须晚于开始时间")
 
-    # Conflict detection: same seat, same date, overlapping time, not cancelled
     conflict = await db.execute(
         select(Booking).where(
             Booking.seat_id == data.seat_id,
@@ -71,13 +103,11 @@ async def create_booking(
         )
     )
     if conflict.scalars().first() is not None:
-        raise ValueError("该座位该时段已被预约")
+        raise BookingConflictError("该座位该时段已被预约")
 
-    # Get room
     room_result = await db.execute(select(StudyRoom).where(StudyRoom.id == seat.room_id))
     room = room_result.scalar_one()
 
-    # Calculate total price
     hours = _calculate_hours(data.start_time, data.end_time)
     total_price = Decimal(str(seat.price_per_hour)) * Decimal(str(round(hours, 2)))
 
@@ -128,12 +158,17 @@ async def list_bookings(
     )
     bookings = result.scalars().all()
 
-    # Build seat/room lookups
+    seat_ids = {b.seat_id for b in bookings}
+    room_ids = {b.room_id for b in bookings}
+
+    seats_result = await db.execute(select(Seat).where(Seat.id.in_(seat_ids))) if seat_ids else None
+    rooms_result = await db.execute(select(StudyRoom).where(StudyRoom.id.in_(room_ids))) if room_ids else None
+    seat_map = {s.id: s for s in seats_result.scalars().all()} if seats_result else {}
+    room_map = {r.id: r for r in rooms_result.scalars().all()} if rooms_result else {}
+
     items: list[BookingResponse] = []
     for b in bookings:
-        seat = (await db.execute(select(Seat).where(Seat.id == b.seat_id))).scalar_one()
-        room = (await db.execute(select(StudyRoom).where(StudyRoom.id == b.room_id))).scalar_one()
-        items.append(_build_booking_response(b, seat, room))
+        items.append(_build_booking_response(b, seat_map[b.seat_id], room_map[b.room_id]))
 
     return BookingListResponse(
         items=items,
@@ -151,7 +186,7 @@ async def get_booking(
     booking = result.scalar_one_or_none()
 
     if booking is None or booking.user_id != str(user_id):
-        raise ValueError("预约不存在")
+        raise BookingNotFoundError("预约不存在")
 
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
@@ -167,10 +202,10 @@ async def cancel_booking(
     booking = result.scalar_one_or_none()
 
     if booking is None or booking.user_id != str(user_id):
-        raise ValueError("预约不存在")
+        raise BookingNotFoundError("预约不存在")
 
-    if booking.status == "cancelled":
-        raise ValueError("该预约已取消")
+    if booking.status != "confirmed":
+        raise BookingAlreadyCancelledError("该预约已取消")
 
     booking.status = "cancelled"
     await db.flush()

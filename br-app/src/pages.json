@@ -13,6 +13,13 @@
       }
     },
     {
+      "path": "pages/booking/detail",
+      "style": {
+        "navigationBarTitleText": "门店详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/orders/index",
       "style": {
         "navigationBarTitleText": "订单"

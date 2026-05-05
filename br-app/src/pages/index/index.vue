@@ -298,7 +298,7 @@ export default {
     },
 
     onTapRoom(room) {
-      uni.navigateTo({ url: `/pages/room/detail?id=${room.id}` })
+      uni.navigateTo({ url: `/pages/booking/detail?room_id=${room.id}` })
     },
 
     onTapLocation() {

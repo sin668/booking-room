@@ -20,6 +20,12 @@
       }
     },
     {
+      "path": "pages/booking/seat-select",
+      "style": {
+        "navigationBarTitleText": "选择座位"
+      }
+    },
+    {
       "path": "pages/orders/index",
       "style": {
         "navigationBarTitleText": "订单"

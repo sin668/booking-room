@@ -585,3 +585,231 @@ Authorization: Bearer <access_token>
 **错误码：**
 - 401: 管理员凭证无效
 - 422: 缺少文件 / 仅支持图片文件 / 文件大小不能超过5MB
+
+---
+
+## 六、座位
+
+### GET /api/v1/rooms/{room_id}/seats/
+
+获取指定自习室的座位列表。无需认证。
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| room_id | integer | 自习室 ID |
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| date | string | - | 日期，格式 YYYY-MM-DD |
+| start_time | string | - | 开始时间，格式 HH:MM |
+| end_time | string | - | 结束时间，格式 HH:MM |
+
+三个时间参数必须同时提供才会返回 `is_available` 字段。
+
+**响应 200（不带时间参数）：**
+```json
+[
+  {
+    "id": 1,
+    "room_id": 1,
+    "seat_number": "A1-01",
+    "zone": "quiet",
+    "position": "靠窗",
+    "floor": 3,
+    "price_per_hour": "6.00",
+    "status": "available",
+    "row": 0,
+    "col": 0
+  }
+]
+```
+
+**响应 200（带时间参数）：**
+```json
+[
+  {
+    "id": 1,
+    "room_id": 1,
+    "seat_number": "A1-01",
+    "zone": "quiet",
+    "position": "靠窗",
+    "floor": 3,
+    "price_per_hour": "6.00",
+    "status": "available",
+    "row": 0,
+    "col": 0,
+    "is_available": true
+  }
+]
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 座位 ID |
+| room_id | integer | 所属自习室 ID |
+| seat_number | string | 座位编号，如 "A1-01" |
+| zone | string | 区域：quiet / keyboard / vip |
+| position | string \| null | 位置描述：靠窗 / 中间 / 独立 |
+| floor | integer | 楼层，默认 3 |
+| price_per_hour | decimal | 每小时价格（单位：元） |
+| status | string | 状态：available / maintenance |
+| row | integer | 座位图行号 |
+| col | integer | 座位图列号 |
+| is_available | boolean | 该时段是否可预约（仅带时间参数时返回） |
+
+**错误码：**
+- 404: 自习室不存在
+
+---
+
+## 七、预约
+
+所有预约接口需要通过 `Authorization` header 传递 Bearer Token。
+
+### POST /api/v1/bookings/
+
+创建座位预约。
+
+**认证：** Bearer Token
+
+**请求体：**
+```json
+{
+  "seat_id": 1,
+  "date": "2026-05-01",
+  "start_time": "09:00",
+  "end_time": "12:00"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| seat_id | integer | 是 | 座位 ID |
+| date | string | 是 | 预约日期，格式 YYYY-MM-DD |
+| start_time | string | 是 | 开始时间，格式 HH:MM |
+| end_time | string | 是 | 结束时间，格式 HH:MM |
+
+**响应 201：**
+```json
+{
+  "id": 1,
+  "seat_id": 1,
+  "user_id": "11111111-2222-3333-4444-555555555555",
+  "room_id": 1,
+  "date": "2026-05-01",
+  "start_time": "09:00:00",
+  "end_time": "12:00:00",
+  "status": "confirmed",
+  "total_price": "18.00",
+  "created_at": "2026-05-01T08:00:00",
+  "seat": {
+    "id": 1,
+    "seat_number": "A1-01",
+    "zone": "quiet",
+    "position": "靠窗",
+    "price_per_hour": "6.00"
+  },
+  "room": {
+    "id": 1,
+    "name": "安静自习室·油城店",
+    "address": "茂名市茂南区油城三路88号"
+  }
+}
+```
+
+**错误码：**
+- 401: 未认证
+- 404: 座位不存在
+- 409: 该座位该时段已被预约
+- 422: 结束时间必须晚于开始时间
+- 400: 该座位正在维护中
+
+---
+
+### GET /api/v1/bookings/
+
+获取当前用户的预约列表。
+
+**认证：** Bearer Token
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | integer | 1 | 页码（从 1 开始） |
+| page_size | integer | 10 | 每页数量（最大 50） |
+| status | string | - | 状态筛选：confirmed / cancelled / completed |
+
+**响应 200：**
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "seat_id": 1,
+      "user_id": "uuid-string",
+      "room_id": 1,
+      "date": "2026-05-01",
+      "start_time": "09:00:00",
+      "end_time": "12:00:00",
+      "status": "confirmed",
+      "total_price": "18.00",
+      "created_at": "2026-05-01T08:00:00",
+      "seat": { "id": 1, "seat_number": "A1-01", "zone": "quiet", "position": "靠窗", "price_per_hour": "6.00" },
+      "room": { "id": 1, "name": "安静自习室", "address": "茂名市茂南区油城三路88号" }
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+**错误码：**
+- 401: 未认证
+- 422: status 参数值无效
+
+---
+
+### GET /api/v1/bookings/{booking_id}
+
+获取预约详情。仅能查看自己的预约。
+
+**认证：** Bearer Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| booking_id | integer | 预约 ID |
+
+**响应 200：** 同创建预约的响应格式。
+
+**错误码：**
+- 401: 未认证
+- 404: 预约不存在 / 无权查看
+
+---
+
+### POST /api/v1/bookings/{booking_id}/cancel
+
+取消预约。仅 `confirmed` 状态的预约可取消。
+
+**认证：** Bearer Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| booking_id | integer | 预约 ID |
+
+**响应 200：** 返回更新后的预约对象，`status` 变为 `"cancelled"`。
+
+**错误码：**
+- 401: 未认证
+- 400: 该预约已取消（非 confirmed 状态）
+- 404: 预约不存在 / 无权操作

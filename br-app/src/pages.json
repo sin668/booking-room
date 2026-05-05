@@ -26,6 +26,12 @@
       }
     },
     {
+      "path": "pages/booking/confirm",
+      "style": {
+        "navigationBarTitleText": "确认订单"
+      }
+    },
+    {
       "path": "pages/orders/index",
       "style": {
         "navigationBarTitleText": "订单"

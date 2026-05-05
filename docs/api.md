@@ -813,3 +813,108 @@ Authorization: Bearer <access_token>
 - 401: 未认证
 - 400: 该预约已取消（非 confirmed 状态）
 - 404: 预约不存在 / 无权操作
+
+## Seats API
+
+### GET /api/v1/rooms/{room_id}/seats/
+
+List seats for a room, with optional availability check for a time slot.
+
+Query Parameters:
+- `date` (optional, string): Filter by date in YYYY-MM-DD format
+- `start_time` (optional, string): Filter by start time in HH:MM format
+- `end_time` (optional, string): Filter by end time in HH:MM format
+
+Response (200):
+```json
+[
+  {
+    "id": 1,
+    "room_id": 1,
+    "seat_number": "A-01",
+    "zone": "quiet",
+    "position": "靠窗",
+    "floor": 3,
+    "price_per_hour": "6.00",
+    "status": "available",
+    "row": 0,
+    "col": 0,
+    "is_available": true
+  }
+]
+```
+
+Note: `is_available` is only meaningful when `date`, `start_time`, and `end_time` are all provided.
+
+## Bookings API
+
+### POST /api/v1/bookings/
+
+Create a new booking. Requires authentication (Bearer token).
+
+Request Body:
+```json
+{
+  "seat_id": 1,
+  "date": "2026-05-01",
+  "start_time": "09:00",
+  "end_time": "12:00"
+}
+```
+
+Response (201):
+```json
+{
+  "id": 1,
+  "seat_id": 1,
+  "user_id": "...",
+  "room_id": 1,
+  "date": "2026-05-01",
+  "start_time": "09:00",
+  "end_time": "12:00",
+  "status": "confirmed",
+  "total_price": "18.00",
+  "created_at": "2026-05-01T09:00:00",
+  "seat": { "id": 1, "seat_number": "A-01", "zone": "quiet", "position": "靠窗", "price_per_hour": "6.00" },
+  "room": { "id": 1, "name": "光谷自习室", "address": "茂名市茂南区光谷大道88号" }
+}
+```
+
+Error Responses:
+- `401` — Not authenticated
+- `404` — Seat not found
+- `409` — Time conflict (seat already booked for this slot)
+- `422` — Invalid time range (end_time <= start_time)
+
+### GET /api/v1/bookings/
+
+List current user's bookings. Requires authentication.
+
+Query Parameters:
+- `page` (int, default 1)
+- `page_size` (int, default 10, max 50)
+- `status` (optional, string): Filter by status — `confirmed`, `cancelled`, `completed`
+
+Response (200):
+```json
+{
+  "items": [ ... ],
+  "total": 15,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+### GET /api/v1/bookings/{booking_id}/
+
+Get a single booking detail. Requires authentication. Only returns bookings belonging to the current user.
+
+### POST /api/v1/bookings/{booking_id}/cancel/
+
+Cancel a confirmed booking. Requires authentication.
+
+Response (200): Returns the updated booking with `status: "cancelled"`.
+
+Error Responses:
+- `404` — Booking not found
+- `400` — Booking already cancelled

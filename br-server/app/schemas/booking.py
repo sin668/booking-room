@@ -51,3 +51,28 @@ class BookingListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class BookingAdminResponse(BaseModel):
+    id: int
+    user_id: str
+    room_id: int
+    seat_id: int
+    date: date
+    start_time: time
+    end_time: time
+    status: str
+    total_price: Decimal
+    created_at: datetime
+    updated_at: datetime
+    seat: SeatBrief
+    room: RoomBrief
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BookingAdminListResponse(BaseModel):
+    items: list[BookingAdminResponse]
+    total: int
+    page: int
+    page_size: int

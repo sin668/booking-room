@@ -204,15 +204,7 @@
     key: 'action',
     fixed: 'right' as const,
     render(record: BookingItem) {
-      const actions = [];
-      const dropDownActions = [
-        {
-          label: '查看详情',
-          onClick: () => {
-            window['$message'].info(`查看订单 #${record.id}`);
-          },
-        },
-      ];
+      const dropDownActions: any[] = [];
       if (record.status === 'confirmed') {
         dropDownActions.push({
           label: '取消',

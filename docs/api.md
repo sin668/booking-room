@@ -918,3 +918,106 @@ Response (200): Returns the updated booking with `status: "cancelled"`.
 Error Responses:
 - `404` — Booking not found
 - `400` — Booking already cancelled
+
+---
+
+## 十、管理端 - 订单管理
+
+所有管理端接口需要通过 `X-Admin-Token` header 传递管理员 Token。
+
+### GET /api/v1/admin/bookings/
+
+获取所有用户的预约订单分页列表，支持多维度筛选。
+
+**认证：** X-Admin-Token
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | integer | 1 | 页码（从 1 开始） |
+| page_size | integer | 10 | 每页数量（最大 50） |
+| status | string | - | 状态筛选：confirmed / cancelled |
+| room_id | integer | - | 自习室 ID 筛选 |
+| date_start | string | - | 起始日期，格式 YYYY-MM-DD |
+| date_end | string | - | 结束日期，格式 YYYY-MM-DD |
+
+**响应 200：**
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "user_id": "11111111-2222-3333-4444-555555555555",
+      "room_id": 1,
+      "seat_id": 1,
+      "date": "2026-05-01",
+      "start_time": "09:00:00",
+      "end_time": "12:00:00",
+      "status": "confirmed",
+      "total_price": "18.00",
+      "created_at": "2026-05-01T08:00:00",
+      "updated_at": "2026-05-01T08:00:00",
+      "seat": {
+        "id": 1,
+        "seat_number": "A1-01",
+        "zone": "quiet",
+        "position": "靠窗",
+        "price_per_hour": "6.00"
+      },
+      "room": {
+        "id": 1,
+        "name": "安静自习室·油城店",
+        "address": "茂名市茂南区油城三路88号"
+      }
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+**错误码：**
+- 401: 管理员凭证无效
+
+---
+
+### GET /api/v1/admin/bookings/{booking_id}/
+
+获取订单详情。管理员可查看任意用户的订单。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| booking_id | integer | 订单 ID |
+
+**响应 200：** 同列表接口中的单个订单对象格式。
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 订单不存在
+
+---
+
+### POST /api/v1/admin/bookings/{booking_id}/cancel/
+
+取消订单。仅 `confirmed` 状态的订单可取消。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| booking_id | integer | 订单 ID |
+
+**响应 200：** 返回更新后的订单对象，`status` 变为 `"cancelled"`。
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 订单不存在
+- 400: 该订单已取消

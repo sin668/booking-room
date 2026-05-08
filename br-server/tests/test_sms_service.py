@@ -1,3 +1,5 @@
+"""Unit tests for SMS service (extended coverage)."""
+
 from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -12,7 +14,6 @@ from app.services.sms_service import AliyunSMSProvider, SMSService
 def mock_redis() -> AsyncMock:
     """Return a mock async Redis client."""
     redis = AsyncMock()
-    # Default: no keys exist
     redis.get = AsyncMock(return_value=None)
     redis.set = AsyncMock(return_value=True)
     redis.delete = AsyncMock(return_value=True)
@@ -34,9 +35,27 @@ def settings() -> Settings:
 
 
 @pytest.fixture
+def settings_with_creds() -> Settings:
+    """Return settings with Aliyun SMS credentials."""
+    return Settings(
+        ALIYUN_SMS_ACCESS_KEY_ID="test_key_id",
+        ALIYUN_SMS_ACCESS_KEY_SECRET="test_key_secret",
+        ALIYUN_SMS_SIGN_NAME="测试签名",
+        ALIYUN_SMS_TEMPLATE_CODE="SMS_123456",
+        ALIYUN_CAPTCHA_SCENE_ID="",
+    )
+
+
+@pytest.fixture
 def sms_service(mock_redis: AsyncMock, settings: Settings) -> SMSService:
     """Return an SMSService with mocked Redis and dev-mode settings."""
     return SMSService(redis=mock_redis, config=settings)
+
+
+@pytest.fixture
+def sms_service_prod(mock_redis: AsyncMock, settings_with_creds: Settings) -> SMSService:
+    """Return an SMSService with real credentials (for provider tests)."""
+    return SMSService(redis=mock_redis, config=settings_with_creds)
 
 
 @pytest.fixture
@@ -48,15 +67,15 @@ def captcha_token() -> str:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 async def _send_and_expect_code(
     sms: SMSService, phone: str = "13800138000", token: str = "token"
 ) -> str:
     """Call send_code and extract the code from Redis.set call args."""
     await sms.send_code(phone, token)
-    # The 3rd positional arg to redis.set is the code value
     set_calls = sms._redis.set.call_args_list
     verify_call = [c for c in set_calls if "sms:verify:" in str(c)]
-    return verify_call[0][0][1]  # args: (key, value, ex)
+    return verify_call[0][0][1]
 
 
 # ---------------------------------------------------------------------------
@@ -75,12 +94,9 @@ async def test_send_code_success(
     """Happy path: code is generated, stored, and sent."""
     await sms_service.send_code("13800138000", captcha_token)
 
-    # Rate-limit key set with 60s TTL
     mock_redis.set.assert_any_call("sms:rate:13800138000", "1", ex=60)
-    # Daily counter incremented
     today = date.today().isoformat()
     mock_redis.incr.assert_called_once_with(f"sms:daily:13800138000:{today}")
-    # Verification code stored (300s TTL)
     verify_calls = [
         c for c in mock_redis.set.call_args_list if "sms:verify:" in str(c)
     ]
@@ -101,10 +117,7 @@ async def test_rate_limit_per_minute(
     captcha_token: str,
 ) -> None:
     """Second send within 60 s is rejected with 429."""
-    # First call succeeds
     await sms_service.send_code("13800138000", captcha_token)
-
-    # Simulate rate-limit key still present for the second call
     mock_redis.get = AsyncMock(return_value="1")
 
     with pytest.raises(HTTPException) as exc_info:
@@ -129,21 +142,30 @@ async def test_daily_limit_exceeded(
 
 @pytest.mark.asyncio
 @patch.object(AliyunSMSProvider, "send", new_callable=AsyncMock, return_value={"Code": "OK"})
-async def test_invalid_phone_format(
+async def test_captcha_validation_failure(
     mock_send: AsyncMock,
     sms_service: SMSService,
-    captcha_token: str,
+    mock_redis: AsyncMock,
 ) -> None:
-    """Invalid phone numbers are not explicitly checked by SMSService.
+    """Invalid captcha token returns 400."""
+    with patch.object(sms_service._captcha_service, "verify", new_callable=AsyncMock, return_value=False):
+        with pytest.raises(HTTPException) as exc_info:
+            await sms_service.send_code("13800138000", "bad-captcha-token")
+        assert exc_info.value.status_code == 400
+        assert "人机验证失败" in exc_info.value.detail
 
-    The schema layer (SendCodeRequest) validates the format.
-    SMSService trusts the caller, so any string is accepted at this layer.
-    """
-    # SMSService itself does not validate phone format.
-    # This test confirms it doesn't crash with a short phone string.
-    # (Format validation lives in the Pydantic schema.)
-    await sms_service.send_code("123", captcha_token)
-    # No exception means it proceeded.
+
+@pytest.mark.asyncio
+@patch.object(AliyunSMSProvider, "send", new_callable=AsyncMock, return_value={"Code": "OK"})
+async def test_no_captcha_token_skips_validation(
+    mock_send: AsyncMock,
+    sms_service: SMSService,
+    mock_redis: AsyncMock,
+) -> None:
+    """No captcha_token skips captcha validation entirely."""
+    await sms_service.send_code("13800138000", None)
+    # If we reach here, no captcha exception was raised
+    mock_send.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -195,3 +217,110 @@ async def test_aliyun_sms_provider_missing_credentials(settings: Settings) -> No
         await provider.send("13800138000", "123456")
     assert exc_info.value.status_code == 500
     assert "未配置" in exc_info.value.detail
+
+
+# ---------------------------------------------------------------------------
+# AliyunSMSProvider.send with real credentials (mocked HTTP)
+# ---------------------------------------------------------------------------
+
+
+class TestAliyunSMSProviderSend:
+    @pytest.mark.asyncio
+    async def test_send_success(self, settings_with_creds: Settings) -> None:
+        """Provider successfully sends SMS and returns response data."""
+        provider = AliyunSMSProvider(settings_with_creds)
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"Code": "OK", "RequestId": "req-123"}
+
+        with patch("app.services.sms_service.httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            mock_client.get = AsyncMock(return_value=mock_response)
+            MockClient.return_value = mock_client
+
+            result = await provider.send("13800138000", "123456")
+            assert result["Code"] == "OK"
+
+    @pytest.mark.asyncio
+    async def test_send_api_error(self, settings_with_creds: Settings) -> None:
+        """Provider raises HTTPException when API returns error code."""
+        provider = AliyunSMSProvider(settings_with_creds)
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"Code": "isv.BUSINESS_LIMIT_CONTROL", "Message": "触发业务流控"}
+
+        with patch("app.services.sms_service.httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            mock_client.get = AsyncMock(return_value=mock_response)
+            MockClient.return_value = mock_client
+
+            with pytest.raises(HTTPException) as exc_info:
+                await provider.send("13800138000", "123456")
+            assert exc_info.value.status_code == 500
+            assert "isv.BUSINESS_LIMIT_CONTROL" in exc_info.value.detail
+
+    @pytest.mark.asyncio
+    async def test_send_http_error(self, settings_with_creds: Settings) -> None:
+        """Provider raises HTTPException when HTTP request fails."""
+        import httpx
+
+        provider = AliyunSMSProvider(settings_with_creds)
+
+        with patch("app.services.sms_service.httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            mock_client.get = AsyncMock(side_effect=httpx.HTTPError("connection failed"))
+            MockClient.return_value = mock_client
+
+            with pytest.raises(HTTPException) as exc_info:
+                await provider.send("13800138000", "123456")
+            assert exc_info.value.status_code == 500
+            assert "请求失败" in exc_info.value.detail
+
+    @pytest.mark.asyncio
+    async def test_send_unexpected_error(self, settings_with_creds: Settings) -> None:
+        """Provider raises HTTPException on unexpected errors."""
+        provider = AliyunSMSProvider(settings_with_creds)
+
+        with patch("app.services.sms_service.httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            mock_client.get = AsyncMock(side_effect=RuntimeError("unexpected"))
+            MockClient.return_value = mock_client
+
+            with pytest.raises(HTTPException) as exc_info:
+                await provider.send("13800138000", "123456")
+            assert exc_info.value.status_code == 500
+            assert "异常" in exc_info.value.detail
+
+
+# ---------------------------------------------------------------------------
+# _percent_encode / _sign_request tests
+# ---------------------------------------------------------------------------
+
+
+class TestSignRequest:
+    def test_percent_encode(self) -> None:
+        """_percent_encode encodes per Aliyun spec."""
+        from app.services.sms_service import _percent_encode
+
+        assert _percent_encode("hello world") == "hello%20world"
+        assert _percent_encode("a+b") == "a%2Bb"
+        assert _percent_encode("a*b") == "a%2Ab"
+        assert _percent_encode("a~b") == "a~b"
+
+    def test_sign_request(self) -> None:
+        """_sign_request produces a Signature field."""
+        from app.services.sms_service import _sign_request
+
+        params = {"Action": "SendSms", "PhoneNumbers": "13800138000"}
+        result = _sign_request(params, "secret&")
+        assert "Signature" in result
+        assert isinstance(result["Signature"], str)
+        assert len(result["Signature"]) > 0

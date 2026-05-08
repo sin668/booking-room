@@ -921,13 +921,64 @@ Error Responses:
 
 ---
 
-## 十、管理端 - 订单管理
+## 八、管理端 - 自习室管理
 
 所有管理端接口需要通过 `X-Admin-Token` header 传递管理员 Token。
 
-### GET /api/v1/admin/bookings/
+### POST /api/v1/admin/rooms
 
-获取所有用户的预约订单分页列表，支持多维度筛选。
+创建自习室。
+
+**认证：** X-Admin-Token
+
+**请求体：**
+```json
+{
+  "name": "安静自习室·油城店",
+  "address": "茂名市茂南区油城三路88号",
+  "description": "宽敞明亮的沉浸式自习空间",
+  "cover_image": "https://example.com/room.jpg",
+  "business_hours": "07:00-23:00",
+  "min_price": 8.00
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| name | string | 是 | 自习室名称，最大100字 |
+| address | string | 是 | 地址，最大255字 |
+| description | string | 否 | 描述，最大1000字 |
+| cover_image | string | 否 | 封面图 URL，最大512字符 |
+| business_hours | string | 否 | 营业时间，如 "07:00-23:00"，最大50字 |
+| min_price | decimal | 否 | 最低价格（单位：元），默认 0 |
+
+**响应 201：**
+```json
+{
+  "id": 1,
+  "name": "安静自习室·油城店",
+  "description": "宽敞明亮的沉浸式自习空间",
+  "cover_image": "https://example.com/room.jpg",
+  "address": "茂名市茂南区油城三路88号",
+  "business_hours": "07:00-23:00",
+  "status": "open",
+  "min_price": "8.00",
+  "created_at": "2026-05-06T10:00:00",
+  "updated_at": "2026-05-06T10:00:00",
+  "seat_count": 0,
+  "available_seat_count": 0
+}
+```
+
+**错误码：**
+- 401: 管理员凭证无效
+- 422: 参数校验失败
+
+---
+
+### GET /api/v1/admin/rooms
+
+获取自习室分页列表，支持状态筛选。
 
 **认证：** X-Admin-Token
 
@@ -937,10 +988,7 @@ Error Responses:
 |------|------|--------|------|
 | page | integer | 1 | 页码（从 1 开始） |
 | page_size | integer | 10 | 每页数量（最大 50） |
-| status | string | - | 状态筛选：confirmed / cancelled |
-| room_id | integer | - | 自习室 ID 筛选 |
-| date_start | string | - | 起始日期，格式 YYYY-MM-DD |
-| date_end | string | - | 结束日期，格式 YYYY-MM-DD |
+| status | string | - | 状态筛选：open / closed |
 
 **响应 200：**
 ```json
@@ -948,31 +996,20 @@ Error Responses:
   "items": [
     {
       "id": 1,
-      "user_id": "11111111-2222-3333-4444-555555555555",
-      "room_id": 1,
-      "seat_id": 1,
-      "date": "2026-05-01",
-      "start_time": "09:00:00",
-      "end_time": "12:00:00",
-      "status": "confirmed",
-      "total_price": "18.00",
-      "created_at": "2026-05-01T08:00:00",
-      "updated_at": "2026-05-01T08:00:00",
-      "seat": {
-        "id": 1,
-        "seat_number": "A1-01",
-        "zone": "quiet",
-        "position": "靠窗",
-        "price_per_hour": "6.00"
-      },
-      "room": {
-        "id": 1,
-        "name": "安静自习室·油城店",
-        "address": "茂名市茂南区油城三路88号"
-      }
+      "name": "安静自习室·油城店",
+      "description": "宽敞明亮的沉浸式自习空间",
+      "cover_image": "https://example.com/room.jpg",
+      "address": "茂名市茂南区油城三路88号",
+      "business_hours": "07:00-23:00",
+      "status": "open",
+      "min_price": "8.00",
+      "created_at": "2026-05-06T10:00:00",
+      "updated_at": "2026-05-06T10:00:00",
+      "seat_count": 50,
+      "available_seat_count": 48
     }
   ],
-  "total": 1,
+  "total": 10,
   "page": 1,
   "page_size": 10
 }
@@ -983,9 +1020,9 @@ Error Responses:
 
 ---
 
-### GET /api/v1/admin/bookings/{booking_id}/
+### GET /api/v1/admin/rooms/{room_id}
 
-获取订单详情。管理员可查看任意用户的订单。
+获取自习室详情。
 
 **认证：** X-Admin-Token
 
@@ -993,19 +1030,19 @@ Error Responses:
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| booking_id | integer | 订单 ID |
+| room_id | integer | 自习室 ID |
 
-**响应 200：** 同列表接口中的单个订单对象格式。
+**响应 200：** 同创建自习室的响应格式。
 
 **错误码：**
 - 401: 管理员凭证无效
-- 404: 订单不存在
+- 404: 自习室不存在
 
 ---
 
-### POST /api/v1/admin/bookings/{booking_id}/cancel/
+### PUT /api/v1/admin/rooms/{room_id}
 
-取消订单。仅 `confirmed` 状态的订单可取消。
+更新自习室。仅更新请求体中传递的字段。
 
 **认证：** X-Admin-Token
 
@@ -1013,11 +1050,420 @@ Error Responses:
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| booking_id | integer | 订单 ID |
+| room_id | integer | 自习室 ID |
 
-**响应 200：** 返回更新后的订单对象，`status` 变为 `"cancelled"`。
+**请求体（所有字段均可选）：**
+```json
+{
+  "name": "更新后的名称",
+  "address": "更新后的地址",
+  "description": "更新后的描述",
+  "cover_image": "https://example.com/new-cover.jpg",
+  "business_hours": "08:00-22:00",
+  "min_price": 10.00
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| name | string | 自习室名称，最大100字 |
+| address | string | 地址，最大255字 |
+| description | string \| null | 描述，最大1000字 |
+| cover_image | string \| null | 封面图 URL，最大512字符 |
+| business_hours | string \| null | 营业时间，最大50字 |
+| min_price | decimal | 最低价格（单位：元） |
+
+**响应 200：** 返回更新后的自习室对象（同 GET 单个自习室）。
 
 **错误码：**
 - 401: 管理员凭证无效
-- 404: 订单不存在
-- 400: 该订单已取消
+- 404: 自习室不存在
+- 422: 参数校验失败
+
+---
+
+### DELETE /api/v1/admin/rooms/{room_id}
+
+删除自习室。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| room_id | integer | 自习室 ID |
+
+**响应 204：** 无响应体。
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 自习室不存在
+- 409: 该自习室存在活跃预约，无法删除
+
+---
+
+### PATCH /api/v1/admin/rooms/{room_id}/status/
+
+切换自习室营业/关闭状态。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| room_id | integer | 自习室 ID |
+
+**请求体：**
+```json
+{
+  "status": "closed"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| status | string | 是 | 目标状态：open / closed |
+
+**响应 200：** 返回更新后的自习室对象（同 GET 单个自习室）。
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 自习室不存在
+
+---
+
+## 九、管理端 - 座位管理
+
+### POST /api/v1/admin/rooms/{room_id}/seats
+
+创建座位。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| room_id | integer | 自习室 ID |
+
+**请求体：**
+```json
+{
+  "seat_number": "A1-01",
+  "zone": "quiet",
+  "position": "靠窗",
+  "floor": 3,
+  "price_per_hour": 6.00,
+  "row": 1,
+  "col": 1
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| seat_number | string | 是 | 座位编号，最大10字 |
+| zone | string | 是 | 区域：quiet / keyboard / vip |
+| position | string | 否 | 位置描述，如 "靠窗"、"中间"，最大20字 |
+| floor | integer | 否 | 楼层，默认 3，最小 1 |
+| price_per_hour | decimal | 是 | 每小时价格（单位：元） |
+| row | integer | 是 | 座位图行号 |
+| col | integer | 是 | 座位图列号 |
+
+**响应 201：**
+```json
+{
+  "id": 1,
+  "room_id": 1,
+  "seat_number": "A1-01",
+  "zone": "quiet",
+  "position": "靠窗",
+  "floor": 3,
+  "price_per_hour": "6.00",
+  "status": "available",
+  "row": 1,
+  "col": 1,
+  "created_at": "2026-05-06T10:00:00",
+  "updated_at": "2026-05-06T10:00:00",
+  "room_name": "安静自习室·油城店"
+}
+```
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 自习室不存在
+- 409: 该房间已存在相同编号的座位
+- 422: 参数校验失败
+
+---
+
+### POST /api/v1/admin/rooms/{room_id}/seats/bulk/
+
+批量创建座位。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| room_id | integer | 自习室 ID |
+
+**请求体：**
+```json
+{
+  "seats": [
+    {
+      "zone": "quiet",
+      "rows": 5,
+      "cols": 8,
+      "prefix": "A",
+      "start_number": 1,
+      "price_per_hour": 6.00,
+      "floor": 3
+    },
+    {
+      "zone": "keyboard",
+      "rows": 3,
+      "cols": 6,
+      "prefix": "B",
+      "start_number": 1,
+      "price_per_hour": 8.00,
+      "floor": 3
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| seats | array | 是 | 区域配置数组 |
+| seats[].zone | string | 是 | 区域：quiet / keyboard / vip |
+| seats[].rows | integer | 是 | 行数 |
+| seats[].cols | integer | 是 | 列数 |
+| seats[].prefix | string | 是 | 编号前缀，最大5字 |
+| seats[].start_number | integer | 否 | 起始编号，默认 1 |
+| seats[].price_per_hour | decimal | 是 | 每小时价格（单位：元） |
+| seats[].floor | integer | 否 | 楼层，默认 3 |
+
+座位编号生成规则：`{prefix}-{编号}`，编号从 start_number 开始自动递增。例如：prefix="A"，start_number=1，rows=2，cols=2 生成 A-01, A-02, A-03, A-04。
+
+**响应 201：**
+```json
+{
+  "created": 58
+}
+```
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 自习室不存在
+- 409: 以下座位编号已存在：A-05, B-03
+- 422: 参数校验失败
+
+---
+
+### GET /api/v1/admin/rooms/{room_id}/seats
+
+获取指定自习室的座位列表，支持区域和状态筛选。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| room_id | integer | 自习室 ID |
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| zone | string | - | 区域筛选：quiet / keyboard / vip |
+| status | string | - | 状态筛选：available / maintenance |
+
+**响应 200：**
+```json
+[
+  {
+    "id": 1,
+    "room_id": 1,
+    "seat_number": "A1-01",
+    "zone": "quiet",
+    "position": "靠窗",
+    "floor": 3,
+    "price_per_hour": "6.00",
+    "status": "available",
+    "row": 1,
+    "col": 1,
+    "created_at": "2026-05-06T10:00:00",
+    "updated_at": "2026-05-06T10:00:00",
+    "room_name": "安静自习室·油城店"
+  }
+]
+```
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 自习室不存在
+
+---
+
+### GET /api/v1/admin/seats/{seat_id}
+
+获取座位详情。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| seat_id | integer | 座位 ID |
+
+**响应 200：** 同创建座位的响应格式。
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 座位不存在
+
+---
+
+### PUT /api/v1/admin/seats/{seat_id}
+
+更新座位。仅更新请求体中传递的字段。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| seat_id | integer | 座位 ID |
+
+**请求体（所有字段均可选）：**
+```json
+{
+  "seat_number": "A1-02",
+  "zone": "vip",
+  "position": "独立",
+  "floor": 4,
+  "price_per_hour": 10.00,
+  "row": 2,
+  "col": 2
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| seat_number | string \| null | 座位编号，最大10字 |
+| zone | string \| null | 区域：quiet / keyboard / vip |
+| position | string \| null | 位置描述，最大20字 |
+| floor | integer \| null | 楼层，最小 1 |
+| price_per_hour | decimal \| null | 每小时价格（单位：元） |
+| row | integer \| null | 座位图行号 |
+| col | integer \| null | 座位图列号 |
+
+**响应 200：** 返回更新后的座位对象（同 GET 单个座位）。
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 座位不存在
+- 409: 该房间已存在相同编号的座位
+- 422: 参数校验失败
+
+---
+
+### DELETE /api/v1/admin/seats/{seat_id}
+
+删除座位。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| seat_id | integer | 座位 ID |
+
+**响应 204：** 无响应体。
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 座位不存在
+- 409: 该座位存在活跃预约，无法删除
+
+---
+
+### PATCH /api/v1/admin/seats/{seat_id}/status/
+
+切换座位可用/维护状态。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| seat_id | integer | 座位 ID |
+
+**请求体：**
+```json
+{
+  "status": "maintenance"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| status | string | 是 | 目标状态：available / maintenance |
+
+**响应 200：** 返回更新后的座位对象（同 GET 单个座位）。
+
+**错误码：**
+- 401: 管理员凭证无效
+- 404: 座位不存在
+
+---
+
+## 数据模型
+
+### RoomAdminResponse
+
+管理端自习室响应对象。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 自习室 ID |
+| name | string | 名称 |
+| description | string \| null | 描述 |
+| cover_image | string \| null | 封面图 URL |
+| address | string | 地址 |
+| business_hours | string \| null | 营业时间 |
+| status | string | 状态：open / closed |
+| min_price | decimal | 最低价格（单位：元） |
+| created_at | datetime | 创建时间 |
+| updated_at | datetime | 更新时间 |
+| seat_count | integer | 座位总数 |
+| available_seat_count | integer | 可用座位数 |
+
+### SeatAdminResponse
+
+管理端座位响应对象。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 座位 ID |
+| room_id | integer | 所属自习室 ID |
+| seat_number | string | 座位编号 |
+| zone | string | 区域：quiet / keyboard / vip |
+| position | string \| null | 位置描述 |
+| floor | integer | 楼层 |
+| price_per_hour | decimal | 每小时价格（单位：元） |
+| status | string | 状态：available / maintenance |
+| row | integer | 座位图行号 |
+| col | integer | 座位图列号 |
+| created_at | datetime | 创建时间 |
+| updated_at | datetime | 更新时间 |
+| room_name | string | 所属自习室名称 |

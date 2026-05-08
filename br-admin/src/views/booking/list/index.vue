@@ -213,7 +213,7 @@
       }
       return h(TableAction as any, {
         style: 'button',
-        actions,
+        actions: [],
         dropDownActions,
       });
     },

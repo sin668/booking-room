@@ -8,7 +8,7 @@
         </n-breadcrumb>
         <n-button text @click="router.back()">
           <template #icon>
-            <n-icon><ArrowBackOutlined /></n-icon>
+            <n-icon><ArrowLeftOutlined /></n-icon>
           </template>
           返回
         </n-button>
@@ -69,7 +69,7 @@
   import { NTag, NButton } from 'naive-ui';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
-  import { PlusOutlined, ArrowBackOutlined } from '@vicons/antd';
+  import { PlusOutlined, ArrowLeftOutlined } from '@vicons/antd';
   import {
     getSeatList,
     deleteSeat,

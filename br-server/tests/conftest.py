@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.api.dependencies import get_current_admin
 from app.core.database import Base, get_db
 from app.core.redis import get_redis
 from app.main import app
@@ -46,6 +47,7 @@ async def client(db_session) -> AsyncGenerator[AsyncClient, None]:
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_redis] = lambda: AsyncMock()
+    app.dependency_overrides[get_current_admin] = lambda: None
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:

@@ -211,6 +211,7 @@ async def cancel_booking(
 
     booking.status = "cancelled"
     await db.flush()
+    await db.refresh(booking)
 
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
@@ -322,6 +323,7 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
 
     booking.status = "cancelled"
     await db.flush()
+    await db.refresh(booking)
 
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()

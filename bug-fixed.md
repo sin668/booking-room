@@ -192,6 +192,35 @@ ValueError: password cannot be longer than 72 bytes, truncate manually if necess
 
 ---
 
+## BUG-13: 预约详情页加载房间信息返回 422
+
+### 报错信息
+```
+request.js:57 GET http://localhost:8000/api/v1/rooms?page=1&page_size=100 422 (Unprocessable Entity)
+```
+
+### 根本原因
+`br-app/src/pages/booking/detail.vue` 在加载 `/booking/detail?room_id=1` 时，为了获取单个自习室信息，调用了列表接口：
+
+```js
+getRooms({ page: 1, page_size: 100 })
+```
+
+后端 `br-server/app/api/routes/study_room.py` 对列表接口的 `page_size` 参数限制为 `le=50`。前端传入 `page_size=100` 超出校验范围，FastAPI 返回 422。
+
+同类问题也存在于 `br-app/src/pages/booking/seat-select.vue`：缺少 `room_name` 时同样通过 `page_size=100` 的列表接口反查房间名。
+
+### 解决方案
+改用已有的房间详情接口 `/api/v1/rooms/{room_id}`：
+
+- `detail.vue` 的 `loadRoom()` 改为 `getRoom(this.roomId)`，不再拉取全量列表。
+- `seat-select.vue` 缺少 `roomName` 时改为 `getRoom(this.roomId)`，避免进入选座页再次触发同样的 422。
+- `br-app/src/api/rooms.js` 提供 `getRoom(roomId)` API 封装。
+
+**文件**: `br-app/src/api/rooms.js`, `br-app/src/pages/booking/detail.vue`, `br-app/src/pages/booking/seat-select.vue`
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -208,3 +237,6 @@ ValueError: password cannot be longer than 72 bytes, truncate manually if necess
 | `br-server/app/services/sms_service.py` | #9, #10 |
 | `br-server/app/services/auth_service.py` | #11 |
 | `br-server/tests/test_auth_service.py` | #11 |
+| `br-app/src/api/rooms.js` | #13 |
+| `br-app/src/pages/booking/detail.vue` | #13 |
+| `br-app/src/pages/booking/seat-select.vue` | #13 |

@@ -112,60 +112,6 @@
         </view>
       </view>
 
-      <!-- Study room list -->
-      <view class="section">
-        <view class="section-header">
-          <text class="section-title">推荐自习室</text>
-          <text class="section-more" @tap="onTapMoreRooms">查看更多</text>
-        </view>
-
-        <!-- Loading skeleton -->
-        <view v-if="roomsLoading" class="room-skeleton">
-          <view v-for="i in 3" :key="i" class="room-card-skeleton">
-            <view class="skeleton-image" />
-            <view class="skeleton-info">
-              <view class="skeleton-line long" />
-              <view class="skeleton-line short" />
-              <view class="skeleton-line medium" />
-            </view>
-          </view>
-        </view>
-
-        <!-- Empty state -->
-        <view v-else-if="rooms.length === 0 && !roomsLoading" class="empty-state">
-          <view class="icon icon-book empty-icon" />
-          <text class="empty-text">暂无自习室</text>
-        </view>
-
-        <!-- Room cards -->
-        <view v-else class="room-list">
-          <view v-for="room in rooms" :key="room.id" class="room-card" @tap="onTapRoom(room)">
-            <image class="room-cover" :src="room.cover_image" mode="aspectFill" />
-            <view class="room-info">
-              <text class="room-name">{{ room.name }}</text>
-              <text class="room-address">{{ room.address }}</text>
-              <view class="room-bottom">
-                <view :class="['room-status', room.status === 'open' ? 'open' : 'closed']">
-                  <text class="room-status-text">{{ room.status === 'open' ? '营业中' : '已打烊' }}</text>
-                </view>
-                <text class="room-price">
-                  <text class="room-price-symbol">¥</text>{{ room.min_price }}
-                  <text class="room-price-unit">起</text>
-                </text>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <!-- Load more -->
-        <view v-if="hasMoreRooms" class="load-more">
-          <text class="load-more-text">加载更多...</text>
-        </view>
-        <view v-else-if="rooms.length > 0" class="load-more">
-          <text class="load-more-text">没有更多了</text>
-        </view>
-      </view>
-
       <!-- Bottom spacing for tab bar -->
       <view style="height: 120rpx;" />
     </scroll-view>
@@ -175,7 +121,6 @@
 <script>
 import { getBanners } from '@/api/banners'
 import { getActivities } from '@/api/activities'
-import { getRooms } from '@/api/rooms'
 
 export default {
   data() {
@@ -186,11 +131,6 @@ export default {
       banners: [],
       currentBanner: 0,
       activities: [],
-      rooms: [],
-      roomsLoading: true,
-      roomPage: 1,
-      roomPageSize: 10,
-      roomTotal: 0,
       quickEntries: [
         { label: '钱包充值', iconClass: 'icon-wallet', bgColor: 'rgba(79,110,247,0.1)', color: '#4F6EF7', path: '/pages/recharge/index' },
         { label: '卡券套餐', iconClass: 'icon-ticket', bgColor: 'rgba(255,165,0,0.1)', color: '#FF8C00', path: '/pages/coupon/index' },
@@ -198,11 +138,6 @@ export default {
         { label: '个人码', iconClass: 'icon-qrcode', bgColor: 'rgba(108,92,231,0.1)', color: '#6C5CE7', path: '/pages/qrcode/index' },
       ],
     }
-  },
-  computed: {
-    hasMoreRooms() {
-      return this.rooms.length < this.roomTotal
-    },
   },
   onShow() {
     this.loadData()
@@ -213,7 +148,7 @@ export default {
   },
   methods: {
     async loadData() {
-      await Promise.allSettled([this.loadBanners(), this.loadActivities(), this.loadRooms(true)])
+      await Promise.allSettled([this.loadBanners(), this.loadActivities()])
     },
 
     async loadBanners() {
@@ -234,26 +169,6 @@ export default {
       }
     },
 
-    async loadRooms(reset = false) {
-      if (reset) {
-        this.roomPage = 1
-        this.roomsLoading = true
-      }
-      try {
-        const data = await getRooms({ page: this.roomPage, page_size: this.roomPageSize })
-        if (reset) {
-          this.rooms = data.items || []
-        } else {
-          this.rooms = [...this.rooms, ...(data.items || [])]
-        }
-        this.roomTotal = data.total || 0
-      } catch {
-        if (reset) this.rooms = []
-      } finally {
-        this.roomsLoading = false
-      }
-    },
-
     onBannerChange(e) {
       this.currentBanner = e.detail.current
     },
@@ -265,12 +180,7 @@ export default {
       })
     },
 
-    onReachBottom() {
-      if (this.hasMoreRooms && !this.roomsLoading) {
-        this.roomPage++
-        this.loadRooms()
-      }
-    },
+    onReachBottom() {},
 
     onTapBanner(banner) {
       if (!banner.link_type || banner.link_type === 'none') return
@@ -291,14 +201,6 @@ export default {
 
     onTapMoreActivities() {
       // Future: navigate to activity list page
-    },
-
-    onTapMoreRooms() {
-      // Future: navigate to room list page
-    },
-
-    onTapRoom(room) {
-      uni.navigateTo({ url: `/pages/booking/detail?room_id=${room.id}` })
     },
 
     onTapLocation() {
@@ -697,183 +599,5 @@ export default {
   font-size: 20rpx;
   color: $text-muted;
   margin-top: 10rpx;
-}
-
-/* Room list */
-.room-list {
-  padding: 0 28rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-}
-
-.room-card {
-  display: flex;
-  background: #fff;
-  border-radius: 20rpx;
-  overflow: hidden;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s;
-}
-
-.room-card:active {
-  transform: scale(0.98);
-}
-
-.room-cover {
-  width: 220rpx;
-  height: 200rpx;
-  flex-shrink: 0;
-}
-
-.room-info {
-  flex: 1;
-  padding: 18rpx 20rpx;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.room-name {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: $text-primary;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.room-address {
-  font-size: 22rpx;
-  color: $text-secondary;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.room-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.room-status {
-  padding: 6rpx 14rpx;
-  border-radius: 8rpx;
-  font-size: 20rpx;
-}
-
-.room-status.open {
-  background: rgba(7, 193, 96, 0.08);
-}
-
-.room-status.closed {
-  background: rgba(255, 107, 107, 0.08);
-}
-
-.room-status.open .room-status-text {
-  color: $success;
-}
-
-.room-status.closed .room-status-text {
-  color: $danger;
-}
-
-.room-price {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: $danger;
-}
-
-.room-price-symbol {
-  font-size: 22rpx;
-}
-
-.room-price-unit {
-  font-size: 20rpx;
-  font-weight: 400;
-}
-
-/* Skeleton loading */
-.room-skeleton {
-  padding: 0 28rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-}
-
-.room-card-skeleton {
-  display: flex;
-  background: #fff;
-  border-radius: 20rpx;
-  overflow: hidden;
-  padding: 16rpx;
-}
-
-.skeleton-image {
-  width: 200rpx;
-  height: 160rpx;
-  border-radius: 12rpx;
-  background: linear-gradient(90deg, #f5f5f5 25%, #eee 50%, #f5f5f5 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-info {
-  flex: 1;
-  padding: 8rpx 16rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  justify-content: center;
-}
-
-.skeleton-line {
-  height: 24rpx;
-  border-radius: 6rpx;
-  background: linear-gradient(90deg, #f5f5f5 25%, #eee 50%, #f5f5f5 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-line.long { width: 80%; }
-.skeleton-line.medium { width: 60%; }
-.skeleton-line.short { width: 40%; }
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-/* Empty state */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 100rpx 0;
-}
-
-.empty-icon {
-  font-size: 80rpx;
-  color: #ccc;
-}
-
-.empty-text {
-  margin-top: 20rpx;
-  font-size: 28rpx;
-  color: $text-muted;
-}
-
-/* Load more */
-.load-more {
-  display: flex;
-  justify-content: center;
-  padding: 32rpx 0;
-}
-
-.load-more-text {
-  font-size: 24rpx;
-  color: $text-muted;
 }
 </style>

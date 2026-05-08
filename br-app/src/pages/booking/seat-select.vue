@@ -36,22 +36,22 @@
         </scroll-view>
 
         <!-- Time slots -->
-        <view class="time-scroll-wrap">
-          <scroll-view class="time-scroll" scroll-x :show-scrollbar="false">
-            <view class="time-list">
-              <view
-                v-for="slot in timeSlots"
-                :key="slot.value"
-                :class="['time-slot', {
-                  selected: selectedTimeSlot === slot.value && !slot.disabled,
-                  disabled: slot.disabled,
-                }]"
-                @tap="onSelectTimeSlot(slot)"
-              >
-                <text class="time-slot-text">{{ slot.label }}</text>
-              </view>
+        <view class="time-grid">
+          <view
+            v-for="slot in timeSlots"
+            :key="slot.value"
+            :class="['time-slot', {
+              selected: selectedTimeSlot === slot.value && !slot.disabled,
+              disabled: slot.disabled,
+            }]"
+            @tap="onSelectTimeSlot(slot)"
+          >
+            <view class="time-slot-range">
+              <text class="time-slot-start">{{ slot.start }}</text>
+              <text class="time-slot-sep">-</text>
+              <text class="time-slot-end">{{ slot.end }}</text>
             </view>
-          </scroll-view>
+          </view>
         </view>
       </view>
 
@@ -84,7 +84,8 @@
             <view v-for="section in seatSections" :key="section.zone" class="zone-section-block">
               <!-- Section label -->
               <view :class="['section-label', section.zone]">
-                <text class="section-label-text">{{ section.icon }} {{ section.name }}</text>
+                <view :class="['zone-mark', section.zone]" />
+                <text class="section-label-text">{{ section.name }}</text>
                 <text class="section-label-range">{{ section.rowRange }}</text>
               </view>
 
@@ -165,7 +166,7 @@
 
 <script>
 import { getSeats } from '@/api/seats'
-import { getRooms } from '@/api/rooms'
+import { getRoom } from '@/api/rooms'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 const TIME_SLOTS = [
@@ -179,9 +180,9 @@ const TIME_SLOTS = [
 ]
 
 const ZONE_CONFIG = {
-  quiet: { label: '静音区', icon: '🤫', color: 'blue' },
-  keyboard: { label: '键盘区', icon: '⌨️', color: 'orange' },
-  vip: { label: 'VIP区', icon: '👑', color: 'purple' },
+  quiet: { label: '静音区', color: 'blue' },
+  keyboard: { label: '键盘区', color: 'orange' },
+  vip: { label: 'VIP区', color: 'purple' },
 }
 
 function formatDate(d) {
@@ -276,7 +277,6 @@ export default {
         sections.push({
           zone,
           name: config.label,
-          icon: config.icon,
           color: config.color,
           rowRange,
           rows,
@@ -303,7 +303,7 @@ export default {
   methods: {
     generateDateList(startDate) {
       const list = []
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 7; i++) {
         const d = new Date(startDate)
         d.setDate(d.getDate() + i)
         list.push({
@@ -332,9 +332,7 @@ export default {
 
         if (!this.roomName) {
           try {
-            const roomsData = await getRooms({ page: 1, page_size: 100 })
-            const items = roomsData.items || []
-            const room = items.find(r => r.id === this.roomId)
+            const room = await getRoom(this.roomId)
             if (room) this.roomName = room.name
           } catch {
             // ignore
@@ -512,29 +510,23 @@ export default {
 }
 
 /* Time slots */
-.time-scroll-wrap {
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
   margin-top: 4rpx;
 }
 
-.time-scroll {
-  white-space: nowrap;
-}
-
-.time-list {
-  display: inline-flex;
-  gap: 12rpx;
-}
-
 .time-slot {
-  display: inline-flex;
+  min-width: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  height: 56rpx;
-  padding: 0 20rpx;
-  border-radius: 28rpx;
+  height: 72rpx;
+  padding: 0 8rpx;
+  border-radius: 18rpx;
   border: 2rpx solid $border-color;
   background: #fff;
-  flex-shrink: 0;
   transition: all 0.2s;
 }
 
@@ -548,16 +540,34 @@ export default {
   border-color: #F0F0F0;
 }
 
-.time-slot-text {
-  font-size: 24rpx;
+.time-slot-range {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.time-slot-start,
+.time-slot-end,
+.time-slot-sep {
+  font-size: 23rpx;
+  line-height: 1;
   color: $text-secondary;
 }
 
-.time-slot.selected .time-slot-text {
+.time-slot-sep {
+  margin: 0 2rpx;
+}
+
+.time-slot.selected .time-slot-start,
+.time-slot.selected .time-slot-end,
+.time-slot.selected .time-slot-sep {
   color: #fff;
 }
 
-.time-slot.disabled .time-slot-text {
+.time-slot.disabled .time-slot-start,
+.time-slot.disabled .time-slot-end,
+.time-slot.disabled .time-slot-sep {
   color: #ccc;
   text-decoration: line-through;
 }
@@ -639,24 +649,39 @@ export default {
   align-items: center;
   gap: 12rpx;
   padding: 12rpx 20rpx;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   margin-bottom: 12rpx;
-  border-left: 6rpx solid transparent;
 }
 
 .section-label.quiet {
-  background: linear-gradient(135deg, #E8EDFF, #F0F3FF);
-  border-left-color: $primary;
+  background: $primary-light;
 }
 
 .section-label.keyboard {
-  background: linear-gradient(135deg, #FFF8E1, #FFFDF5);
-  border-left-color: #FFA726;
+  background: rgba(255, 149, 0, 0.12);
 }
 
 .section-label.vip {
-  background: linear-gradient(135deg, #F3E5F5, #FAFAFE);
-  border-left-color: $purple;
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.zone-mark {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 6rpx;
+  flex-shrink: 0;
+}
+
+.zone-mark.quiet {
+  background: $primary;
+}
+
+.zone-mark.keyboard {
+  background: #e67900;
+}
+
+.zone-mark.vip {
+  background: $purple;
 }
 
 .section-label-text {
@@ -700,9 +725,11 @@ export default {
 /* Seat rows */
 .seat-row {
   display: flex;
-  gap: 12rpx;
+  flex-wrap: wrap;
+  gap: 12rpx 10rpx;
   justify-content: center;
   padding: 8rpx 0;
+  max-width: 508rpx;
 }
 
 /* Seats */

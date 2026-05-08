@@ -12,7 +12,7 @@
           <!-- Store header -->
           <view class="info-row">
             <view class="icon-wrap store-icon">
-              <text class="icon-text">🏢</text>
+              <view class="building-icon" />
             </view>
             <view class="info-text-wrap">
               <text class="info-title">{{ roomName }}</text>
@@ -25,7 +25,7 @@
           <!-- Seat info -->
           <view class="info-row">
             <view class="icon-wrap seat-icon">
-              <text class="icon-text">💺</text>
+              <view class="seat-shape-icon" />
             </view>
             <view class="info-text-wrap">
               <text class="info-title">{{ seatNumber }}号座位</text>
@@ -39,7 +39,7 @@
           <view class="time-section">
             <view class="time-row">
               <view class="icon-wrap date-icon">
-                <text class="icon-text">📅</text>
+                <view class="calendar-icon" />
               </view>
               <view class="info-text-wrap">
                 <text class="info-title">{{ dateLabel }}</text>
@@ -48,7 +48,10 @@
             </view>
             <view class="time-row">
               <view class="icon-wrap clock-icon">
-                <text class="icon-text">🕐</text>
+                <view class="clock-shape-icon">
+                  <view class="clock-hand hour" />
+                  <view class="clock-hand minute" />
+                </view>
               </view>
               <view class="info-text-wrap">
                 <text class="info-title">{{ start_time }} - {{ end_time }}</text>
@@ -142,7 +145,7 @@
 <script>
 import { getSeats } from '@/api/seats'
 import { createBooking } from '@/api/bookings'
-import { getRooms } from '@/api/rooms'
+import { getRoom } from '@/api/rooms'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
@@ -240,13 +243,9 @@ export default {
           this.pricePerHour = seat.price_per_hour
         }
 
-        // Fetch room info
-        const roomsData = await getRooms({ page: 1, page_size: 100 })
-        const room = (roomsData.items || []).find(r => r.id === this.room_id)
-        if (room) {
-          this.roomName = room.name
-          this.roomAddress = room.address || ''
-        }
+        const room = await getRoom(this.room_id)
+        this.roomName = room.name
+        this.roomAddress = room.address || ''
       } catch {
         uni.showToast({ title: '加载失败', icon: 'none' })
       } finally {
@@ -389,8 +388,105 @@ export default {
   background: #F3E5F5;
 }
 
-.icon-text {
-  font-size: 32rpx;
+.building-icon {
+  width: 34rpx;
+  height: 40rpx;
+  border-radius: 6rpx;
+  background: $primary;
+  position: relative;
+}
+
+.building-icon::before,
+.building-icon::after {
+  content: '';
+  position: absolute;
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 2rpx;
+  background: $white;
+  left: 8rpx;
+  box-shadow: 12rpx 0 0 $white;
+}
+
+.building-icon::before {
+  top: 9rpx;
+}
+
+.building-icon::after {
+  top: 22rpx;
+}
+
+.seat-shape-icon {
+  width: 36rpx;
+  height: 26rpx;
+  border-radius: 8rpx 8rpx 5rpx 5rpx;
+  background: $success;
+  position: relative;
+}
+
+.seat-shape-icon::before,
+.seat-shape-icon::after {
+  content: '';
+  position: absolute;
+  bottom: -8rpx;
+  width: 7rpx;
+  height: 10rpx;
+  border-radius: 0 0 4rpx 4rpx;
+  background: $success;
+}
+
+.seat-shape-icon::before {
+  left: 5rpx;
+}
+
+.seat-shape-icon::after {
+  right: 5rpx;
+}
+
+.calendar-icon {
+  width: 36rpx;
+  height: 34rpx;
+  border-radius: 7rpx;
+  border: 4rpx solid #e67900;
+  position: relative;
+}
+
+.calendar-icon::before {
+  content: '';
+  position: absolute;
+  top: 8rpx;
+  left: 0;
+  right: 0;
+  height: 4rpx;
+  background: #e67900;
+}
+
+.clock-shape-icon {
+  width: 38rpx;
+  height: 38rpx;
+  border-radius: 50%;
+  border: 4rpx solid $purple;
+  position: relative;
+}
+
+.clock-hand {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 4rpx;
+  border-radius: 4rpx;
+  background: $purple;
+  transform-origin: bottom center;
+}
+
+.clock-hand.hour {
+  height: 11rpx;
+  transform: translateX(-50%) rotate(-35deg);
+}
+
+.clock-hand.minute {
+  height: 14rpx;
+  transform: translateX(-50%) rotate(80deg);
 }
 
 .info-text-wrap {

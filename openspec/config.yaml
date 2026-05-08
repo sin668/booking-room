@@ -27,6 +27,7 @@ rules:
     - 使用 Given/When/Then 格式描述测试场景
   design:
     - 必须包含复杂流程的序列图
+    - UI 实现参考 prototype 目录的高保真的原型图，保持总体风格一致
   tasks:
     - 必须包含代码审查与重构（确保 Clean Architecture 分层、消除重复代码）
     - 必须更新API 文档（docs/api.md 补充新增的相关接口）

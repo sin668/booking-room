@@ -192,6 +192,30 @@ ValueError: password cannot be longer than 72 bytes, truncate manually if necess
 
 ---
 
+## BUG-12: 订单列表页面数据不显示
+
+### 报错信息
+```
+Uncaught (in promise) ReferenceError: actions is not defined
+```
+
+### 根本原因
+`br-admin/src/views/booking/list/index.vue` 中 `actionColumn` 的 `render` 函数引用了未定义的 `actions` 变量。该代码复制自活动管理页面（activity/list），活动页面定义了 `actions` 数组（编辑、删除按钮），但订单列表页只有下拉操作（取消），没有定义 `actions`。JavaScript 引擎抛出 `ReferenceError`，导致 `loadDataTable` 异步调用静默失败，BasicTable 组件无法渲染数据行。
+
+### 解决方案
+将 `actions` 替换为空数组 `actions: []`：
+
+```diff
+- actions,
++ actions: [],
+```
+
+**文件**: `br-admin/src/views/booking/list/index.vue`
+
+**提交**: `3ec39c1` fix: resolve undefined `actions` reference in booking list page
+
+---
+
 ## BUG-13: 预约详情页加载房间信息返回 422
 
 ### 报错信息
@@ -237,6 +261,7 @@ getRooms({ page: 1, page_size: 100 })
 | `br-server/app/services/sms_service.py` | #9, #10 |
 | `br-server/app/services/auth_service.py` | #11 |
 | `br-server/tests/test_auth_service.py` | #11 |
+| `br-admin/src/views/booking/list/index.vue` | #12 |
 | `br-app/src/api/rooms.js` | #13 |
 | `br-app/src/pages/booking/detail.vue` | #13 |
 | `br-app/src/pages/booking/seat-select.vue` | #13 |

@@ -87,6 +87,26 @@ class TestStudyRoomAPI:
         assert resp.status_code == 422
 
     @pytest.mark.asyncio
+    async def test_get_room_detail(self, client: AsyncClient, seed_data):
+        list_resp = await client.get("/api/v1/rooms")
+        room_id = list_resp.json()["items"][0]["id"]
+
+        resp = await client.get(f"/api/v1/rooms/{room_id}")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["id"] == room_id
+        assert data["name"] == "Room A"
+
+    @pytest.mark.asyncio
+    async def test_get_room_detail_not_found_for_closed_room(self, client: AsyncClient, seed_data):
+        resp = await client.get("/api/v1/rooms")
+        assert all(item["name"] != "Room Closed" for item in resp.json()["items"])
+
+        closed_resp = await client.get("/api/v1/rooms/9999")
+        assert closed_resp.status_code == 404
+
+    @pytest.mark.asyncio
     async def test_list_rooms_empty(self, client: AsyncClient):
         resp = await client.get("/api/v1/rooms")
         assert resp.status_code == 200

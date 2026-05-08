@@ -44,6 +44,17 @@ async def list_study_rooms(
     )
 
 
+async def get_study_room(db: AsyncSession, room_id: int) -> StudyRoomResponse:
+    """Return an open study room by ID."""
+    result = await db.execute(
+        select(StudyRoom).where(StudyRoom.id == room_id, StudyRoom.status == "open")
+    )
+    room = result.scalar_one_or_none()
+    if room is None:
+        raise ValueError(f"Room {room_id} not found")
+    return StudyRoomResponse.model_validate(room)
+
+
 async def admin_list_rooms(
     db: AsyncSession,
     page: int = 1,

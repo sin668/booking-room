@@ -1,0 +1,105 @@
+## ADDED Requirements
+
+### Requirement: Seat database model
+系统 SHALL 创建 `seats` 表，包含字段：`id`（主键，自增）、`room_id`（外键关联 study_rooms.id，非空）、`seat_number`（VARCHAR(10)，如 "A-01"，非空）、`zone`（VARCHAR(20)，枚举值 "quiet"/"keyboard"/"vip"，非空）、`position`（VARCHAR(20)，如 "靠窗"/"中间"/"独立"，可空）、`floor`（INTEGER，默认 3）、`price_per_hour`（DECIMAL(10,2)，非空）、`status`（VARCHAR(20)，默认 "available"，枚举值 "available"/"maintenance"）、`row`（INTEGER，座位图行号）、`col`（INTEGER，座位图列号）、`created_at`、`updated_at`。
+
+#### Scenario: Create seat record
+- **WHEN** 向 `seats` 表插入一条记录，`room_id=1`，`seat_number="A-01"`，`zone="quiet"`，`position="靠窗"`，`price_per_hour=6.00`，`row=1`，`col=1`
+- **THEN** 记录成功创建，`id` 自增，`status` 默认为 "available"，`floor` 默认为 3
+
+### Requirement: List available seats API
+系统 SHALL 提供 `GET /api/v1/rooms/{room_id}/seats/` 接口，返回指定自习室的座位列表，支持查询参数 `date`（YYYY-MM-DD，可选）、`start_time`（HH:MM，可选）、`end_time`（HH:MM，可选）。当提供日期和时段参数时，每个座位额外返回 `is_available` 字段（布尔值，表示该时段是否可预约）。
+
+#### Scenario: List all seats without time filter
+- **WHEN** 客户端发送 `GET /api/v1/rooms/1/seats/` 不带时间参数
+- **THEN** 返回 HTTP 200，响应为座位数组，每个座位包含 `id`、`seat_number`、`zone`、`position`、`floor`、`price_per_hour`、`status`、`row`、`col`
+
+#### Scenario: List seats with availability filter
+- **WHEN** 客户端发送 `GET /api/v1/rooms/1/seats/?date=2026-05-01&start_time=09:00&end_time=12:00`
+- **THEN** 返回 HTTP 200，每个座位额外包含 `is_available` 字段，已被预约的座位 `is_available=false`
+
+#### Scenario: Room not found
+- **WHEN** 客户端发送 `GET /api/v1/rooms/999/seats/`
+- **THEN** 返回 HTTP 404
+
+### Requirement: Create booking API
+系统 SHALL 提供 `POST /api/v1/bookings/` 接口，允许已登录用户创建座位预约。请求体包含 `seat_id`（整数，必填）、`date`（日期字符串 YYYY-MM-DD，必填）、`start_time`（时间字符串 HH:MM，必填）、`end_time`（时间字符串 HH:MM，必填）。创建成功返回 HTTP 201，响应包含预约详情。
+
+#### Scenario: Successful booking creation
+- **WHEN** 已登录用户发送 `POST /api/v1/bookings/`，body 为 `{"seat_id": 1, "date": "2026-05-01", "start_time": "09:00", "end_time": "12:00"}`
+- **THEN** 返回 HTTP 201，响应包含 `id`、`seat_id`、`user_id`、`room_id`、`date`、`start_time`、`end_time`、`status`（值为 "confirmed"）、`total_price`、`created_at`
+
+#### Scenario: Booking with non-existent seat
+- **WHEN** 已登录用户发送 `POST /api/v1/bookings/`，`seat_id` 对应的座位不存在
+- **THEN** 返回 HTTP 404，错误信息为"座位不存在"
+
+#### Scenario: Booking with time conflict on same seat
+- **WHEN** 已登录用户发送 `POST /api/v1/bookings/`，所选时间段与同一座位同日期已有预约重叠
+- **THEN** 返回 HTTP 409，错误信息为"该座位该时段已被预约"
+
+#### Scenario: Booking with invalid time range
+- **WHEN** 已登录用户发送 `POST /api/v1/bookings/`，`end_time` 早于或等于 `start_time`
+- **THEN** 返回 HTTP 422，错误信息提示结束时间必须晚于开始时间
+
+#### Scenario: Booking seat under maintenance
+- **WHEN** 已登录用户发送 `POST /api/v1/bookings/`，座位状态为 "maintenance"
+- **THEN** 返回 HTTP 400，错误信息为"该座位正在维护中"
+
+#### Scenario: Booking requires authentication
+- **WHEN** 未登录用户发送 `POST /api/v1/bookings/`
+- **THEN** 返回 HTTP 401
+
+### Requirement: List my bookings API
+系统 SHALL 提供 `GET /api/v1/bookings/` 接口，返回当前登录用户的预约列表。支持查询参数 `page`（默认 1）、`page_size`（默认 10，最大 50）、`status`（可选，筛选状态）。
+
+#### Scenario: Successful list request with default pagination
+- **WHEN** 已登录用户发送 `GET /api/v1/bookings/` 不带查询参数
+- **THEN** 返回 HTTP 200，响应包含 `items`（预约数组）和 `total`、`page`、`page_size` 字段
+
+#### Scenario: List bookings filtered by status
+- **WHEN** 已登录用户发送 `GET /api/v1/bookings/?status=confirmed`
+- **THEN** 返回 HTTP 200，`items` 中仅包含 `status` 为 "confirmed" 的预约
+
+### Requirement: Get booking detail API
+系统 SHALL 提供 `GET /api/v1/bookings/{booking_id}/` 接口，返回预约详情。用户只能查看自己的预约。
+
+#### Scenario: Successful detail request
+- **WHEN** 已登录用户请求 `GET /api/v1/bookings/1/`，booking_id=1 属于该用户
+- **THEN** 返回 HTTP 200，响应包含预约完整信息、关联的座位信息（`seat` 字段，含 seat_number、zone、position、price_per_hour）及房间信息（`room` 字段，含 name、address）
+
+#### Scenario: Request other user's booking
+- **WHEN** 已登录用户请求 `GET /api/v1/bookings/2/`，booking_id=2 属于其他用户
+- **THEN** 返回 HTTP 404
+
+#### Scenario: Request non-existent booking
+- **WHEN** 已登录用户请求 `GET /api/v1/bookings/999/`
+- **THEN** 返回 HTTP 404
+
+### Requirement: Cancel booking API
+系统 SHALL 提供 `POST /api/v1/bookings/{booking_id}/cancel/` 接口，允许用户取消自己的预约。仅 `confirmed` 状态的预约可取消，取消后状态变为 `cancelled`。
+
+#### Scenario: Successful cancellation
+- **WHEN** 已登录用户发送 `POST /api/v1/bookings/1/cancel/`，该预约状态为 "confirmed" 且属于该用户
+- **THEN** 返回 HTTP 200，预约状态变为 "cancelled"
+
+#### Scenario: Cancel already cancelled booking
+- **WHEN** 用户发送 `POST /api/v1/bookings/1/cancel/`，该预约状态为 "cancelled"
+- **THEN** 返回 HTTP 400，错误信息为"该预约已取消"
+
+#### Scenario: Cancel other user's booking
+- **WHEN** 用户发送 `POST /api/v1/bookings/1/cancel/`，该预约属于其他用户
+- **THEN** 返回 HTTP 404
+
+### Requirement: Booking database model
+系统 SHALL 创建 `bookings` 表，包含字段：`id`（主键，自增）、`seat_id`（外键关联 seats.id，非空）、`user_id`（外键关联 users.id，非空）、`room_id`（外键关联 study_rooms.id，非空）、`date`（DATE，非空）、`start_time`（TIME，非空）、`end_time`（TIME，非空）、`status`（VARCHAR(20)，默认 "confirmed"，枚举值 "confirmed"/"cancelled"/"completed"）、`total_price`（DECIMAL(10,2)，非空）、`created_at`、`updated_at`。
+
+#### Scenario: Create booking record
+- **WHEN** 向 `bookings` 表插入一条记录，`seat_id=1`，`user_id=1`，`room_id=1`，`date="2026-05-01"`，`start_time="09:00"`，`end_time="12:00"`，`total_price=18.00`
+- **THEN** 记录成功创建，`id` 自增，`status` 默认为 "confirmed"，`created_at` 和 `updated_at` 自动填充
+
+### Requirement: Booking response schema
+预约列表/详情响应 SHALL 包含以下字段：`id`（整数）、`seat_id`（整数）、`user_id`（整数）、`room_id`（整数）、`date`（日期字符串 YYYY-MM-DD）、`start_time`（时间字符串 HH:MM）、`end_time`（时间字符串 HH:MM）、`status`（枚举字符串）、`total_price`（数字）、`created_at`（ISO 时间字符串）、`seat`（对象，包含 id、seat_number、zone、position、price_per_hour）、`room`（对象，包含 id、name、address）。
+
+#### Scenario: Response field validation
+- **WHEN** 客户端请求预约详情
+- **THEN** 响应包含 `id`、`seat_id`、`room_id`、`date`、`start_time`、`end_time`、`status`、`total_price`、`created_at`、`seat`、`room` 字段

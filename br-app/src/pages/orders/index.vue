@@ -53,12 +53,12 @@
           :key="order.id"
           :class="['order-card', `status-${order.status}`, `card-enter-${index % 5}`]"
         >
-          <!-- Accent bar for confirmed -->
-          <view v-if="order.status === 'confirmed'" class="accent-bar" />
-
           <!-- Top row: store name + status badge -->
           <view class="card-header">
-            <text class="store-name">{{ order.room ? order.room.name : '未知门店' }}</text>
+            <view class="store-title-wrap">
+              <view :class="['status-dot', `dot-${order.status}`]" />
+              <text class="store-name">{{ order.room ? order.room.name : '未知门店' }}</text>
+            </view>
             <view :class="['status-badge', `badge-${order.status}`]">
               <text class="status-badge-text">{{ statusLabel(order.status) }}</text>
             </view>
@@ -230,7 +230,7 @@ export default {
     },
 
     seatInfoText(order) {
-      if (!order.seat) return '座位信息 unavailable'
+      if (!order.seat) return '暂无座位信息'
       const seat = order.seat
       const zone = ZONE_MAP[seat.zone] || seat.zone || ''
       return zone ? `${seat.seat_number}号座位 · ${zone}` : `${seat.seat_number}号座位`
@@ -436,32 +436,16 @@ export default {
 .order-card {
   position: relative;
   background: #fff;
-  border-radius: 32rpx;
-  padding: 32rpx;
+  border-radius: 28rpx;
+  padding: 30rpx;
   margin: 0 32rpx 24rpx;
   box-shadow: $shadow-sm;
   overflow: hidden;
+  border: 1rpx solid rgba(45, 52, 54, 0.04);
 }
 
 .order-card.status-cancelled {
   opacity: 0.65;
-}
-
-/* Accent bar */
-.accent-bar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 8rpx;
-  background: $success;
-  border-radius: 0 4rpx 4rpx 0;
-  animation: accent-pulse 2s ease-in-out infinite;
-}
-
-@keyframes accent-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
 }
 
 /* Card entrance animation */
@@ -487,12 +471,45 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16rpx;
+}
+
+.store-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.status-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-confirmed {
+  background: $success;
+  box-shadow: 0 0 0 8rpx rgba(7, 193, 96, 0.1);
+}
+
+.dot-cancelled {
+  background: $danger;
+  box-shadow: 0 0 0 8rpx rgba(255, 107, 107, 0.1);
+}
+
+.dot-completed {
+  background: $text-muted;
+  box-shadow: 0 0 0 8rpx rgba(99, 110, 114, 0.08);
 }
 
 .store-name {
   font-size: 30rpx;
   font-weight: 600;
   color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Status badge */

@@ -1,0 +1,3452 @@
+{
+  "br-app/src/main.js::createApp()": {
+    "file": "br-app/src/main.js",
+    "function": "createApp",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.537Z"
+  },
+  "br-app/src/utils/request.js::getToken()": {
+    "file": "br-app/src/utils/request.js",
+    "function": "getToken",
+    "line": 10,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/utils/request.js::setToken()": {
+    "file": "br-app/src/utils/request.js",
+    "function": "setToken",
+    "line": 14,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/utils/request.js::removeToken()": {
+    "file": "br-app/src/utils/request.js",
+    "function": "removeToken",
+    "line": 18,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/utils/request.js::resolvePendingRequests()": {
+    "file": "br-app/src/utils/request.js",
+    "function": "resolvePendingRequests",
+    "line": 22,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/utils/request.js::doRefreshToken()": {
+    "file": "br-app/src/utils/request.js",
+    "function": "doRefreshToken",
+    "line": 27,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/utils/request.js::request()": {
+    "file": "br-app/src/utils/request.js",
+    "function": "request",
+    "line": 47,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/utils/request.js::get()": {
+    "file": "br-app/src/utils/request.js",
+    "function": "get",
+    "line": 98,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/utils/request.js::post()": {
+    "file": "br-app/src/utils/request.js",
+    "function": "post",
+    "line": 102,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/utils/request.js::buildRequest()": {
+    "file": "br-app/src/utils/request.js",
+    "function": "buildRequest",
+    "line": 48,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/api/rooms.js::getRooms()": {
+    "file": "br-app/src/api/rooms.js",
+    "function": "getRooms",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/api/banners.js::getBanners()": {
+    "file": "br-app/src/api/banners.js",
+    "function": "getBanners",
+    "line": 6,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/api/auth.js::sendCode()": {
+    "file": "br-app/src/api/auth.js",
+    "function": "sendCode",
+    "line": 6,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/api/auth.js::register()": {
+    "file": "br-app/src/api/auth.js",
+    "function": "register",
+    "line": 13,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/api/auth.js::login()": {
+    "file": "br-app/src/api/auth.js",
+    "function": "login",
+    "line": 20,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/api/auth.js::refreshToken()": {
+    "file": "br-app/src/api/auth.js",
+    "function": "refreshToken",
+    "line": 27,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/api/auth.js::logout()": {
+    "file": "br-app/src/api/auth.js",
+    "function": "logout",
+    "line": 34,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/api/auth.js::getMe()": {
+    "file": "br-app/src/api/auth.js",
+    "function": "getMe",
+    "line": 41,
+    "updated": "2026-04-23T02:10:01.538Z"
+  },
+  "br-app/src/api/activities.js::getActivities()": {
+    "file": "br-app/src/api/activities.js",
+    "function": "getActivities",
+    "line": 6,
+    "updated": "2026-04-23T02:10:01.539Z"
+  },
+  "br-app/dist/build/mp-weixin/app.js::n()": {
+    "file": "br-app/dist/build/mp-weixin/app.js",
+    "function": "n",
+    "line": 1,
+    "updated": "2026-04-23T02:10:01.539Z"
+  },
+  "br-app/node_modules/yargs-parser/browser.js::Parser()": {
+    "file": "br-app/node_modules/yargs-parser/browser.js",
+    "function": "Parser",
+    "line": 18,
+    "updated": "2026-04-23T02:10:01.539Z"
+  },
+  "br-app/node_modules/yallist/yallist.js::Yallist()": {
+    "file": "br-app/node_modules/yallist/yallist.js",
+    "function": "Yallist",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.539Z"
+  },
+  "br-app/node_modules/yallist/yallist.js::insert()": {
+    "file": "br-app/node_modules/yallist/yallist.js",
+    "function": "insert",
+    "line": 367,
+    "updated": "2026-04-23T02:10:01.539Z"
+  },
+  "br-app/node_modules/yallist/yallist.js::push()": {
+    "file": "br-app/node_modules/yallist/yallist.js",
+    "function": "push",
+    "line": 384,
+    "updated": "2026-04-23T02:10:01.539Z"
+  },
+  "br-app/node_modules/yallist/yallist.js::unshift()": {
+    "file": "br-app/node_modules/yallist/yallist.js",
+    "function": "unshift",
+    "line": 392,
+    "updated": "2026-04-23T02:10:01.539Z"
+  },
+  "br-app/node_modules/yallist/yallist.js::Node()": {
+    "file": "br-app/node_modules/yallist/yallist.js",
+    "function": "Node",
+    "line": 400,
+    "updated": "2026-04-23T02:10:01.539Z"
+  },
+  "br-app/node_modules/xtend/mutable.js::extend()": {
+    "file": "br-app/node_modules/xtend/mutable.js",
+    "function": "extend",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.540Z"
+  },
+  "br-app/node_modules/xtend/immutable.js::extend()": {
+    "file": "br-app/node_modules/xtend/immutable.js",
+    "function": "extend",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.540Z"
+  },
+  "br-app/node_modules/xml-parse-from-string/index.js::xmlparser()": {
+    "file": "br-app/node_modules/xml-parse-from-string/index.js",
+    "function": "xmlparser",
+    "line": 1,
+    "updated": "2026-04-23T02:10:01.542Z"
+  },
+  "br-app/node_modules/wrap-ansi/index.js::wrapWord()": {
+    "file": "br-app/node_modules/wrap-ansi/index.js",
+    "function": "wrapWord",
+    "line": 28,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/wrap-ansi/index.js::exec()": {
+    "file": "br-app/node_modules/wrap-ansi/index.js",
+    "function": "exec",
+    "line": 103,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/wrap-ansi/index.js::remainingColumns()": {
+    "file": "br-app/node_modules/wrap-ansi/index.js",
+    "function": "remainingColumns",
+    "line": 137,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/write-file-atomic/index.js::getId()": {
+    "file": "br-app/node_modules/write-file-atomic/index.js",
+    "function": "getId",
+    "line": 18,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/write-file-atomic/index.js::getTmpname()": {
+    "file": "br-app/node_modules/write-file-atomic/index.js",
+    "function": "getTmpname",
+    "line": 31,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/write-file-atomic/index.js::cleanupOnExit()": {
+    "file": "br-app/node_modules/write-file-atomic/index.js",
+    "function": "cleanupOnExit",
+    "line": 40,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/write-file-atomic/index.js::serializeActiveFile()": {
+    "file": "br-app/node_modules/write-file-atomic/index.js",
+    "function": "serializeActiveFile",
+    "line": 48,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/write-file-atomic/index.js::isChownErrOk()": {
+    "file": "br-app/node_modules/write-file-atomic/index.js",
+    "function": "isChownErrOk",
+    "line": 59,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/write-file-atomic/index.js::writeFileAsync()": {
+    "file": "br-app/node_modules/write-file-atomic/index.js",
+    "function": "writeFileAsync",
+    "line": 74,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/write-file-atomic/index.js::writeFile()": {
+    "file": "br-app/node_modules/write-file-atomic/index.js",
+    "function": "writeFile",
+    "line": 158,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/write-file-atomic/index.js::writeFileSync()": {
+    "file": "br-app/node_modules/write-file-atomic/index.js",
+    "function": "writeFileSync",
+    "line": 172,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/write-file-atomic/index.js::threadId()": {
+    "file": "br-app/node_modules/write-file-atomic/index.js",
+    "function": "threadId",
+    "line": 18,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/wrappy/wrappy.js::wrappy()": {
+    "file": "br-app/node_modules/wrappy/wrappy.js",
+    "function": "wrappy",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/wrappy/wrappy.js::wrapper()": {
+    "file": "br-app/node_modules/wrappy/wrappy.js",
+    "function": "wrapper",
+    "line": 19,
+    "updated": "2026-04-23T02:10:01.543Z"
+  },
+  "br-app/node_modules/which/which.js::getNotFoundError()": {
+    "file": "br-app/node_modules/which/which.js",
+    "function": "getNotFoundError",
+    "line": 9,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/which/which.js::getPathInfo()": {
+    "file": "br-app/node_modules/which/which.js",
+    "function": "getPathInfo",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/which/which.js::which()": {
+    "file": "br-app/node_modules/which/which.js",
+    "function": "which",
+    "line": 43,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/which/which.js::subStep()": {
+    "file": "br-app/node_modules/which/which.js",
+    "function": "subStep",
+    "line": 69,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/which/which.js::whichSync()": {
+    "file": "br-app/node_modules/which/which.js",
+    "function": "whichSync",
+    "line": 87,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::forEachArray()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "forEachArray",
+    "line": 21,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::isEmpty()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "isEmpty",
+    "line": 27,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::initParams()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "initParams",
+    "line": 34,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::createXHR()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "createXHR",
+    "line": 50,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::_createXHR()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "_createXHR",
+    "line": 55,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::cbOnce()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "cbOnce",
+    "line": 61,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::readystatechange()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "readystatechange",
+    "line": 68,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::getBody()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "getBody",
+    "line": 74,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::errorFunc()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "errorFunc",
+    "line": 93,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::loadFunc()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "loadFunc",
+    "line": 103,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::getXml()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "getXml",
+    "line": 231,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/xhr/index.js::noop()": {
+    "file": "br-app/node_modules/xhr/index.js",
+    "function": "noop",
+    "line": 247,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/vary/index.js::append()": {
+    "file": "br-app/node_modules/vary/index.js",
+    "function": "append",
+    "line": 38,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/vary/index.js::parse()": {
+    "file": "br-app/node_modules/vary/index.js",
+    "function": "parse",
+    "line": 96,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/vary/index.js::vary()": {
+    "file": "br-app/node_modules/vary/index.js",
+    "function": "vary",
+    "line": 133,
+    "updated": "2026-04-23T02:10:01.544Z"
+  },
+  "br-app/node_modules/util-deprecate/browser.js::deprecate()": {
+    "file": "br-app/node_modules/util-deprecate/browser.js",
+    "function": "deprecate",
+    "line": 26,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/util-deprecate/browser.js::deprecated()": {
+    "file": "br-app/node_modules/util-deprecate/browser.js",
+    "function": "deprecated",
+    "line": 32,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/util-deprecate/browser.js::config()": {
+    "file": "br-app/node_modules/util-deprecate/browser.js",
+    "function": "config",
+    "line": 57,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::trimLeft()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "trimLeft",
+    "line": 20,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::sanitize()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "sanitize",
+    "line": 39,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::lolcation()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "lolcation",
+    "line": 71,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::isSpecial()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "isSpecial",
+    "line": 112,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::extractProtocol()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "extractProtocol",
+    "line": 139,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::resolve()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "resolve",
+    "line": 198,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::Url()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "Url",
+    "line": 240,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::set()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "set",
+    "line": 422,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::toString()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "toString",
+    "line": 525,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::path()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "path",
+    "line": 201,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/url-parse/index.js::ProtocolExtract()": {
+    "file": "br-app/node_modules/url-parse/index.js",
+    "function": "ProtocolExtract",
+    "line": 124,
+    "updated": "2026-04-23T02:10:01.545Z"
+  },
+  "br-app/node_modules/unquote/index.js::unquote()": {
+    "file": "br-app/node_modules/unquote/index.js",
+    "function": "unquote",
+    "line": 3,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/utils.js::getFirstRegexpMatchOrDefault()": {
+    "file": "br-app/node_modules/update-browserslist-db/utils.js",
+    "function": "getFirstRegexpMatchOrDefault",
+    "line": 3,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::BrowserslistUpdateError()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "BrowserslistUpdateError",
+    "line": 9,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::defaultPrint()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "defaultPrint",
+    "line": 25,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::detectLockfile()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "detectLockfile",
+    "line": 29,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::getLatestInfo()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "getLatestInfo",
+    "line": 67,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::getBrowsers()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "getBrowsers",
+    "line": 89,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::diffBrowsers()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "diffBrowsers",
+    "line": 100,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::updateNpmLockfile()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "updateNpmLockfile",
+    "line": 119,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::deletePackage()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "deletePackage",
+    "line": 126,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::updateYarnLockfile()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "updateYarnLockfile",
+    "line": 150,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::updateLockfile()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "updateLockfile",
+    "line": 183,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::updatePackageManually()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "updatePackageManually",
+    "line": 199,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::updateWith()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "updateWith",
+    "line": 259,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.js::updateDB()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.js",
+    "function": "updateDB",
+    "line": 280,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/cli.js::getPackage()": {
+    "file": "br-app/node_modules/update-browserslist-db/cli.js",
+    "function": "getPackage",
+    "line": 11,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/cli.js::isArg()": {
+    "file": "br-app/node_modules/update-browserslist-db/cli.js",
+    "function": "isArg",
+    "line": 19,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/update-browserslist-db/cli.js::error()": {
+    "file": "br-app/node_modules/update-browserslist-db/cli.js",
+    "function": "error",
+    "line": 23,
+    "updated": "2026-04-23T02:10:01.546Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::log()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "log",
+    "line": 16,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::g()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "g",
+    "line": 21,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::W()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "W",
+    "line": 22,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::X()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "X",
+    "line": 22,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::n()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "n",
+    "line": 22,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::q()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "q",
+    "line": 23,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::h()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "h",
+    "line": 23,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::c()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "c",
+    "line": 23,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::C()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "C",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::w()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "w",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::p()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "p",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::m()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "m",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::t()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "t",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::Y()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "Y",
+    "line": 27,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::N()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "N",
+    "line": 31,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::d()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "d",
+    "line": 476,
+    "updated": "2026-04-23T02:10:01.548Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::f()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "f",
+    "line": 32,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::e()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "e",
+    "line": 32,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::b()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "b",
+    "line": 33,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::bipp()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "bipp",
+    "line": 119,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::noc()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "noc",
+    "line": 174,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::soslen()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "soslen",
+    "line": 394,
+    "updated": "2026-04-23T02:10:01.547Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::qi()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "qi",
+    "line": 821,
+    "updated": "2026-04-23T02:10:01.548Z"
+  },
+  "br-app/node_modules/utif/UTIF.js::tof()": {
+    "file": "br-app/node_modules/utif/UTIF.js",
+    "function": "tof",
+    "line": 937,
+    "updated": "2026-04-23T02:10:01.548Z"
+  },
+  "br-app/node_modules/unpipe/index.js::hasPipeDataListeners()": {
+    "file": "br-app/node_modules/unpipe/index.js",
+    "function": "hasPipeDataListeners",
+    "line": 21,
+    "updated": "2026-04-23T02:10:01.548Z"
+  },
+  "br-app/node_modules/unpipe/index.js::unpipe()": {
+    "file": "br-app/node_modules/unpipe/index.js",
+    "function": "unpipe",
+    "line": 40,
+    "updated": "2026-04-23T02:10:01.548Z"
+  },
+  "br-app/node_modules/type-detect/type-detect.js::typeDetect()": {
+    "file": "br-app/node_modules/type-detect/type-detect.js",
+    "function": "typeDetect",
+    "line": 45,
+    "updated": "2026-04-23T02:10:01.549Z"
+  },
+  "br-app/node_modules/type-detect/type-detect.js::stringTag()": {
+    "file": "br-app/node_modules/type-detect/type-detect.js",
+    "function": "stringTag",
+    "line": 238,
+    "updated": "2026-04-23T02:10:01.549Z"
+  },
+  "br-app/node_modules/type-detect/index.js::typeDetect()": {
+    "file": "br-app/node_modules/type-detect/index.js",
+    "function": "typeDetect",
+    "line": 39,
+    "updated": "2026-04-23T02:10:01.549Z"
+  },
+  "br-app/node_modules/type-detect/index.js::stringTag()": {
+    "file": "br-app/node_modules/type-detect/index.js",
+    "function": "stringTag",
+    "line": 232,
+    "updated": "2026-04-23T02:10:01.549Z"
+  },
+  "br-app/node_modules/typedarray-to-buffer/index.js::typedarrayToBuffer()": {
+    "file": "br-app/node_modules/typedarray-to-buffer/index.js",
+    "function": "typedarrayToBuffer",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.549Z"
+  },
+  "br-app/node_modules/toidentifier/index.js::toIdentifier()": {
+    "file": "br-app/node_modules/toidentifier/index.js",
+    "function": "toIdentifier",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.549Z"
+  },
+  "br-app/node_modules/type-is/index.js::typeis()": {
+    "file": "br-app/node_modules/type-is/index.js",
+    "function": "typeis",
+    "line": 43,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/type-is/index.js::hasbody()": {
+    "file": "br-app/node_modules/type-is/index.js",
+    "function": "hasbody",
+    "line": 92,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/type-is/index.js::typeofrequest()": {
+    "file": "br-app/node_modules/type-is/index.js",
+    "function": "typeofrequest",
+    "line": 123,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/type-is/index.js::normalize()": {
+    "file": "br-app/node_modules/type-is/index.js",
+    "function": "normalize",
+    "line": 161,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/type-is/index.js::mimeMatch()": {
+    "file": "br-app/node_modules/type-is/index.js",
+    "function": "mimeMatch",
+    "line": 195,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/type-is/index.js::normalizeType()": {
+    "file": "br-app/node_modules/type-is/index.js",
+    "function": "normalizeType",
+    "line": 237,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/type-is/index.js::tryNormalizeType()": {
+    "file": "br-app/node_modules/type-is/index.js",
+    "function": "tryNormalizeType",
+    "line": 256,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::collatePatterns()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "collatePatterns",
+    "line": 88,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::splitToRanges()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "splitToRanges",
+    "line": 96,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::rangeToPattern()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "rangeToPattern",
+    "line": 129,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::splitToPatterns()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "splitToPatterns",
+    "line": 160,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::filterPatterns()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "filterPatterns",
+    "line": 195,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::zip()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "zip",
+    "line": 218,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::compare()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "compare",
+    "line": 224,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::contains()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "contains",
+    "line": 228,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::countNines()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "countNines",
+    "line": 232,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::countZeros()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "countZeros",
+    "line": 236,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::toQuantifier()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "toQuantifier",
+    "line": 240,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::toCharacterClass()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "toCharacterClass",
+    "line": 248,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::hasPadding()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "hasPadding",
+    "line": 252,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::padZeros()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "padZeros",
+    "line": 256,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/to-regex-range/index.js::toRegexRange()": {
+    "file": "br-app/node_modules/to-regex-range/index.js",
+    "function": "toRegexRange",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/tr46/index.js::containsNonASCII()": {
+    "file": "br-app/node_modules/tr46/index.js",
+    "function": "containsNonASCII",
+    "line": 8,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/tr46/index.js::findStatus()": {
+    "file": "br-app/node_modules/tr46/index.js",
+    "function": "findStatus",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/tr46/index.js::mapChars()": {
+    "file": "br-app/node_modules/tr46/index.js",
+    "function": "mapChars",
+    "line": 44,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/tr46/index.js::validateLabel()": {
+    "file": "br-app/node_modules/tr46/index.js",
+    "function": "validateLabel",
+    "line": 80,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/tr46/index.js::isBidiDomain()": {
+    "file": "br-app/node_modules/tr46/index.js",
+    "function": "isBidiDomain",
+    "line": 161,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/tr46/index.js::processing()": {
+    "file": "br-app/node_modules/tr46/index.js",
+    "function": "processing",
+    "line": 175,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/tr46/index.js::toASCII()": {
+    "file": "br-app/node_modules/tr46/index.js",
+    "function": "toASCII",
+    "line": 222,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/tr46/index.js::toUnicode()": {
+    "file": "br-app/node_modules/tr46/index.js",
+    "function": "toUnicode",
+    "line": 273,
+    "updated": "2026-04-23T02:10:01.550Z"
+  },
+  "br-app/node_modules/test-exclude/index.js::prepGlobPatterns()": {
+    "file": "br-app/node_modules/test-exclude/index.js",
+    "function": "prepGlobPatterns",
+    "line": 134,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/test-exclude/index.js::getExtensionPattern()": {
+    "file": "br-app/node_modules/test-exclude/index.js",
+    "function": "getExtensionPattern",
+    "line": 150,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/terminal-link/index.js::terminalLink()": {
+    "file": "br-app/node_modules/terminal-link/index.js",
+    "function": "terminalLink",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::throatInternal()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "throatInternal",
+    "line": 3,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::run()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "run",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::runDelayed()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "runDelayed",
+    "line": 18,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::onFulfill()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "onFulfill",
+    "line": 28,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::onReject()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "onReject",
+    "line": 32,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::release()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "release",
+    "line": 36,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::earlyBound()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "earlyBound",
+    "line": 48,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::lateBound()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "lateBound",
+    "line": 58,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::throat()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "throat",
+    "line": 73,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::Delayed()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "Delayed",
+    "line": 98,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/throat/index.js::Queue()": {
+    "file": "br-app/node_modules/throat/index.js",
+    "function": "Queue",
+    "line": 106,
+    "updated": "2026-04-23T02:10:01.551Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_typeof()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_typeof",
+    "line": 11,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::tinycolor()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "tinycolor",
+    "line": 26,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::isDark()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "isDark",
+    "line": 52,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::isLight()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "isLight",
+    "line": 55,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::isValid()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "isValid",
+    "line": 58,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::getOriginalInput()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "getOriginalInput",
+    "line": 61,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::getFormat()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "getFormat",
+    "line": 64,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::getAlpha()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "getAlpha",
+    "line": 67,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::getBrightness()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "getBrightness",
+    "line": 70,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::getLuminance()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "getLuminance",
+    "line": 75,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::setAlpha()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "setAlpha",
+    "line": 87,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toHsv()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toHsv",
+    "line": 92,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toHsvString()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toHsvString",
+    "line": 101,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toHsl()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toHsl",
+    "line": 108,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toHslString()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toHslString",
+    "line": 117,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toHex()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toHex",
+    "line": 124,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toHexString()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toHexString",
+    "line": 127,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toHex8()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toHex8",
+    "line": 130,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toHex8String()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toHex8String",
+    "line": 133,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toRgb()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toRgb",
+    "line": 136,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toRgbString()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toRgbString",
+    "line": 144,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toPercentageRgb()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toPercentageRgb",
+    "line": 147,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toPercentageRgbString()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toPercentageRgbString",
+    "line": 155,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toName()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toName",
+    "line": 158,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toFilter()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toFilter",
+    "line": 167,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::toString()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "toString",
+    "line": 177,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::clone()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "clone",
+    "line": 220,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_applyModification()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_applyModification",
+    "line": 223,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::lighten()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "lighten",
+    "line": 231,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::brighten()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "brighten",
+    "line": 234,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::darken()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "darken",
+    "line": 237,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::desaturate()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "desaturate",
+    "line": 240,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::saturate()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "saturate",
+    "line": 243,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::greyscale()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "greyscale",
+    "line": 246,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::spin()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "spin",
+    "line": 249,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_applyCombination()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_applyCombination",
+    "line": 252,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::analogous()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "analogous",
+    "line": 255,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::complement()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "complement",
+    "line": 258,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::monochromatic()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "monochromatic",
+    "line": 261,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::splitcomplement()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "splitcomplement",
+    "line": 264,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::triad()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "triad",
+    "line": 271,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::tetrad()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "tetrad",
+    "line": 274,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::inputToRGB()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "inputToRGB",
+    "line": 313,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::rgbToRgb()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "rgbToRgb",
+    "line": 372,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::rgbToHsl()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "rgbToHsl",
+    "line": 384,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::hslToRgb()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "hslToRgb",
+    "line": 422,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::hue2rgb()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "hue2rgb",
+    "line": 427,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::rgbToHsv()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "rgbToHsv",
+    "line": 455,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::hsvToRgb()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "hsvToRgb",
+    "line": 493,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::rgbToHex()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "rgbToHex",
+    "line": 517,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::rgbaToHex()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "rgbaToHex",
+    "line": 531,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::rgbaToArgbHex()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "rgbaToArgbHex",
+    "line": 544,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_desaturate()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_desaturate",
+    "line": 568,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_saturate()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_saturate",
+    "line": 575,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_greyscale()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_greyscale",
+    "line": 582,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_lighten()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_lighten",
+    "line": 585,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_brighten()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_brighten",
+    "line": 592,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_darken()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_darken",
+    "line": 600,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_spin()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_spin",
+    "line": 610,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_complement()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_complement",
+    "line": 622,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::polyad()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "polyad",
+    "line": 627,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_splitcomplement()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_splitcomplement",
+    "line": 643,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_analogous()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_analogous",
+    "line": 656,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::_monochromatic()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "_monochromatic",
+    "line": 668,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::flip()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "flip",
+    "line": 944,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::boundAlpha()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "boundAlpha",
+    "line": 955,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::bound01()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "bound01",
+    "line": 964,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::clamp01()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "clamp01",
+    "line": 984,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::parseIntFromHex()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "parseIntFromHex",
+    "line": 989,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::isOnePointZero()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "isOnePointZero",
+    "line": 995,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::isPercentage()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "isPercentage",
+    "line": 1000,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::pad2()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "pad2",
+    "line": 1005,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::convertToPercentage()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "convertToPercentage",
+    "line": 1010,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::convertDecimalToHex()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "convertDecimalToHex",
+    "line": 1018,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::convertHexToDecimal()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "convertHexToDecimal",
+    "line": 1022,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::isValidCSSUnit()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "isValidCSSUnit",
+    "line": 1058,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::stringInputToObject()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "stringInputToObject",
+    "line": 1065,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::validateWCAG2Parms()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "validateWCAG2Parms",
+    "line": 1167,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::hue()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "hue",
+    "line": 612,
+    "updated": "2026-04-23T02:10:01.552Z"
+  },
+  "br-app/node_modules/tinycolor2/tinycolor.js::var()": {
+    "file": "br-app/node_modules/tinycolor2/tinycolor.js",
+    "function": "var",
+    "line": 76,
+    "updated": "2026-04-23T02:10:01.553Z"
+  },
+  "br-app/node_modules/supports-hyperlinks/index.js::parseVersion()": {
+    "file": "br-app/node_modules/supports-hyperlinks/index.js",
+    "function": "parseVersion",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.553Z"
+  },
+  "br-app/node_modules/supports-hyperlinks/index.js::supportsHyperlink()": {
+    "file": "br-app/node_modules/supports-hyperlinks/index.js",
+    "function": "supportsHyperlink",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.553Z"
+  },
+  "br-app/node_modules/supports-hyperlinks/index.js::versions()": {
+    "file": "br-app/node_modules/supports-hyperlinks/index.js",
+    "function": "versions",
+    "line": 16,
+    "updated": "2026-04-23T02:10:01.553Z"
+  },
+  "br-app/node_modules/terser/main.js::_default_options()": {
+    "file": "br-app/node_modules/terser/main.js",
+    "function": "_default_options",
+    "line": 8,
+    "updated": "2026-04-23T02:10:01.553Z"
+  },
+  "br-app/node_modules/terser/main.js::infer_options()": {
+    "file": "br-app/node_modules/terser/main.js",
+    "function": "infer_options",
+    "line": 21,
+    "updated": "2026-04-23T02:10:01.553Z"
+  },
+  "br-app/node_modules/strip-json-comments/index.js::stripWithoutWhitespace()": {
+    "file": "br-app/node_modules/strip-json-comments/index.js",
+    "function": "stripWithoutWhitespace",
+    "line": 4,
+    "updated": "2026-04-23T02:10:01.553Z"
+  },
+  "br-app/node_modules/strip-json-comments/index.js::stripWithWhitespace()": {
+    "file": "br-app/node_modules/strip-json-comments/index.js",
+    "function": "stripWithWhitespace",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.553Z"
+  },
+  "br-app/node_modules/strip-json-comments/index.js::isEscaped()": {
+    "file": "br-app/node_modules/strip-json-comments/index.js",
+    "function": "isEscaped",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.553Z"
+  },
+  "br-app/node_modules/supports-color/index.js::translateLevel()": {
+    "file": "br-app/node_modules/supports-color/index.js",
+    "function": "translateLevel",
+    "line": 31,
+    "updated": "2026-04-23T02:10:01.554Z"
+  },
+  "br-app/node_modules/supports-color/index.js::supportsColor()": {
+    "file": "br-app/node_modules/supports-color/index.js",
+    "function": "supportsColor",
+    "line": 44,
+    "updated": "2026-04-23T02:10:01.554Z"
+  },
+  "br-app/node_modules/supports-color/index.js::getSupportLevel()": {
+    "file": "br-app/node_modules/supports-color/index.js",
+    "function": "getSupportLevel",
+    "line": 126,
+    "updated": "2026-04-23T02:10:01.554Z"
+  },
+  "br-app/node_modules/string-hash/index.js::hash()": {
+    "file": "br-app/node_modules/string-hash/index.js",
+    "function": "hash",
+    "line": 3,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/statuses/index.js::createMessageToStatusCodeMap()": {
+    "file": "br-app/node_modules/statuses/index.js",
+    "function": "createMessageToStatusCodeMap",
+    "line": 63,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/statuses/index.js::forEachCode()": {
+    "file": "br-app/node_modules/statuses/index.js",
+    "function": "forEachCode",
+    "line": 66,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/statuses/index.js::createStatusCodeList()": {
+    "file": "br-app/node_modules/statuses/index.js",
+    "function": "createStatusCodeList",
+    "line": 82,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/statuses/index.js::mapCode()": {
+    "file": "br-app/node_modules/statuses/index.js",
+    "function": "mapCode",
+    "line": 83,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/statuses/index.js::getStatusCode()": {
+    "file": "br-app/node_modules/statuses/index.js",
+    "function": "getStatusCode",
+    "line": 93,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/statuses/index.js::getStatusMessage()": {
+    "file": "br-app/node_modules/statuses/index.js",
+    "function": "getStatusMessage",
+    "line": 108,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/statuses/index.js::status()": {
+    "file": "br-app/node_modules/statuses/index.js",
+    "function": "status",
+    "line": 130,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/stack-utils/index.js::setFile()": {
+    "file": "br-app/node_modules/stack-utils/index.js",
+    "function": "setFile",
+    "line": 295,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/stack-utils/index.js::ignoredPackagesRegExp()": {
+    "file": "br-app/node_modules/stack-utils/index.js",
+    "function": "ignoredPackagesRegExp",
+    "line": 306,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/stack-utils/index.js::name()": {
+    "file": "br-app/node_modules/stack-utils/index.js",
+    "function": "name",
+    "line": 322,
+    "updated": "2026-04-23T02:10:01.555Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::dynamicRequire()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "dynamicRequire",
+    "line": 23,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::isInBrowser()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "isInBrowser",
+    "line": 50,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::hasGlobalProcessEventEmitter()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "hasGlobalProcessEventEmitter",
+    "line": 58,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::globalProcessVersion()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "globalProcessVersion",
+    "line": 62,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::globalProcessStderr()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "globalProcessStderr",
+    "line": 70,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::globalProcessExit()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "globalProcessExit",
+    "line": 76,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::handlerExec()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "handlerExec",
+    "line": 82,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::supportRelativeURL()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "supportRelativeURL",
+    "line": 134,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::retrieveSourceMapURL()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "retrieveSourceMapURL",
+    "line": 148,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::mapSourcePosition()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "mapSourcePosition",
+    "line": 212,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::mapEvalOrigin()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "mapEvalOrigin",
+    "line": 263,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::CallSiteToString()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "CallSiteToString",
+    "line": 292,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::cloneCallSite()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "cloneCallSite",
+    "line": 359,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::wrapCallSite()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "wrapCallSite",
+    "line": 368,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::prepareStackTrace()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "prepareStackTrace",
+    "line": 433,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::getErrorSource()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "getErrorSource",
+    "line": 454,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::printErrorAndExit()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "printErrorAndExit",
+    "line": 485,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::shimEmitUncaughtException()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "shimEmitUncaughtException",
+    "line": 503,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::hasStack()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "hasStack",
+    "line": 508,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/source-map-support.js::hasListeners()": {
+    "file": "br-app/node_modules/source-map-support/source-map-support.js",
+    "function": "hasListeners",
+    "line": 509,
+    "updated": "2026-04-23T02:10:01.556Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::e()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "e",
+    "line": 95,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::p()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "p",
+    "line": 102,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::f()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "f",
+    "line": 103,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::t()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "t",
+    "line": 102,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::m()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "m",
+    "line": 102,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::c()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "c",
+    "line": 104,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::l()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "l",
+    "line": 42,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::q()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "q",
+    "line": 105,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::r()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "r",
+    "line": 13,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::k()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "k",
+    "line": 107,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::u()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "u",
+    "line": 108,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::d()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "d",
+    "line": 109,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::g()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "g",
+    "line": 22,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-app/node_modules/source-map-support/browser-source-map-support.js::F()": {
+    "file": "br-app/node_modules/source-map-support/browser-source-map-support.js",
+    "function": "F",
+    "line": 107,
+    "updated": "2026-04-23T02:10:01.557Z"
+  },
+  "br-admin/vite.config.ts::pathResolve()": {
+    "file": "br-admin/vite.config.ts",
+    "function": "pathResolve",
+    "line": 17,
+    "updated": "2026-04-23T02:10:01.632Z"
+  },
+  "br-admin/types/global.d.ts::parseInt()": {
+    "file": "br-admin/types/global.d.ts",
+    "function": "parseInt",
+    "line": 81,
+    "updated": "2026-04-23T02:10:01.633Z"
+  },
+  "br-admin/types/global.d.ts::parseFloat()": {
+    "file": "br-admin/types/global.d.ts",
+    "function": "parseFloat",
+    "line": 83,
+    "updated": "2026-04-23T02:10:01.633Z"
+  },
+  "br-admin/src/main.ts::bootstrap()": {
+    "file": "br-admin/src/main.ts",
+    "function": "bootstrap",
+    "line": 9,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/build/utils.ts::isDevFn()": {
+    "file": "br-admin/build/utils.ts",
+    "function": "isDevFn",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/build/utils.ts::isProdFn()": {
+    "file": "br-admin/build/utils.ts",
+    "function": "isProdFn",
+    "line": 9,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/build/utils.ts::isReportMode()": {
+    "file": "br-admin/build/utils.ts",
+    "function": "isReportMode",
+    "line": 16,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/build/utils.ts::wrapperEnv()": {
+    "file": "br-admin/build/utils.ts",
+    "function": "wrapperEnv",
+    "line": 21,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/build/utils.ts::getEnvConfig()": {
+    "file": "br-admin/build/utils.ts",
+    "function": "getEnvConfig",
+    "line": 47,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/build/utils.ts::getRootPath()": {
+    "file": "br-admin/build/utils.ts",
+    "function": "getRootPath",
+    "line": 69,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/build/getConfigFileName.ts::getConfigFileName()": {
+    "file": "br-admin/build/getConfigFileName.ts",
+    "function": "getConfigFileName",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/mock/_util.ts::resultSuccess()": {
+    "file": "br-admin/mock/_util.ts",
+    "function": "resultSuccess",
+    "line": 3,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/mock/_util.ts::resultError()": {
+    "file": "br-admin/mock/_util.ts",
+    "function": "resultError",
+    "line": 31,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/mock/_util.ts::doCustomTimes()": {
+    "file": "br-admin/mock/_util.ts",
+    "function": "doCustomTimes",
+    "line": 53,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/mock/_util.ts::getRequestToken()": {
+    "file": "br-admin/mock/_util.ts",
+    "function": "getRequestToken",
+    "line": 71,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/mock/_util.ts::offset()": {
+    "file": "br-admin/mock/_util.ts",
+    "function": "offset",
+    "line": 41,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/src/utils/urlUtils.ts::setObjToUrlParams()": {
+    "file": "br-admin/src/utils/urlUtils.ts",
+    "function": "setObjToUrlParams",
+    "line": 11,
+    "updated": "2026-04-23T02:10:01.634Z"
+  },
+  "br-admin/src/utils/log.ts::warn()": {
+    "file": "br-admin/src/utils/log.ts",
+    "function": "warn",
+    "line": 3,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/log.ts::error()": {
+    "file": "br-admin/src/utils/log.ts",
+    "function": "error",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::renderIcon()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "renderIcon",
+    "line": 10,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::renderFontClassIcon()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "renderFontClassIcon",
+    "line": 16,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::renderUnicodeIcon()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "renderUnicodeIcon",
+    "line": 22,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::renderfontsvg()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "renderfontsvg",
+    "line": 28,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::renderNew()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "renderNew",
+    "line": 40,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::generatorMenu()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "generatorMenu",
+    "line": 57,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::generatorMenuMix()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "generatorMenuMix",
+    "line": 80,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::getChildrenRouter()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "getChildrenRouter",
+    "line": 106,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::isRootRouter()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "isRootRouter",
+    "line": 128,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::filterRouter()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "filterRouter",
+    "line": 138,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::getTreeItem()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "getTreeItem",
+    "line": 162,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::getTreeAll()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "getTreeAll",
+    "line": 179,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::addLight()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "addLight",
+    "line": 214,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::lighten()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "lighten",
+    "line": 226,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/index.ts::isUrl()": {
+    "file": "br-admin/src/utils/index.ts",
+    "function": "isUrl",
+    "line": 238,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/env.ts::getCommonStoragePrefix()": {
+    "file": "br-admin/src/utils/env.ts",
+    "function": "getCommonStoragePrefix",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/env.ts::getStorageShortName()": {
+    "file": "br-admin/src/utils/env.ts",
+    "function": "getStorageShortName",
+    "line": 13,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/env.ts::getAppEnvConfig()": {
+    "file": "br-admin/src/utils/env.ts",
+    "function": "getAppEnvConfig",
+    "line": 17,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/env.ts::getEnv()": {
+    "file": "br-admin/src/utils/env.ts",
+    "function": "getEnv",
+    "line": 69,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/env.ts::isDevMode()": {
+    "file": "br-admin/src/utils/env.ts",
+    "function": "isDevMode",
+    "line": 78,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/env.ts::isProdMode()": {
+    "file": "br-admin/src/utils/env.ts",
+    "function": "isProdMode",
+    "line": 87,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/env.ts::ENV()": {
+    "file": "br-admin/src/utils/env.ts",
+    "function": "ENV",
+    "line": 20,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/downloadFile.ts::getFileName()": {
+    "file": "br-admin/src/utils/downloadFile.ts",
+    "function": "getFileName",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/downloadFile.ts::downloadByUrl()": {
+    "file": "br-admin/src/utils/downloadFile.ts",
+    "function": "downloadByUrl",
+    "line": 17,
+    "updated": "2026-04-23T02:10:01.635Z"
+  },
+  "br-admin/src/utils/domUtils.ts::getBoundingClientRect()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "getBoundingClientRect",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::trim()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "trim",
+    "line": 19,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::hasClass()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "hasClass",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::addClass()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "addClass",
+    "line": 35,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::removeClass()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "removeClass",
+    "line": 56,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::getViewportOffset()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "getViewportOffset",
+    "line": 86,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::hackCss()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "hackCss",
+    "line": 121,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::on()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "on",
+    "line": 135,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::off()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "off",
+    "line": 146,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::once()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "once",
+    "line": 157,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::classes()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "classes",
+    "line": 38,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::scrollLeft()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "scrollLeft",
+    "line": 101,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/domUtils.ts::scrollTop()": {
+    "file": "br-admin/src/utils/domUtils.ts",
+    "function": "scrollTop",
+    "line": 102,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/dateUtil.ts::formatToDateTime()": {
+    "file": "br-admin/src/utils/dateUtil.ts",
+    "function": "formatToDateTime",
+    "line": 6,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/dateUtil.ts::formatToDate()": {
+    "file": "br-admin/src/utils/dateUtil.ts",
+    "function": "formatToDate",
+    "line": 10,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/browser-type.ts::BrowserType()": {
+    "file": "br-admin/src/utils/browser-type.ts",
+    "function": "BrowserType",
+    "line": 6,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/browser-type.ts::testUa()": {
+    "file": "br-admin/src/utils/browser-type.ts",
+    "function": "testUa",
+    "line": 9,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/utils/browser-type.ts::testVs()": {
+    "file": "br-admin/src/utils/browser-type.ts",
+    "function": "testVs",
+    "line": 10,
+    "updated": "2026-04-23T02:10:01.636Z"
+  },
+  "br-admin/src/store/index.ts::setupStore()": {
+    "file": "br-admin/src/store/index.ts",
+    "function": "setupStore",
+    "line": 6,
+    "updated": "2026-04-23T02:10:01.637Z"
+  },
+  "br-admin/src/plugins/naiveDiscreteApi.ts::setupNaiveDiscreteApi()": {
+    "file": "br-admin/src/plugins/naiveDiscreteApi.ts",
+    "function": "setupNaiveDiscreteApi",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.637Z"
+  },
+  "br-admin/src/plugins/naive.ts::setupNaive()": {
+    "file": "br-admin/src/plugins/naive.ts",
+    "function": "setupNaive",
+    "line": 144,
+    "updated": "2026-04-23T02:10:01.638Z"
+  },
+  "br-admin/src/plugins/globalMethods.ts::setupGlobalMethods()": {
+    "file": "br-admin/src/plugins/globalMethods.ts",
+    "function": "setupGlobalMethods",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.638Z"
+  },
+  "br-admin/src/plugins/directives.ts::setupDirectives()": {
+    "file": "br-admin/src/plugins/directives.ts",
+    "function": "setupDirectives",
+    "line": 13,
+    "updated": "2026-04-23T02:10:01.638Z"
+  },
+  "br-admin/src/plugins/customComponents.ts::setupCustomComponents()": {
+    "file": "br-admin/src/plugins/customComponents.ts",
+    "function": "setupCustomComponents",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.638Z"
+  },
+  "br-admin/src/router/index.ts::sortRoute()": {
+    "file": "br-admin/src/router/index.ts",
+    "function": "sortRoute",
+    "line": 16,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/index.ts::setupRouter()": {
+    "file": "br-admin/src/router/index.ts",
+    "function": "setupRouter",
+    "line": 53,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/guards.ts::createRouterGuards()": {
+    "file": "br-admin/src/router/guards.ts",
+    "function": "createRouterGuards",
+    "line": 15,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/guards.ts::redirectPath()": {
+    "file": "br-admin/src/router/guards.ts",
+    "function": "redirectPath",
+    "line": 75,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/generator.ts::Iframe()": {
+    "file": "br-admin/src/router/generator.ts",
+    "function": "Iframe",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/generator.ts::generateRoutes()": {
+    "file": "br-admin/src/router/generator.ts",
+    "function": "generateRoutes",
+    "line": 19,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/generator.ts::generateDynamicRoutes()": {
+    "file": "br-admin/src/router/generator.ts",
+    "function": "generateDynamicRoutes",
+    "line": 56,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/generator.ts::asyncImportRoute()": {
+    "file": "br-admin/src/router/generator.ts",
+    "function": "asyncImportRoute",
+    "line": 67,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/generator.ts::dynamicImport()": {
+    "file": "br-admin/src/router/generator.ts",
+    "function": "dynamicImport",
+    "line": 93,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/constant.ts::ErrorPage()": {
+    "file": "br-admin/src/router/constant.ts",
+    "function": "ErrorPage",
+    "line": 3,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/constant.ts::Layout()": {
+    "file": "br-admin/src/router/constant.ts",
+    "function": "Layout",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/router/constant.ts::ParentLayout()": {
+    "file": "br-admin/src/router/constant.ts",
+    "function": "ParentLayout",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.639Z"
+  },
+  "br-admin/src/hooks/useTime.ts::useTime()": {
+    "file": "br-admin/src/hooks/useTime.ts",
+    "function": "useTime",
+    "line": 6,
+    "updated": "2026-04-23T02:10:01.640Z"
+  },
+  "br-admin/src/hooks/useTime.ts::updateTime()": {
+    "file": "br-admin/src/hooks/useTime.ts",
+    "function": "updateTime",
+    "line": 17,
+    "updated": "2026-04-23T02:10:01.640Z"
+  },
+  "br-admin/src/hooks/useOnline.ts::useOnline()": {
+    "file": "br-admin/src/hooks/useOnline.ts",
+    "function": "useOnline",
+    "line": 6,
+    "updated": "2026-04-23T02:10:01.640Z"
+  },
+  "br-admin/src/hooks/useOnline.ts::showStatus()": {
+    "file": "br-admin/src/hooks/useOnline.ts",
+    "function": "showStatus",
+    "line": 9,
+    "updated": "2026-04-23T02:10:01.640Z"
+  },
+  "br-admin/src/hooks/useDomWidth.ts::useDomWidth()": {
+    "file": "br-admin/src/hooks/useDomWidth.ts",
+    "function": "useDomWidth",
+    "line": 8,
+    "updated": "2026-04-23T02:10:01.640Z"
+  },
+  "br-admin/src/hooks/useDomWidth.ts::resize()": {
+    "file": "br-admin/src/hooks/useDomWidth.ts",
+    "function": "resize",
+    "line": 11,
+    "updated": "2026-04-23T02:10:01.640Z"
+  },
+  "br-admin/src/hooks/useBattery.ts::useBattery()": {
+    "file": "br-admin/src/hooks/useBattery.ts",
+    "function": "useBattery",
+    "line": 11,
+    "updated": "2026-04-23T02:10:01.640Z"
+  },
+  "br-admin/src/hooks/useBattery.ts::updateBattery()": {
+    "file": "br-admin/src/hooks/useBattery.ts",
+    "function": "updateBattery",
+    "line": 22,
+    "updated": "2026-04-23T02:10:01.640Z"
+  },
+  "br-admin/src/hooks/useBattery.ts::minute()": {
+    "file": "br-admin/src/hooks/useBattery.ts",
+    "function": "minute",
+    "line": 40,
+    "updated": "2026-04-23T02:10:01.640Z"
+  },
+  "br-admin/src/hooks/useAsync.ts::setLoading()": {
+    "file": "br-admin/src/hooks/useAsync.ts",
+    "function": "setLoading",
+    "line": 3,
+    "updated": "2026-04-23T02:10:01.641Z"
+  },
+  "br-admin/src/hooks/useAsync.ts::useAsync()": {
+    "file": "br-admin/src/hooks/useAsync.ts",
+    "function": "useAsync",
+    "line": 11,
+    "updated": "2026-04-23T02:10:01.641Z"
+  },
+  "br-admin/src/directives/longpress.ts::start()": {
+    "file": "br-admin/src/directives/longpress.ts",
+    "function": "start",
+    "line": 15,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/src/directives/longpress.ts::cancel()": {
+    "file": "br-admin/src/directives/longpress.ts",
+    "function": "cancel",
+    "line": 28,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/src/directives/longpress.ts::handler()": {
+    "file": "br-admin/src/directives/longpress.ts",
+    "function": "handler",
+    "line": 35,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/src/directives/copy.ts::handleClick()": {
+    "file": "br-admin/src/directives/copy.ts",
+    "function": "handleClick",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/src/directives/clickOutside.ts::createDocumentHandler()": {
+    "file": "br-admin/src/directives/clickOutside.ts",
+    "function": "createDocumentHandler",
+    "line": 28,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/src/directives/clickOutside.ts::popperRef()": {
+    "file": "br-admin/src/directives/clickOutside.ts",
+    "function": "popperRef",
+    "line": 37,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/src/directives/clickOutside.ts::isTargetExcluded()": {
+    "file": "br-admin/src/directives/clickOutside.ts",
+    "function": "isTargetExcluded",
+    "line": 49,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/build/vite/proxy.ts::createProxy()": {
+    "file": "br-admin/build/vite/proxy.ts",
+    "function": "createProxy",
+    "line": 18,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/build/script/postBuild.ts::runBuild()": {
+    "file": "br-admin/build/script/postBuild.ts",
+    "function": "runBuild",
+    "line": 8,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/build/script/buildConf.ts::createConfig()": {
+    "file": "br-admin/build/script/buildConf.ts",
+    "function": "createConfig",
+    "line": 13,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/build/script/buildConf.ts::runBuildConfig()": {
+    "file": "br-admin/build/script/buildConf.ts",
+    "function": "runBuildConfig",
+    "line": 40,
+    "updated": "2026-04-23T02:10:01.642Z"
+  },
+  "br-admin/mock/system/role.ts::getMenuKeys()": {
+    "file": "br-admin/mock/system/role.ts",
+    "function": "getMenuKeys",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.643Z"
+  },
+  "br-admin/mock/system/role.ts::roleList()": {
+    "file": "br-admin/mock/system/role.ts",
+    "function": "roleList",
+    "line": 15,
+    "updated": "2026-04-23T02:10:01.643Z"
+  },
+  "br-admin/mock/system/menu.ts::menuList()": {
+    "file": "br-admin/mock/system/menu.ts",
+    "function": "menuList",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.643Z"
+  },
+  "br-admin/mock/table/list.ts::tableList()": {
+    "file": "br-admin/mock/table/list.ts",
+    "function": "tableList",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.643Z"
+  },
+  "br-admin/mock/dashboard/console.ts::getRandom()": {
+    "file": "br-admin/mock/dashboard/console.ts",
+    "function": "getRandom",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.643Z"
+  },
+  "br-app/node_modules/yaml/util.d.ts::findPair()": {
+    "file": "br-app/node_modules/yaml/util.d.ts",
+    "function": "findPair",
+    "line": 5,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/util.d.ts::parseMap()": {
+    "file": "br-app/node_modules/yaml/util.d.ts",
+    "function": "parseMap",
+    "line": 8,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/util.d.ts::parseSeq()": {
+    "file": "br-app/node_modules/yaml/util.d.ts",
+    "function": "parseSeq",
+    "line": 10,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/util.d.ts::stringifyNumber()": {
+    "file": "br-app/node_modules/yaml/util.d.ts",
+    "function": "stringifyNumber",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/util.d.ts::stringifyString()": {
+    "file": "br-app/node_modules/yaml/util.d.ts",
+    "function": "stringifyString",
+    "line": 13,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/util.d.ts::toJSON()": {
+    "file": "br-app/node_modules/yaml/util.d.ts",
+    "function": "toJSON",
+    "line": 20,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/parse-cst.d.ts::parseCST()": {
+    "file": "br-app/node_modules/yaml/parse-cst.d.ts",
+    "function": "parseCST",
+    "line": 3,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/index.d.ts::createNode()": {
+    "file": "br-app/node_modules/yaml/index.d.ts",
+    "function": "createNode",
+    "line": 334,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/index.d.ts::parseDocument()": {
+    "file": "br-app/node_modules/yaml/index.d.ts",
+    "function": "parseDocument",
+    "line": 343,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/index.d.ts::parseAllDocuments()": {
+    "file": "br-app/node_modules/yaml/index.d.ts",
+    "function": "parseAllDocuments",
+    "line": 350,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/index.d.ts::parse()": {
+    "file": "br-app/node_modules/yaml/index.d.ts",
+    "function": "parse",
+    "line": 367,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/yaml/index.d.ts::stringify()": {
+    "file": "br-app/node_modules/yaml/index.d.ts",
+    "function": "stringify",
+    "line": 372,
+    "updated": "2026-04-23T02:10:01.644Z"
+  },
+  "br-app/node_modules/v8-to-istanbul/index.d.ts::v8ToIstanbul()": {
+    "file": "br-app/node_modules/v8-to-istanbul/index.d.ts",
+    "function": "v8ToIstanbul",
+    "line": 23,
+    "updated": "2026-04-23T02:10:01.645Z"
+  },
+  "br-app/node_modules/update-browserslist-db/index.d.ts::updateDb()": {
+    "file": "br-app/node_modules/update-browserslist-db/index.d.ts",
+    "function": "updateDb",
+    "line": 4,
+    "updated": "2026-04-23T02:10:01.646Z"
+  },
+  "br-app/node_modules/undici-types/util.d.ts::headerNameToString()": {
+    "file": "br-app/node_modules/undici-types/util.d.ts",
+    "function": "headerNameToString",
+    "line": 6,
+    "updated": "2026-04-23T02:10:01.647Z"
+  },
+  "br-app/node_modules/undici-types/util.d.ts::parseHeaders()": {
+    "file": "br-app/node_modules/undici-types/util.d.ts",
+    "function": "parseHeaders",
+    "line": 14,
+    "updated": "2026-04-23T02:10:01.647Z"
+  },
+  "br-server/tests/test_sms_service.py::mock_redis()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "mock_redis",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.682Z"
+  },
+  "br-server/tests/test_sms_service.py::settings()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "settings",
+    "line": 25,
+    "updated": "2026-04-23T02:10:01.682Z"
+  },
+  "br-server/tests/test_sms_service.py::sms_service()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "sms_service",
+    "line": 37,
+    "updated": "2026-04-23T02:10:01.682Z"
+  },
+  "br-server/tests/test_sms_service.py::captcha_token()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "captcha_token",
+    "line": 43,
+    "updated": "2026-04-23T02:10:01.682Z"
+  },
+  "br-server/tests/test_sms_service.py::_send_and_expect_code()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "_send_and_expect_code",
+    "line": 51,
+    "updated": "2026-04-23T02:10:01.682Z"
+  },
+  "br-server/tests/test_sms_service.py::test_send_code_success()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "test_send_code_success",
+    "line": 69,
+    "updated": "2026-04-23T02:10:01.682Z"
+  },
+  "br-server/tests/test_sms_service.py::test_rate_limit_per_minute()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "test_rate_limit_per_minute",
+    "line": 97,
+    "updated": "2026-04-23T02:10:01.682Z"
+  },
+  "br-server/tests/test_sms_service.py::test_daily_limit_exceeded()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "test_daily_limit_exceeded",
+    "line": 117,
+    "updated": "2026-04-23T02:10:01.682Z"
+  },
+  "br-server/tests/test_sms_service.py::test_invalid_phone_format()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "test_invalid_phone_format",
+    "line": 132,
+    "updated": "2026-04-23T02:10:01.682Z"
+  },
+  "br-server/tests/test_sms_service.py::test_verify_code_correct()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "test_verify_code_correct",
+    "line": 150,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_sms_service.py::test_verify_code_incorrect()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "test_verify_code_incorrect",
+    "line": 161,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_sms_service.py::test_verify_code_expired()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "test_verify_code_expired",
+    "line": 172,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_sms_service.py::test_generate_code_format()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "test_generate_code_format",
+    "line": 182,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_sms_service.py::test_aliyun_sms_provider_missing_credentials()": {
+    "file": "br-server/tests/test_sms_service.py",
+    "function": "test_aliyun_sms_provider_missing_credentials",
+    "line": 191,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::_mock_keys_result()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "_mock_keys_result",
+    "line": 19,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::_coro()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "_coro",
+    "line": 21,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::settings()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "settings",
+    "line": 28,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::mock_redis()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "mock_redis",
+    "line": 39,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::jwt_service()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "jwt_service",
+    "line": 45,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::user_id()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "user_id",
+    "line": 51,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_create_access_token()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_create_access_token",
+    "line": 62,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_create_access_token_expiry()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_create_access_token_expiry",
+    "line": 81,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_create_refresh_token()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_create_refresh_token",
+    "line": 105,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_create_refresh_token_unique_jti()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_create_refresh_token_unique_jti",
+    "line": 122,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_verify_token_valid()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_verify_token_valid",
+    "line": 142,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_verify_token_expired()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_verify_token_expired",
+    "line": 150,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_verify_token_invalid_signature()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_verify_token_invalid_signature",
+    "line": 171,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_blacklist_token()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_blacklist_token",
+    "line": 193,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_is_blacklisted()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_is_blacklisted",
+    "line": 208,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_blacklist_token_no_exp()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_blacklist_token_no_exp",
+    "line": 216,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_refresh_token_rotation()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_refresh_token_rotation",
+    "line": 229,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_refresh_token_reuse_detection()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_refresh_token_reuse_detection",
+    "line": 252,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_store_refresh_token()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_store_refresh_token",
+    "line": 272,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_revoke_refresh_token()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_revoke_refresh_token",
+    "line": 283,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_is_refresh_token_valid()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_is_refresh_token_valid",
+    "line": 289,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_get_current_user_id()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_get_current_user_id",
+    "line": 304,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_get_current_user_id_blacklisted()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_get_current_user_id_blacklisted",
+    "line": 312,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_get_current_user_id_wrong_type()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_get_current_user_id_wrong_type",
+    "line": 335,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_jwt_service.py::test_get_current_user_id_expired()": {
+    "file": "br-server/tests/test_jwt_service.py",
+    "function": "test_get_current_user_id_expired",
+    "line": 342,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::mock_redis()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "mock_redis",
+    "line": 10,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::dev_settings()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "dev_settings",
+    "line": 18,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::prod_settings()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "prod_settings",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::captcha_service_dev()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "captcha_service_dev",
+    "line": 30,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::captcha_service_prod()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "captcha_service_prod",
+    "line": 37,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::test_verify_captcha_pass_dev_mode()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "test_verify_captcha_pass_dev_mode",
+    "line": 49,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::test_verify_captcha_aliyun()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "test_verify_captcha_aliyun",
+    "line": 58,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::test_captcha_token_reused()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "test_captcha_token_reused",
+    "line": 81,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::test_missing_captcha_token()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "test_missing_captcha_token",
+    "line": 92,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::test_is_used_true()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "test_is_used_true",
+    "line": 101,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_captcha_service.py::test_is_used_false()": {
+    "file": "br-server/tests/test_captcha_service.py",
+    "function": "test_is_used_false",
+    "line": 109,
+    "updated": "2026-04-23T02:10:01.683Z"
+  },
+  "br-server/tests/test_auth_service.py::_mock_keys_result()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "_mock_keys_result",
+    "line": 22,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::_coro()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "_coro",
+    "line": 24,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::settings()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "settings",
+    "line": 36,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::mock_redis()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "mock_redis",
+    "line": 46,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::mock_db()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "mock_db",
+    "line": 51,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::auth_service()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "auth_service",
+    "line": 58,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::user_create_data()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "user_create_data",
+    "line": 63,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::user_login_data()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "user_login_data",
+    "line": 76,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::existing_user()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "existing_user",
+    "line": 81,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::_mock_scalar_result()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "_mock_scalar_result",
+    "line": 97,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_register_success()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_register_success",
+    "line": 112,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_register_duplicate_phone()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_register_duplicate_phone",
+    "line": 141,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_register_invalid_sms_code()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_register_invalid_sms_code",
+    "line": 166,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_register_default_nickname()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_register_default_nickname",
+    "line": 185,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_register_empty_captcha_token()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_register_empty_captcha_token",
+    "line": 211,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_login_success()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_login_success",
+    "line": 234,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_login_wrong_password()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_login_wrong_password",
+    "line": 254,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_login_account_not_found()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_login_account_not_found",
+    "line": 271,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_login_account_banned()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_login_account_banned",
+    "line": 285,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_refresh_token_success()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_refresh_token_success",
+    "line": 314,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_refresh_token_expired()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_refresh_token_expired",
+    "line": 345,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_refresh_token_reuse_detection()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_refresh_token_reuse_detection",
+    "line": 368,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_logout()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_logout",
+    "line": 402,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_auth_service.py::test_logout_no_sub()": {
+    "file": "br-server/tests/test_auth_service.py",
+    "function": "test_logout_no_sub",
+    "line": 429,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_api_homepage.py::seed_data()": {
+    "file": "br-server/tests/test_api_homepage.py",
+    "function": "seed_data",
+    "line": 13,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_api_homepage.py::test_list_banners()": {
+    "file": "br-server/tests/test_api_homepage.py",
+    "function": "test_list_banners",
+    "line": 32,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_api_homepage.py::test_list_banners_empty()": {
+    "file": "br-server/tests/test_api_homepage.py",
+    "function": "test_list_banners_empty",
+    "line": 41,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_api_homepage.py::test_list_activities()": {
+    "file": "br-server/tests/test_api_homepage.py",
+    "function": "test_list_activities",
+    "line": 49,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_api_homepage.py::test_list_activities_empty()": {
+    "file": "br-server/tests/test_api_homepage.py",
+    "function": "test_list_activities_empty",
+    "line": 58,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_api_homepage.py::test_list_rooms_default_pagination()": {
+    "file": "br-server/tests/test_api_homepage.py",
+    "function": "test_list_rooms_default_pagination",
+    "line": 66,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_api_homepage.py::test_list_rooms_custom_pagination()": {
+    "file": "br-server/tests/test_api_homepage.py",
+    "function": "test_list_rooms_custom_pagination",
+    "line": 76,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_api_homepage.py::test_list_rooms_page_size_exceeds_max()": {
+    "file": "br-server/tests/test_api_homepage.py",
+    "function": "test_list_rooms_page_size_exceeds_max",
+    "line": 85,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/test_api_homepage.py::test_list_rooms_empty()": {
+    "file": "br-server/tests/test_api_homepage.py",
+    "function": "test_list_rooms_empty",
+    "line": 90,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/conftest.py::event_loop()": {
+    "file": "br-server/tests/conftest.py",
+    "function": "event_loop",
+    "line": 14,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/conftest.py::db_session()": {
+    "file": "br-server/tests/conftest.py",
+    "function": "db_session",
+    "line": 22,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/conftest.py::client()": {
+    "file": "br-server/tests/conftest.py",
+    "function": "client",
+    "line": 41,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/tests/conftest.py::override_get_db()": {
+    "file": "br-server/tests/conftest.py",
+    "function": "override_get_db",
+    "line": 44,
+    "updated": "2026-04-23T02:10:01.684Z"
+  },
+  "br-server/app/main.py::lifespan()": {
+    "file": "br-server/app/main.py",
+    "function": "lifespan",
+    "line": 16,
+    "updated": "2026-04-23T02:10:01.685Z"
+  },
+  "br-server/app/main.py::health_check()": {
+    "file": "br-server/app/main.py",
+    "function": "health_check",
+    "line": 50,
+    "updated": "2026-04-23T02:10:01.685Z"
+  },
+  "br-server/alembic/env.py::run_migrations_offline()": {
+    "file": "br-server/alembic/env.py",
+    "function": "run_migrations_offline",
+    "line": 25,
+    "updated": "2026-04-23T02:10:01.685Z"
+  },
+  "br-server/alembic/env.py::do_run_migrations()": {
+    "file": "br-server/alembic/env.py",
+    "function": "do_run_migrations",
+    "line": 43,
+    "updated": "2026-04-23T02:10:01.685Z"
+  },
+  "br-server/alembic/env.py::run_async_migrations()": {
+    "file": "br-server/alembic/env.py",
+    "function": "run_async_migrations",
+    "line": 50,
+    "updated": "2026-04-23T02:10:01.685Z"
+  },
+  "br-server/alembic/env.py::run_migrations_online()": {
+    "file": "br-server/alembic/env.py",
+    "function": "run_migrations_online",
+    "line": 64,
+    "updated": "2026-04-23T02:10:01.685Z"
+  },
+  "br-server/app/services/study_room_service.py::list_study_rooms()": {
+    "file": "br-server/app/services/study_room_service.py",
+    "function": "list_study_rooms",
+    "line": 11,
+    "updated": "2026-04-23T02:10:01.686Z"
+  },
+  "br-server/app/services/sms_service.py::_percent_encode()": {
+    "file": "br-server/app/services/sms_service.py",
+    "function": "_percent_encode",
+    "line": 23,
+    "updated": "2026-04-23T02:10:01.686Z"
+  },
+  "br-server/app/services/sms_service.py::_sign_request()": {
+    "file": "br-server/app/services/sms_service.py",
+    "function": "_sign_request",
+    "line": 28,
+    "updated": "2026-04-23T02:10:01.686Z"
+  },
+  "br-server/app/services/sms_service.py::__init__()": {
+    "file": "br-server/app/services/sms_service.py",
+    "function": "__init__",
+    "line": 114,
+    "updated": "2026-04-23T02:10:01.686Z"
+  },
+  "br-server/app/services/sms_service.py::send()": {
+    "file": "br-server/app/services/sms_service.py",
+    "function": "send",
+    "line": 54,
+    "updated": "2026-04-23T02:10:01.686Z"
+  },
+  "br-server/app/services/sms_service.py::generate_code()": {
+    "file": "br-server/app/services/sms_service.py",
+    "function": "generate_code",
+    "line": 120,
+    "updated": "2026-04-23T02:10:01.686Z"
+  },
+  "br-server/app/services/sms_service.py::send_code()": {
+    "file": "br-server/app/services/sms_service.py",
+    "function": "send_code",
+    "line": 124,
+    "updated": "2026-04-23T02:10:01.686Z"
+  },
+  "br-server/app/services/sms_service.py::verify_code()": {
+    "file": "br-server/app/services/sms_service.py",
+    "function": "verify_code",
+    "line": 166,
+    "updated": "2026-04-23T02:10:01.686Z"
+  },
+  "br-server/app/services/seed_data.py::seed_all()": {
+    "file": "br-server/app/services/seed_data.py",
+    "function": "seed_all",
+    "line": 106,
+    "updated": "2026-04-23T02:10:01.686Z"
+  },
+  "br-server/app/services/jwt_service.py::__init__()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "__init__",
+    "line": 17,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/jwt_service.py::create_access_token()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "create_access_token",
+    "line": 21,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/jwt_service.py::create_refresh_token()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "create_refresh_token",
+    "line": 38,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/jwt_service.py::verify_token()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "verify_token",
+    "line": 57,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/jwt_service.py::blacklist_token()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "blacklist_token",
+    "line": 75,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/jwt_service.py::is_blacklisted()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "is_blacklisted",
+    "line": 90,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/jwt_service.py::store_refresh_token()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "store_refresh_token",
+    "line": 96,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/jwt_service.py::revoke_refresh_token()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "revoke_refresh_token",
+    "line": 105,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/jwt_service.py::is_refresh_token_valid()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "is_refresh_token_valid",
+    "line": 110,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/jwt_service.py::rotate_refresh_token()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "rotate_refresh_token",
+    "line": 116,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/jwt_service.py::get_current_user_id()": {
+    "file": "br-server/app/services/jwt_service.py",
+    "function": "get_current_user_id",
+    "line": 147,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/captcha_service.py::__init__()": {
+    "file": "br-server/app/services/captcha_service.py",
+    "function": "__init__",
+    "line": 19,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/captcha_service.py::verify()": {
+    "file": "br-server/app/services/captcha_service.py",
+    "function": "verify",
+    "line": 23,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/captcha_service.py::is_used()": {
+    "file": "br-server/app/services/captcha_service.py",
+    "function": "is_used",
+    "line": 71,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/banner_service.py::list_active_banners()": {
+    "file": "br-server/app/services/banner_service.py",
+    "function": "list_active_banners",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/auth_service.py::__init__()": {
+    "file": "br-server/app/services/auth_service.py",
+    "function": "__init__",
+    "line": 23,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/auth_service.py::register()": {
+    "file": "br-server/app/services/auth_service.py",
+    "function": "register",
+    "line": 29,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/auth_service.py::login()": {
+    "file": "br-server/app/services/auth_service.py",
+    "function": "login",
+    "line": 123,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/auth_service.py::refresh_token()": {
+    "file": "br-server/app/services/auth_service.py",
+    "function": "refresh_token",
+    "line": 167,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/auth_service.py::logout()": {
+    "file": "br-server/app/services/auth_service.py",
+    "function": "logout",
+    "line": 202,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/services/activity_service.py::list_active_activities()": {
+    "file": "br-server/app/services/activity_service.py",
+    "function": "list_active_activities",
+    "line": 7,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/core/redis.py::init_redis()": {
+    "file": "br-server/app/core/redis.py",
+    "function": "init_redis",
+    "line": 10,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/core/redis.py::close_redis()": {
+    "file": "br-server/app/core/redis.py",
+    "function": "close_redis",
+    "line": 22,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/core/redis.py::get_redis()": {
+    "file": "br-server/app/core/redis.py",
+    "function": "get_redis",
+    "line": 30,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/core/database.py::get_db()": {
+    "file": "br-server/app/core/database.py",
+    "function": "get_db",
+    "line": 20,
+    "updated": "2026-04-23T02:10:01.687Z"
+  },
+  "br-server/app/api/dependencies.py::get_current_user_id()": {
+    "file": "br-server/app/api/dependencies.py",
+    "function": "get_current_user_id",
+    "line": 17,
+    "updated": "2026-04-23T02:10:01.688Z"
+  },
+  "br-server/alembic/versions/2026_04_20_1030-ba64420678cf_create_activities_table.py::upgrade()": {
+    "file": "br-server/alembic/versions/2026_04_20_1030-ba64420678cf_create_activities_table.py",
+    "function": "upgrade",
+    "line": 21,
+    "updated": "2026-04-23T02:10:01.688Z"
+  },
+  "br-server/alembic/versions/2026_04_20_1030-ba64420678cf_create_activities_table.py::downgrade()": {
+    "file": "br-server/alembic/versions/2026_04_20_1030-ba64420678cf_create_activities_table.py",
+    "function": "downgrade",
+    "line": 65,
+    "updated": "2026-04-23T02:10:01.688Z"
+  },
+  "br-server/alembic/versions/2026_04_17_1343-1dfa25667f22_create_users_table.py::upgrade()": {
+    "file": "br-server/alembic/versions/2026_04_17_1343-1dfa25667f22_create_users_table.py",
+    "function": "upgrade",
+    "line": 21,
+    "updated": "2026-04-23T02:10:01.688Z"
+  },
+  "br-server/alembic/versions/2026_04_17_1343-1dfa25667f22_create_users_table.py::downgrade()": {
+    "file": "br-server/alembic/versions/2026_04_17_1343-1dfa25667f22_create_users_table.py",
+    "function": "downgrade",
+    "line": 30,
+    "updated": "2026-04-23T02:10:01.688Z"
+  },
+  "br-server/alembic/versions/2026_04_17_0957-0a2b2652445d_create_users_table.py::upgrade()": {
+    "file": "br-server/alembic/versions/2026_04_17_0957-0a2b2652445d_create_users_table.py",
+    "function": "upgrade",
+    "line": 21,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/alembic/versions/2026_04_17_0957-0a2b2652445d_create_users_table.py::downgrade()": {
+    "file": "br-server/alembic/versions/2026_04_17_0957-0a2b2652445d_create_users_table.py",
+    "function": "downgrade",
+    "line": 42,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/user.py::get_me()": {
+    "file": "br-server/app/api/routes/user.py",
+    "function": "get_me",
+    "line": 16,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/study_room.py::list_study_rooms()": {
+    "file": "br-server/app/api/routes/study_room.py",
+    "function": "list_study_rooms",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/banner.py::list_banners()": {
+    "file": "br-server/app/api/routes/banner.py",
+    "function": "list_banners",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/auth.py::_issue_cookie_token()": {
+    "file": "br-server/app/api/routes/auth.py",
+    "function": "_issue_cookie_token",
+    "line": 29,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/auth.py::_set_refresh_token_cookie()": {
+    "file": "br-server/app/api/routes/auth.py",
+    "function": "_set_refresh_token_cookie",
+    "line": 49,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/auth.py::send_code()": {
+    "file": "br-server/app/api/routes/auth.py",
+    "function": "send_code",
+    "line": 62,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/auth.py::register()": {
+    "file": "br-server/app/api/routes/auth.py",
+    "function": "register",
+    "line": 77,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/auth.py::login()": {
+    "file": "br-server/app/api/routes/auth.py",
+    "function": "login",
+    "line": 101,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/auth.py::refresh()": {
+    "file": "br-server/app/api/routes/auth.py",
+    "function": "refresh",
+    "line": 119,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/auth.py::logout()": {
+    "file": "br-server/app/api/routes/auth.py",
+    "function": "logout",
+    "line": 159,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/auth.py::get_me()": {
+    "file": "br-server/app/api/routes/auth.py",
+    "function": "get_me",
+    "line": 185,
+    "updated": "2026-04-23T02:10:01.689Z"
+  },
+  "br-server/app/api/routes/activity.py::list_activities()": {
+    "file": "br-server/app/api/routes/activity.py",
+    "function": "list_activities",
+    "line": 12,
+    "updated": "2026-04-23T02:10:01.689Z"
+  }
+}

@@ -9,6 +9,8 @@ from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.schemas.booking import (
+    BookingAdminListResponse,
+    BookingAdminResponse,
     BookingCreate,
     BookingListResponse,
     BookingResponse,
@@ -214,3 +216,115 @@ async def cancel_booking(
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
 
     return _build_booking_response(booking, seat, room)
+
+
+def _build_admin_booking_response(booking: Booking, seat: Seat, room: StudyRoom) -> BookingAdminResponse:
+    return BookingAdminResponse(
+        id=booking.id,
+        user_id=booking.user_id,
+        room_id=booking.room_id,
+        seat_id=booking.seat_id,
+        date=booking.date,
+        start_time=booking.start_time,
+        end_time=booking.end_time,
+        status=booking.status,
+        total_price=booking.total_price,
+        created_at=booking.created_at,
+        updated_at=booking.updated_at,
+        seat=SeatBrief.model_validate(seat),
+        room=RoomBrief.model_validate(room),
+    )
+
+
+async def admin_list_bookings(
+    db: AsyncSession,
+    page: int = 1,
+    page_size: int = DEFAULT_PAGE_SIZE,
+    status: str | None = None,
+    room_id: int | None = None,
+    date_start: date | None = None,
+    date_end: date | None = None,
+) -> BookingAdminListResponse:
+    """List all bookings (admin view) with pagination and optional filters."""
+    page_size = min(page_size, MAX_PAGE_SIZE)
+    offset = (page - 1) * page_size
+
+    conditions = []
+    if status is not None:
+        conditions.append(Booking.status == status)
+    if room_id is not None:
+        conditions.append(Booking.room_id == room_id)
+    if date_start is not None:
+        conditions.append(Booking.date >= date_start)
+    if date_end is not None:
+        conditions.append(Booking.date <= date_end)
+
+    where_clause = and_(*conditions) if conditions else True
+
+    count_result = await db.execute(
+        select(func.count()).select_from(Booking).where(where_clause)
+    )
+    total = count_result.scalar_one()
+
+    result = await db.execute(
+        select(Booking)
+        .where(where_clause)
+        .order_by(Booking.id.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
+    bookings = result.scalars().all()
+
+    seat_ids = {b.seat_id for b in bookings}
+    room_ids = {b.room_id for b in bookings}
+
+    seats_result = await db.execute(select(Seat).where(Seat.id.in_(seat_ids))) if seat_ids else None
+    rooms_result = await db.execute(select(StudyRoom).where(StudyRoom.id.in_(room_ids))) if room_ids else None
+    seat_map = {s.id: s for s in seats_result.scalars().all()} if seats_result else {}
+    room_map = {r.id: r for r in rooms_result.scalars().all()} if rooms_result else {}
+
+    items: list[BookingAdminResponse] = []
+    for b in bookings:
+        items.append(_build_admin_booking_response(b, seat_map[b.seat_id], room_map[b.room_id]))
+
+    return BookingAdminListResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
+async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
+    """Get any booking detail (admin view)."""
+    result = await db.execute(select(Booking).where(Booking.id == booking_id))
+    booking = result.scalar_one_or_none()
+
+    if booking is None:
+        raise BookingNotFoundError("预约不存在")
+
+    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
+    room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
+
+    return _build_admin_booking_response(booking, seat, room)
+
+
+async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
+    """Cancel any booking (admin view). Only confirmed bookings can be cancelled."""
+    result = await db.execute(select(Booking).where(Booking.id == booking_id))
+    booking = result.scalar_one_or_none()
+
+    if booking is None:
+        raise BookingNotFoundError("预约不存在")
+
+    if booking.status != "confirmed":
+        raise BookingAlreadyCancelledError("该预约已取消")
+
+    booking.status = "cancelled"
+    await db.flush()
+    await db.refresh(booking)
+
+    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
+    room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
+
+    return _build_admin_booking_response(booking, seat, room)

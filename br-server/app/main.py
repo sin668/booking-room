@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.routes.activity import router as activity_router
 from app.api.routes.admin_activity import router as admin_activity_router
+from app.api.routes.admin_booking import router as admin_booking_router
 from app.api.routes.admin_seat import flat_seats_router as admin_flat_seats_router
 from app.api.routes.admin_seat import room_seats_router as admin_room_seats_router
 from app.api.routes.admin_study_room import router as admin_study_room_router
@@ -55,6 +56,7 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Include routers
 app.include_router(upload_router)
 app.include_router(admin_activity_router)
+app.include_router(admin_booking_router)
 app.include_router(admin_study_room_router)
 app.include_router(admin_room_seats_router)
 app.include_router(admin_flat_seats_router)

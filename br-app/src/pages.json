@@ -44,6 +44,12 @@
       }
     },
     {
+      "path": "pages/study-record/index",
+      "style": {
+        "navigationBarTitleText": "学习记录"
+      }
+    },
+    {
       "path": "pages/login/login",
       "style": {
         "navigationBarTitleText": "登录",

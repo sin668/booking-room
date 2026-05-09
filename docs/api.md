@@ -814,6 +814,100 @@ Authorization: Bearer <access_token>
 - 400: 该预约已取消（非 confirmed 状态）
 - 404: 预约不存在 / 无权操作
 
+## 八、学习记录
+
+所有学习记录接口需要通过 `Authorization` header 传递 Bearer Token。
+
+### GET /api/v1/study-records/summary
+
+Get monthly study summary.
+
+**Authentication:** Bearer Token
+
+**Query Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| month | string | Yes | Month in YYYY-MM format |
+
+**Response 200:**
+```json
+{
+  "monthly_hours": 32.0,
+  "monthly_bookings": 15,
+  "max_streak_days": 7,
+  "total_hours": 128.0,
+  "calendar_mark": [
+    { "date": "2026-05-01", "studied": true },
+    { "date": "2026-05-02", "studied": false }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| monthly_hours | float | Monthly study hours |
+| monthly_bookings | int | Monthly booking count |
+| max_streak_days | int | Longest consecutive study days |
+| total_hours | float | Total study hours (all time) |
+| calendar_mark | array | Daily study marks for the month |
+| calendar_mark[].date | date | Date |
+| calendar_mark[].studied | bool | Whether studied that day |
+
+**Error codes:**
+- 401: Not authenticated
+- 422: Invalid month format
+
+### GET /api/v1/study-records
+
+Get paginated study record list.
+
+**Authentication:** Bearer Token
+
+**Query Parameters:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| page | integer | 1 | Page number (from 1) |
+| page_size | integer | 10 | Items per page (max 50) |
+| month | string | - | Optional month filter (YYYY-MM) |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "room_name": "光谷自习室",
+      "seat_number": "A-12",
+      "date": "2026-05-16",
+      "start_time": "10:00:00",
+      "end_time": "12:00:00",
+      "hours": 2.0,
+      "total_price": "12.00"
+    }
+  ],
+  "total": 30,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | integer | Record ID |
+| room_name | string | Study room name |
+| seat_number | string | Seat number |
+| date | date | Study date |
+| start_time | time | Start time |
+| end_time | time | End time |
+| hours | float | Study duration in hours |
+| total_price | decimal | Total price |
+
+**Error codes:**
+- 401: Not authenticated
+- 422: Invalid parameter values
+
 ## Seats API
 
 ### GET /api/v1/rooms/{room_id}/seats/
@@ -921,7 +1015,7 @@ Error Responses:
 
 ---
 
-## 八、管理端 - 自习室管理
+## 九、管理端 - 自习室管理
 
 所有管理端接口需要通过 `X-Admin-Token` header 传递管理员 Token。
 
@@ -1134,7 +1228,7 @@ Error Responses:
 
 ---
 
-## 九、管理端 - 座位管理
+## 十、管理端 - 座位管理
 
 ### POST /api/v1/admin/rooms/{room_id}/seats
 
@@ -1427,7 +1521,7 @@ Error Responses:
 
 ---
 
-## 数据模型
+## 十一、数据模型
 
 ### RoomAdminResponse
 

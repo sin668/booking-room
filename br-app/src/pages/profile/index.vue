@@ -55,6 +55,14 @@
         <view class="menu-section-label">
           <text class="menu-section-text">会员服务</text>
         </view>
+        <view class="menu-item" @tap="navigateTo('/pages/qrcode/index')">
+          <view class="menu-icon purple">
+            <view class="qr-icon" />
+          </view>
+          <text class="menu-item-text">我的学习码</text>
+          <text class="menu-item-meta">到店核销</text>
+          <view class="icon icon-arrow-right menu-arrow" />
+        </view>
         <view class="menu-item" @tap="navigateTo('/pages/recharge/index')">
           <view class="menu-icon green">
             <view class="wallet-icon" />
@@ -383,6 +391,10 @@ export default {
   background: rgba(255, 149, 0, 0.12);
 }
 
+.menu-icon.purple {
+  background: rgba(108, 92, 231, 0.1);
+}
+
 .menu-icon.gray {
   background: rgba(99, 110, 114, 0.1);
 }
@@ -470,6 +482,35 @@ export default {
 
 .ticket-icon::after {
   right: -8rpx;
+}
+
+.qr-icon {
+  width: 36rpx;
+  height: 36rpx;
+  border: 4rpx solid $purple;
+  border-radius: 7rpx;
+  position: relative;
+}
+
+.qr-icon::before,
+.qr-icon::after {
+  content: '';
+  position: absolute;
+  width: 8rpx;
+  height: 8rpx;
+  background: $purple;
+  border-radius: 2rpx;
+}
+
+.qr-icon::before {
+  left: 6rpx;
+  top: 6rpx;
+  box-shadow: 16rpx 0 0 $purple, 0 16rpx 0 $purple;
+}
+
+.qr-icon::after {
+  right: 6rpx;
+  bottom: 6rpx;
 }
 
 .settings-icon {

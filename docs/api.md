@@ -1521,7 +1521,149 @@ Error Responses:
 
 ---
 
-## 十一、数据模型
+## 十一、Booking Verification / 到店核销
+
+### POST /api/v1/booking-verifications/token
+
+为当前登录用户的可核销预约签发 5 分钟有效的动态核销 token。
+
+**认证：** Bearer Token
+
+**核销窗口：** 仅为当天预约签发；允许预约开始前 30 分钟至 `end_time` 之间核销，未来预约和已过结束时间的预约不会签发核销码。
+
+**Token 类型：** token 使用后端 JWT 签名，包含 `purpose=booking_verification`，不能使用普通登录 JWT 替代。
+
+**配置：** 必须设置 `FRONTEND_BASE_URL` 为公开 H5 域名，例如 `https://booking.example.com`。服务端只使用该配置拼接二维码链接，不接受用户请求传入外部域名。未配置时接口返回 500，避免生成无法被微信扫一扫打开的相对 URL。`BOOKING_TIMEZONE` 控制核销业务时区，默认 `Asia/Shanghai`。
+
+**响应 200：**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "expires_at": "2026-05-09T08:35:00Z",
+  "verify_url": "https://booking.example.com/#/pages/verify-booking/index?token=eyJhbGciOiJIUzI1NiIs...",
+  "booking": {
+    "id": 101,
+    "user_id": "11111111-1111-1111-1111-111111111111",
+    "user_nickname": "Study User",
+    "user_phone": "13800138000",
+    "room_id": 1,
+    "room_name": "安静自习室·油城店",
+    "room_address": "茂名市茂南区油城三路88号",
+    "seat_id": 12,
+    "seat_number": "A-01",
+    "seat_zone": "quiet",
+    "seat_position": "window",
+    "date": "2026-05-10",
+    "start_time": "09:00:00",
+    "end_time": "12:00:00",
+    "total_price": "45.00",
+    "status": "confirmed",
+    "can_verify": true
+  }
+}
+```
+
+**错误码：**
+- 401: 未认证
+- 404: 暂无可核销预约
+- 500: 核销码服务未配置
+
+---
+
+### GET /api/v1/booking-verifications/{token}
+
+管理员或工作人员解析核销 token，查看预约核销信息。
+
+**认证：** X-Admin-Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| token | string | 用户端二维码中的动态核销 token |
+
+**响应 200：**
+```json
+{
+  "booking": {
+    "id": 101,
+    "user_id": "11111111-1111-1111-1111-111111111111",
+    "user_nickname": "Study User",
+    "user_phone": "13800138000",
+    "room_id": 1,
+    "room_name": "安静自习室·油城店",
+    "room_address": "茂名市茂南区油城三路88号",
+    "seat_id": 12,
+    "seat_number": "A-01",
+    "seat_zone": "quiet",
+    "seat_position": "window",
+    "date": "2026-05-10",
+    "start_time": "09:00:00",
+    "end_time": "12:00:00",
+    "total_price": "45.00",
+    "status": "confirmed",
+    "can_verify": true
+  }
+}
+```
+
+**错误码：**
+- 401: 无管理员权限
+- 400: 无效 token
+- 404: 暂无可核销预约
+- 410: token 已过期
+
+---
+
+### POST /api/v1/booking-verifications/{token}/confirm
+
+管理员或工作人员确认到店核销。只有 `confirmed` 预约可更新为 `completed`。
+
+**认证：** X-Admin-Token
+
+**核销窗口：** 服务端会再次校验当天预约、开始前 30 分钟至 `end_time` 的时间窗口；确认核销使用条件更新，只有 `status=confirmed` 的预约能原子转换为 `completed`。
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| token | string | 用户端二维码中的动态核销 token |
+
+**响应 200：**
+```json
+{
+  "booking": {
+    "id": 101,
+    "user_id": "11111111-1111-1111-1111-111111111111",
+    "user_nickname": "Study User",
+    "user_phone": "13800138000",
+    "room_id": 1,
+    "room_name": "安静自习室·油城店",
+    "room_address": "茂名市茂南区油城三路88号",
+    "seat_id": 12,
+    "seat_number": "A-01",
+    "seat_zone": "quiet",
+    "seat_position": "window",
+    "date": "2026-05-10",
+    "start_time": "09:00:00",
+    "end_time": "12:00:00",
+    "total_price": "45.00",
+    "status": "completed",
+    "can_verify": false
+  }
+}
+```
+
+**错误码：**
+- 401: 无管理员权限
+- 400: 无效 token
+- 404: 暂无可核销预约
+- 409: 已核销或不可核销状态
+- 410: token 已过期
+
+---
+
+## 十二、数据模型
 
 ### RoomAdminResponse
 

@@ -50,6 +50,18 @@
       }
     },
     {
+      "path": "pages/qrcode/index",
+      "style": {
+        "navigationBarTitleText": "我的学习码"
+      }
+    },
+    {
+      "path": "pages/verify-booking/index",
+      "style": {
+        "navigationBarTitleText": "预约核销"
+      }
+    },
+    {
       "path": "pages/login/login",
       "style": {
         "navigationBarTitleText": "登录",

@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     # Admin
     ADMIN_TOKEN: str = ""
 
+    # Booking verification
+    FRONTEND_BASE_URL: str = ""
+    BOOKING_TIMEZONE: str = "Asia/Shanghai"
+
     # Cookie
     COOKIE_SECURE: bool = False
 

@@ -122,8 +122,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { onMounted, onReachBottom } from '@dcloudio/uni-app'
+import { ref, computed, onMounted } from 'vue'
+import { onReachBottom } from '@dcloudio/uni-app'
 import { getMonthlySummary, getStudyRecordList } from '@/api/studyRecords'
 
 const now = new Date()

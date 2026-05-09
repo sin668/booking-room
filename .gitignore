@@ -40,3 +40,4 @@ htmlcov/
 .coverage
 coverage/
 .gstack/
+tmp/

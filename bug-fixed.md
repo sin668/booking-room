@@ -245,6 +245,30 @@ getRooms({ page: 1, page_size: 100 })
 
 ---
 
+## BUG-14: UniApp `<script setup>` 中 `onMounted` 导入错误
+
+### 报错信息
+```
+SyntaxError: The requested module '/node_modules/@dcloudio/uni-app/dist/uni-app.es.js' does not provide an export named 'onMounted' (at index.vue:126:10)
+```
+
+### 根本原因
+`@dcloudio/uni-app` 仅导出页面级生命周期钩子（`onLoad`、`onShow`、`onReachBottom` 等），不导出 Vue 组件标准生命周期钩子。`onMounted` 是 Vue 3 的标准 Composition API 钩子，应从 `vue` 包导入，而非 `@dcloudio/uni-app`。
+
+### 解决方案
+将 `onMounted` 从 `@dcloudio/uni-app` 的导入移至 `vue` 的导入：
+
+```diff
+- import { ref, computed } from 'vue'
+- import { onMounted, onReachBottom } from '@dcloudio/uni-app'
++ import { ref, computed, onMounted } from 'vue'
++ import { onReachBottom } from '@dcloudio/uni-app'
+```
+
+**文件**: `br-app/src/pages/study-record/index.vue`
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -265,3 +289,4 @@ getRooms({ page: 1, page_size: 100 })
 | `br-app/src/api/rooms.js` | #13 |
 | `br-app/src/pages/booking/detail.vue` | #13 |
 | `br-app/src/pages/booking/seat-select.vue` | #13 |
+| `br-app/src/pages/study-record/index.vue` | #14 |

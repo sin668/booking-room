@@ -4,6 +4,23 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 
 
+class CalendarMark(BaseModel):
+    date: date
+    studied: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StudyRecordSummaryResponse(BaseModel):
+    monthly_hours: float
+    monthly_bookings: int
+    max_streak_days: int
+    total_hours: float
+    calendar_mark: list[CalendarMark]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class StudyRecordItem(BaseModel):
     id: int
     room_name: str
@@ -22,20 +39,5 @@ class StudyRecordListResponse(BaseModel):
     total: int
     page: int
     page_size: int
-
-
-class CalendarMark(BaseModel):
-    date: date
-    studied: bool
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class StudyRecordSummaryResponse(BaseModel):
-    monthly_hours: float
-    monthly_bookings: int
-    max_streak_days: int
-    total_hours: float
-    calendar_mark: list[CalendarMark]
 
     model_config = ConfigDict(from_attributes=True)

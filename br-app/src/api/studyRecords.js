@@ -5,5 +5,5 @@ export function getMonthlySummary(params) {
 }
 
 export function getStudyRecordList(params) {
-  return get('/api/v1/study-records/', params)
+  return get('/api/v1/study-records', params)
 }

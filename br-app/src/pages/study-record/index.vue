@@ -188,10 +188,8 @@ function formatTime(time) {
 
 async function fetchSummary() {
   try {
-    const data = await getMonthlySummary({
-      year: currentYear.value,
-      month: currentMonth.value,
-    })
+    const monthStr = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}`
+    const data = await getMonthlySummary({ month: monthStr })
     summary.value = data
   } catch {
     summary.value = { monthly_hours: 0, monthly_bookings: 0, max_streak_days: 0, total_hours: 0, calendar_mark: [] }
@@ -207,9 +205,9 @@ async function fetchRecords(reset) {
   }
   recordLoading.value = true
   try {
+    const monthStr = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}`
     const data = await getStudyRecordList({
-      year: currentYear.value,
-      month: currentMonth.value,
+      month: monthStr,
       page: page.value,
       page_size: 10,
     })
@@ -221,6 +219,7 @@ async function fetchRecords(reset) {
     }
     total.value = data.total || 0
     hasMore.value = records.value.length < total.value
+    if (!reset) page.value++
   } catch {
     if (page.value === 1) records.value = []
   } finally {
@@ -260,7 +259,6 @@ onMounted(() => {
 
 onReachBottom(() => {
   if (!hasMore.value || recordLoading.value) return
-  page.value++
   fetchRecords(false)
 })
 </script>

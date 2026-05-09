@@ -1,0 +1,4 @@
+uploads/
+br_server.egg-info/
+.env
+*.local

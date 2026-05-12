@@ -95,6 +95,19 @@ async def test_user_can_issue_verification_token(
     assert data["booking"]["can_verify"] is True
 
 
+async def test_user_can_issue_verification_token_without_frontend_base_url(
+    auth_client: AsyncClient,
+    seed_verifiable_booking,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "FRONTEND_BASE_URL", "")
+
+    response = await auth_client.post("/api/v1/booking-verifications/token")
+
+    assert response.status_code == 200
+    assert response.json()["verify_url"].startswith("/#/pages/verify-booking/index?token=")
+
+
 async def test_admin_can_inspect_verification_token(
     auth_client: AsyncClient,
     seed_verifiable_booking,
@@ -123,6 +136,20 @@ async def test_admin_can_confirm_verification(
     assert data["booking"]["status"] == "completed"
     assert data["booking"]["can_verify"] is False
     assert seed_verifiable_booking["booking"].status == "completed"
+
+
+async def test_admin_can_confirm_future_booking_with_valid_token(
+    auth_client: AsyncClient,
+    seed_verifiable_booking,
+):
+    booking = seed_verifiable_booking["booking"]
+    booking.date = datetime.now(UTC).date() + timedelta(days=1)
+    token = (await auth_client.post("/api/v1/booking-verifications/token")).json()["token"]
+
+    response = await auth_client.post(f"/api/v1/booking-verifications/{token}/confirm")
+
+    assert response.status_code == 200
+    assert response.json()["booking"]["status"] == "completed"
 
 
 async def test_real_admin_header_can_inspect_and_confirm(

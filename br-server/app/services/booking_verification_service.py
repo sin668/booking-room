@@ -1,3 +1,7 @@
+import base64
+import hashlib
+import hmac
+import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -20,6 +24,7 @@ from app.schemas.booking_verification import (
 )
 
 TOKEN_TTL_SECONDS = 5 * 60
+COMPACT_TOKEN_VERSION = "v1"
 VERIFICATION_TOKEN_PURPOSE = "booking_verification"
 VERIFICATION_AUDIENCE = "booking-verification"
 VERIFICATION_EARLY_ARRIVAL_MINUTES = 30
@@ -63,12 +68,66 @@ class VerificationTokenPayload:
 
 
 def _get_signing_secret() -> str:
-    if not settings.JWT_SECRET_KEY:
-        raise VerificationTokenConfigurationError("JWT signing secret is not configured")
     return settings.JWT_SECRET_KEY
 
 
 def _create_verification_token(booking_id: int, user_id: str, now: datetime) -> tuple[str, datetime]:
+    now = _ensure_utc(now)
+    expires_at = now + timedelta(seconds=TOKEN_TTL_SECONDS)
+    expires_at_timestamp = int(expires_at.timestamp())
+    nonce = secrets.token_urlsafe(3)
+    signing_input = f"{COMPACT_TOKEN_VERSION}.{booking_id}.{expires_at_timestamp}.{nonce}"
+    signature = _sign_compact_token(signing_input)
+    token = f"{signing_input}.{signature}"
+    return token, expires_at
+
+
+def _sign_compact_token(signing_input: str) -> str:
+    digest = hmac.new(
+        _get_signing_secret().encode("utf-8"),
+        signing_input.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    return _base64url_encode(digest[:16])
+
+
+def _base64url_encode(value: bytes) -> str:
+    return base64.urlsafe_b64encode(value).decode("ascii").rstrip("=")
+
+
+def _decode_compact_verification_token(token: str, now: datetime) -> VerificationTokenPayload:
+    parts = token.split(".")
+    if len(parts) != 5 or parts[0] != COMPACT_TOKEN_VERSION:
+        raise InvalidVerificationTokenError("无效的核销码")
+
+    signing_input = ".".join(parts[:4])
+    expected_signature = _sign_compact_token(signing_input)
+    if not hmac.compare_digest(parts[4], expected_signature):
+        raise InvalidVerificationTokenError("无效的核销码")
+
+    try:
+        booking_id = int(parts[1])
+        expires_at = datetime.fromtimestamp(int(parts[2]), tz=UTC)
+        nonce = parts[3]
+    except (TypeError, ValueError, OSError) as exc:
+        raise InvalidVerificationTokenError("无效的核销码") from exc
+
+    if not nonce:
+        raise InvalidVerificationTokenError("无效的核销码")
+
+    now = _ensure_utc(now)
+    if expires_at <= now:
+        raise ExpiredVerificationTokenError("核销码已过期")
+
+    return VerificationTokenPayload(
+        booking_id=booking_id,
+        user_id="",
+        iat=expires_at - timedelta(seconds=TOKEN_TTL_SECONDS),
+        nonce=nonce,
+    )
+
+
+def _create_legacy_jwt_verification_token(booking_id: int, user_id: str, now: datetime) -> tuple[str, datetime]:
     now = _ensure_utc(now)
     expires_at = now + timedelta(seconds=TOKEN_TTL_SECONDS)
     payload = {
@@ -85,6 +144,9 @@ def _create_verification_token(booking_id: int, user_id: str, now: datetime) -> 
 
 
 def _decode_verification_token(token: str, now: datetime) -> VerificationTokenPayload:
+    if token.startswith(f"{COMPACT_TOKEN_VERSION}."):
+        return _decode_compact_verification_token(token, now)
+
     try:
         payload = jwt.decode(
             token,
@@ -166,14 +228,7 @@ async def issue_verification_token(
         )
         .order_by(Booking.date.asc(), Booking.start_time.asc(), Booking.id.asc())
     )
-    row = next(
-        (
-            candidate
-            for candidate in result.all()
-            if _is_booking_in_verification_window(candidate[0], now)
-        ),
-        None,
-    )
+    row = _select_nearest_booking(result.all(), now)
     if row is None:
         raise NoVerifiableBookingError("暂无可核销预约")
 
@@ -210,14 +265,12 @@ async def confirm_verification(
         raise BookingAlreadyVerifiedError("预约已核销")
     if booking.status != "confirmed":
         raise BookingNotVerifiableError("预约状态不可核销")
-    if not _is_booking_in_verification_window(booking, datetime.now(UTC)):
-        raise BookingNotVerifiableError("预约状态不可核销")
 
     update_result = await db.execute(
         update(Booking)
         .where(
             Booking.id == payload.booking_id,
-            Booking.user_id == payload.user_id,
+            Booking.user_id == booking.user_id,
             Booking.status == "confirmed",
         )
         .values(status="completed")
@@ -244,15 +297,14 @@ async def _load_payload_booking(
         select(Booking, Seat, StudyRoom)
         .join(Seat, Seat.id == Booking.seat_id)
         .join(StudyRoom, StudyRoom.id == Booking.room_id)
-        .where(
-            Booking.id == payload.booking_id,
-            Booking.user_id == payload.user_id,
-        )
+        .where(Booking.id == payload.booking_id)
     )
     row = result.first()
     if row is None:
         raise NoVerifiableBookingError("暂无可核销预约")
     booking, seat, room = row
+    if payload.user_id and booking.user_id != payload.user_id:
+        raise NoVerifiableBookingError("暂无可核销预约")
     user = await _load_user(db, booking.user_id)
     return booking, seat, room, user
 
@@ -272,13 +324,10 @@ async def _load_user(db: AsyncSession, user_id: str) -> User:
 async def _load_booking_for_status(db: AsyncSession, payload: VerificationTokenPayload) -> Booking:
     booking = (
         await db.execute(
-            select(Booking).where(
-                Booking.id == payload.booking_id,
-                Booking.user_id == payload.user_id,
-            )
+            select(Booking).where(Booking.id == payload.booking_id)
         )
     ).scalar_one_or_none()
-    if booking is None:
+    if booking is None or (payload.user_id and booking.user_id != payload.user_id):
         raise NoVerifiableBookingError("暂无可核销预约")
     return booking
 
@@ -301,10 +350,43 @@ def _is_booking_in_verification_window(booking: Booking, now: datetime) -> bool:
     return start_at <= now <= end_at
 
 
+def _select_nearest_booking(
+    rows: list[tuple[Booking, Seat, StudyRoom]],
+    now: datetime,
+) -> tuple[Booking, Seat, StudyRoom] | None:
+    if not rows:
+        return None
+
+    now = _ensure_booking_timezone(now)
+
+    def sort_key(row: tuple[Booking, Seat, StudyRoom]) -> tuple[int, float, int]:
+        booking = row[0]
+        start_at = datetime.combine(
+            booking.date,
+            booking.start_time,
+            tzinfo=_booking_timezone(),
+        )
+        verification_start_at = start_at - timedelta(
+            minutes=VERIFICATION_EARLY_ARRIVAL_MINUTES,
+        )
+        end_at = datetime.combine(
+            booking.date,
+            booking.end_time,
+            tzinfo=_booking_timezone(),
+        )
+        if verification_start_at <= now <= end_at:
+            return 0, verification_start_at.timestamp(), booking.id
+        if now < verification_start_at:
+            return 1, verification_start_at.timestamp(), booking.id
+        return 2, -end_at.timestamp(), booking.id
+
+    return min(rows, key=sort_key)
+
+
 def _build_verify_url(token: str) -> str:
-    if not settings.FRONTEND_BASE_URL:
-        raise VerificationTokenConfigurationError("Frontend base URL is not configured")
     path = f"{VERIFY_HASH_PATH}?token={token}"
+    if not settings.FRONTEND_BASE_URL:
+        return path
     return f"{settings.FRONTEND_BASE_URL.rstrip('/')}{path}"
 
 

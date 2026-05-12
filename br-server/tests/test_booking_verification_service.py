@@ -12,6 +12,7 @@ from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.models.user import User
+from app.services import booking_verification_service
 from app.services.booking_verification_service import (
     BookingAlreadyVerifiedError,
     BookingNotVerifiableError,
@@ -121,6 +122,8 @@ async def test_issue_verification_token_returns_short_lived_token_and_summary(
     )
 
     assert response.token
+    assert response.token.startswith("v1.")
+    assert len(response.token) < 100
     assert response.verify_url.startswith("https://example.com/app/#/pages/verify-booking/index?token=")
     assert "/pages/verify-booking/index?token=" in response.verify_url
     assert 295 <= (response.expires_at - datetime.now(UTC)).total_seconds() <= 300
@@ -132,6 +135,31 @@ async def test_issue_verification_token_returns_short_lived_token_and_summary(
     assert response.booking.seat_number == "A-01"
     assert response.booking.status == "confirmed"
     assert response.booking.can_verify is True
+
+
+async def test_issue_verification_token_uses_relative_verify_url_without_frontend_base(
+    db_session: AsyncSession,
+    verification_data,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "FRONTEND_BASE_URL", "")
+
+    response = await issue_verification_token(db_session, USER_ID)
+
+    assert response.token
+    assert response.verify_url.startswith("/#/pages/verify-booking/index?token=")
+
+
+async def test_issue_verification_token_allows_empty_jwt_secret_like_auth_service(
+    db_session: AsyncSession,
+    verification_data,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "JWT_SECRET_KEY", "")
+
+    response = await issue_verification_token(db_session, USER_ID)
+
+    assert response.token
 
 
 def test_verification_window_uses_configured_business_timezone(verification_data):
@@ -161,18 +189,21 @@ async def test_issue_verification_token_without_confirmed_booking_raises(
         await issue_verification_token(db_session, USER_ID)
 
 
-async def test_issue_verification_token_for_future_booking_raises(
+async def test_issue_verification_token_for_future_booking_returns_token(
     db_session: AsyncSession,
     verification_data,
 ):
     verification_data["confirmed"].date = datetime.now(UTC).date() + timedelta(days=1)
     await db_session.flush()
 
-    with pytest.raises(NoVerifiableBookingError):
-        await issue_verification_token(db_session, USER_ID)
+    response = await issue_verification_token(db_session, USER_ID)
+
+    assert response.token
+    assert response.booking.id == verification_data["confirmed"].id
+    assert response.booking.status == "confirmed"
 
 
-async def test_issue_verification_token_skips_expired_booking_window(
+async def test_issue_verification_token_selects_nearest_confirmed_booking(
     db_session: AsyncSession,
     verification_data,
 ):
@@ -200,6 +231,68 @@ async def test_issue_verification_token_skips_expired_booking_window(
     assert response.booking.id == eligible.id
 
 
+async def test_issue_verification_token_prefers_future_booking_over_stale_past(
+    db_session: AsyncSession,
+    verification_data,
+    monkeypatch,
+):
+    fixed_now = datetime(2026, 5, 12, 8, 40, tzinfo=_booking_timezone())
+    monkeypatch.setattr(booking_verification_service, "_booking_now", lambda: fixed_now)
+    stale = verification_data["confirmed"]
+    room = verification_data["room"]
+    seat = verification_data["seat"]
+    stale.date = fixed_now.date()
+    stale.start_time = time(8, 0)
+    stale.end_time = time(8, 35)
+    future = Booking(
+        seat_id=seat.id,
+        user_id=str(USER_ID),
+        room_id=room.id,
+        date=fixed_now.date(),
+        start_time=time(12, 0),
+        end_time=time(13, 0),
+        status="confirmed",
+        total_price=45.00,
+    )
+    db_session.add(future)
+    await db_session.flush()
+
+    response = await issue_verification_token(db_session, USER_ID)
+
+    assert response.booking.id == future.id
+
+
+async def test_issue_verification_token_prioritizes_early_arrival_window(
+    db_session: AsyncSession,
+    verification_data,
+    monkeypatch,
+):
+    fixed_now = datetime(2026, 5, 12, 8, 40, tzinfo=_booking_timezone())
+    monkeypatch.setattr(booking_verification_service, "_booking_now", lambda: fixed_now)
+    later = verification_data["confirmed"]
+    room = verification_data["room"]
+    seat = verification_data["seat"]
+    later.date = fixed_now.date()
+    later.start_time = time(12, 0)
+    later.end_time = time(13, 0)
+    early_arrival = Booking(
+        seat_id=seat.id,
+        user_id=str(USER_ID),
+        room_id=room.id,
+        date=fixed_now.date(),
+        start_time=time(9, 0),
+        end_time=time(10, 0),
+        status="confirmed",
+        total_price=45.00,
+    )
+    db_session.add(early_arrival)
+    await db_session.flush()
+
+    response = await issue_verification_token(db_session, USER_ID)
+
+    assert response.booking.id == early_arrival.id
+
+
 async def test_inspect_tampered_token_raises_invalid(
     db_session: AsyncSession,
     verification_data,
@@ -208,6 +301,22 @@ async def test_inspect_tampered_token_raises_invalid(
 
     with pytest.raises(InvalidVerificationTokenError):
         await inspect_verification_token(db_session, response.token + "tampered")
+
+
+async def test_legacy_jwt_verification_token_still_inspects(
+    db_session: AsyncSession,
+    verification_data,
+):
+    booking = verification_data["confirmed"]
+    token, _ = booking_verification_service._create_legacy_jwt_verification_token(
+        booking.id,
+        str(USER_ID),
+        datetime.now(UTC),
+    )
+
+    response = await inspect_verification_token(db_session, token)
+
+    assert response.booking.id == booking.id
 
 
 async def test_wrong_purpose_token_raises_invalid(
@@ -286,20 +395,21 @@ async def test_expired_token_raises_for_inspect_and_confirm(
         await confirm_verification(db_session, token)
 
 
-async def test_confirm_verification_for_future_booking_raises(
+async def test_confirm_verification_for_future_booking_succeeds(
     db_session: AsyncSession,
     verification_data,
 ):
     booking = verification_data["confirmed"]
-    token, _ = _create_verification_token(booking.id, str(USER_ID), datetime.now(UTC))
     booking.date = datetime.now(UTC).date() + timedelta(days=1)
     await db_session.flush()
+    response = await issue_verification_token(db_session, USER_ID)
 
-    with pytest.raises(BookingNotVerifiableError):
-        await confirm_verification(db_session, token)
+    confirmed = await confirm_verification(db_session, response.token)
+
+    assert confirmed.booking.status == "completed"
 
 
-async def test_confirm_verification_after_end_time_raises(
+async def test_confirm_verification_after_end_time_succeeds_with_valid_token(
     db_session: AsyncSession,
     verification_data,
 ):
@@ -309,8 +419,9 @@ async def test_confirm_verification_after_end_time_raises(
     booking.end_time = time(0, 1)
     await db_session.flush()
 
-    with pytest.raises(BookingNotVerifiableError):
-        await confirm_verification(db_session, token)
+    confirmed = await confirm_verification(db_session, token)
+
+    assert confirmed.booking.status == "completed"
 
 
 async def test_confirm_verification_marks_booking_completed(

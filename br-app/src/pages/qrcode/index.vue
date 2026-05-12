@@ -165,10 +165,18 @@ function normalizeError(err) {
 function toAbsoluteVerifyUrl(url) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url)) return url
+  const configuredBaseUrl = import.meta.env.VITE_FRONTEND_BASE_URL || ''
+  if (/^https?:\/\//i.test(configuredBaseUrl)) {
+    return `${configuredBaseUrl.replace(/\/$/, '')}${url.startsWith('/') ? url : `/${url}`}`
+  }
   // #ifdef H5
   if (url.startsWith('/')) return `${window.location.origin}${url}`
   // #endif
   return url
+}
+
+function isScannableVerifyUrl(url) {
+  return /^https?:\/\//i.test(url) && !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(url)
 }
 
 async function loadToken() {
@@ -180,8 +188,12 @@ async function loadToken() {
   errorMessage.value = ''
   try {
     const data = await issueVerificationToken()
+    const verifyUrl = toAbsoluteVerifyUrl(data.verify_url)
+    if (!isScannableVerifyUrl(verifyUrl)) {
+      throw new Error('核销链接不是可被微信打开的公网地址，请配置 FRONTEND_BASE_URL 或 VITE_FRONTEND_BASE_URL')
+    }
     verification.value = data
-    qrImageSrc.value = createQrSvgDataUrl(toAbsoluteVerifyUrl(data.verify_url))
+    qrImageSrc.value = createQrSvgDataUrl(verifyUrl)
     state.value = 'ready'
     startCountdown(data.expires_at)
   } catch (err) {

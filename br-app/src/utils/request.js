@@ -11,12 +11,24 @@ function getToken() {
   return uni.getStorageSync('access_token') || ''
 }
 
+function getRefreshToken() {
+  return uni.getStorageSync('refresh_token') || ''
+}
+
 function setToken(token) {
   uni.setStorageSync('access_token', token)
 }
 
+function setRefreshToken(token) {
+  uni.setStorageSync('refresh_token', token)
+}
+
 function removeToken() {
   uni.removeStorageSync('access_token')
+}
+
+function removeRefreshToken() {
+  uni.removeStorageSync('refresh_token')
 }
 
 function resolvePendingRequests(token) {
@@ -25,10 +37,16 @@ function resolvePendingRequests(token) {
 }
 
 async function doRefreshToken() {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) {
+    throw new Error('missing refresh token')
+  }
+
   const res = await new Promise((resolve, reject) => {
     uni.request({
       url: `${BASE_URL}/api/v1/auth/refresh`,
       method: 'POST',
+      data: { refresh_token: refreshToken },
       header: { 'Content-Type': 'application/json' },
       success: (res) => {
         if (res.statusCode === 200) {
@@ -41,6 +59,9 @@ async function doRefreshToken() {
     })
   })
   setToken(res.access_token)
+  if (res.refresh_token) {
+    setRefreshToken(res.refresh_token)
+  }
   return res.access_token
 }
 
@@ -75,6 +96,7 @@ function request(options) {
                   isRefreshing = false
                   pendingRequests = []
                   removeToken()
+                  removeRefreshToken()
                   uni.reLaunch({ url: '/pages/login/login' })
                   reject(new Error('登录已过期'))
                 })
@@ -103,5 +125,5 @@ export function post(url, data) {
   return request({ url, method: 'POST', data })
 }
 
-export { getToken, setToken, removeToken }
+export { getToken, getRefreshToken, setToken, setRefreshToken, removeToken, removeRefreshToken, doRefreshToken }
 export default request

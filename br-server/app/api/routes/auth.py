@@ -26,26 +26,6 @@ REFRESH_TOKEN_COOKIE_KEY = "refresh_token"
 COOKIE_MAX_AGE = settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400
 
 
-def _issue_cookie_token(jwt_svc: JWTService, access_token: str) -> str:
-    """Create a refresh token for the cookie from an access token."""
-    from jose import jwt as jose_jwt
-
-    payload = jose_jwt.decode(
-        access_token,
-        settings.JWT_SECRET_KEY,
-        algorithms=[settings.JWT_ALGORITHM],
-    )
-    user_id = uuid.UUID(payload["sub"])
-    refresh_token = jwt_svc.create_refresh_token(user_id)
-    rt_payload = jose_jwt.decode(
-        refresh_token,
-        settings.JWT_SECRET_KEY,
-        algorithms=[settings.JWT_ALGORITHM],
-    )
-    jwt_svc.store_refresh_token(user_id, rt_payload["jti"])
-    return refresh_token
-
-
 def _set_refresh_token_cookie(response: Response, refresh_token: str) -> None:
     """Set the refresh token as an HttpOnly cookie."""
     response.set_cookie(
@@ -88,11 +68,10 @@ async def register(
         )
 
     auth_service = AuthService(db=db, redis=redis, config=settings)
-    jwt_svc = JWTService(config=settings, redis=redis)
 
     token_response = await auth_service.register(body)
-    refresh_token = _issue_cookie_token(jwt_svc, token_response.access_token)
-    _set_refresh_token_cookie(response, refresh_token)
+    if token_response.refresh_token:
+        _set_refresh_token_cookie(response, token_response.refresh_token)
 
     return token_response
 
@@ -106,11 +85,10 @@ async def login(
 ) -> TokenResponse:
     """Authenticate user with phone and password."""
     auth_service = AuthService(db=db, redis=redis, config=settings)
-    jwt_svc = JWTService(config=settings, redis=redis)
 
     token_response = await auth_service.login(body)
-    refresh_token = _issue_cookie_token(jwt_svc, token_response.access_token)
-    _set_refresh_token_cookie(response, refresh_token)
+    if token_response.refresh_token:
+        _set_refresh_token_cookie(response, token_response.refresh_token)
 
     return token_response
 
@@ -138,7 +116,6 @@ async def refresh(
         )
 
     auth_service = AuthService(db=db, redis=redis, config=settings)
-    jwt_svc = JWTService(config=settings, redis=redis)
 
     result = await auth_service.refresh_token(refresh_token_str)
 
@@ -149,8 +126,8 @@ async def refresh(
             detail="登录已过期，请重新登录",
         )
 
-    refresh_token = _issue_cookie_token(jwt_svc, result.access_token)
-    _set_refresh_token_cookie(response, refresh_token)
+    if result.refresh_token:
+        _set_refresh_token_cookie(response, result.refresh_token)
 
     return result
 

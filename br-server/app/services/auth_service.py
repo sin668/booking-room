@@ -116,6 +116,7 @@ class AuthService:
 
         return TokenResponse(
             access_token=access_token,
+            refresh_token=refresh_token,
             token_type="bearer",
             expires_in=self._config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
@@ -160,6 +161,7 @@ class AuthService:
 
         return TokenResponse(
             access_token=access_token,
+            refresh_token=refresh_token,
             token_type="bearer",
             expires_in=self._config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
@@ -195,6 +197,7 @@ class AuthService:
 
         return TokenResponse(
             access_token=access_token,
+            refresh_token=new_rt,
             token_type="bearer",
             expires_in=self._config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )

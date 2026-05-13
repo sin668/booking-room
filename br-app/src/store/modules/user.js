@@ -1,10 +1,19 @@
 import { defineStore } from 'pinia'
-import { getToken, setToken, removeToken } from '@/utils/request'
+import {
+  doRefreshToken,
+  getRefreshToken,
+  getToken,
+  removeRefreshToken,
+  removeToken,
+  setRefreshToken,
+  setToken,
+} from '@/utils/request'
 import * as authApi from '@/api/auth'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
     token: getToken(),
+    refreshToken: getRefreshToken(),
     userInfo: null,
   }),
 
@@ -24,7 +33,11 @@ export const useUserStore = defineStore('user', {
     async register(data) {
       const res = await authApi.register(data)
       this.token = res.access_token
+      this.refreshToken = res.refresh_token || ''
       setToken(res.access_token)
+      if (res.refresh_token) {
+        setRefreshToken(res.refresh_token)
+      }
       // 注册成功后获取用户信息（失败不阻塞注册流程）
       this.fetchUserInfo().catch(() => {})
       return res
@@ -34,7 +47,11 @@ export const useUserStore = defineStore('user', {
     async login(phone, password) {
       const res = await authApi.login({ phone, password })
       this.token = res.access_token
+      this.refreshToken = res.refresh_token || ''
       setToken(res.access_token)
+      if (res.refresh_token) {
+        setRefreshToken(res.refresh_token)
+      }
       // 登录成功后获取用户信息（失败不阻塞登录流程）
       this.fetchUserInfo().catch(() => {})
       return res
@@ -56,14 +73,21 @@ export const useUserStore = defineStore('user', {
         // 即使 API 调用失败也要清理本地状态
       }
       this.token = ''
+      this.refreshToken = ''
       this.userInfo = null
       removeToken()
+      removeRefreshToken()
     },
 
     /** 自动登录（检查本地 Token 有效性） */
     async autoLogin() {
-      if (!this.token) return false
+      if (!this.token && !this.refreshToken) return false
+
       try {
+        if (!this.token && this.refreshToken) {
+          const res = await doRefreshToken()
+          this.token = res
+        }
         await this.fetchUserInfo()
         return true
       } catch {

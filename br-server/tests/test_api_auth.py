@@ -37,7 +37,7 @@ def _create_refresh_token(user_id: uuid.UUID) -> str:
         "sub": str(user_id),
         "type": "refresh",
         "jti": uuid.uuid4().hex,
-        "exp": int((datetime.now(UTC) + timedelta(days=7)).timestamp()),
+        "exp": int((datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)).timestamp()),
     }
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
@@ -46,9 +46,10 @@ FIXED_USER_ID = uuid.UUID("11111111-2222-3333-4444-555555555555")
 
 
 def _make_real_token_response(user_id: uuid.UUID) -> TokenResponse:
-    """Create a TokenResponse with a real JWT access token."""
+    """Create a TokenResponse with real JWT access/refresh tokens."""
     return TokenResponse(
         access_token=_create_access_token(user_id),
+        refresh_token=_create_refresh_token(user_id),
         token_type="bearer",
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )

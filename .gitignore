@@ -42,3 +42,5 @@ coverage/
 .gstack/
 tmp/
 .worktrees/
+swarm/
+swarm-*

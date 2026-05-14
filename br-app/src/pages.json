@@ -50,6 +50,12 @@
       }
     },
     {
+      "path": "pages/recharge/index",
+      "style": {
+        "navigationBarTitleText": "钱包充值"
+      }
+    },
+    {
       "path": "pages/coupon/index",
       "style": {
         "navigationBarTitleText": "卡券包",

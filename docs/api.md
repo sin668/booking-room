@@ -782,7 +782,137 @@ Authorization: Bearer <access_token>
 
 ---
 
-## 八、预约
+## 八、钱包
+
+所有钱包接口需要通过 `Authorization` header 传递 Bearer Token。
+
+### POST /api/v1/wallet/recharge
+
+创建充值订单。当前为模拟支付流程，创建订单后调用确认接口完成入账。
+
+**认证：** Bearer Token
+
+**请求体：**
+```json
+{
+  "amount": 100,
+  "payment_method": "wechat",
+  "promo_code": "SAVE30"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| amount | number | 是 | 充值金额，必须 >0 且 <=9999 |
+| payment_method | string | 是 | 支付方式：wechat / alipay |
+| promo_code | string | 否 | 优惠码 |
+
+**响应 201：**
+```json
+{
+  "order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "amount": "100.00",
+  "bonus_amount": "30.00",
+  "status": "pending",
+  "balance_after": null
+}
+```
+
+**错误码：**
+- 401: 未认证
+- 404: 用户不存在
+- 422: 参数校验失败 / 优惠码无效 / 优惠码已过期 / 未达到优惠码最低充值金额
+
+---
+
+### POST /api/v1/wallet/recharge/{order_id}/confirm
+
+确认充值订单并更新账户余额。
+
+**认证：** Bearer Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| order_id | uuid | 充值订单 ID |
+
+**响应 200：**
+```json
+{
+  "order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "amount": "100.00",
+  "bonus_amount": "30.00",
+  "status": "completed",
+  "balance_after": "386.00"
+}
+```
+
+**错误码：**
+- 401: 未认证
+- 404: 订单不存在
+- 409: 订单已处理
+
+---
+
+### GET /api/v1/wallet/balance
+
+获取当前账户余额和累计充值金额。
+
+**认证：** Bearer Token
+
+**响应 200：**
+```json
+{
+  "balance": "256.00",
+  "total_recharged": "1200.00"
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| balance | decimal | 当前账户余额 |
+| total_recharged | decimal | 累计成功充值金额 |
+
+**错误码：**
+- 401: 未认证
+- 404: 用户不存在
+
+---
+
+### POST /api/v1/wallet/promo-code
+
+校验充值优惠码并返回可赠送金额。
+
+**认证：** Bearer Token
+
+**请求体：**
+```json
+{
+  "code": "SAVE30"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| code | string | 是 | 优惠码 |
+
+**响应 200：**
+```json
+{
+  "code": "SAVE30",
+  "description": "充值100送30",
+  "bonus_amount": "30.00"
+}
+```
+
+**错误码：**
+- 401: 未认证
+- 422: 优惠码无效 / 优惠码已过期
+
+---
+
+## 九、预约
 
 所有预约接口需要通过 `Authorization` header 传递 Bearer Token。
 

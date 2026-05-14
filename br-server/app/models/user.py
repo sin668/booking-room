@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
+from decimal import Decimal
 
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import DateTime, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -42,6 +43,11 @@ class User(Base):
         String(20),
         default="active",
         index=True,
+        nullable=False,
+    )
+    balance: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2),
+        default=0,
         nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(

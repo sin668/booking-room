@@ -22,6 +22,7 @@ from app.api.routes.study_record import router as study_record_router
 from app.api.routes.study_room import router as study_room_router
 from app.api.routes.upload import router as upload_router
 from app.api.routes.user import router as user_router
+from app.api.routes.wallet import router as wallet_router
 from app.core.redis import close_redis, init_redis
 
 
@@ -73,6 +74,7 @@ app.include_router(study_room_router)
 app.include_router(study_record_router)
 app.include_router(booking_router)
 app.include_router(booking_verification_router)
+app.include_router(wallet_router)
 
 
 @app.get("/health", tags=["health"])

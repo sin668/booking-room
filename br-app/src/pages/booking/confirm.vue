@@ -63,11 +63,71 @@
           </view>
         </view>
 
+        <!-- Coupon Card -->
+        <view class="card coupon-card">
+          <view class="coupon-header">
+            <view class="coupon-title-wrap">
+              <text class="coupon-title">卡券优惠</text>
+              <text class="coupon-sub">{{ couponSummaryText }}</text>
+            </view>
+            <view v-if="couponLoading" class="coupon-loading">
+              <view class="coupon-spinner" />
+              <text class="coupon-loading-text">加载中</text>
+            </view>
+          </view>
+
+          <view v-if="couponLoadError" class="coupon-error">
+            <text class="coupon-error-text">{{ couponLoadError }}</text>
+            <text class="coupon-retry" @tap="loadAvailableCoupons">重试</text>
+          </view>
+
+          <view
+            :class="['coupon-option', { active: !selectedCouponId }]"
+            @tap="clearCoupon"
+          >
+            <view class="coupon-option-main">
+              <text class="coupon-option-name">不使用卡券</text>
+              <text class="coupon-option-desc">按原价支付</text>
+            </view>
+            <view class="coupon-radio">
+              <view v-if="!selectedCouponId" class="coupon-radio-dot" />
+            </view>
+          </view>
+
+          <view v-if="availableCoupons.length" class="coupon-list">
+            <view
+              v-for="coupon in availableCoupons"
+              :key="coupon.id"
+              :class="['coupon-option', 'coupon-item', { active: selectedCouponId === coupon.id }]"
+              @tap="selectCoupon(coupon)"
+            >
+              <view class="coupon-option-main">
+                <view class="coupon-name-row">
+                  <text class="coupon-option-name">{{ coupon.name }}</text>
+                  <text class="coupon-discount">-¥{{ money(coupon.discount_amount) }}</text>
+                </view>
+                <text class="coupon-option-desc">{{ coupon.description || couponMetaText(coupon) }}</text>
+                <text class="coupon-payable">使用后实付 ¥{{ money(coupon.payable_amount) }}</text>
+              </view>
+              <view class="coupon-radio">
+                <view v-if="selectedCouponId === coupon.id" class="coupon-radio-dot" />
+              </view>
+            </view>
+          </view>
+        </view>
+
         <!-- Price Summary Card -->
         <view class="card price-card">
           <view class="price-row">
             <text class="price-label">座位费（{{ zoneLabel }} · {{ hours }}小时）</text>
-            <text class="price-value">¥{{ totalPrice }}</text>
+            <text class="price-value">¥{{ originalPrice }}</text>
+          </view>
+
+          <view class="price-row">
+            <text class="price-label">优惠券抵扣</text>
+            <text :class="['price-value', { discount: discountAmountNum > 0 }]">
+              {{ discountAmountNum > 0 ? '-¥' + discountAmount : '¥0.00' }}
+            </text>
           </view>
 
           <view class="divider" />
@@ -75,7 +135,7 @@
           <view class="price-row total-row">
             <text class="total-label">实付金额</text>
             <text class="total-value">
-              <text class="total-symbol">¥</text>{{ totalPrice }}
+              <text class="total-symbol">¥</text>{{ payableAmount }}
             </text>
           </view>
         </view>
@@ -90,7 +150,7 @@
       <view class="bottom-left">
         <text class="bottom-total-label">合计</text>
         <text class="bottom-total-price">
-          <text class="bottom-total-symbol">¥</text>{{ totalPrice }}
+          <text class="bottom-total-symbol">¥</text>{{ payableAmount }}
         </text>
       </view>
       <view :class="['btn-pay', { disabled: submitting }]" @tap="onPay">
@@ -117,6 +177,10 @@
         <!-- Booking summary -->
         <view class="summary-card">
           <view class="summary-row">
+            <text class="summary-label">订单编号</text>
+            <text class="summary-value">#{{ bookingId }}</text>
+          </view>
+          <view class="summary-row">
             <text class="summary-label">门店</text>
             <text class="summary-value">{{ bookingRoomName }}</text>
           </view>
@@ -126,11 +190,21 @@
           </view>
           <view class="summary-row">
             <text class="summary-label">时间</text>
-            <text class="summary-value">{{ bookingStartTime }} - {{ bookingEndTime }}</text>
+            <text class="summary-value">{{ bookingDate }} {{ bookingStartTime }} - {{ bookingEndTime }}</text>
           </view>
           <view class="summary-row">
-            <text class="summary-label">支付金额</text>
-            <text class="summary-value summary-price">¥{{ bookingPrice }}</text>
+            <text class="summary-label">原价</text>
+            <text class="summary-value">¥{{ bookingOriginalPrice }}</text>
+          </view>
+          <view class="summary-row">
+            <text class="summary-label">优惠抵扣</text>
+            <text :class="['summary-value', { 'summary-discount': bookingDiscountAmountNum > 0 }]">
+              {{ bookingDiscountAmountNum > 0 ? '-¥' + bookingDiscountAmount : '¥0.00' }}
+            </text>
+          </view>
+          <view class="summary-row">
+            <text class="summary-label">实付金额</text>
+            <text class="summary-value summary-price">¥{{ bookingPayableAmount }}</text>
           </view>
         </view>
 
@@ -146,6 +220,7 @@
 import { getSeats } from '@/api/seats'
 import { createBooking } from '@/api/bookings'
 import { getRoom } from '@/api/rooms'
+import { getAvailableCouponsForBooking } from '@/api/coupons'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
@@ -177,14 +252,25 @@ export default {
       pageLoading: true,
       submitting: false,
       showSuccess: false,
+      availableCoupons: [],
+      selectedCouponId: null,
+      selectedCoupon: null,
+      couponLoading: false,
+      couponLoadError: '',
+      couponOriginalPrice: '',
+      couponRequestId: 0,
 
       // Booking result for success modal
+      bookingId: '',
       bookingRoomName: '',
       bookingSeatNumber: '',
       bookingZone: '',
+      bookingDate: '',
       bookingStartTime: '',
       bookingEndTime: '',
-      bookingPrice: '',
+      bookingOriginalPrice: '',
+      bookingDiscountAmount: '',
+      bookingPayableAmount: '',
     }
   },
 
@@ -197,6 +283,38 @@ export default {
 
     totalPrice() {
       return (this.pricePerHour * this.hours).toFixed(2)
+    },
+
+    originalPrice() {
+      return this.money(this.couponOriginalPrice || this.totalPrice)
+    },
+
+    discountAmountNum() {
+      if (!this.selectedCoupon) return 0
+      const value = Number(this.selectedCoupon.discount_amount)
+      return Number.isFinite(value) ? value : 0
+    },
+
+    discountAmount() {
+      return this.money(this.selectedCoupon?.discount_amount || 0)
+    },
+
+    payableAmount() {
+      if (this.selectedCoupon) {
+        return this.money(this.selectedCoupon.payable_amount)
+      }
+      return this.originalPrice
+    },
+
+    couponSummaryText() {
+      if (this.couponLoading && !this.availableCoupons.length) return '正在匹配可用卡券'
+      if (this.selectedCoupon) return `已选择：${this.selectedCoupon.name}`
+      return `可用 ${this.availableCoupons.length} 张`
+    },
+
+    bookingDiscountAmountNum() {
+      const value = Number(this.bookingDiscountAmount)
+      return Number.isFinite(value) ? value : 0
     },
 
     zoneLabel() {
@@ -246,6 +364,8 @@ export default {
         const room = await getRoom(this.room_id)
         this.roomName = room.name
         this.roomAddress = room.address || ''
+
+        await this.loadAvailableCoupons()
       } catch {
         uni.showToast({ title: '加载失败', icon: 'none' })
       } finally {
@@ -253,27 +373,82 @@ export default {
       }
     },
 
-    async onPay() {
-      if (this.submitting) return
-      this.submitting = true
+    async loadAvailableCoupons() {
+      const requestId = ++this.couponRequestId
+      this.couponLoading = true
+      this.couponLoadError = ''
       try {
-        const booking = await createBooking({
+        const res = await getAvailableCouponsForBooking({
           seat_id: this.seat_id,
           date: this.date,
           start_time: this.start_time,
           end_time: this.end_time,
         })
+        if (requestId !== this.couponRequestId) return
+        this.couponOriginalPrice = res?.original_price || this.totalPrice
+        this.availableCoupons = Array.isArray(res?.items) ? res.items : []
+
+        if (this.selectedCouponId) {
+          const refreshed = this.availableCoupons.find(coupon => coupon.id === this.selectedCouponId)
+          this.selectedCoupon = refreshed || null
+          if (!refreshed) this.selectedCouponId = null
+        }
+      } catch {
+        if (requestId !== this.couponRequestId) return
+        this.availableCoupons = []
+        this.clearCoupon()
+        this.couponLoadError = '卡券加载失败，请重试'
+      } finally {
+        if (requestId === this.couponRequestId) {
+          this.couponLoading = false
+        }
+      }
+    },
+
+    selectCoupon(coupon) {
+      this.selectedCouponId = coupon.id
+      this.selectedCoupon = coupon
+    },
+
+    clearCoupon() {
+      this.selectedCouponId = null
+      this.selectedCoupon = null
+    },
+
+    async onPay() {
+      if (this.submitting) return
+      this.submitting = true
+      try {
+        const payload = {
+          seat_id: this.seat_id,
+          date: this.date,
+          start_time: this.start_time,
+          end_time: this.end_time,
+        }
+        if (this.selectedCouponId) {
+          payload.coupon_id = this.selectedCouponId
+        }
+
+        const booking = await createBooking(payload)
         // Fill success modal data
+        this.bookingId = booking.id || ''
         this.bookingRoomName = booking.room?.name || this.roomName
         this.bookingSeatNumber = booking.seat?.seat_number || this.seatNumber
         this.bookingZone = booking.seat?.zone ? (ZONE_LABELS[booking.seat.zone] || booking.seat.zone) : this.zoneLabel
+        this.bookingDate = booking.date || this.date
         this.bookingStartTime = booking.start_time || this.start_time
         this.bookingEndTime = booking.end_time || this.end_time
-        this.bookingPrice = booking.total_price != null ? Number(booking.total_price).toFixed(2) : this.totalPrice
+        this.bookingOriginalPrice = this.money(booking.original_price != null ? booking.original_price : this.originalPrice)
+        this.bookingDiscountAmount = this.money(booking.discount_amount != null ? booking.discount_amount : this.discountAmount)
+        this.bookingPayableAmount = this.money(booking.total_price != null ? booking.total_price : this.payableAmount)
         this.showSuccess = true
       } catch (err) {
-        if (err && (err.statusCode === 409 || err.code === 'conflict')) {
-          uni.showToast({ title: '该座位该时段已被预约', icon: 'none' })
+        if (this.isCouponUnavailableError(err)) {
+          uni.showToast({ title: '卡券不可用，请重新选择', icon: 'none' })
+          this.clearCoupon()
+          await this.loadAvailableCoupons()
+        } else if (this.isBookingConflictError(err)) {
+          uni.showToast({ title: '该座位该时段已被预约，请重新选择', icon: 'none' })
         } else {
           uni.showToast({ title: '预约失败，请重试', icon: 'none' })
         }
@@ -284,6 +459,35 @@ export default {
 
     onDone() {
       uni.switchTab({ url: '/pages/orders/index' })
+    },
+
+    money(value) {
+      const num = Number(value)
+      return Number.isFinite(num) ? num.toFixed(2) : '0.00'
+    },
+
+    couponMetaText(coupon) {
+      if (coupon.min_order_amount) {
+        return `满 ¥${this.money(coupon.min_order_amount)} 可用`
+      }
+      return '当前预约可用'
+    },
+
+    errorText(err) {
+      if (!err) return ''
+      if (typeof err === 'string') return err
+      return err.detail || err.message || err.errMsg || err.error || ''
+    },
+
+    isCouponUnavailableError(err) {
+      const text = this.errorText(err)
+      const code = err?.code || err?.status || err?.statusCode
+      return code === 'coupon_unavailable' || /卡券|coupon|优惠券|不可用|重新选择/i.test(text)
+    },
+
+    isBookingConflictError(err) {
+      const text = this.errorText(err)
+      return err?.statusCode === 409 || err?.code === 'conflict' || /座位.*时段.*预约/.test(text)
     },
   },
 }
@@ -330,6 +534,10 @@ export default {
 
 .price-card {
   animation-delay: 0.1s;
+}
+
+.coupon-card {
+  animation-delay: 0.05s;
 }
 
 @keyframes fadeInUp {
@@ -529,21 +737,209 @@ export default {
   margin: 24rpx 0;
 }
 
+/* Coupon card */
+.coupon-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.coupon-title-wrap {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.coupon-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.coupon-sub {
+  max-width: 480rpx;
+  font-size: 24rpx;
+  color: $text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coupon-loading {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+
+.coupon-spinner {
+  width: 24rpx;
+  height: 24rpx;
+  border: 3rpx solid rgba(79, 110, 247, 0.18);
+  border-top-color: $primary;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.coupon-loading-text {
+  font-size: 22rpx;
+  color: $text-muted;
+}
+
+.coupon-error {
+  min-height: 64rpx;
+  padding: 0 20rpx;
+  margin-bottom: 16rpx;
+  border-radius: 16rpx;
+  background: #FFF3E0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.coupon-error-text {
+  min-width: 0;
+  flex: 1;
+  font-size: 24rpx;
+  color: #E67900;
+}
+
+.coupon-retry {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: $primary;
+}
+
+.coupon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.coupon-option {
+  min-height: 96rpx;
+  padding: 20rpx;
+  border: 2rpx solid $border-color;
+  border-radius: 20rpx;
+  background: #FAFBFC;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  transition: all 0.2s;
+}
+
+.coupon-option.active {
+  border-color: $primary;
+  background: rgba(79, 110, 247, 0.06);
+}
+
+.coupon-item {
+  align-items: flex-start;
+}
+
+.coupon-option-main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.coupon-name-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.coupon-option-name {
+  min-width: 0;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coupon-discount {
+  flex-shrink: 0;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #E64A19;
+}
+
+.coupon-option-desc,
+.coupon-payable {
+  max-width: 100%;
+  font-size: 23rpx;
+  color: $text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coupon-payable {
+  color: $primary;
+}
+
+.coupon-radio {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  border: 3rpx solid $border-color;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.coupon-option.active .coupon-radio {
+  border-color: $primary;
+}
+
+.coupon-radio-dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: $primary;
+}
+
 /* Price card */
 .price-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 18rpx;
+}
+
+.price-row:last-child {
+  margin-bottom: 0;
 }
 
 .price-label {
+  min-width: 0;
   font-size: 28rpx;
   color: $text-secondary;
 }
 
 .price-value {
+  flex-shrink: 0;
   font-size: 28rpx;
   color: $text-primary;
+}
+
+.price-value.discount {
+  color: #E64A19;
 }
 
 .total-row {
@@ -726,8 +1122,18 @@ export default {
 }
 
 .summary-value {
+  max-width: 440rpx;
   font-size: 26rpx;
   color: $text-primary;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-discount {
+  font-weight: 600;
+  color: #E64A19;
 }
 
 .summary-price {

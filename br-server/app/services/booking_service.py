@@ -17,6 +17,7 @@ from app.schemas.booking import (
     RoomBrief,
     SeatBrief,
 )
+from app.services import coupon_service
 
 MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
@@ -50,6 +51,10 @@ class BookingAlreadyCancelledError(BookingError):
     pass
 
 
+class BookingCouponUnavailableError(BookingError):
+    pass
+
+
 def _calculate_hours(start_time: time, end_time: time) -> float:
     start_seconds = start_time.hour * 3600 + start_time.minute * 60 + start_time.second
     end_seconds = end_time.hour * 3600 + end_time.minute * 60 + end_time.second
@@ -66,7 +71,10 @@ def _build_booking_response(booking: Booking, seat: Seat, room: StudyRoom) -> Bo
         start_time=booking.start_time,
         end_time=booking.end_time,
         status=booking.status,
+        original_price=booking.original_price,
+        discount_amount=booking.discount_amount,
         total_price=booking.total_price,
+        coupon_id=booking.coupon_id,
         created_at=booking.created_at,
         seat=SeatBrief.model_validate(seat),
         room=RoomBrief.model_validate(room),
@@ -110,8 +118,29 @@ async def create_booking(
     room_result = await db.execute(select(StudyRoom).where(StudyRoom.id == seat.room_id))
     room = room_result.scalar_one()
 
-    hours = _calculate_hours(data.start_time, data.end_time)
-    total_price = Decimal(str(seat.price_per_hour)) * Decimal(str(round(hours, 2)))
+    if data.coupon_id is None:
+        original_price = coupon_service.calculate_original_price(
+            Decimal(str(seat.price_per_hour)), data.start_time, data.end_time
+        )
+        discount_amount = Decimal("0.00")
+        total_price = original_price
+        user_coupon = None
+    else:
+        try:
+            coupon_result = await coupon_service.validate_coupon_for_booking(
+                db=db,
+                user_id=user_id,
+                user_coupon_id=data.coupon_id,
+                seat=seat,
+                start_time=data.start_time,
+                end_time=data.end_time,
+            )
+        except coupon_service.CouponError as exc:
+            raise BookingCouponUnavailableError("卡券不可用，请重新选择") from exc
+        original_price = coupon_result.original_price
+        discount_amount = coupon_result.discount_amount
+        total_price = coupon_result.payable_amount
+        user_coupon = coupon_result.user_coupon
 
     booking = Booking(
         seat_id=data.seat_id,
@@ -121,10 +150,16 @@ async def create_booking(
         start_time=data.start_time,
         end_time=data.end_time,
         status="confirmed",
+        original_price=original_price,
+        discount_amount=discount_amount,
         total_price=total_price,
+        coupon_id=data.coupon_id,
     )
     db.add(booking)
     await db.flush()
+    if user_coupon is not None:
+        coupon_service.mark_coupon_used(user_coupon, booking.id)
+        await db.flush()
 
     return _build_booking_response(booking, seat, room)
 
@@ -210,6 +245,7 @@ async def cancel_booking(
         raise BookingAlreadyCancelledError("该预约已取消")
 
     booking.status = "cancelled"
+    await coupon_service.restore_user_coupon_for_booking(db, booking)
     await db.flush()
 
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
@@ -228,7 +264,10 @@ def _build_admin_booking_response(booking: Booking, seat: Seat, room: StudyRoom)
         start_time=booking.start_time,
         end_time=booking.end_time,
         status=booking.status,
+        original_price=booking.original_price,
+        discount_amount=booking.discount_amount,
         total_price=booking.total_price,
+        coupon_id=booking.coupon_id,
         created_at=booking.created_at,
         updated_at=booking.updated_at,
         seat=SeatBrief.model_validate(seat),
@@ -321,6 +360,7 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
         raise BookingAlreadyCancelledError("该预约已取消")
 
     booking.status = "cancelled"
+    await coupon_service.restore_user_coupon_for_booking(db, booking)
     await db.flush()
     await db.refresh(booking)
 

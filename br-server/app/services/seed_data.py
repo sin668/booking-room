@@ -5,6 +5,8 @@ Requires DATABASE_URL env var to be set.
 """
 
 import asyncio
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import async_session
 from app.models.activity import Activity
 from app.models.banner import Banner
+from app.models.coupon import Coupon, UserCoupon
 from app.models.study_room import StudyRoom
+from app.models.user import User
 
 SEED_BANNERS = [
     Banner(
@@ -102,6 +106,81 @@ SEED_STUDY_ROOMS = [
     ),
 ]
 
+SEED_COUPONS = [
+    {
+        "name": "满20减3",
+        "description": "全场通用",
+        "type": "threshold_amount_off",
+        "discount_amount": Decimal("3.00"),
+        "discount_percent": None,
+        "min_order_amount": Decimal("20.00"),
+        "scope": "all",
+        "seat_zone": None,
+    },
+    {
+        "name": "新用户首单立减20",
+        "description": "限首次预约",
+        "type": "amount_off",
+        "discount_amount": Decimal("20.00"),
+        "discount_percent": None,
+        "min_order_amount": Decimal("0.00"),
+        "scope": "first_booking",
+        "seat_zone": None,
+    },
+    {
+        "name": "VIP专享8折",
+        "description": "限VIP座位",
+        "type": "percentage_off",
+        "discount_amount": None,
+        "discount_percent": 80,
+        "min_order_amount": Decimal("0.00"),
+        "scope": "seat_zone",
+        "seat_zone": "vip",
+    },
+]
+
+
+async def seed_coupons(session: AsyncSession) -> None:
+    valid_from = datetime.now(UTC) - timedelta(days=1)
+    expires_at = datetime.now(UTC) + timedelta(days=90)
+    coupons_by_name: dict[str, Coupon] = {}
+
+    for coupon_data in SEED_COUPONS:
+        existing = await session.execute(
+            select(Coupon).where(Coupon.name == coupon_data["name"])
+        )
+        coupon = existing.scalar_one_or_none()
+        if coupon is None:
+            coupon = Coupon(
+                **coupon_data,
+                valid_from=valid_from,
+                expires_at=expires_at,
+                is_active=True,
+            )
+            session.add(coupon)
+            await session.flush()
+            print(f"  + Coupon: {coupon.name}")
+        coupons_by_name[coupon.name] = coupon
+
+    users = (await session.execute(select(User).where(User.status == "active"))).scalars().all()
+    for user in users:
+        for coupon in coupons_by_name.values():
+            existing_user_coupon = await session.execute(
+                select(UserCoupon).where(
+                    UserCoupon.user_id == str(user.id),
+                    UserCoupon.coupon_id == coupon.id,
+                )
+            )
+            if existing_user_coupon.scalar_one_or_none() is None:
+                session.add(
+                    UserCoupon(
+                        user_id=str(user.id),
+                        coupon_id=coupon.id,
+                        status="available",
+                    )
+                )
+                print(f"  + UserCoupon: {coupon.name} -> {user.phone}")
+
 
 async def seed_all() -> None:
     async with async_session() as session:
@@ -128,6 +207,8 @@ async def seed_all() -> None:
             if existing.scalar_one_or_none() is None:
                 session.add(room)
                 print(f"  + StudyRoom: {room.name}")
+
+        await seed_coupons(session)
 
         await session.commit()
         print("Seed data complete.")

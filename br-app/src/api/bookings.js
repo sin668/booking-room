@@ -2,6 +2,7 @@ import { get, post } from '@/utils/request'
 
 /**
  * 创建预约
+ * @param {Object} data - 预约数据，可包含 coupon_id
  */
 export function createBooking(data) {
   return post('/api/v1/bookings/', data)

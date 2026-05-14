@@ -50,6 +50,13 @@
       }
     },
     {
+      "path": "pages/coupon/index",
+      "style": {
+        "navigationBarTitleText": "卡券包",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
       "path": "pages/qrcode/index",
       "style": {
         "navigationBarTitleText": "我的学习码"

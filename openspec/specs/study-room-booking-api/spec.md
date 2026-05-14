@@ -23,30 +23,52 @@
 - **THEN** 返回 HTTP 404
 
 ### Requirement: Create booking API
-系统 SHALL 提供 `POST /api/v1/bookings/` 接口，允许已登录用户创建座位预约。请求体包含 `seat_id`（整数，必填）、`date`（日期字符串 YYYY-MM-DD，必填）、`start_time`（时间字符串 HH:MM，必填）、`end_time`（时间字符串 HH:MM，必填）。创建成功返回 HTTP 201，响应包含预约详情。
+系统 SHALL 提供 `POST /api/v1/bookings/` 接口，允许已登录用户创建座位预约。请求体包含 `seat_id`（整数，必填）、`date`（日期字符串 YYYY-MM-DD，必填）、`start_time`（时间字符串 HH:MM，必填）、`end_time`（时间字符串 HH:MM，必填）、`coupon_id`（整数，可选，指向当前用户持有的用户卡券）。创建成功返回 HTTP 201，响应包含预约详情。若传入 `coupon_id`，系统 MUST 在后端校验卡券归属、状态、有效期、适用范围和订单门槛，并计算抵扣后金额。
 
 #### Scenario: Successful booking creation
-- **WHEN** 已登录用户发送 `POST /api/v1/bookings/`，body 为 `{"seat_id": 1, "date": "2026-05-01", "start_time": "09:00", "end_time": "12:00"}`
-- **THEN** 返回 HTTP 201，响应包含 `id`、`seat_id`、`user_id`、`room_id`、`date`、`start_time`、`end_time`、`status`（值为 "confirmed"）、`total_price`、`created_at`
+- **GIVEN** 用户已登录
+- **WHEN** 用户发送 `POST /api/v1/bookings/`，body 为 `{"seat_id": 1, "date": "2026-05-01", "start_time": "09:00", "end_time": "12:00"}`
+- **THEN** 返回 HTTP 201
+- **AND** 响应包含 `id`、`seat_id`、`user_id`、`room_id`、`date`、`start_time`、`end_time`、`status`（值为 "confirmed"）、`original_price`、`discount_amount`、`total_price`、`coupon_id`、`created_at`
+
+#### Scenario: Successful booking creation with coupon
+- **GIVEN** 用户已登录且拥有一张可用于该预约的卡券
+- **WHEN** 用户发送 `POST /api/v1/bookings/` 并传入该 `coupon_id`
+- **THEN** 返回 HTTP 201
+- **AND** 响应中的 `discount_amount` 大于 0
+- **AND** `total_price` 等于 `original_price - discount_amount`
+- **AND** 该用户卡券状态变为 `used`
+
+#### Scenario: Booking with invalid coupon
+- **GIVEN** 用户已登录
+- **WHEN** 用户发送 `POST /api/v1/bookings/` 并传入不存在、不属于自己、已使用、已过期或不适用该订单的 `coupon_id`
+- **THEN** 返回 HTTP 400
+- **AND** 不创建预约
+- **AND** 不改变任何卡券状态
 
 #### Scenario: Booking with non-existent seat
-- **WHEN** 已登录用户发送 `POST /api/v1/bookings/`，`seat_id` 对应的座位不存在
+- **GIVEN** 用户已登录
+- **WHEN** 用户发送 `POST /api/v1/bookings/`，`seat_id` 对应的座位不存在
 - **THEN** 返回 HTTP 404，错误信息为"座位不存在"
 
 #### Scenario: Booking with time conflict on same seat
-- **WHEN** 已登录用户发送 `POST /api/v1/bookings/`，所选时间段与同一座位同日期已有预约重叠
+- **GIVEN** 用户已登录
+- **WHEN** 用户发送 `POST /api/v1/bookings/`，所选时间段与同一座位同日期已有预约重叠
 - **THEN** 返回 HTTP 409，错误信息为"该座位该时段已被预约"
 
 #### Scenario: Booking with invalid time range
-- **WHEN** 已登录用户发送 `POST /api/v1/bookings/`，`end_time` 早于或等于 `start_time`
+- **GIVEN** 用户已登录
+- **WHEN** 用户发送 `POST /api/v1/bookings/`，`end_time` 早于或等于 `start_time`
 - **THEN** 返回 HTTP 422，错误信息提示结束时间必须晚于开始时间
 
 #### Scenario: Booking seat under maintenance
-- **WHEN** 已登录用户发送 `POST /api/v1/bookings/`，座位状态为 "maintenance"
+- **GIVEN** 用户已登录
+- **WHEN** 用户发送 `POST /api/v1/bookings/`，座位状态为 "maintenance"
 - **THEN** 返回 HTTP 400，错误信息为"该座位正在维护中"
 
 #### Scenario: Booking requires authentication
-- **WHEN** 未登录用户发送 `POST /api/v1/bookings/`
+- **GIVEN** 用户未登录
+- **WHEN** 用户发送 `POST /api/v1/bookings/`
 - **THEN** 返回 HTTP 401
 
 ### Requirement: List my bookings API
@@ -76,30 +98,56 @@
 - **THEN** 返回 HTTP 404
 
 ### Requirement: Cancel booking API
-系统 SHALL 提供 `POST /api/v1/bookings/{booking_id}/cancel/` 接口，允许用户取消自己的预约。仅 `confirmed` 状态的预约可取消，取消后状态变为 `cancelled`。
+系统 SHALL 提供 `POST /api/v1/bookings/{booking_id}/cancel/` 接口，允许用户取消自己的预约。仅 `confirmed` 状态的预约可取消，取消后状态变为 `cancelled`。若该预约使用了卡券，系统 SHALL 在取消成功后恢复对应用户卡券为可使用状态。
 
 #### Scenario: Successful cancellation
-- **WHEN** 已登录用户发送 `POST /api/v1/bookings/1/cancel/`，该预约状态为 "confirmed" 且属于该用户
-- **THEN** 返回 HTTP 200，预约状态变为 "cancelled"
+- **GIVEN** 已登录用户拥有状态为 "confirmed" 的预约
+- **WHEN** 用户发送 `POST /api/v1/bookings/1/cancel/`
+- **THEN** 返回 HTTP 200
+- **AND** 预约状态变为 "cancelled"
+
+#### Scenario: Cancel booking restores used coupon
+- **GIVEN** 已登录用户拥有一笔使用卡券的 "confirmed" 预约
+- **WHEN** 用户发送 `POST /api/v1/bookings/1/cancel/`
+- **THEN** 返回 HTTP 200
+- **AND** 预约状态变为 "cancelled"
+- **AND** 对应用户卡券恢复为 `available`
 
 #### Scenario: Cancel already cancelled booking
-- **WHEN** 用户发送 `POST /api/v1/bookings/1/cancel/`，该预约状态为 "cancelled"
+- **GIVEN** 已登录用户拥有状态为 "cancelled" 的预约
+- **WHEN** 用户发送 `POST /api/v1/bookings/1/cancel/`
 - **THEN** 返回 HTTP 400，错误信息为"该预约已取消"
 
 #### Scenario: Cancel other user's booking
-- **WHEN** 用户发送 `POST /api/v1/bookings/1/cancel/`，该预约属于其他用户
+- **GIVEN** 已登录用户请求其他用户的预约
+- **WHEN** 用户发送 `POST /api/v1/bookings/1/cancel/`
 - **THEN** 返回 HTTP 404
 
 ### Requirement: Booking database model
-系统 SHALL 创建 `bookings` 表，包含字段：`id`（主键，自增）、`seat_id`（外键关联 seats.id，非空）、`user_id`（外键关联 users.id，非空）、`room_id`（外键关联 study_rooms.id，非空）、`date`（DATE，非空）、`start_time`（TIME，非空）、`end_time`（TIME，非空）、`status`（VARCHAR(20)，默认 "confirmed"，枚举值 "confirmed"/"cancelled"/"completed"）、`total_price`（DECIMAL(10,2)，非空）、`created_at`、`updated_at`。
+系统 SHALL 创建 `bookings` 表，包含字段：`id`（主键，自增）、`seat_id`（外键关联 seats.id，非空）、`user_id`（外键关联 users.id，非空）、`room_id`（外键关联 study_rooms.id，非空）、`date`（DATE，非空）、`start_time`（TIME，非空）、`end_time`（TIME，非空）、`status`（VARCHAR(20)，默认 "confirmed"，枚举值 "confirmed"/"cancelled"/"completed"）、`original_price`（DECIMAL(10,2)，非空）、`discount_amount`（DECIMAL(10,2)，默认 0，非空）、`total_price`（DECIMAL(10,2)，非空，表示抵扣后实付金额）、`coupon_id`（外键关联 user_coupons.id，可空）、`created_at`、`updated_at`。
 
-#### Scenario: Create booking record
-- **WHEN** 向 `bookings` 表插入一条记录，`seat_id=1`，`user_id=1`，`room_id=1`，`date="2026-05-01"`，`start_time="09:00"`，`end_time="12:00"`，`total_price=18.00`
-- **THEN** 记录成功创建，`id` 自增，`status` 默认为 "confirmed"，`created_at` 和 `updated_at` 自动填充
+#### Scenario: Create booking record without coupon
+- **GIVEN** 用户创建不使用卡券的预约
+- **WHEN** 向 `bookings` 表插入一条记录，原价为 18.00
+- **THEN** 记录成功创建
+- **AND** `original_price=18.00`
+- **AND** `discount_amount=0.00`
+- **AND** `total_price=18.00`
+- **AND** `coupon_id` 为空
+
+#### Scenario: Create booking record with coupon
+- **GIVEN** 用户创建使用卡券的预约
+- **WHEN** 向 `bookings` 表插入一条记录，原价为 24.00，抵扣为 3.00
+- **THEN** 记录成功创建
+- **AND** `original_price=24.00`
+- **AND** `discount_amount=3.00`
+- **AND** `total_price=21.00`
+- **AND** `coupon_id` 指向被使用的用户卡券
 
 ### Requirement: Booking response schema
-预约列表/详情响应 SHALL 包含以下字段：`id`（整数）、`seat_id`（整数）、`user_id`（整数）、`room_id`（整数）、`date`（日期字符串 YYYY-MM-DD）、`start_time`（时间字符串 HH:MM）、`end_time`（时间字符串 HH:MM）、`status`（枚举字符串）、`total_price`（数字）、`created_at`（ISO 时间字符串）、`seat`（对象，包含 id、seat_number、zone、position、price_per_hour）、`room`（对象，包含 id、name、address）。
+预约列表/详情响应 SHALL 包含以下字段：`id`（整数）、`seat_id`（整数）、`user_id`（整数）、`room_id`（整数）、`date`（日期字符串 YYYY-MM-DD）、`start_time`（时间字符串 HH:MM）、`end_time`（时间字符串 HH:MM）、`status`（枚举字符串）、`original_price`（数字）、`discount_amount`（数字）、`total_price`（数字）、`coupon_id`（整数或 null）、`created_at`（ISO 时间字符串）、`seat`（对象，包含 id、seat_number、zone、position、price_per_hour）、`room`（对象，包含 id、name、address）。
 
 #### Scenario: Response field validation
-- **WHEN** 客户端请求预约详情
-- **THEN** 响应包含 `id`、`seat_id`、`room_id`、`date`、`start_time`、`end_time`、`status`、`total_price`、`created_at`、`seat`、`room` 字段
+- **GIVEN** 客户端请求预约详情
+- **WHEN** 后端返回预约详情
+- **THEN** 响应包含 `id`、`seat_id`、`room_id`、`date`、`start_time`、`end_time`、`status`、`original_price`、`discount_amount`、`total_price`、`coupon_id`、`created_at`、`seat`、`room` 字段

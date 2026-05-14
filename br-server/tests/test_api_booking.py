@@ -185,6 +185,7 @@ class TestCreateBooking:
         assert seed_booking_coupon.status == "used"
         assert seed_booking_coupon.used_booking_id == data["id"]
         assert seed_booking_coupon.used_at is not None
+        assert seed_booking_coupon.used_at.tzinfo is None
 
     @pytest.mark.asyncio
     async def test_create_booking_with_invalid_coupon_does_not_create_booking_or_mutate_coupon(

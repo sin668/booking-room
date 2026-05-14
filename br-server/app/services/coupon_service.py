@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, date, datetime, time
+from datetime import date, datetime, time
 from decimal import Decimal, ROUND_HALF_UP
 from typing import NamedTuple
+from zoneinfo import ZoneInfo
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
@@ -37,14 +38,21 @@ class BookingCouponCalculation(NamedTuple):
     user_coupon: UserCoupon
 
 
+CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")
+
+
 def _now() -> datetime:
-    return datetime.now(UTC)
+    return datetime.now(CHINA_TIMEZONE)
+
+
+def _now_for_db() -> datetime:
+    return _now().replace(tzinfo=None)
 
 
 def _ensure_aware(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value.replace(tzinfo=UTC)
-    return value.astimezone(UTC)
+        return value.replace(tzinfo=CHINA_TIMEZONE)
+    return value.astimezone(CHINA_TIMEZONE)
 
 
 def _money(value: Decimal | float | int | str) -> Decimal:
@@ -143,13 +151,13 @@ async def list_user_coupons(
 
 
 async def _has_booking_history(db: AsyncSession, user_id: str) -> bool:
-    result = await db.execute(
-        select(Booking.id).where(
+    statement = select(
+        exists().where(
             Booking.user_id == user_id,
             Booking.status.in_(["confirmed", "completed"]),
         )
     )
-    return result.scalar_one_or_none() is not None
+    return bool(await db.scalar(statement))
 
 
 def _scope_allows(coupon: Coupon, seat: Seat, has_history: bool) -> bool:
@@ -268,7 +276,7 @@ async def validate_coupon_for_booking(
 def mark_coupon_used(user_coupon: UserCoupon, booking_id: int) -> None:
     user_coupon.status = "used"
     user_coupon.used_booking_id = booking_id
-    user_coupon.used_at = _now()
+    user_coupon.used_at = _now_for_db()
 
 
 async def restore_user_coupon_for_booking(db: AsyncSession, booking: Booking) -> None:

@@ -324,6 +324,48 @@ class TestAvailableCouponsForBooking:
         assert "首单立减20" not in [item.name for item in result.items]
 
     @pytest.mark.asyncio
+    async def test_multiple_booking_history_rows_do_not_fail(self, db_session: AsyncSession, seed_room_and_seats, seed_coupons):
+        db_session.add_all(
+            [
+                Booking(
+                    seat_id=seed_room_and_seats["quiet"].id,
+                    user_id=USER_ID,
+                    room_id=seed_room_and_seats["room"].id,
+                    date=date(2026, 4, 29),
+                    start_time=time(8, 0),
+                    end_time=time(10, 0),
+                    status="confirmed",
+                    total_price=Decimal("30.00"),
+                ),
+                Booking(
+                    seat_id=seed_room_and_seats["vip"].id,
+                    user_id=USER_ID,
+                    room_id=seed_room_and_seats["room"].id,
+                    date=date(2026, 4, 30),
+                    start_time=time(10, 0),
+                    end_time=time(12, 0),
+                    status="completed",
+                    total_price=Decimal("40.00"),
+                ),
+            ]
+        )
+        await db_session.flush()
+
+        result = await coupon_service.list_available_coupons_for_booking(
+            db_session,
+            USER_ID,
+            seed_room_and_seats["vip"].id,
+            date(2026, 5, 1),
+            time(9, 0),
+            time(12, 0),
+        )
+
+        names = [item.name for item in result.items]
+        assert "首单立减20" not in names
+        assert "满20减3" in names
+        assert "VIP专享8折" in names
+
+    @pytest.mark.asyncio
     async def test_available_result_not_include_used_coupon(self, db_session: AsyncSession, seed_room_and_seats, seed_coupons):
         result = await coupon_service.list_available_coupons_for_booking(
             db_session,

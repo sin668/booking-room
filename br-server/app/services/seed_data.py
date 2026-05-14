@@ -5,7 +5,7 @@ Requires DATABASE_URL env var to be set.
 """
 
 import asyncio
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -17,6 +17,14 @@ from app.models.banner import Banner
 from app.models.coupon import Coupon, UserCoupon
 from app.models.study_room import StudyRoom
 from app.models.user import User
+
+CHINA_TIMEZONE = timezone(timedelta(hours=8))
+
+
+def _china_now_naive() -> datetime:
+    """Return China local time for timezone-naive database DateTime columns."""
+    return datetime.now(CHINA_TIMEZONE).replace(tzinfo=None)
+
 
 SEED_BANNERS = [
     Banner(
@@ -141,8 +149,9 @@ SEED_COUPONS = [
 
 
 async def seed_coupons(session: AsyncSession) -> None:
-    valid_from = datetime.now(UTC) - timedelta(days=1)
-    expires_at = datetime.now(UTC) + timedelta(days=90)
+    now = _china_now_naive()
+    valid_from = now - timedelta(days=1)
+    expires_at = now + timedelta(days=90)
     coupons_by_name: dict[str, Coupon] = {}
 
     for coupon_data in SEED_COUPONS:

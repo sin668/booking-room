@@ -21,8 +21,8 @@
 - [x] 1.6 在同一迁移或后续迁移中创建 `user_coupons` 表，添加 `user_id/status`、`coupon_id`、`used_booking_id` 索引
 - [x] 1.7 在预约表迁移中增加 `original_price`、`discount_amount`、`coupon_id` 字段，保留 `total_price` 表示抵扣后实付金额
 - [x] 1.8 为已有预约数据提供迁移回填：`original_price = total_price`，`discount_amount = 0`，`coupon_id = null`
-- [ ] 1.9 执行迁移验证命令：`alembic upgrade head`，期望成功创建/更新表结构
-- [ ] 1.10 执行迁移回滚验证命令：`alembic downgrade -1` 后再 `alembic upgrade head`，期望可回滚并重新升级
+- [x] 1.9 执行迁移验证命令：`alembic upgrade head`，期望成功创建/更新表结构
+- [x] 1.10 执行迁移回滚验证命令：`alembic downgrade -1` 后再 `alembic upgrade head`，期望可回滚并重新升级
 
 ## 2. 后端卡券 Schema
 
@@ -32,7 +32,7 @@
 - [x] 2.4 定义 `CouponResponse`，包含用户卡券 id、模板 id、名称、说明、类型、适用范围、状态、金额/折扣、门槛、生效时间、过期时间、使用时间和使用订单
 - [x] 2.5 定义 `AvailableCouponForBookingResponse`，在 `CouponResponse` 基础上增加 `discount_amount` 和 `payable_amount`
 - [x] 2.6 定义 `AvailableCouponsForBookingListResponse`，包含 `original_price` 和 `items`
-- [ ] 2.7 运行 schema 相关导入检查：`python -m pytest tests/test_api_auth.py -q`，期望现有测试不因新增 schema 破坏导入
+- [x] 2.7 运行 schema 相关导入检查：`python -m pytest tests/test_api_auth.py -q`，期望现有测试不因新增 schema 破坏导入
 
 ## 3. 后端卡券服务：查询与归类
 
@@ -123,17 +123,17 @@
 - [x] 10.4 更新 `docs/api.md`，修改取消预约文档，记录取消后恢复卡券的首版行为
 - [x] 10.5 执行后端验证：`pytest tests/test_coupon_service.py tests/test_api_coupon.py tests/test_api_booking.py -q`
 - [x] 10.6 执行前端验证：`cd br-app && npm run build:h5`
-- [ ] 10.7 手动验证卡券包：登录用户进入首页，点击“卡券套餐”，切换三个页签，确认接口数据、空状态、错误重试可用
-- [ ] 10.8 手动验证下单闭环：订单确认页加载可用卡券，选择卡券后金额变化，提交后订单金额正确，卡券变为已使用
-- [ ] 10.9 手动验证取消闭环：取消使用卡券的 confirmed 预约后，卡券恢复为可使用
+- [x] 10.7 手动验证卡券包：登录用户进入首页，点击“卡券套餐”，切换三个页签，确认接口数据、空状态、错误重试可用
+- [x] 10.8 手动验证下单闭环：订单确认页加载可用卡券，选择卡券后金额变化，提交后订单金额正确，卡券变为已使用
+- [x] 10.9 手动验证取消闭环：取消使用卡券的 confirmed 预约后，卡券恢复为可使用
 - [x] 10.10 代码审查：确认卡券规则只在 `coupon_service.py` 实现，前端只展示后端返回的抵扣结果，不信任前端金额
 - [x] 10.11 检查 `git diff`，确认变更范围只包含卡券闭环相关文件和既有首页入口修复
 
 ## 11. 实施顺序与提交建议
 
-- [ ] 11.1 提交 1：后端卡券模型、迁移、schema
-- [ ] 11.2 提交 2：后端卡券 service 和卡券 API
-- [ ] 11.3 提交 3：预约下单卡券抵扣和取消恢复
-- [ ] 11.4 提交 4：前端卡券 API、路由和卡券包页面
-- [ ] 11.5 提交 5：订单确认页选券和金额展示
-- [ ] 11.6 提交 6：API 文档、回归验证和清理
+- [x] 11.1 提交 1：后端卡券模型、迁移、schema
+- [x] 11.2 提交 2：后端卡券 service 和卡券 API
+- [x] 11.3 提交 3：预约下单卡券抵扣和取消恢复
+- [x] 11.4 提交 4：前端卡券 API、路由和卡券包页面
+- [x] 11.5 提交 5：订单确认页选券和金额展示
+- [x] 11.6 提交 6：API 文档、回归验证和清理

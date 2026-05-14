@@ -27,6 +27,7 @@ class BookingCreate(BaseModel):
     date: date
     start_time: time
     end_time: time
+    coupon_id: int | None = None
 
 
 class BookingResponse(BaseModel):
@@ -38,7 +39,10 @@ class BookingResponse(BaseModel):
     start_time: time
     end_time: time
     status: str
+    original_price: Decimal
+    discount_amount: Decimal
     total_price: Decimal
+    coupon_id: int | None
     created_at: datetime
     seat: SeatBrief
     room: RoomBrief
@@ -62,7 +66,10 @@ class BookingAdminResponse(BaseModel):
     start_time: time
     end_time: time
     status: str
+    original_price: Decimal
+    discount_amount: Decimal
     total_price: Decimal
+    coupon_id: int | None
     created_at: datetime
     updated_at: datetime
     seat: SeatBrief

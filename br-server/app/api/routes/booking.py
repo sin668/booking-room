@@ -34,6 +34,8 @@ async def create_booking(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="该座位该时段已被预约")
     except booking_service.InvalidTimeRangeError:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="结束时间必须晚于开始时间")
+    except booking_service.BookingCouponUnavailableError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="卡券不可用，请重新选择")
     except booking_service.BookingError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

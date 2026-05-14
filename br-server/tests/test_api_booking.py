@@ -1,7 +1,8 @@
 """Integration tests for Booking API."""
 
 import uuid
-from datetime import date, time
+from datetime import UTC, date, datetime, timedelta, time
+from decimal import Decimal
 
 import pytest
 from httpx import AsyncClient
@@ -9,11 +10,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id
 from app.models.booking import Booking
+from app.models.coupon import Coupon, UserCoupon
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 
 USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
 OTHER_USER_ID = uuid.UUID("22222222-2222-2222-2222-222222222222")
+NOW = datetime.now(UTC)
 
 
 @pytest.fixture
@@ -70,6 +73,35 @@ async def seed_room_seat(db_session: AsyncSession):
 
 
 @pytest.fixture
+async def seed_booking_coupon(db_session: AsyncSession):
+    coupon = Coupon(
+        name="满20减3",
+        description="全场通用",
+        type="threshold_amount_off",
+        discount_amount=Decimal("3.00"),
+        discount_percent=None,
+        min_order_amount=Decimal("20.00"),
+        scope="all",
+        seat_zone=None,
+        valid_from=NOW - timedelta(days=1),
+        expires_at=NOW + timedelta(days=1),
+        is_active=True,
+    )
+    db_session.add(coupon)
+    await db_session.flush()
+
+    user_coupon = UserCoupon(
+        user_id=str(USER_ID),
+        coupon_id=coupon.id,
+        status="available",
+    )
+    db_session.add(user_coupon)
+    await db_session.flush()
+
+    return user_coupon
+
+
+@pytest.fixture
 async def auth_client(client: AsyncClient):
     """Create a client with mocked auth returning USER_ID."""
     app = client._transport.app
@@ -110,7 +142,10 @@ class TestCreateBooking:
         assert data["start_time"] == "09:00:00"
         assert data["end_time"] == "12:00:00"
         assert data["status"] == "confirmed"
+        assert data["original_price"] == "45.00"
+        assert data["discount_amount"] == "0.00"
         assert data["total_price"] == "45.00"  # 3 hours * 15.00
+        assert data["coupon_id"] is None
         assert data["seat"]["seat_number"] == "A-01"
         assert data["seat"]["zone"] == "quiet"
         assert data["seat"]["position"] == "window"
@@ -119,6 +154,73 @@ class TestCreateBooking:
         assert data["room"]["address"] == "123 Test St"
         assert "id" in data
         assert "created_at" in data
+
+    @pytest.mark.asyncio
+    async def test_create_booking_with_coupon_marks_coupon_used(
+        self,
+        auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+        seed_booking_coupon: UserCoupon,
+    ):
+        seat = seed_room_seat["seat_a"]
+        resp = await auth_client.post(
+            "/api/v1/bookings",
+            json={
+                "seat_id": seat.id,
+                "date": "2026-05-01",
+                "start_time": "09:00",
+                "end_time": "12:00",
+                "coupon_id": seed_booking_coupon.id,
+            },
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["original_price"] == "45.00"
+        assert data["discount_amount"] == "3.00"
+        assert data["total_price"] == "42.00"
+        assert data["coupon_id"] == seed_booking_coupon.id
+
+        await db_session.refresh(seed_booking_coupon)
+        assert seed_booking_coupon.status == "used"
+        assert seed_booking_coupon.used_booking_id == data["id"]
+        assert seed_booking_coupon.used_at is not None
+
+    @pytest.mark.asyncio
+    async def test_create_booking_with_invalid_coupon_does_not_create_booking_or_mutate_coupon(
+        self,
+        auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+        seed_booking_coupon: UserCoupon,
+    ):
+        seed_booking_coupon.user_id = str(OTHER_USER_ID)
+        await db_session.flush()
+
+        seat = seed_room_seat["seat_a"]
+        resp = await auth_client.post(
+            "/api/v1/bookings",
+            json={
+                "seat_id": seat.id,
+                "date": "2026-05-01",
+                "start_time": "09:00",
+                "end_time": "12:00",
+                "coupon_id": seed_booking_coupon.id,
+            },
+        )
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == "卡券不可用，请重新选择"
+
+        bookings = (
+            await db_session.execute(
+                Booking.__table__.select().where(Booking.user_id == str(USER_ID))
+            )
+        ).all()
+        assert bookings == []
+        await db_session.refresh(seed_booking_coupon)
+        assert seed_booking_coupon.status == "available"
+        assert seed_booking_coupon.used_booking_id is None
+        assert seed_booking_coupon.used_at is None
 
     @pytest.mark.asyncio
     async def test_create_booking_no_auth(self, client: AsyncClient, seed_room_seat):
@@ -413,6 +515,45 @@ class TestCancelBooking:
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "cancelled"
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_restores_used_coupon(
+        self,
+        auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+        seed_booking_coupon: UserCoupon,
+    ):
+        seat = seed_room_seat["seat_a"]
+        room = seed_room_seat["room"]
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=date(2026, 5, 1),
+            start_time=time(9, 0),
+            end_time=time(12, 0),
+            status="confirmed",
+            original_price=Decimal("45.00"),
+            discount_amount=Decimal("3.00"),
+            total_price=Decimal("42.00"),
+            coupon_id=seed_booking_coupon.id,
+        )
+        db_session.add(booking)
+        await db_session.flush()
+        seed_booking_coupon.status = "used"
+        seed_booking_coupon.used_booking_id = booking.id
+        seed_booking_coupon.used_at = NOW
+        await db_session.flush()
+
+        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel")
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "cancelled"
+
+        await db_session.refresh(seed_booking_coupon)
+        assert seed_booking_coupon.status == "available"
+        assert seed_booking_coupon.used_booking_id is None
+        assert seed_booking_coupon.used_at is None
 
     @pytest.mark.asyncio
     async def test_cancel_already_cancelled(self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat):

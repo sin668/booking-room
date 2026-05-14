@@ -666,7 +666,123 @@ Authorization: Bearer <access_token>
 
 ---
 
-## 七、预约
+## 七、卡券
+
+所有卡券接口需要通过 `Authorization` header 传递 Bearer Token。
+
+### GET /api/v1/coupons
+
+获取当前登录用户持有的卡券列表，支持按动态状态过滤。
+
+**认证：** Bearer Token
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| status | string | - | 状态筛选：available / used / expired |
+
+`expired` 为动态状态：未使用但未到生效时间、已过期或模板停用的卡券不会作为可用券返回。
+
+**响应 200：**
+```json
+[
+  {
+    "id": 12,
+    "coupon_id": 3,
+    "name": "满20减3",
+    "description": "全场通用",
+    "type": "threshold_amount_off",
+    "scope": "all",
+    "status": "available",
+    "discount_amount": "3.00",
+    "discount_percent": null,
+    "min_order_amount": "20.00",
+    "valid_from": "2026-05-01T00:00:00Z",
+    "expires_at": "2026-05-31T23:59:59Z",
+    "used_at": null,
+    "used_booking_id": null,
+    "seat_zone": null
+  }
+]
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 用户卡券 ID，创建预约时传入 `coupon_id` |
+| coupon_id | integer | 卡券模板 ID |
+| name | string | 卡券名称 |
+| description | string | 展示说明 |
+| type | string | amount_off / threshold_amount_off / percentage_off |
+| scope | string | all / first_booking / seat_zone |
+| status | string | available / used / expired |
+| discount_amount | decimal \| null | 固定抵扣金额 |
+| discount_percent | integer \| null | 折扣比例，80 表示 8 折 |
+| min_order_amount | decimal | 使用门槛 |
+| valid_from | datetime | 生效时间 |
+| expires_at | datetime | 过期时间 |
+| used_at | datetime \| null | 使用时间 |
+| used_booking_id | integer \| null | 使用该券的预约 ID |
+| seat_zone | string \| null | 指定座位类型范围 |
+
+**错误码：**
+- 401: 未认证
+- 422: status 参数值无效
+
+---
+
+### GET /api/v1/coupons/available-for-booking
+
+根据预约参数返回当前用户可用于该订单的卡券，并返回每张券的抵扣金额和预计实付金额。
+
+**认证：** Bearer Token
+
+**查询参数：**
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| seat_id | integer | 是 | 座位 ID |
+| date | string | 是 | 预约日期，格式 YYYY-MM-DD |
+| start_time | string | 是 | 开始时间，格式 HH:MM |
+| end_time | string | 是 | 结束时间，格式 HH:MM |
+
+**响应 200：**
+```json
+{
+  "original_price": "45.00",
+  "items": [
+    {
+      "id": 12,
+      "coupon_id": 3,
+      "name": "满20减3",
+      "description": "全场通用",
+      "type": "threshold_amount_off",
+      "scope": "all",
+      "status": "available",
+      "discount_amount": "3.00",
+      "discount_percent": null,
+      "min_order_amount": "20.00",
+      "valid_from": "2026-05-01T00:00:00Z",
+      "expires_at": "2026-05-31T23:59:59Z",
+      "used_at": null,
+      "used_booking_id": null,
+      "seat_zone": null,
+      "payable_amount": "42.00"
+    }
+  ]
+}
+```
+
+不可用卡券会被过滤，包括：不属于当前用户、已使用、未生效、已过期、模板停用、未达到满减门槛、不满足首次预约限制、座位类型不匹配。
+
+**错误码：**
+- 401: 未认证
+- 404: 座位不存在
+- 422: 查询参数格式无效
+
+---
+
+## 八、预约
 
 所有预约接口需要通过 `Authorization` header 传递 Bearer Token。
 
@@ -682,7 +798,8 @@ Authorization: Bearer <access_token>
   "seat_id": 1,
   "date": "2026-05-01",
   "start_time": "09:00",
-  "end_time": "12:00"
+  "end_time": "12:00",
+  "coupon_id": 12
 }
 ```
 
@@ -692,6 +809,7 @@ Authorization: Bearer <access_token>
 | date | string | 是 | 预约日期，格式 YYYY-MM-DD |
 | start_time | string | 是 | 开始时间，格式 HH:MM |
 | end_time | string | 是 | 结束时间，格式 HH:MM |
+| coupon_id | integer \| null | 否 | 用户卡券 ID，每个订单最多使用 1 张卡券 |
 
 **响应 201：**
 ```json
@@ -704,7 +822,10 @@ Authorization: Bearer <access_token>
   "start_time": "09:00:00",
   "end_time": "12:00:00",
   "status": "confirmed",
-  "total_price": "18.00",
+  "original_price": "18.00",
+  "discount_amount": "3.00",
+  "total_price": "15.00",
+  "coupon_id": 12,
   "created_at": "2026-05-01T08:00:00",
   "seat": {
     "id": 1,
@@ -727,6 +848,7 @@ Authorization: Bearer <access_token>
 - 409: 该座位该时段已被预约
 - 422: 结束时间必须晚于开始时间
 - 400: 该座位正在维护中
+- 400: 卡券不可用，请重新选择（不存在、不属于当前用户、已使用、未生效、已过期、停用、门槛不足或适用范围不匹配）
 
 ---
 
@@ -757,7 +879,10 @@ Authorization: Bearer <access_token>
       "start_time": "09:00:00",
       "end_time": "12:00:00",
       "status": "confirmed",
+      "original_price": "18.00",
+      "discount_amount": "0.00",
       "total_price": "18.00",
+      "coupon_id": null,
       "created_at": "2026-05-01T08:00:00",
       "seat": { "id": 1, "seat_number": "A1-01", "zone": "quiet", "position": "靠窗", "price_per_hour": "6.00" },
       "room": { "id": 1, "name": "安静自习室", "address": "茂名市茂南区油城三路88号" }
@@ -797,7 +922,7 @@ Authorization: Bearer <access_token>
 
 ### POST /api/v1/bookings/{booking_id}/cancel
 
-取消预约。仅 `confirmed` 状态的预约可取消。
+取消预约。仅 `confirmed` 状态的预约可取消。若该预约使用了卡券，取消成功后对应用户卡券恢复为 `available`，并清空 `used_booking_id` 和 `used_at`。
 
 **认证：** Bearer Token
 
@@ -807,14 +932,14 @@ Authorization: Bearer <access_token>
 |------|------|------|
 | booking_id | integer | 预约 ID |
 
-**响应 200：** 返回更新后的预约对象，`status` 变为 `"cancelled"`。
+**响应 200：** 返回更新后的预约对象，`status` 变为 `"cancelled"`。若订单使用过卡券，该卡券已恢复为可使用状态。
 
 **错误码：**
 - 401: 未认证
 - 400: 该预约已取消（非 confirmed 状态）
 - 404: 预约不存在 / 无权操作
 
-## 八、学习记录
+## 九、学习记录
 
 所有学习记录接口需要通过 `Authorization` header 传递 Bearer Token。
 

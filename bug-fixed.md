@@ -269,6 +269,53 @@ SyntaxError: The requested module '/node_modules/@dcloudio/uni-app/dist/uni-app.
 
 ---
 
+## BUG-15: 卡券时间字段混用 aware/naive datetime 导致下单 500
+
+### 报错信息
+调用卡券种子数据和预约下单接口时出现 500：
+
+```
+invalid input for query argument $9: datetime.datetime(2026, 5, 13, 2, 35, 11...)
+(can't subtract offset-naive and offset-aware datetimes)
+```
+
+```
+"POST /api/v1/bookings HTTP/1.1" 500 Internal Server Error
+invalid input for query argument $3: datetime.datetime(2026, 5, 14, 3, 24, 46...)
+(can't subtract offset-naive and offset-aware datetimes)
+```
+
+### 根本原因
+`coupons.valid_from`、`coupons.expires_at`、`user_coupons.used_at` 等字段在 SQLAlchemy 模型中定义为普通 `DateTime`，对应数据库侧是 timezone-naive 时间字段。
+
+但新增卡券 seed 和使用卡券下单流程里传入了带 `tzinfo` 的 aware datetime：
+
+- `seed_data.py` 使用 `datetime.now(UTC)` 写入 `valid_from` / `expires_at`
+- `coupon_service.mark_coupon_used()` 使用 UTC aware datetime 写入 `used_at`
+
+asyncpg 在绑定 PostgreSQL timestamp 参数时遇到 offset-aware 和 offset-naive datetime 混用，触发 `can't subtract offset-naive and offset-aware datetimes`。
+
+另外卡券有效期判断中，原逻辑把数据库里的 naive datetime 当作 UTC 处理，不符合业务要求的中国东八区时间。
+
+### 解决方案
+统一卡券相关业务时间为中国所在的东八区 `Asia/Shanghai`：
+
+- seed 数据生成东八区当前时间，并在写入数据库前去掉 `tzinfo`，匹配现有 `DateTime` 字段。
+- 卡券服务中有效期比较将数据库 naive datetime 解释为 `Asia/Shanghai`。
+- 使用卡券下单时，`user_coupons.used_at` 写入东八区本地 naive datetime，避免 asyncpg 参数绑定错误。
+- 保留 JWT、核销 token、短信签名等不写入普通 `DateTime` 数据库列的 UTC 时间逻辑。
+- 增加回归测试，确认使用卡券创建预约后 `used_at.tzinfo is None`。
+
+**文件**: `br-server/app/services/seed_data.py`, `br-server/app/services/coupon_service.py`, `br-server/tests/test_api_booking.py`
+
+**验证**:
+```
+pytest tests/test_coupon_service.py tests/test_api_coupon.py tests/test_api_booking.py -q
+# 40 passed
+```
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -290,3 +337,6 @@ SyntaxError: The requested module '/node_modules/@dcloudio/uni-app/dist/uni-app.
 | `br-app/src/pages/booking/detail.vue` | #13 |
 | `br-app/src/pages/booking/seat-select.vue` | #13 |
 | `br-app/src/pages/study-record/index.vue` | #14 |
+| `br-server/app/services/seed_data.py` | #15 |
+| `br-server/app/services/coupon_service.py` | #15 |
+| `br-server/tests/test_api_booking.py` | #15 |

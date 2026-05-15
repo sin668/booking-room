@@ -2,7 +2,7 @@ import { get } from '@/utils/request'
 
 /**
  * 获取自习室列表
- * @param {Object} params - { page, page_size }
+ * @param {Object} params - { page, page_size, city_id }
  */
 export function getRooms(params) {
   return get('/api/v1/rooms/', params)

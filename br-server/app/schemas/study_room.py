@@ -10,6 +10,8 @@ class StudyRoomResponse(BaseModel):
     description: str | None
     cover_image: str | None
     address: str
+    city_id: int | None = None
+    city_name: str | None = None
     business_hours: str | None
     status: str
     min_price: Decimal

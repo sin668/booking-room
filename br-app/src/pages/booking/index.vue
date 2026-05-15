@@ -8,7 +8,7 @@
         </view>
         <view class="hero-city" @tap="onTapCity">
           <view class="icon icon-location hero-city-icon" />
-          <text class="hero-city-text">茂名市</text>
+          <text class="hero-city-text">{{ currentCityName }}</text>
         </view>
       </view>
 
@@ -137,6 +137,7 @@
 
 <script>
 import { getRooms } from '@/api/rooms'
+import { useCityStore } from '@/store/modules/city'
 
 const REAL_ROOM_COVERS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=720&h=520&fit=crop&q=85',
@@ -162,12 +163,29 @@ export default {
       roomPage: 1,
       roomPageSize: 10,
       roomTotal: 0,
+      lastCityId: null,
       selectedFilter: FILTERS[0].value,
       filters: FILTERS,
     }
   },
 
   computed: {
+    cityStore() {
+      return useCityStore()
+    },
+
+    currentCity() {
+      return this.cityStore.currentCity
+    },
+
+    currentCityName() {
+      return this.cityStore.currentCityName
+    },
+
+    currentCityId() {
+      return this.currentCity?.id || null
+    },
+
     hasMoreRooms() {
       return this.rooms.length < this.roomTotal
     },
@@ -204,7 +222,8 @@ export default {
   },
 
   onShow() {
-    if (this.rooms.length === 0) {
+    const cityChanged = this.lastCityId !== this.currentCityId
+    if (this.rooms.length === 0 || cityChanged) {
       this.loadRooms(true)
     }
   },
@@ -260,10 +279,18 @@ export default {
 
       this.roomsLoading = true
       try {
-        const data = await getRooms({ page: this.roomPage, page_size: this.roomPageSize })
+        if (!this.cityStore.initialized) {
+          await this.cityStore.initCity()
+        }
+        const params = { page: this.roomPage, page_size: this.roomPageSize }
+        if (this.currentCityId) {
+          params.city_id = this.currentCityId
+        }
+        const data = await getRooms(params)
         const items = data.items || []
         this.rooms = reset ? items : [...this.rooms, ...items]
         this.roomTotal = data.total || this.rooms.length
+        this.lastCityId = this.currentCityId
       } catch {
         if (reset) {
           this.rooms = []
@@ -296,7 +323,7 @@ export default {
     },
 
     onTapCity() {
-      // Future: city selector
+      uni.navigateTo({ url: '/pages/city-select/index' })
     },
 
     onTapSearch() {

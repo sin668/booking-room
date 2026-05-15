@@ -2,6 +2,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
+from app.models.city import City
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.schemas.study_room import (
@@ -16,25 +17,37 @@ DEFAULT_PAGE_SIZE = 10
 
 
 async def list_study_rooms(
-    db: AsyncSession, page: int = 1, page_size: int = DEFAULT_PAGE_SIZE
+    db: AsyncSession,
+    page: int = 1,
+    page_size: int = DEFAULT_PAGE_SIZE,
+    city_id: int | None = None,
 ) -> StudyRoomListResponse:
     """Return paginated list of open study rooms."""
     page_size = min(page_size, MAX_PAGE_SIZE)
     offset = (page - 1) * page_size
 
+    filters = [StudyRoom.status == "open"]
+    if city_id is not None:
+        filters.append(StudyRoom.city_id == city_id)
+
     count_result = await db.execute(
-        select(func.count()).select_from(StudyRoom).where(StudyRoom.status == "open")
+        select(func.count()).select_from(StudyRoom).where(*filters)
     )
     total = count_result.scalar_one()
 
     result = await db.execute(
-        select(StudyRoom)
-        .where(StudyRoom.status == "open")
+        select(StudyRoom, City.name.label("city_name"))
+        .outerjoin(City, StudyRoom.city_id == City.id)
+        .where(*filters)
         .order_by(StudyRoom.id.asc())
         .offset(offset)
         .limit(page_size)
     )
-    items = [StudyRoomResponse.model_validate(room) for room in result.scalars().all()]
+    items = []
+    for room, city_name in result.all():
+        item = StudyRoomResponse.model_validate(room)
+        item.city_name = city_name
+        items.append(item)
 
     return StudyRoomListResponse(
         items=items,
@@ -47,12 +60,17 @@ async def list_study_rooms(
 async def get_study_room(db: AsyncSession, room_id: int) -> StudyRoomResponse:
     """Return an open study room by ID."""
     result = await db.execute(
-        select(StudyRoom).where(StudyRoom.id == room_id, StudyRoom.status == "open")
+        select(StudyRoom, City.name.label("city_name"))
+        .outerjoin(City, StudyRoom.city_id == City.id)
+        .where(StudyRoom.id == room_id, StudyRoom.status == "open")
     )
-    room = result.scalar_one_or_none()
-    if room is None:
+    row = result.one_or_none()
+    if row is None:
         raise ValueError(f"Room {room_id} not found")
-    return StudyRoomResponse.model_validate(room)
+    room, city_name = row
+    item = StudyRoomResponse.model_validate(room)
+    item.city_name = city_name
+    return item
 
 
 async def admin_list_rooms(

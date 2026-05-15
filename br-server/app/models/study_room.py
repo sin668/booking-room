@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, Numeric, String, func
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -14,6 +14,9 @@ class StudyRoom(Base):
     description: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     cover_image: Mapped[str | None] = mapped_column(String(512), nullable=True)
     address: Mapped[str] = mapped_column(String(255), nullable=False)
+    city_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("cities.id"), nullable=True
+    )
     business_hours: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="open", nullable=False)
     min_price: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)

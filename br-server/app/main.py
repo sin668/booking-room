@@ -17,6 +17,7 @@ from app.api.routes.banner import router as banner_router
 from app.api.routes.booking import router as booking_router
 from app.api.routes.coupon import router as coupon_router
 from app.api.routes.booking_verification import router as booking_verification_router
+from app.api.routes.cities import router as cities_router
 from app.api.routes.seat import router as seat_router
 from app.api.routes.study_record import router as study_record_router
 from app.api.routes.study_room import router as study_room_router
@@ -69,6 +70,7 @@ app.include_router(user_router)
 app.include_router(banner_router)
 app.include_router(activity_router)
 app.include_router(coupon_router)
+app.include_router(cities_router)
 app.include_router(seat_router)
 app.include_router(study_room_router)
 app.include_router(study_record_router)

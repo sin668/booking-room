@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.activity import Activity
 from app.models.banner import Banner
+from app.models.city import City
 from app.models.study_room import StudyRoom
 
 
@@ -84,7 +85,9 @@ class TestStudyRoomAPI:
     @pytest.mark.asyncio
     async def test_list_rooms_page_size_exceeds_max(self, client: AsyncClient, seed_data):
         resp = await client.get("/api/v1/rooms?page_size=100")
-        assert resp.status_code == 422
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["page_size"] == 50
 
     @pytest.mark.asyncio
     async def test_get_room_detail(self, client: AsyncClient, seed_data):
@@ -109,6 +112,122 @@ class TestStudyRoomAPI:
     @pytest.mark.asyncio
     async def test_list_rooms_empty(self, client: AsyncClient):
         resp = await client.get("/api/v1/rooms")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 0
+        assert data["items"] == []
+
+    @pytest.mark.asyncio
+    async def test_list_rooms_filters_by_city_id(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
+        maoming = City(name="茂名市", province="广东省", sort_order=1)
+        guangzhou = City(name="广州市", province="广东省", sort_order=2)
+        db_session.add_all([maoming, guangzhou])
+        await db_session.flush()
+
+        db_session.add_all(
+            [
+                StudyRoom(
+                    name="Maoming Room",
+                    address="Addr A",
+                    status="open",
+                    min_price=10.00,
+                    city_id=maoming.id,
+                ),
+                StudyRoom(
+                    name="Guangzhou Room",
+                    address="Addr B",
+                    status="open",
+                    min_price=15.00,
+                    city_id=guangzhou.id,
+                ),
+                StudyRoom(
+                    name="Closed Maoming Room",
+                    address="Addr C",
+                    status="closed",
+                    min_price=8.00,
+                    city_id=maoming.id,
+                ),
+            ]
+        )
+        await db_session.flush()
+
+        resp = await client.get(f"/api/v1/rooms?city_id={maoming.id}")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert [item["name"] for item in data["items"]] == ["Maoming Room"]
+        assert data["items"][0]["city_id"] == maoming.id
+        assert data["items"][0]["city_name"] == "茂名市"
+
+    @pytest.mark.asyncio
+    async def test_list_rooms_without_city_id_returns_all_open_rooms(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
+        maoming = City(name="茂名市", province="广东省", sort_order=1)
+        guangzhou = City(name="广州市", province="广东省", sort_order=2)
+        db_session.add_all([maoming, guangzhou])
+        await db_session.flush()
+
+        db_session.add_all(
+            [
+                StudyRoom(
+                    name="Maoming Room",
+                    address="Addr A",
+                    status="open",
+                    min_price=10.00,
+                    city_id=maoming.id,
+                ),
+                StudyRoom(
+                    name="Guangzhou Room",
+                    address="Addr B",
+                    status="open",
+                    min_price=15.00,
+                    city_id=guangzhou.id,
+                ),
+                StudyRoom(
+                    name="No City Room",
+                    address="Addr C",
+                    status="open",
+                    min_price=20.00,
+                ),
+            ]
+        )
+        await db_session.flush()
+
+        resp = await client.get("/api/v1/rooms")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 3
+        assert {item["name"] for item in data["items"]} == {
+            "Maoming Room",
+            "Guangzhou Room",
+            "No City Room",
+        }
+
+    @pytest.mark.asyncio
+    async def test_list_rooms_missing_city_returns_empty(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
+        city = City(name="茂名市", province="广东省", sort_order=1)
+        db_session.add(city)
+        await db_session.flush()
+        db_session.add(
+            StudyRoom(
+                name="Maoming Room",
+                address="Addr A",
+                status="open",
+                min_price=10.00,
+                city_id=city.id,
+            )
+        )
+        await db_session.flush()
+
+        resp = await client.get("/api/v1/rooms?city_id=9999")
+
         assert resp.status_code == 200
         data = resp.json()
         assert data["total"] == 0

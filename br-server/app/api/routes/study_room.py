@@ -11,10 +11,13 @@ router = APIRouter(prefix="/api/v1/rooms", tags=["rooms"])
 @router.get("", response_model=StudyRoomListResponse)
 async def list_study_rooms(
     page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=50),
+    page_size: int = Query(10, ge=1),
+    city_id: int | None = Query(None, ge=1),
     db: AsyncSession = Depends(get_db),
 ) -> StudyRoomListResponse:
-    return await study_room_service.list_study_rooms(db, page=page, page_size=page_size)
+    return await study_room_service.list_study_rooms(
+        db, page=page, page_size=page_size, city_id=city_id
+    )
 
 
 @router.get("/{room_id}", response_model=StudyRoomResponse)

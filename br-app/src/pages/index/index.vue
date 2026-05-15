@@ -7,7 +7,7 @@
     <view class="nav-bar">
       <view class="nav-location" @tap="onTapLocation">
         <view class="icon icon-location nav-location-icon" />
-        <text class="nav-location-text">茂名市</text>
+        <text class="nav-location-text">{{ currentCityName }}</text>
         <view class="icon icon-arrow-down nav-location-arrow" />
       </view>
       <view class="nav-search" @tap="onTapSearch">
@@ -90,6 +90,51 @@
         </view>
       </view>
 
+      <view class="section">
+        <view class="section-header">
+          <text class="section-title">附近自习室</text>
+          <text class="section-more" @tap="onTapMoreRooms">查看更多</text>
+        </view>
+
+        <view v-if="roomsLoading && rooms.length === 0" class="room-list">
+          <view v-for="i in 2" :key="i" class="room-card room-card-skeleton">
+            <view class="room-cover skeleton-block" />
+            <view class="room-info">
+              <view class="skeleton-line long" />
+              <view class="skeleton-line short" />
+              <view class="skeleton-line medium" />
+            </view>
+          </view>
+        </view>
+
+        <view v-else-if="rooms.length === 0" class="empty-rooms">
+          <text class="empty-rooms-title">当前城市暂无自习室</text>
+          <text class="empty-rooms-text">切换城市或稍后再试</text>
+        </view>
+
+        <view v-else class="room-list">
+          <view
+            v-for="room in rooms"
+            :key="room.id"
+            class="room-card"
+            @tap="onTapRoom(room)"
+          >
+            <image class="room-cover" :src="roomCover(room)" mode="aspectFill" />
+            <view class="room-info">
+              <text class="room-name">{{ room.name }}</text>
+              <view class="room-address-row">
+                <view class="icon icon-location room-address-icon" />
+                <text class="room-address">{{ room.address || '地址待完善' }}</text>
+              </view>
+              <view class="room-meta">
+                <text class="room-tag">在线选座</text>
+                <text class="room-price">¥{{ room.min_price || 0 }}起</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <!-- Hot activities -->
       <view v-if="activities.length > 0" class="section">
         <view class="section-header">
@@ -121,6 +166,14 @@
 <script>
 import { getBanners } from '@/api/banners'
 import { getActivities } from '@/api/activities'
+import { getRooms } from '@/api/rooms'
+import { useCityStore } from '@/store/modules/city'
+
+const REAL_ROOM_COVERS = [
+  'https://images.unsplash.com/photo-1497366216548-37526070297c?w=720&h=520&fit=crop&q=85',
+  'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=720&h=520&fit=crop&q=85',
+  'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=720&h=520&fit=crop&q=85',
+]
 
 export default {
   data() {
@@ -131,6 +184,9 @@ export default {
       banners: [],
       currentBanner: 0,
       activities: [],
+      rooms: [],
+      roomsLoading: false,
+      lastCityId: null,
       quickEntries: [
         { label: '钱包充值', iconClass: 'icon-wallet', bgColor: 'rgba(79,110,247,0.1)', color: '#4F6EF7', path: '/pages/recharge/index' },
         { label: '卡券套餐', iconClass: 'icon-ticket', bgColor: 'rgba(255,165,0,0.1)', color: '#FF8C00', path: '/pages/coupon/index' },
@@ -146,9 +202,27 @@ export default {
     const sysInfo = uni.getSystemInfoSync()
     this.statusBarHeight = sysInfo.statusBarHeight || 0
   },
+  computed: {
+    cityStore() {
+      return useCityStore()
+    },
+
+    currentCityName() {
+      return this.cityStore.currentCityName
+    },
+
+    currentCityId() {
+      return this.cityStore.currentCity?.id || null
+    },
+  },
   methods: {
     async loadData() {
-      await Promise.allSettled([this.loadBanners(), this.loadActivities()])
+      const cityChanged = this.lastCityId !== this.currentCityId
+      await Promise.allSettled([
+        this.loadBanners(),
+        this.loadActivities(),
+        this.loadRooms(cityChanged || this.rooms.length === 0),
+      ])
     },
 
     async loadBanners() {
@@ -167,6 +241,35 @@ export default {
       } catch {
         this.activities = []
       }
+    },
+
+    async loadRooms(force = false) {
+      if (this.roomsLoading) return
+      if (!force && this.rooms.length > 0) return
+
+      this.roomsLoading = true
+      try {
+        if (!this.cityStore.initialized) {
+          await this.cityStore.initCity()
+        }
+        const params = { page: 1, page_size: 6 }
+        if (this.currentCityId) {
+          params.city_id = this.currentCityId
+        }
+        const data = await getRooms(params)
+        this.rooms = data.items || []
+        this.lastCityId = this.currentCityId
+      } catch {
+        this.rooms = []
+      } finally {
+        this.roomsLoading = false
+      }
+    },
+
+    roomCover(room) {
+      if (room.cover_image) return room.cover_image
+      const key = Number(room.id || 0)
+      return REAL_ROOM_COVERS[key % REAL_ROOM_COVERS.length]
     },
 
     onBannerChange(e) {
@@ -204,8 +307,16 @@ export default {
       // Future: navigate to activity list page
     },
 
+    onTapMoreRooms() {
+      uni.switchTab({ url: '/pages/booking/index' })
+    },
+
+    onTapRoom(room) {
+      uni.navigateTo({ url: `/pages/booking/detail?room_id=${room.id}` })
+    },
+
     onTapLocation() {
-      // Future: city selector
+      uni.navigateTo({ url: '/pages/city-select/index' })
     },
 
     onTapSearch() {
@@ -543,6 +654,161 @@ export default {
   display: flex;
   align-items: center;
   gap: 4rpx;
+}
+
+/* Room list */
+.room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  padding: 0 28rpx;
+}
+
+.room-card {
+  display: flex;
+  min-height: 188rpx;
+  overflow: hidden;
+  border-radius: 22rpx;
+  background: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s;
+}
+
+.room-card:active {
+  transform: scale(0.98);
+}
+
+.room-cover {
+  width: 184rpx;
+  height: 188rpx;
+  flex-shrink: 0;
+  background: #eef1fb;
+}
+
+.room-info {
+  flex: 1;
+  min-width: 0;
+  padding: 20rpx 22rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.room-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-address-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin-top: 10rpx;
+}
+
+.room-address-icon {
+  flex-shrink: 0;
+  margin-right: 6rpx;
+  font-size: 22rpx;
+  color: $text-muted;
+}
+
+.room-address {
+  flex: 1;
+  min-width: 0;
+  font-size: 23rpx;
+  color: $text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-top: 14rpx;
+}
+
+.room-tag {
+  flex-shrink: 0;
+  padding: 6rpx 12rpx;
+  border-radius: 14rpx;
+  background: rgba(79, 110, 247, 0.08);
+  font-size: 20rpx;
+  color: $primary;
+}
+
+.room-price {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: $danger;
+}
+
+.empty-rooms {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200rpx;
+  margin: 0 28rpx;
+  border-radius: 22rpx;
+  background: #fff;
+}
+
+.empty-rooms-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.empty-rooms-text {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: $text-muted;
+}
+
+.skeleton-block,
+.skeleton-line {
+  background: linear-gradient(90deg, #eef1fb 0%, #f7f8ff 48%, #eef1fb 100%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.2s ease-in-out infinite;
+}
+
+.room-card-skeleton .room-info {
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.skeleton-line {
+  height: 22rpx;
+  border-radius: 11rpx;
+}
+
+.skeleton-line.long {
+  width: 70%;
+}
+
+.skeleton-line.medium {
+  width: 56%;
+}
+
+.skeleton-line.short {
+  width: 42%;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* Activity grid */

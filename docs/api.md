@@ -297,6 +297,7 @@ Authorization: Bearer <access_token>
 |------|------|--------|------|
 | page | integer | 1 | 页码（从 1 开始） |
 | page_size | integer | 10 | 每页数量（最大 50） |
+| city_id | integer | - | 城市 ID；不传时返回全部城市的自习室 |
 
 **响应 200：**
 ```json
@@ -310,7 +311,9 @@ Authorization: Bearer <access_token>
       "address": "茂名市茂南区油城三路88号",
       "business_hours": "07:00-23:00",
       "status": "open",
-      "min_price": "8.00"
+      "min_price": "8.00",
+      "city_id": 1,
+      "city_name": "茂名市"
     }
   ],
   "total": 10,
@@ -319,7 +322,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-仅返回 `status=open` 的自习室。
+仅返回 `status=open` 的自习室。传入 `city_id` 时，仅返回该城市的自习室；不传时返回全部城市的自习室。
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -331,9 +334,40 @@ Authorization: Bearer <access_token>
 | business_hours | string \| null | 营业时间（如 "08:00-22:00"） |
 | status | string | 状态：open / closed |
 | min_price | decimal | 最低价格（单位：元） |
+| city_id | integer \| null | 城市 ID |
+| city_name | string \| null | 城市名称 |
 
-**错误码：**
-- 422: page_size 超过最大值 50
+当 `page_size` 超过 50 时，服务端会按 50 返回。
+
+---
+
+### GET /api/v1/cities/
+
+获取可用城市列表。无需认证。
+
+**响应 200：**
+```json
+[
+  {
+    "id": 1,
+    "name": "茂名市",
+    "province": "广东省"
+  },
+  {
+    "id": 2,
+    "name": "广州市",
+    "province": "广东省"
+  }
+]
+```
+
+仅返回 `status=active` 的城市，按 `sort_order` 升序排列。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 城市 ID |
+| name | string | 城市名称 |
+| province | string | 省份名称 |
 
 ---
 

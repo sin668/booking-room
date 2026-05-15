@@ -65,7 +65,7 @@
         <view class="info-row">
           <view class="icon icon-location info-icon primary" />
           <view class="info-main">
-            <text class="info-text">{{ room.address || '茂名市茂南区光谷大道88号3楼' }}</text>
+            <text class="info-text">{{ displayAddress }}</text>
             <text class="info-sub">距您约1.2km</text>
           </view>
           <view class="icon icon-arrow-right info-arrow" />
@@ -218,6 +218,11 @@ export default {
 
     roomName() {
       return this.room.name || '光谷自习室'
+    },
+
+    displayAddress() {
+      const address = this.room.address || '茂南区光谷大道88号3楼'
+      return this.room.city_name ? `${this.room.city_name} ${address}` : address
     },
 
     ratingText() {

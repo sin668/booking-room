@@ -122,36 +122,36 @@
 
 ## 6. Backend Tests — Integration
 
-- [ ] 6.1 Create integration test file skeleton
+- [x] 6.1 Create integration test file skeleton
   - File: `br-server/tests/test_api_wallet.py` (new)
   - Follow `br-server/tests/test_api_auth.py` pattern: use `httpx.AsyncClient` with test app, create auth tokens with `_create_access_token(user_id)`
 
-- [ ] 6.2 Write `test_get_balance` integration test
+- [x] 6.2 Write `test_get_balance` integration test
   - Create test user, get auth token, `GET /api/v1/wallet/balance`
   - Assert 200 with `{"balance": "0.00", "total_recharged": "0.00"}`
   - Run: `cd br-server && pytest tests/test_api_wallet.py::test_get_balance -v`
 
-- [ ] 6.3 Write `test_create_recharge_order` integration test
+- [x] 6.3 Write `test_create_recharge_order` integration test
   - `POST /api/v1/wallet/recharge {"amount": 100, "payment_method": "wechat"}`
   - Assert 201 with order_id and status="pending"
   - Run: `cd br-server && pytest tests/test_api_wallet.py::test_create_recharge_order -v`
 
-- [ ] 6.4 Write `test_create_recharge_invalid_amount` integration test
+- [x] 6.4 Write `test_create_recharge_invalid_amount` integration test
   - `POST /api/v1/wallet/recharge {"amount": -1, "payment_method": "wechat"}`
   - Assert 422 validation error
   - Run: `cd br-server && pytest tests/test_api_wallet.py::test_create_recharge_invalid_amount -v`
 
-- [ ] 6.5 Write `test_confirm_payment` integration test
+- [x] 6.5 Write `test_confirm_payment` integration test
   - Create order via POST, then `POST /api/v1/wallet/recharge/{order_id}/confirm`
   - Assert 200, balance updated, status="completed"
   - Run: `cd br-server && pytest tests/test_api_wallet.py::test_confirm_payment -v`
 
-- [ ] 6.6 Write `test_unauthenticated_access` integration test
+- [x] 6.6 Write `test_unauthenticated_access` integration test
   - Call all 4 endpoints without token
   - Assert all return 401
   - Run: `cd br-server && pytest tests/test_api_wallet.py::test_unauthenticated_access -v`
 
-- [ ] 6.7 Run full test suite
+- [x] 6.7 Run full test suite
   - Run: `cd br-server && pytest tests/test_wallet_service.py tests/test_api_wallet.py -v`
   - Verify all pass, check no regressions
 

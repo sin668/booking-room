@@ -8,6 +8,10 @@ export function createRechargeOrder(data) {
   return post('/api/v1/wallet/recharge', data)
 }
 
+export function getRechargeOrder(orderId) {
+  return get(`/api/v1/wallet/recharge/${orderId}`)
+}
+
 export function confirmPayment(orderId) {
   return post(`/api/v1/wallet/recharge/${orderId}/confirm`)
 }

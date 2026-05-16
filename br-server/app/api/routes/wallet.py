@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id, get_db, get_redis
@@ -10,17 +11,49 @@ from app.schemas.wallet import (
     PromoCodeRequest,
     PromoCodeResponse,
     RechargeRequest,
+    RechargeOrderResponse,
     RechargeResponse,
 )
 from app.services.wallet_service import (
+    InvalidPaymentCallbackError,
     InvalidPromoCodeError,
     OrderAlreadyProcessedError,
     OrderNotFoundError,
+    PaymentProviderUnavailableError,
+    PaymentSignatureError,
+    SimulatedPaymentDisabledError,
+    UnsupportedPaymentMethodError,
     UserNotFoundError,
     WalletService,
+    WechatOpenIdRequiredError,
 )
 
+from app.services.wechat_pay_client import WechatPayClient
+
+
 router = APIRouter(prefix="/api/v1/wallet", tags=["wallet"])
+
+
+def _build_wechat_client():
+    if not getattr(settings, "WECHAT_PAY_ENABLED", False):
+        return None
+    return WechatPayClient(settings)
+
+
+def _service(db: AsyncSession, redis) -> WalletService:
+    return WalletService(
+        db=db,
+        redis=redis,
+        config=settings,
+        wechat_client=_build_wechat_client(),
+    )
+
+
+def _notify_failure(status_code: int, message: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=status_code,
+        content={"code": "FAIL", "message": message},
+    )
 
 
 @router.post(
@@ -33,8 +66,8 @@ async def create_recharge(
     user_id: UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
     redis=Depends(get_redis),
-) -> RechargeResponse:
-    service = WalletService(db=db, redis=redis, config=settings)
+):
+    service = _service(db, redis)
     try:
         return await service.create_recharge_order(
             user_id=user_id,
@@ -44,11 +77,53 @@ async def create_recharge(
         )
     except UserNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=exc.detail)
-    except InvalidPromoCodeError as exc:
+    except (InvalidPromoCodeError, UnsupportedPaymentMethodError, WechatOpenIdRequiredError) as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=exc.detail,
         )
+    except PaymentProviderUnavailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=exc.detail,
+        )
+
+
+@router.get("/recharge/{order_id}", response_model=RechargeOrderResponse)
+async def get_recharge_order(
+    order_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    service = _service(db, redis)
+    try:
+        return await service.get_recharge_order(order_id=order_id, user_id=user_id)
+    except OrderNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=exc.detail)
+
+
+@router.post("/wechat/notify")
+async def wechat_notify(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    service = _service(db, redis)
+    headers = {key: value for key, value in request.headers.items()}
+    body = await request.body()
+    try:
+        return await service.handle_wechat_notify(headers=headers, body=body)
+    except PaymentProviderUnavailableError as exc:
+        return _notify_failure(status.HTTP_503_SERVICE_UNAVAILABLE, exc.detail)
+    except PaymentSignatureError as exc:
+        return _notify_failure(status.HTTP_401_UNAUTHORIZED, exc.detail)
+    except InvalidPaymentCallbackError as exc:
+        return _notify_failure(status.HTTP_400_BAD_REQUEST, exc.detail)
+    except OrderNotFoundError as exc:
+        return _notify_failure(status.HTTP_404_NOT_FOUND, exc.detail)
+    except OrderAlreadyProcessedError as exc:
+        return _notify_failure(status.HTTP_400_BAD_REQUEST, exc.detail)
 
 
 @router.post("/recharge/{order_id}/confirm", response_model=RechargeResponse)
@@ -58,11 +133,13 @@ async def confirm_recharge(
     db: AsyncSession = Depends(get_db),
     redis=Depends(get_redis),
 ) -> RechargeResponse:
-    service = WalletService(db=db, redis=redis, config=settings)
+    service = _service(db, redis)
     try:
         return await service.confirm_payment(order_id=order_id, user_id=user_id)
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=exc.detail)
+    except SimulatedPaymentDisabledError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=exc.detail)
     except OrderAlreadyProcessedError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=exc.detail)
 
@@ -73,7 +150,7 @@ async def get_balance(
     db: AsyncSession = Depends(get_db),
     redis=Depends(get_redis),
 ) -> BalanceResponse:
-    service = WalletService(db=db, redis=redis, config=settings)
+    service = _service(db, redis)
     try:
         return await service.get_balance(user_id=user_id)
     except UserNotFoundError as exc:
@@ -87,7 +164,7 @@ async def redeem_promo_code(
     db: AsyncSession = Depends(get_db),
     redis=Depends(get_redis),
 ) -> PromoCodeResponse:
-    service = WalletService(db=db, redis=redis, config=settings)
+    service = _service(db, redis)
     try:
         return await service.redeem_promo_code(code=body.code)
     except InvalidPromoCodeError as exc:

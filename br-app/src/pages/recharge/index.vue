@@ -67,9 +67,9 @@
             placeholder="输入优惠码"
             placeholder-class="promo-placeholder"
             confirm-type="done"
-            :disabled="submitting"
+            :disabled="isPaymentActive"
           />
-          <button class="promo-btn" :disabled="submitting" @tap="redeemPromoCode">
+          <button class="promo-btn" :disabled="isPaymentActive" @tap="redeemPromoCode">
             兑换
           </button>
         </view>
@@ -80,8 +80,8 @@
     </scroll-view>
 
     <view class="bottom-bar">
-      <button class="recharge-btn" :disabled="submitting" @tap="handleRecharge">
-        {{ submitting ? '充值中...' : rechargeButtonText }}
+      <button class="recharge-btn" :disabled="isPaymentActive" @tap="handleRecharge">
+        {{ paymentButtonText }}
       </button>
     </view>
   </view>
@@ -91,13 +91,15 @@
 import {
   getBalance,
   createRechargeOrder,
-  confirmPayment,
+  getRechargeOrder,
   redeemPromoCode as redeemPromoCodeApi,
 } from '@/api/wallet'
 
 const DEFAULT_AMOUNT = 50
 const MIN_AMOUNT = 1
 const MAX_AMOUNT = 9999
+const RECHARGE_POLL_INTERVAL = 2000
+const RECHARGE_POLL_MAX_ATTEMPTS = 10
 
 export default {
   data() {
@@ -109,7 +111,7 @@ export default {
       promoCode: '',
       promoInfo: null,
       loading: false,
-      submitting: false,
+      paymentState: '',
       amounts: [30, 50, 100, 200, 500],
     }
   },
@@ -121,6 +123,19 @@ export default {
 
     rechargeButtonText() {
       return `立即充值 ¥${this.formatAmount(this.selectedAmount)}`
+    },
+
+    paymentButtonText() {
+      const stateText = {
+        creating: '正在创建订单...',
+        paying: '等待微信支付...',
+        confirming: '支付确认中...',
+      }
+      return stateText[this.paymentState] || this.rechargeButtonText
+    },
+
+    isPaymentActive() {
+      return Boolean(this.paymentState)
     },
 
     promoText() {
@@ -176,6 +191,7 @@ export default {
     },
 
     togglePayment(method) {
+      if (this.isPaymentActive) return
       this.paymentMethod = method
     },
 
@@ -195,14 +211,19 @@ export default {
     },
 
     async handleRecharge() {
-      if (this.submitting) return
+      if (this.isPaymentActive) return
+      if (this.paymentMethod === 'alipay') {
+        uni.showToast({ title: '暂未开通', icon: 'none' })
+        return
+      }
+
       const amount = Number(this.selectedAmount)
       if (!this.isValidAmount(amount, String(this.selectedAmount))) {
         uni.showToast({ title: '请选择有效充值金额', icon: 'none' })
         return
       }
 
-      this.submitting = true
+      this.paymentState = 'creating'
       try {
         const payload = {
           amount,
@@ -213,15 +234,79 @@ export default {
         }
         const order = await createRechargeOrder(payload)
         const orderId = order.order_id || order.orderId
-        await confirmPayment(orderId)
+        const paymentParams = order.payment_params || order.paymentParams
+        if (!orderId || !paymentParams) {
+          throw new Error('missing payment params')
+        }
+
+        this.paymentState = 'paying'
+        await this.requestWechatPayment(paymentParams)
+
+        this.paymentState = 'confirming'
+        const confirmedOrder = await this.pollRechargeOrder(orderId)
+        if (!confirmedOrder) {
+          uni.showToast({ title: '支付处理中，请稍后查看余额', icon: 'none' })
+          return
+        }
+
         uni.showToast({ title: '充值成功' })
         this.promoInfo = null
         await this.loadBalance()
-      } catch {
-        uni.showToast({ title: '充值失败，请重试', icon: 'none' })
+      } catch (error) {
+        if (this.isPaymentCancel(error)) {
+          uni.showToast({ title: '支付已取消', icon: 'none' })
+        } else if (this.paymentState === 'confirming' && !error.paymentStatus) {
+          uni.showToast({ title: '支付处理中，请稍后查看余额', icon: 'none' })
+        } else {
+          uni.showToast({ title: '支付失败，请重试', icon: 'none' })
+        }
       } finally {
-        this.submitting = false
+        this.paymentState = ''
       }
+    },
+
+    requestWechatPayment(paymentParams) {
+      return new Promise((resolve, reject) => {
+        uni.requestPayment({
+          ...paymentParams,
+          success: resolve,
+          fail: reject,
+        })
+      })
+    },
+
+    async pollRechargeOrder(orderId) {
+      for (let attempt = 0; attempt < RECHARGE_POLL_MAX_ATTEMPTS; attempt += 1) {
+        const order = await getRechargeOrder(orderId)
+        const status = order.status || order.payment_status || order.paymentStatus
+        if (status === 'completed') {
+          return order
+        }
+        if (status === 'failed' || status === 'cancelled' || status === 'closed') {
+          throw this.createPaymentStatusError(status)
+        }
+        if (attempt < RECHARGE_POLL_MAX_ATTEMPTS - 1) {
+          await this.wait(RECHARGE_POLL_INTERVAL)
+        }
+      }
+      return null
+    },
+
+    createPaymentStatusError(status) {
+      const error = new Error(`payment ${status}`)
+      error.paymentStatus = status
+      return error
+    },
+
+    wait(ms) {
+      return new Promise((resolve) => {
+        setTimeout(resolve, ms)
+      })
+    },
+
+    isPaymentCancel(error) {
+      const message = String((error && (error.errMsg || error.message)) || '')
+      return message.toLowerCase().includes('cancel')
     },
 
     formatMoney(value) {

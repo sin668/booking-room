@@ -820,6 +820,196 @@ Authorization: Bearer <access_token>
 
 所有钱包接口需要通过 `Authorization` header 传递 Bearer Token。
 
+### WeChat Pay recharge contract
+
+Wallet recharge now uses WeChat Pay JSAPI for real payment. The client creates a
+recharge order, calls `uni.requestPayment` with backend-signed JSAPI parameters,
+then confirms the final wallet result by querying the backend order status.
+Wallet crediting happens only after the backend receives a WeChat Pay callback,
+verifies the signature, decrypts the notification resource, and validates the
+business fields against the local order. Client-side payment success is not a
+trusted source for balance changes.
+
+#### POST /api/v1/wallet/recharge
+
+Create a wallet recharge order and return WeChat Mini Program payment
+parameters.
+
+**Auth:** Bearer Token
+
+**Request body:**
+```json
+{
+  "amount": 100,
+  "payment_method": "wechat",
+  "promo_code": "SAVE30"
+}
+```
+
+| Field | Type | Required | Notes |
+|------|------|------|------|
+| amount | number | yes | Recharge amount, greater than 0 and not more than 9999 |
+| payment_method | string | yes | `wechat`; `alipay` is rejected until implemented |
+| promo_code | string | no | Optional promo code |
+
+**Response 201:**
+```json
+{
+  "order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "amount": "100.00",
+  "bonus_amount": "30.00",
+  "status": "pending",
+  "balance_after": null,
+  "payment_provider": "wechat",
+  "payment_status": "pending",
+  "payment_params": {
+    "timeStamp": "1778912580",
+    "nonceStr": "random-nonce",
+    "package": "prepay_id=wx201410272009395522657a690389285100",
+    "signType": "RSA",
+    "paySign": "signed-jsapi-parameters"
+  }
+}
+```
+
+`payment_params` maps directly to `uni.requestPayment`. The frontend must not
+refresh or locally increase the wallet balance from `uni.requestPayment`
+success. It should poll `GET /api/v1/wallet/recharge/{order_id}` and refresh
+the balance only after the backend reports `status="completed"`.
+
+**Errors:**
+- 401: unauthenticated
+- 404: user not found
+- 422: invalid parameters, unsupported payment method, invalid promo code, or promo-code minimum not met
+- 503: WeChat Pay disabled or missing required configuration
+
+#### GET /api/v1/wallet/recharge/{order_id}
+
+Return the authenticated user's recharge order status. Orders owned by another
+user must return 404.
+
+**Auth:** Bearer Token
+
+**Response 200:**
+```json
+{
+  "order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "amount": "100.00",
+  "bonus_amount": "30.00",
+  "status": "pending",
+  "payment_provider": "wechat",
+  "payment_status": "pending",
+  "balance_after": null
+}
+```
+
+After a verified callback is processed, `status` becomes `completed`,
+`payment_status` becomes `paid`, and `balance_after` contains the post-credit
+wallet balance. Time fields such as `paid_at` and `notify_processed_at`, when
+exposed, should be serialized consistently. Avoid mixing timezone-aware and
+timezone-naive `DateTime` values in database persistence.
+
+**Errors:**
+- 401: unauthenticated
+- 404: order not found or belongs to another user
+
+#### POST /api/v1/wallet/wechat/notify
+
+Receive WeChat Pay API v3 asynchronous notifications. This endpoint does not use
+user Bearer authentication because the caller is WeChat Pay. Its trust boundary
+is the WeChat Pay signature headers, successful API v3 resource decryption, and
+business validation against the local pending order.
+
+**Auth:** WeChat Pay API v3 signature verification
+
+**Required headers:**
+
+| Header | Required | Notes |
+|------|------|------|
+| Wechatpay-Signature | yes | WeChat Pay request signature |
+| Wechatpay-Timestamp | yes | Signature timestamp; reject stale or invalid values |
+| Wechatpay-Nonce | yes | Signature nonce |
+| Wechatpay-Serial | yes | Platform certificate serial number |
+
+**Request body:** WeChat Pay API v3 notification JSON, including encrypted
+`resource`.
+
+**Processing requirements:**
+- Verify the signature before decrypting or mutating state.
+- Decrypt `resource` with `WECHAT_PAY_API_V3_KEY`.
+- Validate `appid`, `mchid`, `out_trade_no`, `trade_state="SUCCESS"`, amount,
+  and currency against the local pending recharge order.
+- Handle duplicate notifications idempotently. A completed/paid order returns
+  success without crediting the balance again.
+- Save only sanitized callback details needed for audit/debugging.
+- Reject malformed callbacks, signature/decrypt failures, amount mismatches, and
+  unexpected app/merchant IDs without changing wallet balances.
+
+**Success response 200:**
+```json
+{
+  "code": "SUCCESS",
+  "message": "OK"
+}
+```
+
+**Failure response:**
+```json
+{
+  "code": "FAIL",
+  "message": "invalid notification"
+}
+```
+
+Failure messages must not include API v3 keys, private-key content, decrypted
+sensitive payloads, or certificate material.
+
+**Errors:**
+- 400: malformed callback, decrypted payload validation failed, amount or currency mismatch
+- 401/403: invalid WeChat Pay signature or certificate serial
+- 503: WeChat Pay disabled or misconfigured
+
+#### WeChat Pay operational configuration
+
+Required environment variables when `WECHAT_PAY_ENABLED=true`:
+
+| Variable | Purpose |
+|------|------|
+| WECHAT_PAY_ENABLED | Enables real WeChat Pay integration; keep `false` for local/dev without real payment |
+| WECHAT_PAY_APPID | Mini Program AppID used for JSAPI payment |
+| WECHAT_PAY_MCHID | WeChat Pay merchant ID |
+| WECHAT_PAY_API_V3_KEY | API v3 key used to decrypt notification resources |
+| WECHAT_PAY_PRIVATE_KEY_PATH | Filesystem path to the merchant private key |
+| WECHAT_PAY_CERT_SERIAL_NO | Merchant certificate serial number used for request signing |
+| WECHAT_PAY_PLATFORM_CERT_SERIAL_NO | WeChat Pay platform certificate/public-key serial expected on notify headers |
+| WECHAT_PAY_PLATFORM_PUBLIC_KEY_PATH | Filesystem path to the WeChat Pay platform public key used to verify notify signatures |
+| WECHAT_PAY_NOTIFY_URL | Public HTTPS callback URL routed to `/api/v1/wallet/wechat/notify` |
+| WECHAT_PAY_API_BASE_URL | WeChat Pay API base URL; use the official production URL unless testing against a controlled mock |
+
+Operational cautions:
+- Do not hardcode or commit real AppIDs, merchant IDs, API v3 keys, private keys,
+  certificate contents, or platform certificates. Store secrets in deployment
+  secret management or environment variables, and keep examples to variable
+  names only.
+- `WECHAT_PAY_NOTIFY_URL` must be publicly reachable by WeChat over HTTPS and
+  must route to this backend deployment. Localhost or private intranet URLs will
+  not receive production callbacks.
+- To disable WeChat Pay safely, set `WECHAT_PAY_ENABLED=false` and ensure the
+  frontend blocks new WeChat recharge attempts. Existing pending orders should
+  remain pending unless a verified callback is later processed.
+- When storing callback timestamps such as `paid_at` and `notify_processed_at`,
+  keep the same timezone policy used by the wallet transaction model. Avoid
+  writing timezone-aware datetimes into timezone-naive database columns.
+- Frontend polling must handle races: payment UI success can arrive before the
+  backend callback, duplicate taps can create multiple orders, and delayed
+  callbacks can complete after the first poll window. Keep separate UI states for
+  order creation, WeChat payment, and backend confirmation.
+
+The older simulated confirm endpoint below is for local/test flows only and
+must not be used by production recharge crediting.
+
+---
+
 ### POST /api/v1/wallet/recharge
 
 创建充值订单。当前为模拟支付流程，创建订单后调用确认接口完成入账。

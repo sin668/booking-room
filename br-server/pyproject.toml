@@ -23,6 +23,8 @@ dev = [
     "pytest-asyncio",
     "pytest-cov",
     "httpx",
+    "aiosqlite",
+    "python-multipart",
 ]
 
 [build-system]

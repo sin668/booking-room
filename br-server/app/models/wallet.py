@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, Numeric, String, func
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, JSON, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -58,6 +58,40 @@ class WalletTransaction(Base):
     )
     payment_method: Mapped[str | None] = mapped_column(
         String(20),
+        nullable=True,
+    )
+    payment_provider: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="wechat",
+    )
+    payment_status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="pending",
+        index=True,
+    )
+    prepay_id: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+        index=True,
+    )
+    transaction_id: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        unique=True,
+        index=True,
+    )
+    paid_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+    notify_payload: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+    notify_processed_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(

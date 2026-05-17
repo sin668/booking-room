@@ -17,23 +17,23 @@
               <text class="vip-badge-text">VIP会员</text>
             </view>
           </view>
-          <text class="phone">已累计学习 128 小时</text>
+          <text class="phone">已累计学习 {{ studyHoursText }}</text>
         </view>
       </view>
 
       <view class="stats-card">
         <view class="stat-item">
-          <text class="stat-value">¥256.00</text>
-          <text class="stat-label">账户余额</text>
+          <text class="stat-value">¥{{ walletBalanceText }}</text>
+          <text class="stat-label">钱包余额</text>
         </view>
         <view class="stat-divider" />
         <view class="stat-item">
-          <text class="stat-value orange">3</text>
+          <text class="stat-value orange">{{ availableCouponCount }}</text>
           <text class="stat-label">卡券</text>
         </view>
         <view class="stat-divider" />
         <view class="stat-item">
-          <text class="stat-value green">128h</text>
+          <text class="stat-value green">{{ studyHoursText }}</text>
           <text class="stat-label">学习时长</text>
         </view>
       </view>
@@ -83,7 +83,7 @@
             <view class="ticket-icon" />
           </view>
           <text class="menu-item-text">卡券包</text>
-          <text class="menu-item-meta">3张可用</text>
+          <text class="menu-item-meta">{{ availableCouponCount }}张可用</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
 
@@ -122,17 +122,35 @@
 
 <script>
 import { useUserStore } from '@/store/modules/user'
+import { getCoupons } from '@/api/coupons'
+import { getMonthlySummary } from '@/api/studyRecords'
+import { getBalance } from '@/api/wallet'
 
 export default {
   data() {
     return {
       userStore: useUserStore(),
+      walletBalance: 0,
+      availableCouponCount: 0,
+      totalStudyHours: 0,
+      profileRequestId: 0,
     }
   },
   computed: {
     avatarText() {
       return (this.userStore.nickname || this.userStore.phone || 'U').charAt(0).toUpperCase()
     },
+    walletBalanceText() {
+      return this.formatMoney(this.walletBalance)
+    },
+    studyHoursText() {
+      return `${this.formatHours(this.totalStudyHours)}h`
+    },
+  },
+  onShow() {
+    if (this.userStore.isLoggedIn) {
+      this.loadProfileStats()
+    }
   },
   methods: {
     goLogin() {
@@ -143,6 +161,49 @@ export default {
     },
     navigateTo(url) {
       uni.navigateTo({ url })
+    },
+    async loadProfileStats() {
+      const requestId = ++this.profileRequestId
+      const month = this.currentMonthString()
+      const [balanceResult, couponResult, studyResult] = await Promise.allSettled([
+        getBalance(),
+        getCoupons('available'),
+        getMonthlySummary({ month }),
+      ])
+
+      if (requestId !== this.profileRequestId) return
+
+      this.walletBalance = balanceResult.status === 'fulfilled'
+        ? (balanceResult.value?.balance || 0)
+        : 0
+
+      if (couponResult.status === 'fulfilled') {
+        const coupons = Array.isArray(couponResult.value)
+          ? couponResult.value
+          : (couponResult.value?.items || [])
+        this.availableCouponCount = coupons.length
+      } else {
+        this.availableCouponCount = 0
+      }
+
+      this.totalStudyHours = studyResult.status === 'fulfilled'
+        ? (studyResult.value?.total_hours || 0)
+        : 0
+    },
+    currentMonthString() {
+      const now = new Date()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      return `${now.getFullYear()}-${month}`
+    },
+    formatMoney(value) {
+      const number = Number(value)
+      if (!Number.isFinite(number)) return '0.00'
+      return number.toFixed(2)
+    },
+    formatHours(value) {
+      const number = Number(value)
+      if (!Number.isFinite(number)) return '0'
+      return Number.isInteger(number) ? String(number) : number.toFixed(1).replace(/\.0$/, '')
     },
   },
 }

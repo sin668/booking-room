@@ -2,7 +2,12 @@
   <view class="page">
     <scroll-view class="content-scroll" scroll-y>
       <view class="balance-card">
-        <text class="balance-label">账户余额</text>
+        <view class="balance-header">
+          <text class="balance-label">账户余额</text>
+          <view class="detail-entry" @tap="goTransactions">
+            <text class="detail-entry-text">交易明细</text>
+          </view>
+        </view>
         <view v-if="loading" class="balance-skeleton main" />
         <text v-else class="balance-value">¥{{ formatMoney(balance) }}</text>
         <view v-if="loading" class="balance-skeleton sub" />
@@ -162,6 +167,10 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    goTransactions() {
+      uni.navigateTo({ url: '/pages/wallet/transactions' })
     },
 
     selectAmount(amount) {
@@ -345,11 +354,36 @@ export default {
   flex-direction: column;
 }
 
+.balance-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
 .balance-label,
 .balance-total {
   font-size: 24rpx;
   line-height: 34rpx;
   color: rgba(255, 255, 255, 0.68);
+}
+
+.detail-entry {
+  flex-shrink: 0;
+  height: 52rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-entry-text {
+  font-size: 24rpx;
+  line-height: 32rpx;
+  font-weight: 600;
+  color: $white;
 }
 
 .balance-value {

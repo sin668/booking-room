@@ -62,6 +62,12 @@
       }
     },
     {
+      "path": "pages/wallet/transactions",
+      "style": {
+        "navigationBarTitleText": "钱包流水"
+      }
+    },
+    {
       "path": "pages/coupon/index",
       "style": {
         "navigationBarTitleText": "卡券包",

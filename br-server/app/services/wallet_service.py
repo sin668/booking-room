@@ -20,6 +20,9 @@ from app.schemas.wallet import (
     PromoCodeResponse,
     RechargeOrderResponse,
     RechargeResponse,
+    WalletTransactionListResponse,
+    WalletTransactionResponse,
+    WalletTransactionType,
 )
 from app.services.wechat_pay_client import (
     WechatPayConfigError,
@@ -109,6 +112,48 @@ class WalletService:
         return BalanceResponse(
             balance=user.balance,
             total_recharged=Decimal(str(total_recharged)),
+        )
+
+    async def list_transactions(
+        self,
+        user_id: uuid.UUID,
+        page: int,
+        page_size: int,
+        type: WalletTransactionType,
+    ) -> WalletTransactionListResponse:
+        """Return a page of user-owned wallet transactions."""
+        conditions = [WalletTransaction.user_id == str(user_id)]
+        if type != "all":
+            conditions.append(WalletTransaction.type == type)
+
+        total_stmt = (
+            select(func.count())
+            .select_from(WalletTransaction)
+            .where(*conditions)
+        )
+        total_result = await self._db.execute(total_stmt)
+        total = int(total_result.scalar_one() or 0)
+
+        offset = (page - 1) * page_size
+        stmt = (
+            select(WalletTransaction)
+            .where(*conditions)
+            .order_by(WalletTransaction.created_at.desc(), WalletTransaction.id.desc())
+            .offset(offset)
+            .limit(page_size)
+        )
+        result = await self._db.execute(stmt)
+        transactions = result.scalars().all()
+
+        return WalletTransactionListResponse(
+            items=[
+                self._transaction_list_payload(transaction)
+                for transaction in transactions
+            ],
+            total=total,
+            page=page,
+            page_size=page_size,
+            has_more=offset + len(transactions) < total,
         )
 
     async def create_recharge_order(
@@ -300,8 +345,10 @@ class WalletService:
         user_result = await self._db.execute(user_stmt)
         user = user_result.scalar_one()
 
+        now = datetime.now()
         transaction.status = "completed"
         transaction.balance_after = user.balance
+        self._set_payment_attr(transaction, "paid_at", now)
 
         return RechargeResponse(
             order_id=uuid.UUID(transaction.order_id),
@@ -381,6 +428,57 @@ class WalletService:
         if "payment_params" in payload:
             return RechargeResponse.model_validate(payload)
         return RechargeOrderResponse.model_validate(payload)
+
+    def _transaction_list_payload(
+        self,
+        transaction: WalletTransaction,
+    ) -> WalletTransactionResponse:
+        transaction_type = transaction.type
+        status = transaction.status
+        return WalletTransactionResponse(
+            id=transaction.id,
+            type=transaction_type,
+            title=self._transaction_title(transaction_type, status),
+            amount=Decimal(str(transaction.amount)),
+            bonus_amount=Decimal(str(transaction.bonus_amount)),
+            direction=self._transaction_direction(transaction_type),
+            status=status,
+            payment_method=transaction.payment_method,
+            balance_after=(
+                Decimal(str(transaction.balance_after))
+                if transaction.balance_after is not None
+                else None
+            ),
+            created_at=transaction.created_at,
+            completed_at=self._transaction_completed_at(transaction),
+            order_id=uuid.UUID(transaction.order_id),
+        )
+
+    def _transaction_title(self, transaction_type: str, status: str) -> str:
+        if transaction_type == "recharge":
+            return {
+                "completed": "充值到账",
+                "pending": "充值待支付",
+                "failed": "充值失败",
+            }.get(status, "钱包充值")
+        if transaction_type == "consume":
+            return "钱包消费"
+        if transaction_type == "refund":
+            return "钱包退款"
+        return "钱包流水"
+
+    def _transaction_direction(self, transaction_type: str) -> str:
+        if transaction_type == "consume":
+            return "expense"
+        return "income"
+
+    def _transaction_completed_at(self, transaction: WalletTransaction) -> datetime | None:
+        paid_at = getattr(transaction, "paid_at", None)
+        if paid_at is not None:
+            return paid_at
+        if transaction.status == "completed":
+            return getattr(transaction, "notify_processed_at", None) or transaction.created_at
+        return None
 
     def _validate_notify_payload(self, notify: dict[str, Any]) -> None:
         if notify.get("trade_state") != "SUCCESS":

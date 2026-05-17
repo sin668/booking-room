@@ -1,4 +1,6 @@
 from decimal import Decimal
+from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -51,6 +53,32 @@ class BalanceResponse(BaseModel):
     total_recharged: Decimal
 
     model_config = ConfigDict(from_attributes=True)
+
+
+WalletTransactionType = Literal["all", "recharge", "consume", "refund"]
+
+
+class WalletTransactionResponse(BaseModel):
+    id: UUID
+    type: str
+    title: str
+    amount: Decimal
+    bonus_amount: Decimal = Decimal("0")
+    direction: str
+    status: str
+    payment_method: str | None = None
+    balance_after: Decimal | None = None
+    created_at: datetime
+    completed_at: datetime | None = None
+    order_id: UUID
+
+
+class WalletTransactionListResponse(BaseModel):
+    items: list[WalletTransactionResponse]
+    total: int
+    page: int
+    page_size: int
+    has_more: bool
 
 
 class PromoCodeRequest(BaseModel):

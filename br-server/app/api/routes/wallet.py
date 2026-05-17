@@ -1,6 +1,7 @@
+from typing import cast, get_args
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +14,8 @@ from app.schemas.wallet import (
     RechargeRequest,
     RechargeOrderResponse,
     RechargeResponse,
+    WalletTransactionListResponse,
+    WalletTransactionType,
 )
 from app.services.wallet_service import (
     InvalidPaymentCallbackError,
@@ -54,6 +57,9 @@ def _notify_failure(status_code: int, message: str) -> JSONResponse:
         status_code=status_code,
         content={"code": "FAIL", "message": message},
     )
+
+
+_TRANSACTION_TYPES = set(get_args(WalletTransactionType))
 
 
 @router.post(
@@ -101,6 +107,30 @@ async def get_recharge_order(
         return await service.get_recharge_order(order_id=order_id, user_id=user_id)
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=exc.detail)
+
+
+@router.get("/transactions", response_model=WalletTransactionListResponse)
+async def list_transactions(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=50),
+    type: str = Query("all"),
+    user_id: UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+) -> WalletTransactionListResponse:
+    if type not in _TRANSACTION_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Unsupported wallet transaction type",
+        )
+
+    service = _service(db, redis)
+    return await service.list_transactions(
+        user_id=user_id,
+        page=page,
+        page_size=page_size,
+        type=cast(WalletTransactionType, type),
+    )
 
 
 @router.post("/wechat/notify")

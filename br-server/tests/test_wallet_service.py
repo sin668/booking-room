@@ -77,6 +77,12 @@ def _mock_scalar_one_result(value):
     return result
 
 
+def _mock_scalars_result(values):
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = values
+    return result
+
+
 def _test_user_id() -> uuid.UUID:
     return uuid.UUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
 
@@ -98,6 +104,208 @@ async def test_get_balance(
 
     assert result.balance == Decimal("256.00")
     assert result.total_recharged == Decimal("1200.00")
+
+
+async def test_list_transactions_returns_current_user_first_page(
+    wallet_service: WalletService, mock_db: AsyncMock
+) -> None:
+    user_id = _test_user_id()
+    other_user_id = uuid.UUID("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+    transactions = [
+        SimpleNamespace(
+            id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
+            user_id=str(user_id),
+            type="recharge",
+            amount=Decimal("100.00"),
+            bonus_amount=Decimal("10.00"),
+            balance_after=Decimal("210.00"),
+            order_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            status="completed",
+            payment_method="wechat",
+            paid_at=datetime(2026, 5, 17, 10, 30, 0),
+            created_at=datetime(2026, 5, 17, 10, 0, 0),
+        )
+    ]
+    mock_db.execute = AsyncMock(
+        side_effect=[
+            _mock_scalar_one_result(1),
+            _mock_scalars_result(transactions),
+        ]
+    )
+
+    result = await wallet_service.list_transactions(
+        user_id=user_id,
+        page=1,
+        page_size=20,
+        type="all",
+    )
+
+    assert result.total == 1
+    assert result.page == 1
+    assert result.page_size == 20
+    assert result.has_more is False
+    assert len(result.items) == 1
+    assert result.items[0].title == "充值到账"
+    assert result.items[0].direction == "income"
+    assert result.items[0].completed_at == datetime(2026, 5, 17, 10, 30, 0)
+    executed_params = [
+        value
+        for call in mock_db.execute.await_args_list
+        for value in call.args[0].compile().params.values()
+    ]
+    assert str(user_id) in executed_params
+    assert str(other_user_id) not in executed_params
+
+
+async def test_list_transactions_filters_by_recharge_type(
+    wallet_service: WalletService, mock_db: AsyncMock
+) -> None:
+    user_id = _test_user_id()
+    mock_db.execute = AsyncMock(
+        side_effect=[
+            _mock_scalar_one_result(0),
+            _mock_scalars_result([]),
+        ]
+    )
+
+    result = await wallet_service.list_transactions(
+        user_id=user_id,
+        page=1,
+        page_size=20,
+        type="recharge",
+    )
+
+    assert result.items == []
+    assert result.total == 0
+    executed_sql = " ".join(str(call.args[0]) for call in mock_db.execute.await_args_list)
+    assert "wallet_transactions.type" in executed_sql
+    assert ":type_1" in executed_sql
+
+
+async def test_list_transactions_orders_newest_first(
+    wallet_service: WalletService, mock_db: AsyncMock
+) -> None:
+    mock_db.execute = AsyncMock(
+        side_effect=[
+            _mock_scalar_one_result(0),
+            _mock_scalars_result([]),
+        ]
+    )
+
+    await wallet_service.list_transactions(
+        user_id=_test_user_id(),
+        page=1,
+        page_size=20,
+        type="all",
+    )
+
+    list_stmt = mock_db.execute.await_args_list[1].args[0]
+    assert "ORDER BY wallet_transactions.created_at DESC" in str(list_stmt)
+    assert "wallet_transactions.id DESC" in str(list_stmt)
+
+
+async def test_list_transactions_maps_recharge_status_titles(
+    wallet_service: WalletService, mock_db: AsyncMock
+) -> None:
+    user_id = _test_user_id()
+    transactions = [
+        SimpleNamespace(
+            id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
+            user_id=str(user_id),
+            type="recharge",
+            amount=Decimal("100.00"),
+            bonus_amount=Decimal("10.00"),
+            balance_after=Decimal("210.00"),
+            order_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            status="completed",
+            payment_method="wechat",
+            paid_at=datetime(2026, 5, 17, 10, 30, 0),
+            created_at=datetime(2026, 5, 17, 10, 0, 0),
+        ),
+        SimpleNamespace(
+            id=uuid.UUID("22222222-2222-2222-2222-222222222222"),
+            user_id=str(user_id),
+            type="recharge",
+            amount=Decimal("50.00"),
+            bonus_amount=Decimal("0.00"),
+            balance_after=None,
+            order_id="bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
+            status="pending",
+            payment_method="wechat",
+            paid_at=None,
+            created_at=datetime(2026, 5, 17, 9, 0, 0),
+        ),
+        SimpleNamespace(
+            id=uuid.UUID("33333333-3333-3333-3333-333333333333"),
+            user_id=str(user_id),
+            type="recharge",
+            amount=Decimal("80.00"),
+            bonus_amount=Decimal("0.00"),
+            balance_after=None,
+            order_id="cccccccc-dddd-eeee-ffff-000000000000",
+            status="failed",
+            payment_method="wechat",
+            paid_at=None,
+            created_at=datetime(2026, 5, 17, 8, 0, 0),
+        ),
+    ]
+    mock_db.execute = AsyncMock(
+        side_effect=[
+            _mock_scalar_one_result(3),
+            _mock_scalars_result(transactions),
+        ]
+    )
+
+    result = await wallet_service.list_transactions(
+        user_id=user_id,
+        page=1,
+        page_size=20,
+        type="all",
+    )
+
+    assert [item.title for item in result.items] == [
+        "充值到账",
+        "充值待支付",
+        "充值失败",
+    ]
+    assert [item.status for item in result.items] == ["completed", "pending", "failed"]
+    assert all(item.direction == "income" for item in result.items)
+
+
+async def test_list_transactions_completed_recharge_falls_back_completed_at(
+    wallet_service: WalletService, mock_db: AsyncMock
+) -> None:
+    user_id = _test_user_id()
+    created_at = datetime(2026, 5, 17, 8, 0, 0)
+    transaction = SimpleNamespace(
+        id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
+        user_id=str(user_id),
+        type="recharge",
+        amount=Decimal("100.00"),
+        bonus_amount=Decimal("0.00"),
+        balance_after=Decimal("200.00"),
+        order_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        status="completed",
+        payment_method="wechat",
+        paid_at=None,
+        notify_processed_at=None,
+        created_at=created_at,
+    )
+    mock_db.execute = AsyncMock(
+        side_effect=[
+            _mock_scalar_one_result(1),
+            _mock_scalars_result([transaction]),
+        ]
+    )
+
+    result = await wallet_service.list_transactions(
+        user_id=user_id,
+        page=1,
+        page_size=20,
+        type="all",
+    )
+
+    assert result.items[0].completed_at == created_at
 
 
 async def test_create_wechat_recharge_order_returns_payment_params(

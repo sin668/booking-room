@@ -70,6 +70,14 @@
           <text class="menu-item-text">钱包充值</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
+        <view class="menu-item" @tap="navigateTo('/pages/wallet/transactions')">
+          <view class="menu-icon blue">
+            <view class="bill-icon" />
+          </view>
+          <text class="menu-item-text">钱包流水</text>
+          <text class="menu-item-meta">交易明细</text>
+          <view class="icon icon-arrow-right menu-arrow" />
+        </view>
         <view class="menu-item" @tap="navigateTo('/pages/coupon/index')">
           <view class="menu-icon orange">
             <view class="ticket-icon" />
@@ -455,6 +463,33 @@ export default {
   height: 10rpx;
   border-radius: 5rpx;
   background: $success;
+}
+
+.bill-icon {
+  width: 34rpx;
+  height: 40rpx;
+  border-radius: 7rpx;
+  border: 4rpx solid $primary;
+  position: relative;
+}
+
+.bill-icon::before,
+.bill-icon::after {
+  content: '';
+  position: absolute;
+  left: 7rpx;
+  right: 7rpx;
+  height: 4rpx;
+  border-radius: 4rpx;
+  background: $primary;
+}
+
+.bill-icon::before {
+  top: 10rpx;
+}
+
+.bill-icon::after {
+  top: 22rpx;
 }
 
 .ticket-icon {

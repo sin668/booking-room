@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from decimal import Decimal
+from datetime import datetime
 from unittest.mock import AsyncMock
 
 import pytest
@@ -128,6 +129,133 @@ async def test_recharge_order_detail_for_another_user_returns_404(
     response = await other_auth_client.get(f"/api/v1/wallet/recharge/{ORDER_ID}")
 
     assert response.status_code == 404
+
+
+async def test_get_wallet_transactions_success(
+    auth_client: AsyncClient,
+    wallet_service: AsyncMock,
+) -> None:
+    wallet_service.list_transactions.return_value = {
+        "items": [
+            {
+                "id": uuid.UUID("11111111-1111-1111-1111-111111111111"),
+                "type": "recharge",
+                "title": "充值到账",
+                "amount": Decimal("100.00"),
+                "bonus_amount": Decimal("10.00"),
+                "direction": "income",
+                "status": "completed",
+                "payment_method": "wechat",
+                "balance_after": Decimal("210.00"),
+                "created_at": datetime(2026, 5, 17, 10, 0, 0),
+                "completed_at": datetime(2026, 5, 17, 10, 30, 0),
+                "order_id": uuid.UUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            }
+        ],
+        "total": 1,
+        "page": 1,
+        "page_size": 20,
+        "has_more": False,
+    }
+
+    response = await auth_client.get("/api/v1/wallet/transactions")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["page"] == 1
+    assert data["page_size"] == 20
+    assert data["has_more"] is False
+    assert data["items"][0]["title"] == "充值到账"
+    assert data["items"][0]["amount"] == "100.00"
+    wallet_service.list_transactions.assert_awaited_once_with(
+        user_id=USER_ID,
+        page=1,
+        page_size=20,
+        type="all",
+    )
+
+
+async def test_get_wallet_transactions_reserved_type_empty(
+    auth_client: AsyncClient,
+    wallet_service: AsyncMock,
+) -> None:
+    wallet_service.list_transactions.return_value = {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "page_size": 20,
+        "has_more": False,
+    }
+
+    response = await auth_client.get("/api/v1/wallet/transactions?type=consume")
+
+    assert response.status_code == 200
+    assert response.json()["items"] == []
+    assert response.json()["total"] == 0
+    wallet_service.list_transactions.assert_awaited_once_with(
+        user_id=USER_ID,
+        page=1,
+        page_size=20,
+        type="consume",
+    )
+
+
+async def test_get_wallet_transactions_invalid_type_returns_422(
+    auth_client: AsyncClient,
+    wallet_service: AsyncMock,
+) -> None:
+    response = await auth_client.get("/api/v1/wallet/transactions?type=unknown")
+
+    assert response.status_code == 422
+    assert "type" in response.text
+    wallet_service.list_transactions.assert_not_called()
+
+
+async def test_get_wallet_transactions_page_size_over_limit_returns_422(
+    auth_client: AsyncClient,
+    wallet_service: AsyncMock,
+) -> None:
+    response = await auth_client.get("/api/v1/wallet/transactions?page_size=51")
+
+    assert response.status_code == 422
+    assert "page_size" in response.text
+    wallet_service.list_transactions.assert_not_called()
+
+
+async def test_get_wallet_transactions_does_not_accept_user_id_override(
+    auth_client: AsyncClient,
+    wallet_service: AsyncMock,
+) -> None:
+    wallet_service.list_transactions.return_value = {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "page_size": 20,
+        "has_more": False,
+    }
+
+    response = await auth_client.get(
+        f"/api/v1/wallet/transactions?user_id={OTHER_USER_ID}"
+    )
+
+    assert response.status_code == 200
+    wallet_service.list_transactions.assert_awaited_once_with(
+        user_id=USER_ID,
+        page=1,
+        page_size=20,
+        type="all",
+    )
+
+
+async def test_unauthenticated_get_wallet_transactions_returns_401(
+    client: AsyncClient,
+) -> None:
+    app.dependency_overrides.pop(get_current_user_id, None)
+
+    response = await client.get("/api/v1/wallet/transactions")
+
+    assert response.status_code == 401
 
 
 async def test_wechat_notify_success(

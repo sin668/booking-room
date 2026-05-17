@@ -1104,6 +1104,79 @@ must not be used by production recharge crediting.
 
 ---
 
+### GET /api/v1/wallet/transactions
+
+返回当前认证用户的钱包流水列表。后端必须按 Bearer Token 解析出的当前用户过滤流水记录，客户端不得传递 `user_id`。结果按 `created_at` 倒序返回，并使用稳定的次级排序避免同时间记录顺序漂移。
+
+**认证：** Bearer Token
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | integer | 1 | 页码，最小值为 1 |
+| page_size | integer | 20 | 每页数量，最小值为 1，最大值为 50 |
+| type | string | all | 流水类型筛选：all / recharge / consume / refund |
+
+**响应 200：**
+```json
+{
+  "items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "type": "recharge",
+      "title": "充值到账",
+      "amount": "100.00",
+      "bonus_amount": "30.00",
+      "direction": "income",
+      "status": "completed",
+      "payment_method": "wechat",
+      "balance_after": "386.00",
+      "created_at": "2026-05-17T10:00:00",
+      "completed_at": "2026-05-17T10:01:30",
+      "order_id": "550e8400-e29b-41d4-a716-446655440000"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 20,
+  "has_more": false
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| items | array | 当前用户的钱包流水记录 |
+| total | integer | 当前筛选条件下的总记录数 |
+| page | integer | 当前页码 |
+| page_size | integer | 当前每页数量 |
+| has_more | boolean | 是否还有下一页 |
+
+**items 字段：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | string | 流水记录 ID |
+| type | string | 流水类型：recharge / consume / refund |
+| title | string | 展示标题，例如 `充值到账`、`充值待支付`、`充值失败` |
+| amount | decimal string | 流水金额；客户端不得用浮点数参与资金计算 |
+| bonus_amount | decimal string | 赠送金额，无赠送时为 `0.00` |
+| direction | string | 金额方向，例如 `income` |
+| status | string | 流水状态，例如 pending / completed / failed |
+| payment_method | string \| null | 支付方式，例如 wechat / alipay |
+| balance_after | decimal string \| null | 交易后余额；待支付或失败记录可以为 null |
+| created_at | datetime | 流水创建时间 |
+| completed_at | datetime \| null | 支付完成时间或等价完成时间 |
+| order_id | string \| null | 关联充值/订单 ID |
+
+当 `type=consume` 或 `type=refund` 暂无匹配记录时，接口仍返回 200，`items` 为空数组，`total` 为 0，并返回请求对应的分页元数据。
+
+**错误码：**
+- 401: 未认证 / Token 已过期或失效
+- 422: `page < 1` / `page_size < 1` / `page_size > 50` / `type` 参数不支持
+
+---
+
 ### POST /api/v1/wallet/promo-code
 
 校验充值优惠码并返回可赠送金额。

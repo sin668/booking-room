@@ -1,12 +1,12 @@
 from datetime import date, time
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
-from app.schemas.seat import SeatAdminResponse, SeatResponse, SeatWithAvailabilityResponse
+from app.schemas.seat import SeatAdminResponse, SeatResponse, SeatStatsResponse, SeatWithAvailabilityResponse
 
 
 async def _room_exists(db: AsyncSession, room_id: int) -> bool:
@@ -64,6 +64,51 @@ async def list_seats(
         is_available = base.status != "maintenance" and s.id not in booked_ids
         items.append(SeatWithAvailabilityResponse(**base.model_dump(), is_available=is_available))
     return items
+
+
+async def get_seat_stats(
+    db: AsyncSession,
+    room_id: int,
+    target_date: date | None = None,
+    start_time: time | None = None,
+    end_time: time | None = None,
+) -> SeatStatsResponse:
+    if not await _room_exists(db, room_id):
+        raise ValueError(f"Room {room_id} not found")
+
+    with_availability = target_date is not None and start_time is not None and end_time is not None
+
+    if not with_availability:
+        result = await db.execute(
+            select(
+                func.count(Seat.id),
+                func.sum(case((Seat.status == "available", 1), else_=0)),
+                func.sum(case((Seat.status == "maintenance", 1), else_=0)),
+            ).where(Seat.room_id == room_id)
+        )
+        total, available, maintenance = result.one()
+        total = total or 0
+        available = available or 0
+        maintenance = maintenance or 0
+        return SeatStatsResponse(
+            total=total,
+            available=available,
+            maintenance=maintenance,
+            occupied=max(0, total - available - maintenance),
+        )
+
+    result = await db.execute(select(Seat).where(Seat.room_id == room_id))
+    seats = result.scalars().all()
+    booked_ids = await _get_booked_seat_ids(db, [s.id for s in seats], target_date, start_time, end_time)
+    maintenance = sum(1 for s in seats if s.status == "maintenance")
+    occupied = sum(1 for s in seats if s.status != "maintenance" and s.id in booked_ids)
+    total = len(seats)
+    return SeatStatsResponse(
+        total=total,
+        available=max(0, total - maintenance - occupied),
+        occupied=occupied,
+        maintenance=maintenance,
+    )
 
 
 # ---- Admin functions ----

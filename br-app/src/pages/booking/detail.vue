@@ -180,7 +180,7 @@
 
 <script>
 import { getRoom } from '@/api/rooms'
-import { getSeats } from '@/api/seats'
+import { getSeatStats } from '@/api/seats'
 
 const REAL_ROOM_PHOTOS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&h=560&fit=crop&q=85',
@@ -195,7 +195,7 @@ export default {
       statusBarHeight: 0,
       roomId: null,
       room: {},
-      seats: [],
+      seatStatsData: null,
       loading: true,
       isFav: false,
       reviewCount: 0,
@@ -256,15 +256,12 @@ export default {
     },
 
     seatStats() {
-      const total = this.seats.length
-      const available = this.seats.filter(s => s.is_available).length
-      const maintenance = this.seats.filter(s => s.status === 'maintenance').length
-      const occupied = total - available - maintenance
+      const stats = this.seatStatsData || {}
       return {
-        total,
-        available,
-        occupied: Math.max(0, occupied),
-        maintenance,
+        total: Number(stats.total || 0),
+        available: Number(stats.available || 0),
+        occupied: Number(stats.occupied || 0),
+        maintenance: Number(stats.maintenance || 0),
       }
     },
   },
@@ -283,7 +280,7 @@ export default {
     async loadData() {
       this.loading = true
       try {
-        await Promise.all([this.loadRoom(), this.loadSeats()])
+        await Promise.all([this.loadRoom(), this.loadSeatStats()])
       } finally {
         this.loading = false
       }
@@ -298,12 +295,12 @@ export default {
       }
     },
 
-    async loadSeats() {
+    async loadSeatStats() {
       try {
-        const data = await getSeats(this.roomId)
-        this.seats = data || []
+        const data = await getSeatStats(this.roomId)
+        this.seatStatsData = data || null
       } catch {
-        this.seats = []
+        this.seatStatsData = null
       }
     },
 

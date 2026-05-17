@@ -8,3 +8,7 @@ import { get } from '@/utils/request'
 export function getSeats(roomId, params) {
   return get(`/api/v1/rooms/${roomId}/seats/`, params)
 }
+
+export function getSeatStats(roomId, params) {
+  return get(`/api/v1/rooms/${roomId}/seats/stats/`, params)
+}

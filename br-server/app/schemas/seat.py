@@ -23,6 +23,13 @@ class SeatWithAvailabilityResponse(SeatResponse):
     is_available: bool
 
 
+class SeatStatsResponse(BaseModel):
+    total: int
+    available: int
+    occupied: int
+    maintenance: int
+
+
 class SeatCreate(BaseModel):
     seat_number: str = Field(..., max_length=10)
     zone: str = Field(..., pattern="^(quiet|keyboard|vip)$")

@@ -116,6 +116,23 @@
           </view>
         </view>
 
+        <!-- Wallet Balance Card -->
+        <view class="card wallet-card">
+          <view class="wallet-card-main">
+            <view class="wallet-copy">
+              <text class="wallet-title">钱包余额</text>
+            </view>
+            <view class="wallet-amount-wrap">
+              <text class="wallet-symbol">¥</text>
+              <text class="wallet-amount">{{ walletBalanceText }}</text>
+            </view>
+          </view>
+          <view class="wallet-footer">
+            <text :class="['wallet-status', { error: walletLoadError }]">{{ walletStatusText }}</text>
+            <text class="wallet-refresh" @tap="loadWalletBalance">刷新</text>
+          </view>
+        </view>
+
         <!-- Price Summary Card -->
         <view class="card price-card">
           <view class="price-row">
@@ -221,6 +238,7 @@ import { getSeats } from '@/api/seats'
 import { createBooking } from '@/api/bookings'
 import { getRoom } from '@/api/rooms'
 import { getAvailableCouponsForBooking } from '@/api/coupons'
+import { getBalance } from '@/api/wallet'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
@@ -259,6 +277,10 @@ export default {
       couponLoadError: '',
       couponOriginalPrice: '',
       couponRequestId: 0,
+      walletBalance: 0,
+      walletLoading: false,
+      walletLoadError: false,
+      walletRequestId: 0,
 
       // Booking result for success modal
       bookingId: '',
@@ -304,6 +326,16 @@ export default {
         return this.money(this.selectedCoupon.payable_amount)
       }
       return this.originalPrice
+    },
+
+    walletBalanceText() {
+      return this.money(this.walletBalance)
+    },
+
+    walletStatusText() {
+      if (this.walletLoading) return '正在更新余额'
+      if (this.walletLoadError) return '余额加载失败'
+      return '将使用钱包余额支付'
     },
 
     couponSummaryText() {
@@ -365,7 +397,10 @@ export default {
         this.roomName = room.name
         this.roomAddress = room.address || ''
 
-        await this.loadAvailableCoupons()
+        await Promise.all([
+          this.loadAvailableCoupons(),
+          this.loadWalletBalance(),
+        ])
       } catch {
         uni.showToast({ title: '加载失败', icon: 'none' })
       } finally {
@@ -401,6 +436,24 @@ export default {
       } finally {
         if (requestId === this.couponRequestId) {
           this.couponLoading = false
+        }
+      }
+    },
+
+    async loadWalletBalance() {
+      const requestId = ++this.walletRequestId
+      this.walletLoading = true
+      this.walletLoadError = false
+      try {
+        const res = await getBalance()
+        if (requestId !== this.walletRequestId) return
+        this.walletBalance = res?.balance || 0
+      } catch {
+        if (requestId !== this.walletRequestId) return
+        this.walletLoadError = true
+      } finally {
+        if (requestId === this.walletRequestId) {
+          this.walletLoading = false
         }
       }
     },
@@ -443,6 +496,7 @@ export default {
         this.bookingDiscountAmount = this.money(booking.discount_amount != null ? booking.discount_amount : this.discountAmount)
         this.bookingPayableAmount = this.money(booking.total_price != null ? booking.total_price : this.payableAmount)
         this.showSuccess = true
+        this.loadWalletBalance()
       } catch (err) {
         if (this.isCouponUnavailableError(err)) {
           uni.showToast({ title: '卡券不可用，请重新选择', icon: 'none' })
@@ -546,6 +600,77 @@ export default {
 
 .coupon-card {
   animation-delay: 0.05s;
+}
+
+.wallet-card {
+  border: 1rpx solid rgba(79, 110, 247, 0.12);
+  background: #fff;
+  animation-delay: 0.08s;
+}
+
+.wallet-card-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.wallet-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.wallet-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.wallet-amount-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  color: $primary;
+}
+
+.wallet-symbol {
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.wallet-amount {
+  font-size: 38rpx;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.wallet-footer {
+  margin-top: 18rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid rgba(79, 110, 247, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.wallet-status {
+  min-width: 0;
+  font-size: 24rpx;
+  color: $text-secondary;
+}
+
+.wallet-status.error {
+  color: $danger;
+}
+
+.wallet-refresh {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: $primary;
 }
 
 @keyframes fadeInUp {

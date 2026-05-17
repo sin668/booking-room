@@ -641,9 +641,9 @@ export default {
 }
 
 .wallet-amount {
-  font-size: 38rpx;
+  font-size: 28rpx;
   line-height: 1;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .wallet-footer {

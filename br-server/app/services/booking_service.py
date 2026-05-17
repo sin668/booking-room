@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
+from app.models.user import User
+from app.models.wallet import WalletTransaction
 from app.schemas.booking import (
     BookingAdminListResponse,
     BookingAdminResponse,
@@ -52,6 +54,10 @@ class BookingAlreadyCancelledError(BookingError):
 
 
 class BookingCouponUnavailableError(BookingError):
+    pass
+
+
+class WalletBalanceInsufficientError(BookingError):
     pass
 
 
@@ -142,6 +148,22 @@ async def create_booking(
         total_price = coupon_result.payable_amount
         user_coupon = coupon_result.user_coupon
 
+    wallet_payment = data.payment_method == "wallet"
+    user = None
+    total_price = total_price.quantize(Decimal("0.01"))
+
+    if wallet_payment:
+        user_result = await db.execute(
+            select(User).where(User.id == user_id).with_for_update()
+        )
+        user = user_result.scalar_one_or_none()
+        if user is None:
+            raise BookingError("User not found")
+        if Decimal(str(user.balance)) < total_price:
+            raise WalletBalanceInsufficientError("Wallet balance is insufficient")
+
+        user.balance = Decimal(str(user.balance)) - total_price
+
     booking = Booking(
         seat_id=data.seat_id,
         user_id=str(user_id),
@@ -157,9 +179,27 @@ async def create_booking(
     )
     db.add(booking)
     await db.flush()
+
+    wallet_transaction = None
+    if wallet_payment and user is not None:
+        wallet_transaction = WalletTransaction(
+            user_id=str(user_id),
+            type="consume",
+            amount=total_price,
+            bonus_amount=Decimal("0.00"),
+            balance_after=Decimal(str(user.balance)),
+            order_id=str(uuid.uuid4()),
+            status="completed",
+            payment_method="wallet",
+        )
+        setattr(wallet_transaction, "payment_provider", "wallet")
+        setattr(wallet_transaction, "payment_status", "completed")
+        db.add(wallet_transaction)
+
     if user_coupon is not None:
         coupon_service.mark_coupon_used(user_coupon, booking.id)
-        await db.flush()
+
+    await db.flush()
 
     return _build_booking_response(booking, seat, room)
 

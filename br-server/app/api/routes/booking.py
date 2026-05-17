@@ -32,6 +32,11 @@ async def create_booking(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该座位正在维护中")
     except booking_service.BookingConflictError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="该座位该时段已被预约")
+    except booking_service.WalletBalanceInsufficientError:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="Wallet balance is insufficient",
+        )
     except booking_service.InvalidTimeRangeError:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="结束时间必须晚于开始时间")
     except booking_service.BookingCouponUnavailableError:

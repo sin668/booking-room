@@ -424,6 +424,7 @@ export default {
           date: this.date,
           start_time: this.start_time,
           end_time: this.end_time,
+          payment_method: 'wallet',
         }
         if (this.selectedCouponId) {
           payload.coupon_id = this.selectedCouponId
@@ -449,6 +450,8 @@ export default {
           await this.loadAvailableCoupons()
         } else if (this.isBookingConflictError(err)) {
           uni.showToast({ title: '该座位该时段已被预约，请重新选择', icon: 'none' })
+        } else if (this.isWalletBalanceInsufficientError(err)) {
+          uni.showToast({ title: '钱包余额不足，请先充值', icon: 'none' })
         } else {
           uni.showToast({ title: '预约失败，请重试', icon: 'none' })
         }
@@ -488,6 +491,11 @@ export default {
     isBookingConflictError(err) {
       const text = this.errorText(err)
       return err?.statusCode === 409 || err?.code === 'conflict' || /座位.*时段.*预约/.test(text)
+    },
+
+    isWalletBalanceInsufficientError(err) {
+      const text = this.errorText(err)
+      return err?.statusCode === 402 || /wallet balance is insufficient/i.test(text)
     },
   },
 }

@@ -6,6 +6,7 @@ from decimal import Decimal
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id
@@ -13,6 +14,8 @@ from app.models.booking import Booking
 from app.models.coupon import Coupon, UserCoupon
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
+from app.models.user import User
+from app.models.wallet import WalletTransaction
 
 USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
 OTHER_USER_ID = uuid.UUID("22222222-2222-2222-2222-222222222222")
@@ -222,6 +225,96 @@ class TestCreateBooking:
         assert seed_booking_coupon.status == "available"
         assert seed_booking_coupon.used_booking_id is None
         assert seed_booking_coupon.used_at is None
+
+    @pytest.mark.asyncio
+    async def test_create_booking_with_wallet_payment_deducts_balance_and_creates_consume_transaction(
+        self,
+        auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+    ):
+        db_session.add(
+            User(
+                id=USER_ID,
+                phone="18800000001",
+                nickname="Wallet User",
+                password_hash="hash",
+                balance=Decimal("100.00"),
+            )
+        )
+        await db_session.flush()
+
+        seat = seed_room_seat["seat_a"]
+        resp = await auth_client.post(
+            "/api/v1/bookings",
+            json={
+                "seat_id": seat.id,
+                "date": "2026-05-01",
+                "start_time": "09:00",
+                "end_time": "12:00",
+                "payment_method": "wallet",
+            },
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["total_price"] == "45.00"
+
+        user = await db_session.get(User, USER_ID)
+        assert user is not None
+        assert user.balance == Decimal("55.00")
+
+        tx_result = await db_session.execute(
+            select(WalletTransaction).where(WalletTransaction.user_id == str(USER_ID))
+        )
+        tx = tx_result.scalar_one()
+        assert tx.type == "consume"
+        assert tx.amount == Decimal("45.00")
+        assert tx.status == "completed"
+        assert tx.payment_method == "wallet"
+        assert tx.balance_after == Decimal("55.00")
+
+    @pytest.mark.asyncio
+    async def test_create_booking_with_wallet_payment_insufficient_balance_does_not_create_booking_or_transaction(
+        self,
+        auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+    ):
+        db_session.add(
+            User(
+                id=USER_ID,
+                phone="18800000002",
+                nickname="Poor Wallet User",
+                password_hash="hash",
+                balance=Decimal("10.00"),
+            )
+        )
+        await db_session.flush()
+
+        seat = seed_room_seat["seat_a"]
+        resp = await auth_client.post(
+            "/api/v1/bookings",
+            json={
+                "seat_id": seat.id,
+                "date": "2026-05-01",
+                "start_time": "09:00",
+                "end_time": "12:00",
+                "payment_method": "wallet",
+            },
+        )
+        assert resp.status_code == 402
+
+        bookings = (
+            await db_session.execute(
+                Booking.__table__.select().where(Booking.user_id == str(USER_ID))
+            )
+        ).all()
+        assert bookings == []
+
+        tx_count = await db_session.scalar(
+            select(func.count()).select_from(WalletTransaction).where(WalletTransaction.user_id == str(USER_ID))
+        )
+        assert tx_count == 0
 
     @pytest.mark.asyncio
     async def test_create_booking_no_auth(self, client: AsyncClient, seed_room_seat):

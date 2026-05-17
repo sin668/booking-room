@@ -130,6 +130,7 @@ export default {
       filters: [
         { label: '全部', value: 'all' },
         { label: '充值', value: 'recharge' },
+        { label: '消费', value: 'consume' },
       ],
       transactions: [],
       page: 1,

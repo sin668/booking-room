@@ -28,6 +28,7 @@ class BookingCreate(BaseModel):
     start_time: time
     end_time: time
     coupon_id: int | None = None
+    payment_method: str | None = None
 
 
 class BookingResponse(BaseModel):

@@ -22,17 +22,17 @@
       </view>
 
       <view class="stats-card">
-        <view class="stat-item">
+        <view class="stat-item" @tap="navigateTo('/pages/wallet/transactions')">
           <text class="stat-value">¥{{ walletBalanceText }}</text>
           <text class="stat-label">钱包余额</text>
         </view>
         <view class="stat-divider" />
-        <view class="stat-item">
+        <view class="stat-item" @tap="navigateTo('/pages/coupon/index')">
           <text class="stat-value orange">{{ availableCouponCount }}</text>
           <text class="stat-label">卡券</text>
         </view>
         <view class="stat-divider" />
-        <view class="stat-item">
+        <view class="stat-item" @tap="navigateTo('/pages/study-record/index')">
           <text class="stat-value green">{{ studyHoursText }}</text>
           <text class="stat-label">学习时长</text>
         </view>

@@ -3,13 +3,11 @@ import { store } from '@/store';
 import { ACCESS_TOKEN, CURRENT_USER, IS_SCREENLOCKED } from '@/store/mutation-types';
 import { ResultEnum } from '@/enums/httpEnum';
 
-import { getUserInfo as getUserInfoApi, login } from '@/api/system/user';
+import { getUserInfo as getUserInfoApi, login, type AdminUserInfo } from '@/api/system/user';
 import { storage } from '@/utils/Storage';
 
-export type UserInfoType = {
-  // TODO: add your own data
+export type UserInfoType = AdminUserInfo & {
   username: string;
-  email: string;
 };
 
 export interface IUserState {
@@ -52,6 +50,9 @@ export const useUserStore = defineStore({
     setToken(token: string) {
       this.token = token;
     },
+    setNickname(nickname: string) {
+      this.username = nickname;
+    },
     setAvatar(avatar: string) {
       this.avatar = avatar;
     },
@@ -63,31 +64,34 @@ export const useUserStore = defineStore({
     },
     // 登录
     async login(params: any) {
-      const response = await login(params);
-      const { result, code } = response;
-      if (code === ResultEnum.SUCCESS) {
-        const ex = 7 * 24 * 60 * 60;
-        storage.set(ACCESS_TOKEN, result.token, ex);
-        storage.set(CURRENT_USER, result, ex);
-        storage.set(IS_SCREENLOCKED, false);
-        this.setToken(result.token);
-        this.setUserInfo(result);
-      }
-      return response;
+      const result = await login(params);
+      const token = result.access_token;
+      const ex = 7 * 24 * 60 * 60;
+      storage.set(ACCESS_TOKEN, token, ex);
+      storage.set(CURRENT_USER, result, ex);
+      storage.set(IS_SCREENLOCKED, false);
+      this.setToken(token);
+      this.setUserInfo({ username: params.username, ...result });
+      return {
+        code: ResultEnum.SUCCESS,
+        message: '登录成功',
+        result: {
+          ...result,
+          token,
+        },
+      };
     },
 
     // 获取用户信息
     async getInfo() {
-      const data = await getUserInfoApi();
-      const { result } = data;
-      if (result.permissions && result.permissions.length) {
-        const permissionsList = result.permissions;
-        this.setPermissions(permissionsList);
-        this.setUserInfo(result);
-      } else {
-        throw new Error('getInfo: permissionsList must be a non-null array !');
-      }
-      this.setAvatar(result.avatar);
+      const result = await getUserInfoApi();
+      const permissionsList = Array.isArray(result.permissions) ? result.permissions : [];
+      const nickname = result.nickname || result.username || '';
+      this.setPermissions(permissionsList);
+      this.setUserInfo(result as UserInfoType);
+      this.setNickname(nickname);
+      this.setAvatar(result.avatar || '');
+      storage.set(CURRENT_USER, result, 7 * 24 * 60 * 60);
       return result;
     },
 

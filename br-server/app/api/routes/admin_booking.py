@@ -3,15 +3,15 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import get_current_admin
+from app.api.dependencies import require_admin_permission
 from app.core.database import get_db
 from app.schemas.booking import BookingAdminListResponse, BookingAdminResponse
 from app.services import booking_service
 
-router = APIRouter(prefix="/api/v1/admin/bookings", tags=["admin-bookings"], dependencies=[Depends(get_current_admin)])
+router = APIRouter(prefix="/api/v1/admin/bookings", tags=["admin-bookings"])
 
 
-@router.get("", response_model=BookingAdminListResponse)
+@router.get("", response_model=BookingAdminListResponse, dependencies=[Depends(require_admin_permission("booking:view"))])
 async def list_bookings(
     page: int = 1,
     page_size: int = 10,
@@ -26,7 +26,7 @@ async def list_bookings(
     )
 
 
-@router.get("/{booking_id}", response_model=BookingAdminResponse)
+@router.get("/{booking_id}", response_model=BookingAdminResponse, dependencies=[Depends(require_admin_permission("booking:view"))])
 async def get_booking(booking_id: int, db: AsyncSession = Depends(get_db)) -> BookingAdminResponse:
     try:
         return await booking_service.admin_get_booking(db, booking_id)
@@ -34,7 +34,7 @@ async def get_booking(booking_id: int, db: AsyncSession = Depends(get_db)) -> Bo
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="预约不存在")
 
 
-@router.post("/{booking_id}/cancel", response_model=BookingAdminResponse)
+@router.post("/{booking_id}/cancel", response_model=BookingAdminResponse, dependencies=[Depends(require_admin_permission("booking:cancel"))])
 async def cancel_booking(booking_id: int, db: AsyncSession = Depends(get_db)) -> BookingAdminResponse:
     try:
         return await booking_service.admin_cancel_booking(db, booking_id)

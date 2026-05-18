@@ -66,35 +66,28 @@ export interface SeatListParams {
 
 // --- Common meta for admin API calls ---
 const adminMeta = {
-  ignoreToken: true,
   isReturnNativeResponse: true,
 };
 
-/** Read admin token from env (never hardcode) */
-function getAdminHeaders(): Record<string, string> {
-  const token = import.meta.env.VITE_ADMIN_TOKEN;
-  return token ? { 'X-Admin-Token': token } : {};
-}
-
 // --- API Functions ---
 export function createSeat(roomId: number, data: SeatFormParams) {
-  return Alova.Post<SeatItem>(`/v1/admin/rooms/${roomId}/seats`, data, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Post<SeatItem>(`/v1/admin/rooms/${roomId}/seats`, data, { meta: adminMeta });
 }
 export function bulkCreateSeats(roomId: number, data: SeatBulkParams) {
-  return Alova.Post<SeatBulkResult>(`/v1/admin/rooms/${roomId}/seats/bulk`, data, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Post<SeatBulkResult>(`/v1/admin/rooms/${roomId}/seats/bulk`, data, { meta: adminMeta });
 }
 export function getSeatList(roomId: number, params?: SeatListParams) {
-  return Alova.Get<SeatItem[]>(`/v1/admin/rooms/${roomId}/seats`, { params, meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Get<SeatItem[]>(`/v1/admin/rooms/${roomId}/seats`, { params, meta: adminMeta });
 }
 export function getSeatById(seatId: number) {
-  return Alova.Get<SeatItem>(`/v1/admin/seats/${seatId}`, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Get<SeatItem>(`/v1/admin/seats/${seatId}`, { meta: adminMeta });
 }
 export function updateSeat(seatId: number, data: SeatUpdateParams) {
-  return Alova.Put<SeatItem>(`/v1/admin/seats/${seatId}`, data, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Put<SeatItem>(`/v1/admin/seats/${seatId}`, data, { meta: adminMeta });
 }
 export function deleteSeat(seatId: number) {
-  return Alova.Delete(`/v1/admin/seats/${seatId}`, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Delete(`/v1/admin/seats/${seatId}`, { meta: adminMeta });
 }
 export function toggleSeatStatus(seatId: number, status: 'available' | 'maintenance') {
-  return Alova.Patch<SeatItem>(`/v1/admin/seats/${seatId}/status`, { status }, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Patch<SeatItem>(`/v1/admin/seats/${seatId}/status`, { status }, { meta: adminMeta });
 }

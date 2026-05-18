@@ -18,17 +18,15 @@
       <n-grid-item span="18">
         <n-card :bordered="false" size="small" :title="state.typeTitle" class="proCard">
           <BasicSetting v-if="state.type === 1" />
-          <RevealSetting v-if="state.type === 2" />
-          <EmailSetting v-if="state.type === 3" />
+          <EmailSetting v-if="state.type === 2" />
         </n-card>
       </n-grid-item>
     </n-grid>
   </div>
 </template>
 <script lang="ts" setup>
-  import { reactive, toRefs } from 'vue';
+  import { reactive } from 'vue';
   import BasicSetting from './BasicSetting.vue';
-  import RevealSetting from './RevealSetting.vue';
   import EmailSetting from './EmailSetting.vue';
 
   const typeTabList = [
@@ -38,14 +36,9 @@
       key: 1,
     },
     {
-      name: '显示设置',
-      desc: '系统显示设置',
-      key: 2,
-    },
-    {
       name: '邮件设置',
       desc: '系统邮件设置',
-      key: 3,
+      key: 2,
     },
   ];
 

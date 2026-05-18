@@ -3,7 +3,7 @@ import { NTag } from 'naive-ui';
 
 export const columns = [
   {
-    title: 'id',
+    title: 'ID',
     key: 'id',
   },
   {
@@ -11,26 +11,30 @@ export const columns = [
     key: 'name',
   },
   {
-    title: '说明',
-    key: 'explain',
+    title: '角色编码',
+    key: 'code',
   },
   {
-    title: '是否默认角色',
-    key: 'isDefault',
+    title: '说明',
+    key: 'description',
+  },
+  {
+    title: '状态',
+    key: 'status',
     render(row) {
       return h(
         NTag,
         {
-          type: row.isDefault ? 'success' : 'error',
+          type: row.status === 'active' ? 'success' : 'error',
         },
         {
-          default: () => (row.isDefault ? '是' : '否'),
+          default: () => (row.status === 'active' ? '启用' : '禁用'),
         }
       );
     },
   },
   {
     title: '创建时间',
-    key: 'create_date',
+    key: 'created_at',
   },
 ];

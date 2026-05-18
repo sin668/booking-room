@@ -10,6 +10,9 @@
   import { nextTick } from 'vue';
   import { FormSchema, useForm } from '@/components/Form';
   import { basicModal, useModal } from '@/components/Modal';
+  import { updateRole } from '@/api/system/role';
+
+  const emit = defineEmits(['success']);
 
   const schemas: FormSchema[] = [
     {
@@ -22,25 +25,41 @@
       rules: [{ required: true, message: '请输入角色名称', trigger: ['blur'] }],
     },
     {
-      field: 'explain',
+      field: 'code',
+      component: 'NInput',
+      label: '角色编码',
+      componentProps: {
+        placeholder: '请输入角色编码',
+      },
+      rules: [{ required: true, message: '请输入角色编码', trigger: ['blur'] }],
+    },
+    {
+      field: 'description',
       component: 'NInput',
       label: '角色说明',
       componentProps: {
         type: 'textarea',
-        placeholder: '请输入角色角色说明',
+        placeholder: '请输入角色说明',
       },
     },
     {
-      field: 'isDefault',
-      component: 'NSwitch',
-      label: '默认角色',
-      componentProps: {},
+      field: 'status',
+      component: 'NSelect',
+      label: '状态',
+      componentProps: {
+        options: [
+          { label: '启用', value: 'active' },
+          { label: '禁用', value: 'disabled' },
+        ],
+      },
     },
   ];
 
+  let currentId: string | number | undefined;
+
   const [registerForm, { submit, setFieldsValue }] = useForm({
     gridProps: { cols: 1 },
-    collapsedRows: 3,
+    collapsedRows: 4,
     labelWidth: 80,
     layout: 'horizontal',
     submitButtonText: '保存',
@@ -54,6 +73,7 @@
   });
 
   function showModal(record: any) {
+    currentId = record?.id;
     openModal();
     nextTick(() => {
       record && setFieldsValue({ ...record });
@@ -62,9 +82,14 @@
 
   async function okModal() {
     const formRes = await submit();
-    if (formRes) {
-      closeModal();
-      console.log('formRes', formRes);
+    if (formRes && currentId != null) {
+      try {
+        await updateRole(currentId, formRes);
+        closeModal();
+        emit('success');
+      } catch {
+        setSubLoading(false);
+      }
     } else {
       setSubLoading(false);
     }

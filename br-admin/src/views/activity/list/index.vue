@@ -14,7 +14,7 @@
         :striped="true"
       >
         <template #tableTitle>
-          <n-button type="primary" @click="addTable">
+          <n-button v-permission="{ action: ['activity:create'] }" type="primary" @click="addTable">
             <template #icon>
               <n-icon><PlusOutlined /></n-icon>
             </template>
@@ -23,11 +23,7 @@
         </template>
       </BasicTable>
 
-      <ActivityEditModal
-        v-model:show="showModal"
-        :editData="editData"
-        @success="handleSuccess"
-      />
+      <ActivityEditModal v-model:show="showModal" :editData="editData" @success="handleSuccess" />
     </n-card>
   </n-flex>
 </template>
@@ -114,16 +110,19 @@
           {
             label: '编辑',
             onClick: handleEdit.bind(null, record),
+            auth: ['activity:update'],
           },
           {
             label: '删除',
             onClick: handleDelete.bind(null, record),
+            auth: ['activity:delete'],
           },
         ],
         dropDownActions: [
           {
             label: record.is_active ? '下架' : '上架',
             key: record.is_active ? 'offline' : 'online',
+            auth: ['activity:status'],
           },
         ],
         select: (key: string) => {

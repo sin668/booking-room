@@ -47,14 +47,8 @@ export interface BookingListParams {
 // --- Common meta for admin API calls ---
 
 const adminMeta = {
-  ignoreToken: true,
   isReturnNativeResponse: true,
 };
-
-function getAdminHeaders(): Record<string, string> {
-  const token = import.meta.env.VITE_ADMIN_TOKEN;
-  return token ? { 'X-Admin-Token': token } : {};
-}
 
 // --- API Functions ---
 
@@ -62,20 +56,17 @@ export function getBookingList(params?: BookingListParams) {
   return Alova.Get<BookingListResult>('/v1/admin/bookings', {
     params,
     meta: adminMeta,
-    headers: getAdminHeaders(),
   });
 }
 
 export function getBookingDetail(id: number) {
   return Alova.Get<BookingItem>(`/v1/admin/bookings/${id}`, {
     meta: adminMeta,
-    headers: getAdminHeaders(),
   });
 }
 
 export function cancelBooking(id: number) {
   return Alova.Post<BookingItem>(`/v1/admin/bookings/${id}/cancel`, undefined, {
     meta: adminMeta,
-    headers: getAdminHeaders(),
   });
 }

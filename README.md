@@ -47,6 +47,28 @@
 - 提交信息格式：`type(scope): description` 
   - 类型：feat, fix, docs, refactor, test
 
+## 管理后台初始化与认证迁移
+
+admin RBAC 动态设置变更落地后，后端数据库迁移只负责建表；默认管理员、超级管理员角色、默认菜单、按钮权限和系统设置通过独立 seed 脚本初始化。
+
+```bash
+cd br-server
+alembic upgrade head
+python -m app.services.seed_admin
+```
+
+seed 脚本应保持幂等，可以重复执行且不得重复插入默认角色、菜单、权限或系统设置。默认开发账号为 `admin / 123456`，也可以通过环境变量覆盖：
+
+```bash
+ADMIN_DEFAULT_USERNAME=admin
+ADMIN_DEFAULT_PASSWORD=change-me
+ADMIN_DEFAULT_EMAIL=admin@example.com
+```
+
+生产环境必须显式设置 `ADMIN_DEFAULT_PASSWORD`，不得依赖弱默认密码创建管理员。
+
+管理后台认证将从 legacy `X-Admin-Token` 迁移到 br-server 签发的 `Authorization: Bearer <admin access token>`。`X-Admin-Token` 仅作为兼容和应急超级管理员通道保留，不能作为新 admin API 的主认证路径。
+
 ## 重要约束 
 
 ### 技术约束 
@@ -85,7 +107,6 @@
 - [ ] 学习记录：查看历史预约
 - [ ] 排行榜：学习时长排名
 - [ ] 意见反馈：用户可提交问题
-
 
 
 

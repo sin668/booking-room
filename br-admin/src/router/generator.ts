@@ -18,9 +18,11 @@ LayoutMap.set('IFRAME', Iframe);
  */
 export const generateRoutes = (routerMap, parent?): any[] => {
   return routerMap.map((item) => {
+    const itemPath = `${item.path || ''}`.replace(/^\/+/, '');
+    const parentPath = parent?.path && parent.path !== '/' ? parent.path : '';
     const currentRoute: any = {
       // 路由地址 动态拼接生成如 /dashboard/workplace
-      path: `${(parent && parent.path) ?? ''}/${item.path}`,
+      path: `${parentPath}/${itemPath || item.path || ''}`,
       // 路由名称，建议唯一
       name: item.name ?? '',
       // 该路由对应页面的 组件
@@ -28,9 +30,12 @@ export const generateRoutes = (routerMap, parent?): any[] => {
       // meta: 页面标题, 菜单图标, 页面权限(供指令权限用，可去掉)
       meta: {
         ...item.meta,
-        label: item.meta.title,
-        icon: constantRouterIcon[item.meta.icon] || null,
-        permissions: item.meta.permissions || null,
+        label: item.meta?.title,
+        title: item.meta?.title,
+        icon: constantRouterIcon[item.meta?.icon] || null,
+        permissions: item.meta?.permissions || null,
+        hidden: item.meta?.hidden,
+        keepAlive: item.meta?.keepAlive,
       },
     };
 
@@ -41,7 +46,11 @@ export const generateRoutes = (routerMap, parent?): any[] => {
     // 是否有子菜单，并递归处理
     if (item.children && item.children.length > 0) {
       //如果未定义 redirect 默认第一个子路由为 redirect
-      !item.redirect && (currentRoute.redirect = `${item.path}/${item.children[0].path}`);
+      !item.redirect &&
+        (currentRoute.redirect = `${currentRoute.path}/${`${item.children[0].path}`.replace(
+          /^\/+/,
+          ''
+        )}`);
       // Recursion
       currentRoute.children = generateRoutes(item.children, currentRoute);
     }
@@ -95,11 +104,12 @@ export const dynamicImport = (
   component: string
 ) => {
   const keys = Object.keys(viewsModules);
+  const normalizedComponent = component.startsWith('/') ? component : `/${component}`;
   const matchKeys = keys.filter((key) => {
     let k = key.replace('../views', '');
     const lastIndex = k.lastIndexOf('.');
     k = k.substring(0, lastIndex);
-    return k === component;
+    return k === normalizedComponent;
   });
   if (matchKeys?.length === 1) {
     const matchKey = matchKeys[0];
@@ -111,4 +121,5 @@ export const dynamicImport = (
     );
     return;
   }
+  console.warn(`[router] Dynamic route component not found: ${component}`);
 };

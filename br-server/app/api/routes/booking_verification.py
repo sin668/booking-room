@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import get_current_admin, get_current_user_id
+from app.api.dependencies import get_current_user_id, require_admin_permission
 from app.core.database import get_db
 from app.schemas.booking_verification import (
     BookingVerificationConfirmResponse,
@@ -35,7 +35,7 @@ async def issue_verification_token(
 async def inspect_verification_token(
     token: str,
     db: AsyncSession = Depends(get_db),
-    _admin: None = Depends(get_current_admin),
+    _admin=Depends(require_admin_permission("booking:view")),
 ) -> BookingVerificationDetailResponse:
     try:
         return await booking_verification_service.inspect_verification_token(db, token)
@@ -53,7 +53,7 @@ async def inspect_verification_token(
 async def confirm_verification(
     token: str,
     db: AsyncSession = Depends(get_db),
-    _admin: None = Depends(get_current_admin),
+    _admin=Depends(require_admin_permission("booking:cancel")),
 ) -> BookingVerificationConfirmResponse:
     try:
         return await booking_verification_service.confirm_verification(db, token)

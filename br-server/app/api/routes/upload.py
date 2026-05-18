@@ -4,17 +4,17 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 
-from app.api.dependencies import get_current_admin
+from app.api.dependencies import require_admin_permission
 from app.schemas.activity import UploadResponse
 
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-upload"], dependencies=[Depends(get_current_admin)])
+router = APIRouter(prefix="/api/v1/admin", tags=["admin-upload"])
 
 UPLOAD_DIR = Path("uploads")
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 
-@router.post("/upload", response_model=UploadResponse)
+@router.post("/upload", response_model=UploadResponse, dependencies=[Depends(require_admin_permission("upload:create"))])
 async def upload_file(file: UploadFile) -> UploadResponse:
     if not file.filename:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="缺少文件")

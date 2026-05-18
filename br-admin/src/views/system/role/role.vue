@@ -1,9 +1,7 @@
 <template>
   <div>
     <div class="n-layout-page-header">
-      <n-card :bordered="false" title="角色权限管理">
-        页面数据为 Mock 示例数据，非真实数据。
-      </n-card>
+      <n-card :bordered="false" title="角色权限管理"> 管理角色与菜单授权。 </n-card>
     </div>
     <n-card :bordered="false" class="mt-4 proCard">
       <BasicTable
@@ -15,7 +13,11 @@
         @update:checked-row-keys="onCheckedRow"
       >
         <template #tableTitle>
-          <n-button type="primary" @click="addRole">
+          <n-button
+            v-permission="{ action: ['system:role:create'] }"
+            type="primary"
+            @click="addRole"
+          >
             <template #icon>
               <n-icon>
                 <PlusOutlined />
@@ -51,7 +53,6 @@
           <n-button type="info" ghost icon-placement="left" @click="packHandle">
             全部{{ expandedKeys.length ? '收起' : '展开' }}
           </n-button>
-
           <n-button type="info" ghost icon-placement="left" @click="checkedAllHandle">
             全部{{ checkedAll ? '取消' : '选择' }}
           </n-button>
@@ -59,23 +60,22 @@
         </n-space>
       </template>
     </n-modal>
-    <CreateModal ref="createModalRef" />
-    <EditModal ref="editModalRef" />
+    <CreateModal ref="createModalRef" @success="reloadTable" />
+    <EditModal ref="editModalRef" @success="reloadTable" />
   </div>
 </template>
 
 <script lang="ts" setup>
-  import { reactive, ref, unref, h, onMounted } from 'vue';
+  import { h, reactive, ref, unref } from 'vue';
   import { useMessage } from 'naive-ui';
   import { BasicTable, TableAction } from '@/components/Table';
-  import { getRoleList } from '@/api/system/role';
-  import { getMenuList } from '@/api/system/menu';
+  import { getRoleList, getRoleMenus, updateRoleMenus, deleteRole } from '@/api/system/role';
   import { columns } from './columns';
   import { PlusOutlined } from '@vicons/antd';
   import { getTreeAll } from '@/utils';
   import CreateModal from './CreateModal.vue';
   import EditModal from './EditModal.vue';
-  import type { ListDate } from '@/api/system/menu';
+  import type { MenuTreeNode } from '@/api/system/menu';
 
   const message = useMessage();
   const actionRef = ref();
@@ -85,16 +85,18 @@
   const formBtnLoading = ref(false);
   const checkedAll = ref(false);
   const editRoleTitle = ref('');
-  const treeData = ref<ListDate[]>([]);
+  const treeData = ref<MenuTreeNode[]>([]);
   const expandedKeys = ref<string[]>([]);
-  const checkedKeys = ref<string[]>(['console', 'step-form']);
+  const checkedKeys = ref<(string | number)[]>([]);
+  const activeRoleId = ref<string | number | null>(null);
 
   const params = reactive({
-    name: 'NaiveAdmin',
+    name: '',
+    code: '',
   });
 
   const actionColumn = reactive({
-    width: 250,
+    width: 280,
     title: '操作',
     key: 'action',
     fixed: 'right',
@@ -105,30 +107,20 @@
           {
             label: '菜单权限',
             onClick: handleMenuAuth.bind(null, record),
-            // 根据业务控制是否显示 isShow 和 auth 是并且关系
-            ifShow: () => {
-              return true;
-            },
-            // 根据权限控制是否显示: 有权限，会显示，支持多个
-            auth: ['basic_list'],
+            auth: ['system:role:assign'],
+            ifShow: () => true,
           },
           {
             label: '编辑',
             onClick: handleEdit.bind(null, record),
-            ifShow: () => {
-              return true;
-            },
-            auth: ['basic_list'],
+            auth: ['system:role:update'],
+            ifShow: () => true,
           },
           {
             label: '删除',
             onClick: handleDelete.bind(null, record),
-            // 根据业务控制是否显示 isShow 和 auth 是并且关系
-            ifShow: () => {
-              return true;
-            },
-            // 根据权限控制是否显示: 有权限，会显示，支持多个
-            auth: ['basic_list'],
+            auth: ['system:role:delete'],
+            ifShow: () => true,
           },
         ],
       });
@@ -136,11 +128,17 @@
   });
 
   const loadDataTable = async (res: any) => {
-    let _params = {
+    const _params = {
       ...unref(params),
       ...res,
     };
-    return await getRoleList(_params);
+    const result = await getRoleList(_params);
+    return {
+      list: result.list,
+      itemCount: result.itemCount,
+      pageCount: result.pageCount,
+      page: result.page,
+    };
   };
 
   function addRole() {
@@ -155,36 +153,40 @@
     actionRef.value.reload();
   }
 
-  function confirmForm(e: any) {
-    e.preventDefault();
-    formBtnLoading.value = true;
-    setTimeout(() => {
-      showModal.value = false;
-      message.success('提交成功');
-      reloadTable();
-      formBtnLoading.value = false;
-    }, 200);
-  }
-
   function handleEdit(record: Recordable) {
-    console.log('点击了编辑', record);
-    // router.push({ name: 'basic-info', params: { id: record.id } });
     editModalRef.value.showModal(record);
   }
 
   function handleDelete(record: Recordable) {
-    console.log('点击了删除', record);
-    message.info('点击了删除');
+    window['$dialog'].warning({
+      title: '确认删除',
+      content: `确定要删除角色「${record.name}」吗？`,
+      positiveText: '确认删除',
+      negativeText: '取消',
+      onPositiveClick: async () => {
+        try {
+          await deleteRole(record.id);
+          window['$message'].success('删除成功');
+          reloadTable();
+        } catch (error: any) {
+          window['$message'].error(error?.message || '删除失败');
+        }
+      },
+    });
   }
 
-  function handleMenuAuth(record: Recordable) {
+  async function handleMenuAuth(record: Recordable) {
+    activeRoleId.value = record.id;
     editRoleTitle.value = `分配 ${record.name} 的菜单权限`;
-    checkedKeys.value = record.menu_keys;
+    const result = await getRoleMenus(record.id);
+    treeData.value = result.tree;
+    expandedKeys.value = result.tree.map((item) => item.key as string);
+    checkedKeys.value = result.checkedKeys;
     showModal.value = true;
   }
 
   function checkedTree(keys) {
-    checkedKeys.value = [checkedKeys.value, ...keys];
+    checkedKeys.value = keys;
   }
 
   function onExpandedKeys(keys) {
@@ -192,11 +194,9 @@
   }
 
   function packHandle() {
-    if (expandedKeys.value.length) {
-      expandedKeys.value = [];
-    } else {
-      expandedKeys.value = treeData.value.map((item: any) => item.key) as [];
-    }
+    expandedKeys.value = expandedKeys.value.length
+      ? []
+      : treeData.value.map((item: any) => item.key);
   }
 
   function checkedAllHandle() {
@@ -209,11 +209,19 @@
     }
   }
 
-  onMounted(async () => {
-    const treeMenuList = await getMenuList();
-    expandedKeys.value = treeMenuList?.list.map((item) => item.key);
-    treeData.value = treeMenuList?.list;
-  });
+  async function confirmForm(e: any) {
+    e.preventDefault();
+    if (activeRoleId.value == null) return;
+    formBtnLoading.value = true;
+    try {
+      await updateRoleMenus(activeRoleId.value, checkedKeys.value);
+      showModal.value = false;
+      message.success('提交成功');
+      reloadTable();
+    } catch (error: any) {
+      message.error(error?.message || '提交失败');
+    } finally {
+      formBtnLoading.value = false;
+    }
+  }
 </script>
-
-<style lang="less" scoped></style>

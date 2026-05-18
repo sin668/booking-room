@@ -31,13 +31,17 @@
       >
         <template #tableTitle>
           <n-space>
-            <n-button type="primary" @click="addTable">
+            <n-button v-permission="{ action: ['seat:create'] }" type="primary" @click="addTable">
               <template #icon>
                 <n-icon><PlusOutlined /></n-icon>
               </template>
               新建座位
             </n-button>
-            <n-button type="info" @click="handleBulkCreate">
+            <n-button
+              v-permission="{ action: ['seat:bulk_create'] }"
+              type="info"
+              @click="handleBulkCreate"
+            >
               <template #icon>
                 <n-icon><PlusOutlined /></n-icon>
               </template>
@@ -54,11 +58,7 @@
         @success="handleSuccess"
       />
 
-      <SeatBulkCreateModal
-        v-model:show="showBulkModal"
-        :roomId="roomId"
-        @success="handleSuccess"
-      />
+      <SeatBulkCreateModal v-model:show="showBulkModal" :roomId="roomId" @success="handleSuccess" />
     </n-card>
   </n-flex>
 </template>
@@ -70,12 +70,7 @@
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
   import { PlusOutlined, ArrowLeftOutlined } from '@vicons/antd';
-  import {
-    getSeatList,
-    deleteSeat,
-    toggleSeatStatus,
-    type SeatItem,
-  } from '@/api/seat';
+  import { getSeatList, deleteSeat, toggleSeatStatus, type SeatItem } from '@/api/seat';
   import SeatEditModal from './components/SeatEditModal.vue';
   import SeatBulkCreateModal from './components/SeatBulkCreateModal.vue';
 
@@ -218,16 +213,19 @@
           {
             label: '编辑',
             onClick: handleEdit.bind(null, record),
+            auth: ['seat:update'],
           },
         ],
         dropDownActions: [
           {
             label: '删除',
             key: 'delete',
+            auth: ['seat:delete'],
           },
           {
             label: record.status === 'available' ? '设为维护中' : '设为可用',
             key: 'toggleStatus',
+            auth: ['seat:status'],
           },
         ],
         select: (key: string) => {
@@ -277,7 +275,9 @@
     const newStatus = record.status === 'available' ? 'maintenance' : 'available';
     window['$dialog'].warning({
       title: '确认操作',
-      content: `确定要将座位「${record.seat_number}」状态改为${newStatus === 'available' ? '可用' : '维护中'}吗？`,
+      content: `确定要将座位「${record.seat_number}」状态改为${
+        newStatus === 'available' ? '可用' : '维护中'
+      }吗？`,
       positiveText: '确认',
       negativeText: '取消',
       onPositiveClick: async () => {

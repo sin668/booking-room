@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import get_current_admin
+from app.api.dependencies import require_admin_permission
 from app.core.database import get_db
 from app.schemas.activity import (
     ActivityAdminResponse,
@@ -12,10 +12,10 @@ from app.schemas.activity import (
 )
 from app.services import activity_service
 
-router = APIRouter(prefix="/api/v1/admin/activities", tags=["admin-activities"], dependencies=[Depends(get_current_admin)])
+router = APIRouter(prefix="/api/v1/admin/activities", tags=["admin-activities"])
 
 
-@router.get("", response_model=ActivityListResponse)
+@router.get("", response_model=ActivityListResponse, dependencies=[Depends(require_admin_permission("activity:view"))])
 async def list_activities(
     page: int = 1,
     page_size: int = 10,
@@ -26,13 +26,18 @@ async def list_activities(
     return await activity_service.list_activities(db, page=page, page_size=page_size, keyword=keyword, is_active=is_active)
 
 
-@router.post("", response_model=ActivityAdminResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=ActivityAdminResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_admin_permission("activity:create"))],
+)
 async def create_activity(data: ActivityCreate, db: AsyncSession = Depends(get_db)) -> ActivityAdminResponse:
     activity = await activity_service.create_activity(db, data.model_dump())
     return activity
 
 
-@router.get("/{activity_id}", response_model=ActivityAdminResponse)
+@router.get("/{activity_id}", response_model=ActivityAdminResponse, dependencies=[Depends(require_admin_permission("activity:view"))])
 async def get_activity(activity_id: int, db: AsyncSession = Depends(get_db)) -> ActivityAdminResponse:
     activity = await activity_service.get_activity_by_id(db, activity_id)
     if not activity:
@@ -40,7 +45,7 @@ async def get_activity(activity_id: int, db: AsyncSession = Depends(get_db)) -> 
     return activity
 
 
-@router.put("/{activity_id}", response_model=ActivityAdminResponse)
+@router.put("/{activity_id}", response_model=ActivityAdminResponse, dependencies=[Depends(require_admin_permission("activity:update"))])
 async def update_activity(activity_id: int, data: ActivityUpdate, db: AsyncSession = Depends(get_db)) -> ActivityAdminResponse:
     activity = await activity_service.get_activity_by_id(db, activity_id)
     if not activity:
@@ -48,7 +53,7 @@ async def update_activity(activity_id: int, data: ActivityUpdate, db: AsyncSessi
     return await activity_service.update_activity(db, activity, data.model_dump(exclude_unset=True))
 
 
-@router.delete("/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{activity_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin_permission("activity:delete"))])
 async def delete_activity(activity_id: int, db: AsyncSession = Depends(get_db)) -> None:
     activity = await activity_service.get_activity_by_id(db, activity_id)
     if not activity:
@@ -56,7 +61,7 @@ async def delete_activity(activity_id: int, db: AsyncSession = Depends(get_db)) 
     await activity_service.delete_activity(db, activity)
 
 
-@router.patch("/{activity_id}/status", response_model=ActivityAdminResponse)
+@router.patch("/{activity_id}/status", response_model=ActivityAdminResponse, dependencies=[Depends(require_admin_permission("activity:status"))])
 async def toggle_status(activity_id: int, data: ActivityStatusUpdate, db: AsyncSession = Depends(get_db)) -> ActivityAdminResponse:
     activity = await activity_service.get_activity_by_id(db, activity_id)
     if not activity:

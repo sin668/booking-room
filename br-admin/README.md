@@ -71,6 +71,18 @@
 
 ## 🏗️ 使用
 
+- 管理后台认证迁移
+
+admin RBAC 动态设置完成后，`br-admin` 登录页调用 `POST /api/v1/admin/auth/login`，保存后端返回的 admin access token，并通过统一请求层发送：
+
+```http
+Authorization: Bearer <admin access token>
+```
+
+`GET /api/v1/admin/auth/me` 返回当前管理员资料、角色和 `{ label, value }` 格式的权限列表，供动态路由、`v-permission` 和表格操作权限使用。
+
+legacy `X-Admin-Token` 只保留为兼容和应急通道。新 admin API、动态菜单、角色权限、个人设置和系统设置接口应以 Bearer token 为主路径；旧业务管理接口迁移期间如需兼容，可以把 `X-Admin-Token` 作为 fallback，不应继续作为主路径。
+
 - 获取项目代码
 
 ```bash

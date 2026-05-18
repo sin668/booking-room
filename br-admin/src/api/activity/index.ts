@@ -53,15 +53,8 @@ export interface UploadResult {
 // --- Common meta for admin API calls ---
 
 const adminMeta = {
-  ignoreToken: true,
   isReturnNativeResponse: true,
 };
-
-/** Read admin token from env (never hardcode - BUG-5) */
-function getAdminHeaders(): Record<string, string> {
-  const token = import.meta.env.VITE_ADMIN_TOKEN;
-  return token ? { 'X-Admin-Token': token } : {};
-}
 
 // --- API Functions ---
 
@@ -69,42 +62,36 @@ export function getActivityList(params?: ActivityListParams) {
   return Alova.Get<ActivityListResult>('/v1/admin/activities', {
     params,
     meta: adminMeta,
-    headers: getAdminHeaders(),
   });
 }
 
 export function createActivity(data: ActivityFormParams) {
   return Alova.Post<ActivityItem>('/v1/admin/activities', data, {
     meta: adminMeta,
-    headers: getAdminHeaders(),
   });
 }
 
 export function getActivityById(id: number) {
   return Alova.Get<ActivityItem>(`/v1/admin/activities/${id}`, {
     meta: adminMeta,
-    headers: getAdminHeaders(),
   });
 }
 
 export function updateActivity(id: number, data: ActivityUpdateParams) {
   return Alova.Put<ActivityItem>(`/v1/admin/activities/${id}`, data, {
     meta: adminMeta,
-    headers: getAdminHeaders(),
   });
 }
 
 export function deleteActivity(id: number) {
   return Alova.Delete(`/v1/admin/activities/${id}`, {
     meta: adminMeta,
-    headers: getAdminHeaders(),
   });
 }
 
 export function toggleActivityStatus(id: number, is_active: boolean) {
   return Alova.Patch<ActivityItem>(`/v1/admin/activities/${id}/status`, { is_active }, {
     meta: adminMeta,
-    headers: getAdminHeaders(),
   });
 }
 
@@ -113,6 +100,5 @@ export function uploadFile(file: File) {
   formData.append('file', file);
   return Alova.Post<UploadResult>('/v1/admin/upload', formData, {
     meta: adminMeta,
-    headers: getAdminHeaders(),
   });
 }

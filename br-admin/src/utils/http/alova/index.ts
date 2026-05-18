@@ -59,9 +59,12 @@ export const Alova = createAlova({
   beforeRequest(method) {
     const userStore = useUser();
     const token = userStore.getToken;
-    // 添加 token 到请求头
+    method.config.headers = method.config.headers || {};
+    // 添加 token 到请求头。新管理端接口使用 Bearer，旧 token header 仅在未登录时兜底。
     if (!method.meta?.ignoreToken && token) {
-      method.config.headers['token'] = token;
+      method.config.headers['Authorization'] = `Bearer ${token}`;
+    } else if (!method.meta?.ignoreToken && import.meta.env.VITE_ADMIN_TOKEN) {
+      method.config.headers['X-Admin-Token'] = import.meta.env.VITE_ADMIN_TOKEN;
     }
     // 处理 api 请求前缀
     const isUrlStr = isUrl(method.url as string);
@@ -75,13 +78,35 @@ export const Alova = createAlova({
   responded: {
     onSuccess: async (response, method) => {
       const res = (response.json && (await response.json())) || response.body;
+      const message = res?.message || res?.detail || response.statusText;
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          const Modal = window.$dialog;
+          const LoginPath = PageEnum.BASE_LOGIN;
+          Modal?.warning({
+            title: '提示',
+            content: '登录身份已失效，请重新登录!',
+            okText: '确定',
+            closable: false,
+            maskClosable: false,
+            onOk: async () => {
+              storage.clear();
+              window.location.href = LoginPath;
+            },
+          });
+        } else {
+          window.$message?.error(message);
+        }
+        throw new Error(message);
+      }
 
       // 是否返回原生响应头 比如：需要获取响应头时使用该属性
       if (method.meta?.isReturnNativeResponse) {
         return res;
       }
       // 请根据自身情况修改数据结构
-      const { message, code, result } = res;
+      const { code, result } = res;
 
       // 不进行任何处理，直接返回
       // 用于需要直接获取 code、result、 message 这些信息时开启

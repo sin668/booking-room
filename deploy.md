@@ -53,6 +53,11 @@ COOKIE_SECURE=false  # 生产环境 HTTPS 设为 true
 
 # 功能开关
 REGISTRATION_ENABLED=true
+
+# 管理后台默认账号 seed（admin RBAC 动态设置迁移后使用）
+ADMIN_DEFAULT_USERNAME=admin
+ADMIN_DEFAULT_PASSWORD=change-me
+ADMIN_DEFAULT_EMAIL=admin@example.com
 ```
 
 ### 1.3 数据库迁移
@@ -63,12 +68,17 @@ createdb booking_room
 
 # 执行迁移
 alembic upgrade head
+
+# 初始化默认管理员、角色、菜单、按钮权限和系统设置
+python -m app.services.seed_admin
 ```
 
 如需回滚：
 ```bash
 alembic downgrade base
 ```
+
+`python -m app.services.seed_admin` 必须保持幂等，可重复执行且不重复插入默认数据。开发环境默认账号为 `admin / 123456`；生产环境必须显式设置 `ADMIN_DEFAULT_PASSWORD`，不得依赖弱默认密码。
 
 ### 1.4 启动服务
 
@@ -126,7 +136,7 @@ VITE_GLOB_API_URL =
 # 接口前缀（Alova 会自动添加到请求 URL 前）
 VITE_GLOB_API_URL_PREFIX = /api
 
-# 管理后台 Token（与后端 ADMIN_TOKEN 一致）
+# legacy 管理后台 Token（迁移期间仅作为兼容 fallback）
 VITE_ADMIN_TOKEN =
 ```
 
@@ -136,8 +146,10 @@ VITE_ADMIN_TOKEN =
 VITE_USE_MOCK = false
 VITE_GLOB_API_URL = https://your-api-domain.com
 VITE_GLOB_API_URL_PREFIX = /api
-VITE_ADMIN_TOKEN = your_production_admin_token
+VITE_ADMIN_TOKEN = your_legacy_emergency_admin_token
 ```
+
+admin RBAC 动态设置迁移完成后，`br-admin` 以 `POST /api/v1/admin/auth/login` 返回的 admin access token 为主认证路径，并在请求中发送 `Authorization: Bearer <token>`。`VITE_ADMIN_TOKEN` / `X-Admin-Token` 仅用于兼容旧管理接口和紧急恢复，不应用于新 admin API 的常规访问。
 
 ### 2.3 配置开发代理
 
@@ -288,14 +300,42 @@ npm run dev:h5
 ### 管理后台 (br-admin)
 - [ ] `VITE_USE_MOCK` 设为 `false`
 - [ ] `VITE_GLOB_API_URL` 指向生产后端地址
-- [ ] `VITE_ADMIN_TOKEN` 与后端 `ADMIN_TOKEN` 一致
+- [ ] 已执行 `python -m app.services.seed_admin` 初始化生产管理员、角色、菜单、按钮权限和系统设置
+- [ ] `ADMIN_DEFAULT_PASSWORD` 已显式设置为强密码，未使用开发默认密码
+- [ ] br-admin 使用 `Authorization: Bearer <admin access token>` 调用新 admin API
+- [ ] 如仍保留 `VITE_ADMIN_TOKEN`，仅作为 legacy `X-Admin-Token` 兼容和应急通道
 - [ ] `uploads/` 目录通过 Nginx 反向代理到后端
 - [ ] HTTPS 已启用（生产环境必须）
 
 ### 用户端 (br-app)
 - [ ] 前端 `manifest.json` 中微信小程序 appid 已填写
 
-## 六、项目结构
+## 六、Legacy X-Admin-Token 移除计划
+
+`X-Admin-Token` 是 admin RBAC 迁移期的兼容和应急超级管理员通道。满足以下前提后再移除：
+
+- br-admin 登录、动态路由、菜单设置、角色权限、个人设置、系统设置均已迁移到 Bearer admin token。
+- 房间、座位、活动、订单、上传等现有业务管理接口已优先使用统一 Bearer token。
+- 生产环境管理员账号、`super_admin` 角色、默认菜单、按钮权限和系统设置已通过 seed 初始化。
+- 生产运维已确认无需通过 `ADMIN_TOKEN` 进行紧急后台访问。
+- 后端和前端测试已覆盖 Bearer 认证、权限通过、权限拒绝和未认证 401。
+
+移除范围：
+
+- 后端 `X-Admin-Token` header 读取逻辑。
+- legacy super admin context 分支。
+- 前端 `VITE_ADMIN_TOKEN` 配置和手写 `X-Admin-Token` 请求头。
+- legacy token 兼容测试，改为 Bearer admin token 和权限码测试。
+
+建议移除步骤：
+
+1. 先发布 Bearer-only 代码到预发环境，确认 br-admin 全流程可用。
+2. 在生产环境短期保留 `ADMIN_TOKEN` 配置但不再由前端发送。
+3. 观察管理接口认证日志，确认无 `X-Admin-Token` 流量。
+4. 删除代码和环境变量，运行后端 `pytest`、前端 `pnpm build`。
+5. 发布后再次验证管理员登录、动态菜单、按钮权限和核心管理接口。
+
+## 七、项目结构
 
 ```
 booking-room/
@@ -339,12 +379,13 @@ booking-room/
 └── deploy.md                   # 本文件
 ```
 
-## 七、常用命令速查
+## 八、常用命令速查
 
 | 命令 | 说明 |
 |------|------|
 | `cd br-server && pytest -v` | 运行后端测试 |
 | `cd br-server && alembic upgrade head` | 执行数据库迁移 |
+| `cd br-server && python -m app.services.seed_admin` | 初始化或补齐 admin RBAC 默认数据 |
 | `cd br-server && alembic downgrade base` | 回滚数据库迁移 |
 | `cd br-server && uvicorn app.main:app --reload` | 启动后端开发服务器 |
 | `cd br-admin && pnpm install` | 安装管理后台依赖 |

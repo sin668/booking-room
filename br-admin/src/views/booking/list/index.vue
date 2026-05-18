@@ -12,8 +12,7 @@
         :actionColumn="actionColumn"
         :scroll-x="1300"
         :striped="true"
-      >
-      </BasicTable>
+      />
     </n-card>
   </n-flex>
 </template>
@@ -115,7 +114,7 @@
         return h(
           NTag,
           { type: record.status === 'confirmed' ? 'success' : 'error' },
-          { default: () => (record.status === 'confirmed' ? '已确认' : '已取消') },
+          { default: () => (record.status === 'confirmed' ? '已确认' : '已取消') }
         );
       },
     },
@@ -125,7 +124,9 @@
   function formatTimestamp(ts: number | null): string | undefined {
     if (!ts) return undefined;
     const d = new Date(ts);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+      d.getDate()
+    ).padStart(2, '0')}`;
   }
 
   const actionRef = ref();
@@ -198,6 +199,16 @@
     });
   }
 
+  function handleView(record: BookingItem) {
+    window['$dialog'].info({
+      title: '订单详情',
+      content: `订单 #${record.id}：${record.room?.name || '-'} / ${
+        record.seat?.seat_number || '-'
+      } / ${record.date} ${record.start_time}~${record.end_time}`,
+      positiveText: '确定',
+    });
+  }
+
   const actionColumn = reactive({
     width: 150,
     title: '操作',
@@ -208,13 +219,25 @@
       if (record.status === 'confirmed') {
         dropDownActions.push({
           label: '取消',
-          onClick: handleCancel.bind(null, record),
+          key: 'cancel',
+          auth: ['booking:cancel'],
         });
       }
       return h(TableAction as any, {
         style: 'button',
-        actions: [],
+        actions: [
+          {
+            label: '查看',
+            onClick: handleView.bind(null, record),
+            auth: ['booking:view'],
+          },
+        ],
         dropDownActions,
+        select: (key: string) => {
+          if (key === 'cancel') {
+            handleCancel(record);
+          }
+        },
       });
     },
   });

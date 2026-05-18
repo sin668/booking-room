@@ -102,6 +102,7 @@ export const useAsyncRouteStore = defineStore({
           accessedRouters = await generateDynamicRoutes();
         } catch (error) {
           console.log(error);
+          accessedRouters = [];
         }
       } else {
         try {
@@ -109,9 +110,12 @@ export const useAsyncRouteStore = defineStore({
           accessedRouters = filter(asyncRoutes, routeFilter);
         } catch (error) {
           console.log(error);
+          accessedRouters = [];
         }
       }
-      accessedRouters = accessedRouters.filter(routeFilter);
+      if (unref(permissionMode) !== 'BACK') {
+        accessedRouters = accessedRouters.filter(routeFilter);
+      }
       this.setRouters(accessedRouters);
       this.setMenus(accessedRouters);
       return toRaw(accessedRouters);

@@ -9,7 +9,20 @@ from app.core.config import settings
 from app.core.database import Base
 
 # Import all models so that Alembic can detect them for autogenerate.
-from app.models import Activity, Banner, Booking, Coupon, Seat, StudyRoom, User, UserCoupon  # noqa: F401
+from app.models import (  # noqa: F401
+    Activity,
+    AdminMenu,
+    AdminRole,
+    AdminUser,
+    Banner,
+    Booking,
+    Coupon,
+    Seat,
+    StudyRoom,
+    SystemSetting,
+    User,
+    UserCoupon,
+)
 
 config = context.config
 

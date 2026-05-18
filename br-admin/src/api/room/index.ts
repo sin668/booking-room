@@ -53,32 +53,25 @@ export interface RoomListParams {
 
 // --- Common meta for admin API calls ---
 const adminMeta = {
-  ignoreToken: true,
   isReturnNativeResponse: true,
 };
 
-/** Read admin token from env (never hardcode) */
-function getAdminHeaders(): Record<string, string> {
-  const token = import.meta.env.VITE_ADMIN_TOKEN;
-  return token ? { 'X-Admin-Token': token } : {};
-}
-
 // --- API Functions ---
 export function getRoomList(params?: RoomListParams) {
-  return Alova.Get<RoomListResult>('/v1/admin/rooms', { params, meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Get<RoomListResult>('/v1/admin/rooms', { params, meta: adminMeta });
 }
 export function createRoom(data: RoomFormParams) {
-  return Alova.Post<RoomItem>('/v1/admin/rooms', data, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Post<RoomItem>('/v1/admin/rooms', data, { meta: adminMeta });
 }
 export function getRoomById(id: number) {
-  return Alova.Get<RoomItem>(`/v1/admin/rooms/${id}`, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Get<RoomItem>(`/v1/admin/rooms/${id}`, { meta: adminMeta });
 }
 export function updateRoom(id: number, data: RoomUpdateParams) {
-  return Alova.Put<RoomItem>(`/v1/admin/rooms/${id}`, data, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Put<RoomItem>(`/v1/admin/rooms/${id}`, data, { meta: adminMeta });
 }
 export function deleteRoom(id: number) {
-  return Alova.Delete(`/v1/admin/rooms/${id}`, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Delete(`/v1/admin/rooms/${id}`, { meta: adminMeta });
 }
 export function toggleRoomStatus(id: number, status: 'open' | 'closed') {
-  return Alova.Patch<RoomItem>(`/v1/admin/rooms/${id}/status`, { status }, { meta: adminMeta, headers: getAdminHeaders() });
+  return Alova.Patch<RoomItem>(`/v1/admin/rooms/${id}/status`, { status }, { meta: adminMeta });
 }

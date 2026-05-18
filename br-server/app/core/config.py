@@ -25,6 +25,10 @@ class Settings(BaseSettings):
 
     # Admin
     ADMIN_TOKEN: str = ""
+    ADMIN_DEFAULT_USERNAME: str = "admin"
+    ADMIN_DEFAULT_PASSWORD: str = ""
+    ADMIN_DEFAULT_EMAIL: str = ""
+    ENVIRONMENT: str = "development"
 
     # Booking verification
     FRONTEND_BASE_URL: str = ""

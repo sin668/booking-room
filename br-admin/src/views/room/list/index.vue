@@ -14,7 +14,7 @@
         :striped="true"
       >
         <template #tableTitle>
-          <n-button type="primary" @click="addTable">
+          <n-button v-permission="{ action: ['room:create'] }" type="primary" @click="addTable">
             <template #icon>
               <n-icon><PlusOutlined /></n-icon>
             </template>
@@ -23,11 +23,7 @@
         </template>
       </BasicTable>
 
-      <RoomEditModal
-        v-model:show="showModal"
-        :editData="editData"
-        @success="handleSuccess"
-      />
+      <RoomEditModal v-model:show="showModal" :editData="editData" @success="handleSuccess" />
     </n-card>
   </n-flex>
 </template>
@@ -38,12 +34,7 @@
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
   import { PlusOutlined } from '@vicons/antd';
-  import {
-    getRoomList,
-    deleteRoom,
-    toggleRoomStatus,
-    type RoomItem,
-  } from '@/api/room';
+  import { getRoomList, deleteRoom, toggleRoomStatus, type RoomItem } from '@/api/room';
   import { columns } from './columns';
   import RoomEditModal from './RoomEditModal.vue';
 
@@ -115,20 +106,24 @@
           {
             label: '编辑',
             onClick: handleEdit.bind(null, record),
+            auth: ['room:update'],
           },
           {
             label: '删除',
             onClick: handleDelete.bind(null, record),
+            auth: ['room:delete'],
           },
         ],
         dropDownActions: [
           {
             label: record.status === 'open' ? '下架' : '上架',
             key: 'toggleStatus',
+            auth: ['room:status'],
           },
           {
             label: '管理座位',
             key: 'manageSeats',
+            auth: ['seat:view'],
           },
         ],
         select: (key: string) => {

@@ -33,7 +33,7 @@
 <script lang="ts" setup>
   import { onMounted, reactive, ref } from 'vue';
   import { useMessage } from 'naive-ui';
-  import { getUserInfo, updateProfile } from '@/api/system/user';
+  import * as userApi from '@/api/system/user';
   import { useUser } from '@/store/modules/user';
 
   const rules = {
@@ -66,7 +66,7 @@
   });
 
   async function loadProfile() {
-    const result = await getUserInfo();
+    const result = await userApi.getUserInfo();
     Object.assign(formValue, {
       nickname: result.nickname || result.username || '',
       mobile: result.mobile || '',
@@ -80,7 +80,7 @@
       if (!errors) {
         subLoading.value = true;
         try {
-          const result = await updateProfile({ ...formValue });
+          const result = await userApi.updateProfile({ ...formValue });
           userStore.setNickname(result.nickname || result.username || formValue.nickname);
           userStore.setAvatar(result.avatar || '');
           message.success('保存成功');

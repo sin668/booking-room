@@ -65,7 +65,7 @@ class AdminMenuService:
         await self._db.refresh(menu)
         return menu
 
-    async def update(self, menu_id: int, data: AdminMenuUpdate) -> AdminMenu:
+    async def update(self, menu_id: int, data: AdminMenuUpdate) -> AdminMenuNode:
         menu = await self._get(menu_id)
         updates = data.model_dump(exclude_unset=True)
         final_type = updates.get("type", menu.type)
@@ -85,8 +85,8 @@ class AdminMenuService:
         except IntegrityError as exc:
             await self._db.rollback()
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="菜单权限码已存在") from exc
-        await self._db.refresh(menu)
-        return menu
+        tree = self._build_model_tree(await self._list_all())
+        return self._find_node(tree, menu_id)
 
     async def delete(self, menu_id: int) -> None:
         menu = await self._get(menu_id)
@@ -158,6 +158,15 @@ class AdminMenuService:
             )
 
         return [build(menu) for menu in by_parent.get(None, [])]
+
+    def _find_node(self, tree: list[AdminMenuNode], menu_id: int) -> AdminMenuNode | None:
+        for node in tree:
+            if node.id == menu_id:
+                return node
+            found = self._find_node(node.children, menu_id)
+            if found:
+                return found
+        return None
 
     def _build_route_tree(
         self,

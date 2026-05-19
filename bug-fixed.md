@@ -316,6 +316,73 @@ pytest tests/test_coupon_service.py tests/test_api_coupon.py tests/test_api_book
 
 ---
 
+## BUG-16: 菜单更新接口 500 错误 (MissingGreenlet)
+
+### 报错信息
+```
+fastapi.exceptions.ResponseValidationError: 5 validation errors:
+  {'type': 'get_attribute_error', 'loc': ('response', 'children', 0, 'children'),
+   'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called;
+   can't call await_only() here. Was IO attempted in an unexpected place?"}
+  ... (children[1]~[4] 同上)
+```
+
+### 根本原因
+`AdminMenuService.update()` 方法返回原始 `AdminMenu` ORM 对象。FastAPI 将其序列化为 `AdminMenuNode`（含 `children` 字段）时，访问嵌套的 `children` 关系触发了 SQLAlchemy 的懒加载。在 async session 外部执行 IO 操作导致 `MissingGreenlet` 异常——SQLAlchemy 异步模式下，数据库查询只能在 async session 上下文中通过 greenlet 协程执行。
+
+### 解决方案
+将 `update()` 返回类型从 `AdminMenu` 改为 `AdminMenuNode`，复用 `_list_all()` + `_build_model_tree()` 构建纯 Pydantic 树，再通过新增的 `_find_node()` 递归查找目标节点返回。彻底避免返回带懒加载关系的 ORM 对象。
+
+**文件**: `br-server/app/services/admin_menu_service.py`
+
+---
+
+## BUG-17: 座位管理页面 404 (No match found for /room/list/1/seats)
+
+### 报错信息
+```
+No match found for location with path "/room/list/1/seats"
+```
+
+### 根本原因
+数据库 `admin_menus` 表中，座位管理菜单（id=11）的 `path` 字段值为 `seats`。br-admin 使用动态路由，路由生成器将父路径 `/room` 与子路径 `seats` 拼接后得到 `/room/seats`，与前端实际访问路径 `/room/list/1/seats` 不匹配。
+
+### 解决方案
+将座位管理菜单的 `path` 从 `seats` 更新为 `list/:id/seats`，路由生成器拼接后得到 `/room/list/:id/seats`，与前端访问路径一致。
+
+**修改**: 数据库 `admin_menus` 表 id=11 的 `path` 字段
+
+---
+
+## BUG-18: 角色权限页面 emit 'register' 警告
+
+### 报错信息
+```
+[Vue warn]: Component emitted event "register" but it is neither declared in the emits option nor as an "onRegister" prop.
+```
+
+### 根本原因
+`useModal.ts` 的 `register` 回调中调用了 `currentInstance?.emit('register', modalInstance)`，在调用组件（如 CreateModal、EditModal）的实例上触发 'register' 事件。但这些组件仅声明了 `defineEmits(['success'])`，未声明 'register'，导致 Vue 3 发出警告。实际上 register 回调已通过模板 `@register="modalRegister"` 直接传递给子组件 `basicModal`，这行 emit 是多余的。
+
+### 解决方案
+删除 `useModal.ts` 中多余的 `currentInstance?.emit('register', modalInstance)` 语句。
+
+**文件**: `br-admin/src/components/Modal/src/hooks/useModal.ts`
+
+---
+
+## 已知行为: /system/menu 初始路由解析警告
+
+### 现象
+```
+[Vue Router warn]: No match found for location with path "/system/menu"
+```
+
+### 说明
+br-admin 使用动态路由，路由在 `beforeEach` 导航守卫中从后端 API 加载。浏览器刷新时，Vue Router 先用静态路由解析当前 URL，此时动态路由尚未注册，`/system/menu` 匹配失败产生警告。随后导航守卫触发、加载并注册动态路由，页面正常渲染。功能不受影响，属于 Vue Router 动态路由的预期行为。
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -340,3 +407,6 @@ pytest tests/test_coupon_service.py tests/test_api_coupon.py tests/test_api_book
 | `br-server/app/services/seed_data.py` | #15 |
 | `br-server/app/services/coupon_service.py` | #15 |
 | `br-server/tests/test_api_booking.py` | #15 |
+| `br-server/app/services/admin_menu_service.py` | #16 |
+| 数据库 `admin_menus` id=11 | #17 |
+| `br-admin/src/components/Modal/src/hooks/useModal.ts` | #18 |

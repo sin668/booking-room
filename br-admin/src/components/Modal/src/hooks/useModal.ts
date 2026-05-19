@@ -21,7 +21,6 @@ export function useModal(props): UseModalReturnType {
         modalRef.value = null;
       });
     modalRef.value = modalInstance;
-    currentInstance?.emit('register', modalInstance);
 
     watch(
       () => props,

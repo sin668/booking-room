@@ -15,6 +15,26 @@ const { apiUrl, urlPrefix } = useGlobSetting();
 
 const { useMock, loggerMock } = useLocalSetting();
 
+let isRedirectingToLogin = false;
+
+async function redirectToLogin() {
+  if (isRedirectingToLogin) return;
+  isRedirectingToLogin = true;
+
+  const userStore = useUser();
+  await userStore.logout();
+  storage.clear();
+
+  const currentPath = `${window.location.pathname}${window.location.search}`;
+  const loginPath = PageEnum.BASE_LOGIN;
+  const loginUrl =
+    currentPath && currentPath !== loginPath
+      ? `${loginPath}?redirect=${encodeURIComponent(currentPath)}`
+      : loginPath;
+
+  window.location.replace(loginUrl);
+}
+
 const mockAdapter = createAlovaMockAdapter([...mocks], {
   // 全局控制是否启用mock接口，默认为true
   enable: useMock,
@@ -83,18 +103,14 @@ export const Alova = createAlova({
       if (!response.ok) {
         if (response.status === 401) {
           const Modal = window.$dialog;
-          const LoginPath = PageEnum.BASE_LOGIN;
           Modal?.warning({
             title: '提示',
             content: '登录身份已失效，请重新登录!',
             okText: '确定',
             closable: false,
             maskClosable: false,
-            onOk: async () => {
-              storage.clear();
-              window.location.href = LoginPath;
-            },
           });
+          void redirectToLogin();
         } else {
           window.$message?.error(message);
         }
@@ -119,7 +135,6 @@ export const Alova = createAlova({
       // @ts-ignore
       const Modal = window.$dialog;
 
-      const LoginPath = PageEnum.BASE_LOGIN;
       if (ResultEnum.SUCCESS === code) {
         return result;
       }
@@ -131,11 +146,9 @@ export const Alova = createAlova({
           okText: '确定',
           closable: false,
           maskClosable: false,
-          onOk: async () => {
-            storage.clear();
-            window.location.href = LoginPath;
-          },
         });
+        void redirectToLogin();
+        throw new Error(message);
       } else {
         // 可按需处理错误 一般情况下不是 912 错误，不一定需要弹出 message
         Message?.error(message);

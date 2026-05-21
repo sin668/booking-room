@@ -13,7 +13,6 @@ from app.models import (  # noqa: F401
     Activity,
     AdminMenu,
     AdminRole,
-    AdminUser,
     Banner,
     Booking,
     Coupon,

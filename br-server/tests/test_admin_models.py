@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from app.models.admin_menu import AdminMenu
 from app.models.admin_role import AdminRole
 from app.models.admin_setting import SystemSetting
-from app.models.admin_user import AdminUser
+from app.models.user import User
 from app.services.seed_admin import BUTTON_SEEDS, MENU_SEEDS
 
 
@@ -12,8 +12,8 @@ from app.services.seed_admin import BUTTON_SEEDS, MENU_SEEDS
 async def test_admin_user_username_is_unique(db_session):
     db_session.add_all(
         [
-            AdminUser(username="admin", password_hash="hash"),
-            AdminUser(username="admin", password_hash="hash"),
+            User(user_type="admin", username="admin", phone="", password_hash="hash"),
+            User(user_type="admin", username="admin", phone="", password_hash="hash"),
         ]
     )
 

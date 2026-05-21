@@ -3,7 +3,7 @@ from httpx import AsyncClient
 
 from app.models.admin_menu import AdminMenu
 from app.models.admin_role import AdminRole
-from app.models.admin_user import AdminUser
+from app.models.user import User
 from app.services.admin_auth_service import AdminAuthService
 
 
@@ -31,7 +31,7 @@ async def test_role_crud_duplicate_and_assigned_delete_conflict(client: AsyncCli
 
     role_id = created.json()["id"]
     role = await db_session.get(AdminRole, role_id)
-    user = AdminUser(username="assigned", password_hash=AdminAuthService.hash_password("secret123"))
+    user = User(user_type="admin", phone="", nickname="Assigned", username="assigned", password_hash=AdminAuthService.hash_password("secret123"))
     user.roles.append(role)
     db_session.add(user)
     await db_session.commit()
@@ -45,7 +45,7 @@ async def test_role_menu_assignment_updates_auth_permissions(client: AsyncClient
     monkeypatch.setattr("app.core.config.settings.ADMIN_TOKEN", "test-admin-token")
     menu = AdminMenu(type="button", title="Role assign", permission_code="system:role:assign")
     role = AdminRole(name="Assigner", code="assigner")
-    user = AdminUser(username="user1", password_hash=AdminAuthService.hash_password("secret123"))
+    user = User(user_type="admin", phone="", nickname="User1", username="user1", password_hash=AdminAuthService.hash_password("secret123"))
     user.roles.append(role)
     db_session.add_all([menu, role, user])
     await db_session.commit()

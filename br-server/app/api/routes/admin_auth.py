@@ -13,7 +13,7 @@ from app.schemas.admin_auth import (
     AdminTokenResponse,
     admin_profile_from_model,
 )
-from app.models.admin_user import AdminUser
+from app.models.user import User
 from app.services.admin_auth_service import AdminAuthService
 
 router = APIRouter(prefix="/api/v1/admin/auth", tags=["admin-auth"])
@@ -38,7 +38,8 @@ async def me(
 ) -> AdminCurrentResponse:
     service = AdminAuthService(db, settings)
     if context.admin_id.int == 0 and context.is_super_admin:
-        admin = AdminUser(
+        admin = User(
+            user_type='admin',
             id=context.admin_id,
             username=context.username,
             password_hash="",

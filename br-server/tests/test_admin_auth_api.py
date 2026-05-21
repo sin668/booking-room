@@ -3,7 +3,7 @@ from httpx import AsyncClient
 
 from app.models.admin_menu import AdminMenu
 from app.models.admin_role import AdminRole
-from app.models.admin_user import AdminUser
+from app.models.user import User
 from app.services.admin_auth_service import AdminAuthService
 
 
@@ -12,7 +12,7 @@ async def admin_user(db_session):
     permission = AdminMenu(type="button", title="Role create", permission_code="system:role:create")
     role = AdminRole(name="Role manager", code="role_manager")
     role.menus.append(permission)
-    user = AdminUser(
+    user = User(user_type="admin", phone="",
         username="admin",
         password_hash=AdminAuthService.hash_password("secret123"),
         nickname="Admin",
@@ -47,9 +47,10 @@ async def test_admin_login_and_me_return_permissions(client: AsyncClient, admin_
 @pytest.mark.asyncio
 async def test_admin_login_rejects_disabled_user(client: AsyncClient, db_session):
     db_session.add(
-        AdminUser(
+        User(user_type="admin", phone="",
             username="disabled",
             password_hash=AdminAuthService.hash_password("secret123"),
+            nickname="Disabled",
             status="disabled",
         )
     )

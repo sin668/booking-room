@@ -67,8 +67,8 @@ class AuthService:
             # SMSService not yet implemented -- skip SMS verification
             pass
 
-        # --- Step 3: Check phone uniqueness ---
-        stmt = select(User).where(User.phone == data.phone)
+        # --- Step 3: Check phone uniqueness (app users only) ---
+        stmt = select(User).where(User.phone == data.phone, User.user_type == 'app')
         result = await self._db.execute(stmt)
         existing_user = result.scalar_one_or_none()
         if existing_user is not None:
@@ -104,6 +104,23 @@ class AuthService:
             # e.g. look up inviter, create an Invitation record, etc.
             pass
 
+        # --- Step 7.5: Assign default app_register_user role (non-blocking) ---
+        try:
+            from app.models.admin_role import AdminRole, admin_user_roles
+            app_role = (await self._db.execute(
+                select(AdminRole).where(AdminRole.code == "app_register_user", AdminRole.status == "active")
+            )).scalar_one_or_none()
+            if app_role is not None:
+                await self._db.execute(
+                    admin_user_roles.insert().values(user_id=user.id, admin_role_id=app_role.id)
+                )
+            else:
+                import logging
+                logging.getLogger(__name__).warning("app_register_user role not found, skipping auto-assignment")
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning("Failed to assign app_register_user role", exc_info=True)
+
         # --- Step 8: Create tokens ---
         access_token = self._jwt.create_access_token(user.id)
         refresh_token = self._jwt.create_refresh_token(user.id)
@@ -123,8 +140,8 @@ class AuthService:
 
     async def login(self, data: UserLogin) -> TokenResponse:
         """Authenticate a user by phone + password and return JWT tokens."""
-        # --- Find user by phone ---
-        stmt = select(User).where(User.phone == data.phone)
+        # --- Find app user by phone ---
+        stmt = select(User).where(User.phone == data.phone, User.user_type == 'app')
         result = await self._db.execute(stmt)
         user = result.scalar_one_or_none()
         if user is None:

@@ -2255,3 +2255,226 @@ Error Responses:
 | created_at | datetime | 创建时间 |
 | updated_at | datetime | 更新时间 |
 | room_name | string | 所属自习室名称 |
+
+---
+
+## 十三、管理端 - 用户管理
+
+统一管理 App 用户和 Admin 用户。所有接口需要管理员认证。
+
+### GET /api/v1/admin/users
+
+获取用户分页列表。
+
+**认证：** Bearer Token 或 X-Admin-Token（需 `system:user:view` 权限）
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| user_type | string | - | 用户类型筛选：app / admin |
+| keyword | string | - | 搜索关键词（匹配手机号/昵称/用户名） |
+| status | string | - | 状态筛选：active / banned / disabled |
+| page | integer | 1 | 页码 |
+| page_size | integer | 20 | 每页数量（最大 100） |
+
+**响应 200：**
+```json
+{
+  "items": [
+    {
+      "id": "uuid-string",
+      "phone": "13800138000",
+      "nickname": "学习达人",
+      "user_type": "app",
+      "status": "active",
+      "avatar": null,
+      "created_at": "2026-04-17T00:00:00",
+      "roles": [{ "id": 1, "name": "注册用户", "code": "app_register_user" }],
+      "booking_count": 5,
+      "coupon_count": 2
+    }
+  ],
+  "total": 100,
+  "page": 1,
+  "page_size": 20
+}
+```
+
+**错误码：**
+- 401: 未认证
+- 403: 无 `system:user:view` 权限
+
+---
+
+### POST /api/v1/admin/users
+
+创建用户。
+
+**认证：** 需 `system:user:create` 权限
+
+**请求体：**
+```json
+{
+  "user_type": "app",
+  "phone": "13800138000",
+  "password": "Abc123456",
+  "nickname": "新用户"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| user_type | string | 是 | 用户类型：app / admin |
+| phone | string | 条件必填 | 手机号（app 用户必填），需匹配 `^1[3-9]\d{9}$` |
+| username | string | 条件必填 | 用户名（admin 用户必填） |
+| password | string | 是 | 密码，6-128 位 |
+| nickname | string | 否 | 昵称 |
+
+App 用户创建后自动分配 `app_register_user` 角色。
+
+**响应 201：** 返回 `AdminUserDetail` 对象。
+
+**错误码：**
+- 400: app 用户需要手机号 / admin 用户需要用户名
+- 409: 该手机号已注册 / 该用户名已存在
+- 422: 参数校验失败
+
+---
+
+### GET /api/v1/admin/users/{user_id}
+
+获取用户详情。
+
+**认证：** 需 `system:user:view` 权限
+
+**响应 200：**
+```json
+{
+  "id": "uuid-string",
+  "phone": "13800138000",
+  "nickname": "学习达人",
+  "user_type": "app",
+  "username": null,
+  "email": null,
+  "mobile": null,
+  "avatar": null,
+  "status": "active",
+  "balance": 0,
+  "is_super_admin": false,
+  "wechat_openid": null,
+  "invite_code": null,
+  "created_at": "2026-04-17T00:00:00",
+  "updated_at": "2026-04-17T00:00:00",
+  "roles": [{ "id": 1, "name": "注册用户", "code": "app_register_user" }],
+  "booking_count": 5,
+  "coupon_count": 2
+}
+```
+
+**错误码：**
+- 401: 未认证
+- 403: 无权限
+- 404: 用户不存在
+
+---
+
+### PUT /api/v1/admin/users/{user_id}
+
+更新用户信息。
+
+**认证：** 需 `system:user:update` 权限
+
+**请求体（所有字段均可选）：**
+```json
+{
+  "nickname": "新昵称",
+  "email": "user@example.com",
+  "role_ids": [1, 2]
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| nickname | string | 昵称 |
+| email | string | 邮箱 |
+| mobile | string | 手机号 |
+| avatar | string | 头像 URL |
+| balance | decimal | 余额 |
+| role_ids | integer[] | 角色ID列表 |
+
+**响应 200：** 返回更新后的 `AdminUserDetail`。
+
+**错误码：**
+- 401: 未认证
+- 403: 无权限
+- 404: 用户不存在
+
+---
+
+### DELETE /api/v1/admin/users/{user_id}
+
+删除用户及其角色关联。
+
+**认证：** 需 `system:user:delete` 权限
+
+**响应 204：** 无响应体。
+
+**错误码：**
+- 401: 未认证
+- 403: 无权限
+- 404: 用户不存在
+
+---
+
+### PUT /api/v1/admin/users/{user_id}/reset-password
+
+重置用户密码。
+
+**认证：** 需 `system:user:reset-password` 权限
+
+**请求体：**
+```json
+{
+  "new_password": "NewPass123"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| new_password | string | 是 | 新密码，6-128 位 |
+
+**响应 200：** 返回更新后的 `AdminUserDetail`。
+
+**错误码：**
+- 401: 未认证
+- 403: 无权限
+- 404: 用户不存在
+- 422: 密码长度不合法
+
+---
+
+### PUT /api/v1/admin/users/{user_id}/status
+
+切换用户状态。
+
+**认证：** 需 `system:user:status` 权限
+
+**请求体：**
+```json
+{
+  "target_status": "banned"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| target_status | string | 是 | 目标状态：active / banned / disabled |
+
+**响应 200：** 返回更新后的 `AdminUserDetail`。
+
+**错误码：**
+- 400: 无效的状态值
+- 401: 未认证
+- 403: 无权限
+- 404: 用户不存在

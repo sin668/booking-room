@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.core.config import Settings, settings
 from app.models.admin_menu import AdminMenu
 from app.models.admin_role import AdminRole
-from app.models.admin_user import AdminUser
+from app.models.user import User
 from app.schemas.admin_auth import AdminPermissionItem, AdminRoleSummary
 
 
@@ -65,11 +65,11 @@ class AdminAuthService:
                 detail="管理员令牌无效",
             ) from exc
 
-    async def get_admin_by_id(self, admin_id: uuid.UUID) -> AdminUser:
+    async def get_admin_by_id(self, admin_id: uuid.UUID) -> User:
         stmt = (
-            select(AdminUser)
-            .options(selectinload(AdminUser.roles).selectinload(AdminRole.menus))
-            .where(AdminUser.id == admin_id)
+            select(User)
+            .options(selectinload(User.roles).selectinload(AdminRole.menus))
+            .where(User.id == admin_id, User.user_type == 'admin')
         )
         admin = (await self._db.execute(stmt)).scalar_one_or_none()
         if admin is None:
@@ -78,11 +78,11 @@ class AdminAuthService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="管理员已禁用")
         return admin
 
-    async def login(self, username: str, password: str) -> tuple[AdminUser, str]:
+    async def login(self, username: str, password: str) -> tuple[User, str]:
         stmt = (
-            select(AdminUser)
-            .options(selectinload(AdminUser.roles).selectinload(AdminRole.menus))
-            .where(AdminUser.username == username)
+            select(User)
+            .options(selectinload(User.roles).selectinload(AdminRole.menus))
+            .where(User.username == username, User.user_type == 'admin')
         )
         admin = (await self._db.execute(stmt)).scalar_one_or_none()
         if admin is None or not self.verify_password(password, admin.password_hash):
@@ -91,7 +91,7 @@ class AdminAuthService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="管理员已禁用")
         return admin, self.create_access_token(admin.id, self._config)
 
-    async def permissions_for(self, admin: AdminUser) -> list[AdminPermissionItem]:
+    async def permissions_for(self, admin: User) -> list[AdminPermissionItem]:
         if admin.is_super_admin:
             stmt = (
                 select(AdminMenu)
@@ -117,24 +117,24 @@ class AdminAuthService:
         ]
 
     @staticmethod
-    def roles_for(admin: AdminUser) -> list[AdminRoleSummary]:
+    def roles_for(admin: User) -> list[AdminRoleSummary]:
         return [
             AdminRoleSummary(id=role.id, name=role.name, code=role.code)
             for role in admin.roles
             if role.status == "active"
         ]
 
-    async def permission_codes_for(self, admin: AdminUser) -> set[str]:
+    async def permission_codes_for(self, admin: User) -> set[str]:
         return {item.value for item in await self.permissions_for(admin)}
 
-    async def update_profile(self, admin: AdminUser, values: dict) -> AdminUser:
+    async def update_profile(self, admin: User, values: dict) -> User:
         for key, value in values.items():
             setattr(admin, key, value)
         await self._db.flush()
         await self._db.refresh(admin)
         return admin
 
-    async def update_password(self, admin: AdminUser, old_password: str, new_password: str) -> None:
+    async def update_password(self, admin: User, old_password: str, new_password: str) -> None:
         if not self.verify_password(old_password, admin.password_hash):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="旧密码错误")
         admin.password_hash = self.hash_password(new_password)

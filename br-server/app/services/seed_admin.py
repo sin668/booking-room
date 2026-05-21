@@ -10,7 +10,7 @@ from app.core.config import settings
 from app.core.database import async_session
 from app.models.admin_menu import AdminMenu
 from app.models.admin_role import AdminRole, admin_role_menus, admin_user_roles
-from app.models.admin_user import AdminUser
+from app.models.user import User
 from app.models.admin_setting import SystemSetting
 from app.services.admin_auth_service import AdminAuthService
 
@@ -39,6 +39,7 @@ MENU_SEEDS = [
     MenuSeed("system", "directory", "系统设置", "system:view", "system", "System", "LAYOUT", "/system/menu", "SettingOutlined", 20),
     MenuSeed("system.menu", "menu", "菜单设置", "system:menu:view", "menu", "SystemMenu", "/system/menu/menu", None, "MenuOutlined", 21, parent="system"),
     MenuSeed("system.role", "menu", "角色权限", "system:role:view", "role", "SystemRole", "/system/role/role", None, "TeamOutlined", 22, parent="system"),
+    MenuSeed("system.user", "menu", "用户管理", "system:user:view", "user", "SystemUser", "/system/user/index", None, "UserOutlined", 23, parent="system"),
     MenuSeed("setting", "directory", "设置页面", "setting:view", "setting", "Setting", "LAYOUT", "/setting/account", "ToolOutlined", 30),
     MenuSeed("setting.account", "menu", "个人设置", "admin:profile:view", "account", "AccountSetting", "/setting/account/account", None, "UserOutlined", 31, parent="setting"),
     MenuSeed("setting.system", "menu", "系统设置", "system:settings:view", "system", "SystemSetting", "/setting/system/system", None, "SettingOutlined", 32, parent="setting"),
@@ -59,6 +60,11 @@ BUTTON_SEEDS = [
     ("system.role", "system:role:update", "角色权限-编辑"),
     ("system.role", "system:role:delete", "角色权限-删除"),
     ("system.role", "system:role:assign", "角色权限-授权"),
+    ("system.user", "system:user:create", "用户管理-新增"),
+    ("system.user", "system:user:update", "用户管理-编辑"),
+    ("system.user", "system:user:delete", "用户管理-删除"),
+    ("system.user", "system:user:reset-password", "用户管理-重置密码"),
+    ("system.user", "system:user:status", "用户管理-状态"),
     ("setting.system", "system:settings:update", "系统设置-更新"),
     ("setting.system", "system:settings:email", "系统设置-邮件测试"),
     ("setting.account", "admin:profile:update", "个人设置-更新资料"),
@@ -109,6 +115,7 @@ async def seed_admin() -> dict[str, Any]:
 
     async with async_session() as session:
         role = await _get_or_create_role(session)
+        await _get_or_create_app_role(session)
         admin = await _get_or_create_admin(session, password)
         await _ensure_user_role(session, admin.id, role.id)
 
@@ -147,11 +154,12 @@ async def _get_or_create_role(session) -> AdminRole:
     return role
 
 
-async def _get_or_create_admin(session, password: str) -> AdminUser:
+async def _get_or_create_admin(session, password: str) -> User:
     username = settings.ADMIN_DEFAULT_USERNAME or "admin"
-    admin = (await session.execute(select(AdminUser).where(AdminUser.username == username))).scalar_one_or_none()
+    admin = (await session.execute(select(User).where(User.username == username, User.user_type == 'admin'))).scalar_one_or_none()
     if admin is None:
-        admin = AdminUser(
+        admin = User(
+            user_type='admin',
             username=username,
             password_hash=AdminAuthService.hash_password(password),
             nickname="超级管理员",
@@ -169,20 +177,35 @@ async def _get_or_create_admin(session, password: str) -> AdminUser:
     return admin
 
 
-async def _ensure_user_role(session, admin_user_id, admin_role_id: int) -> None:
+async def _ensure_user_role(session, user_id, admin_role_id: int) -> None:
     exists = await session.scalar(
-        select(admin_user_roles.c.admin_user_id).where(
-            admin_user_roles.c.admin_user_id == admin_user_id,
+        select(admin_user_roles.c.user_id).where(
+            admin_user_roles.c.user_id == user_id,
             admin_user_roles.c.admin_role_id == admin_role_id,
         )
     )
     if exists is None:
         await session.execute(
             admin_user_roles.insert().values(
-                admin_user_id=admin_user_id,
+                user_id=user_id,
                 admin_role_id=admin_role_id,
             )
         )
+
+
+async def _get_or_create_app_role(session) -> AdminRole:
+    role = (await session.execute(select(AdminRole).where(AdminRole.code == "app_register_user"))).scalar_one_or_none()
+    if role is None:
+        role = AdminRole(
+            name="注册用户",
+            code="app_register_user",
+            description="App注册用户默认角色",
+            status="active",
+            is_default=False,
+        )
+        session.add(role)
+        await session.flush()
+    return role
 
 
 async def _ensure_role_menus(session, admin_role_id: int, admin_menu_ids: list[int]) -> None:

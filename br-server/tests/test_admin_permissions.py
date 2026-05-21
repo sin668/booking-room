@@ -12,7 +12,7 @@ from app.core.redis import get_redis
 from app.main import app
 from app.models.admin_menu import AdminMenu
 from app.models.admin_role import AdminRole
-from app.models.admin_user import AdminUser
+from app.models.user import User
 from app.services.admin_auth_service import AdminAuthService
 
 
@@ -65,9 +65,10 @@ async def test_bearer_admin_token_can_access_permissioned_route(db_session, real
     menu = AdminMenu(type="button", title="Menu view", permission_code="system:menu:view")
     role = AdminRole(name="Menu viewer", code="menu_viewer")
     role.menus.append(menu)
-    admin = AdminUser(
+    admin = User(user_type="admin", phone="",
         id=uuid.uuid4(),
         username="manager",
+        nickname="Manager",
         password_hash=AdminAuthService.hash_password("secret123"),
     )
     admin.roles.append(role)
@@ -85,9 +86,10 @@ async def test_bearer_admin_token_can_access_permissioned_route(db_session, real
 
 @pytest.mark.asyncio
 async def test_permission_dependency_rejects_missing_permission(db_session):
-    admin = AdminUser(
+    admin = User(user_type="admin", phone="",
         id=uuid.uuid4(),
         username="manager",
+        nickname="Manager",
         password_hash=AdminAuthService.hash_password("secret123"),
     )
     db_session.add(admin)

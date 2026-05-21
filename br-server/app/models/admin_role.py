@@ -21,15 +21,15 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.admin_menu import AdminMenu
-    from app.models.admin_user import AdminUser
+    from app.models.user import User
 
 
 admin_user_roles = Table(
     "admin_user_roles",
     Base.metadata,
     Column(
-        "admin_user_id",
-        ForeignKey("admin_users.id", ondelete="CASCADE"),
+        "user_id",
+        ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
     ),
     Column(
@@ -37,7 +37,7 @@ admin_user_roles = Table(
         ForeignKey("admin_roles.id", ondelete="CASCADE"),
         primary_key=True,
     ),
-    UniqueConstraint("admin_user_id", "admin_role_id", name="uq_admin_user_roles"),
+    UniqueConstraint("user_id", "admin_role_id", name="uq_admin_user_roles"),
 )
 
 
@@ -75,8 +75,8 @@ class AdminRole(Base):
         DateTime, default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    users: Mapped[list[AdminUser]] = relationship(
-        "AdminUser",
+    users: Mapped[list[User]] = relationship(
+        "User",
         secondary=admin_user_roles,
         back_populates="roles",
         lazy="selectin",

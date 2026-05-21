@@ -206,7 +206,7 @@ class WalletService:
         try:
             prepay_id = await self._wechat_client.create_jsapi_prepay(
                 openid=user.wechat_openid,
-                out_trade_no=transaction.order_id,
+                out_trade_no=transaction.order_id[:32],
                 amount_cents=self._decimal_to_cents(transaction.amount),
                 description="Wallet recharge",
                 notify_url=getattr(self._config, "WECHAT_PAY_NOTIFY_URL", ""),

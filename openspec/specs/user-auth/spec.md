@@ -1,12 +1,13 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: JWT token issuance
-系统 SHALL 在用户注册或登录成功后签发 JWT Access Token（15 分钟有效期）和 Refresh Token（7 天有效期）。
+系统 SHALL 在用户注册或登录成功后签发 JWT Access Token（15 分钟有效期）和 Refresh Token（7 天有效期）。用户数据从统一的 `users` 表中查询（`user_type='app'`）。注册成功后自动分配 `app_register_user` 默认角色。
 
 #### Scenario: Issue token pair on registration
 - **GIVEN** 用户完成注册流程
 - **WHEN** 注册成功
 - **THEN** 系统返回 Access Token（15min）和 Refresh Token（7d），Access Token 存放于响应体，Refresh Token 存放于 HttpOnly Cookie
+- **AND** 系统自动为该用户分配 `app_register_user` 角色
 
 #### Scenario: Issue token pair on login
 - **GIVEN** 用户使用手机号 + 密码登录成功
@@ -45,12 +46,12 @@
 - **THEN** 系统拒绝请求，返回 HTTP 401，提示"Token 已失效"
 
 ### Requirement: Phone + password login
-系统 SHALL 支持使用手机号 + 密码登录。
+系统 SHALL 支持使用手机号 + 密码登录。用户查询从统一的 `users` 表中按 `user_type='app'` 过滤。
 
 #### Scenario: Successful login
 - **GIVEN** 用户已注册，手机号 13800138000，密码 "Abc123456"
 - **WHEN** 用户提交手机号和密码登录
-- **THEN** 系统验证密码（bcrypt 比对），验证通过后返回 JWT Token 对
+- **THEN** 系统从 `users` 表查询 `user_type='app'` 且 `phone` 匹配的用户，验证密码通过后返回 JWT Token 对
 
 #### Scenario: Wrong password
 - **GIVEN** 用户已注册，手机号 13800138000
@@ -68,12 +69,12 @@
 - **THEN** 系统拒绝登录，返回 HTTP 403，提示"账号已被禁用，请联系客服"
 
 ### Requirement: Protected route middleware
-系统 SHALL 提供 JWT 验证中间件，保护需要认证的 API 路由。
+系统 SHALL 提供 JWT 验证中间件，保护需要认证的 API 路由。用户验证从统一的 `users` 表中查询。
 
 #### Scenario: Access protected route with valid token
 - **GIVEN** 用户持有有效的 Access Token
 - **WHEN** 请求受保护的 API（如 GET /api/v1/users/me）
-- **THEN** 系统验证 Token 有效性，通过后将用户信息注入请求上下文
+- **THEN** 系统验证 Token 有效性，从 `users` 表查询用户信息，通过后将用户信息注入请求上下文
 
 #### Scenario: Access protected route without token
 - **GIVEN** 请求未携带 Authorization Header

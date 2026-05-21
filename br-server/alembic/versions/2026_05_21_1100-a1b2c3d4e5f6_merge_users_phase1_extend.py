@@ -42,45 +42,11 @@ def upgrade() -> None:
         "CREATE UNIQUE INDEX ix_users_username ON users (username) WHERE username IS NOT NULL"
     )
 
-    # --- Rename admin_user_id -> user_id in admin_user_roles ---
-    # SQLite doesn't support ALTER TABLE RENAME COLUMN with FK changes,
-    # but this project targets PostgreSQL.
-    op.alter_column("admin_user_roles", "admin_user_id", new_column_name="user_id")
-
-    # Drop the old FK referencing admin_users.id and create new one referencing users.id
-    op.drop_constraint(
-        "admin_user_roles_admin_user_id_fkey", "admin_user_roles", type_="foreignkey"
-    )
-    op.create_foreign_key(
-        "admin_user_roles_user_id_fkey",
-        "admin_user_roles",
-        "users",
-        ["user_id"],
-        ["id"],
-        ondelete="CASCADE",
-    )
-
-    # Update the unique constraint name to reference the new column
-    op.drop_constraint("uq_admin_user_roles", "admin_user_roles", type_="unique")
-    op.create_unique_constraint("uq_admin_user_roles", "admin_user_roles", ["user_id", "admin_role_id"])
+    # NOTE: admin_user_roles FK changes are deferred to Phase 2,
+    # after admin_users data has been migrated into the users table.
 
 
 def downgrade() -> None:
-    # Revert admin_user_roles FK changes
-    op.drop_constraint("uq_admin_user_roles", "admin_user_roles", type_="unique")
-    op.create_unique_constraint("uq_admin_user_roles", "admin_user_roles", ["admin_user_id", "admin_role_id"])
-
-    op.drop_constraint("admin_user_roles_user_id_fkey", "admin_user_roles", type_="foreignkey")
-    op.create_foreign_key(
-        "admin_user_roles_admin_user_id_fkey",
-        "admin_user_roles",
-        "admin_users",
-        ["admin_user_id"],
-        ["id"],
-        ondelete="CASCADE",
-    )
-    op.alter_column("admin_user_roles", "user_id", new_column_name="admin_user_id")
-
     # Drop partial indexes and restore original ix_users_phone
     op.drop_index("ix_users_username", table_name="users")
     op.execute("DROP INDEX ix_users_phone")

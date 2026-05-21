@@ -28,9 +28,9 @@ class User(Base):
         default="app",
         nullable=False,
     )
-    phone: Mapped[str] = mapped_column(
+    phone: Mapped[str | None] = mapped_column(
         String(11),
-        nullable=False,
+        nullable=True,
     )
     nickname: Mapped[str] = mapped_column(
         String(50),

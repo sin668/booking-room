@@ -1,6 +1,6 @@
 """merge_users_phase2_data
 
-Migrate data from admin_users into users table.
+Migrate data from admin_users into users table and update admin_user_roles FK.
 
 Revision ID: b2c3d4e5f6a1
 Revises: a1b2c3d4e5f6
@@ -10,6 +10,7 @@ Create Date: 2026-05-21 11:01:00.000000
 from typing import Sequence, Union
 
 from alembic import op
+import sqlalchemy as sa
 
 
 revision: str = "b2c3d4e5f6a1"
@@ -19,6 +20,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # Make phone nullable so admin users (who have no phone) can be inserted
+    op.alter_column("users", "phone", existing_type=sa.String(length=11), nullable=True)
+
     # Insert admin_users rows into users, handling potential ID conflicts
     # by generating new UUIDs for colliding rows and updating admin_user_roles.
     op.execute("""
@@ -51,8 +55,8 @@ def upgrade() -> None:
 
                     -- Update admin_user_roles to point to the new user ID
                     UPDATE admin_user_roles
-                    SET user_id = new_id
-                    WHERE user_id = admin_rec.id;
+                    SET admin_user_id = new_id
+                    WHERE admin_user_id = admin_rec.id;
                 ELSE
                     INSERT INTO users (
                         id, user_type, username, password_hash, nickname,
@@ -75,7 +79,42 @@ def upgrade() -> None:
         $$
     """)
 
+    # --- Now that admin data is in users, update admin_user_roles FK ---
+    # Drop old FK referencing admin_users.id
+    op.drop_constraint(
+        "admin_user_roles_admin_user_id_fkey", "admin_user_roles", type_="foreignkey"
+    )
+    # Rename column
+    op.alter_column("admin_user_roles", "admin_user_id", new_column_name="user_id")
+    # Create new FK referencing users.id
+    op.create_foreign_key(
+        "admin_user_roles_user_id_fkey",
+        "admin_user_roles",
+        "users",
+        ["user_id"],
+        ["id"],
+        ondelete="CASCADE",
+    )
+    # Update unique constraint to reference renamed column
+    op.drop_constraint("uq_admin_user_roles", "admin_user_roles", type_="unique")
+    op.create_unique_constraint("uq_admin_user_roles", "admin_user_roles", ["user_id", "admin_role_id"])
+
 
 def downgrade() -> None:
+    # Revert admin_user_roles FK changes
+    op.drop_constraint("uq_admin_user_roles", "admin_user_roles", type_="unique")
+    op.create_unique_constraint("uq_admin_user_roles", "admin_user_roles", ["admin_user_id", "admin_role_id"])
+
+    op.drop_constraint("admin_user_roles_user_id_fkey", "admin_user_roles", type_="foreignkey")
+    op.create_foreign_key(
+        "admin_user_roles_admin_user_id_fkey",
+        "admin_user_roles",
+        "admin_users",
+        ["admin_user_id"],
+        ["id"],
+        ondelete="CASCADE",
+    )
+    op.alter_column("admin_user_roles", "user_id", new_column_name="admin_user_id")
+
     # Remove admin-type rows from users table
     op.execute("DELETE FROM users WHERE user_type = 'admin'")

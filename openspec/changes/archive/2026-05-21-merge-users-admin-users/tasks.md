@@ -1,22 +1,22 @@
 ## 1. User 模型合并
 
-- [ ] 1.1 更新 `User` 模型（`br-server/app/models/user.py`）：
+- [x] 1.1 更新 `User` 模型（`br-server/app/models/user.py`）：
   - 新增字段：`user_type`（String(10), NOT NULL, DEFAULT 'app'）、`username`（String(50), nullable）、`email`（String(255), nullable）、`mobile`（String(20), nullable）、`avatar`（String(512), nullable）、`is_super_admin`（Boolean, DEFAULT False, NOT NULL）
   - 添加 `__table_args__`：CHECK 约束 `user_type IN ('app', 'admin')`，partial unique index `ix_users_phone`（WHERE phone IS NOT NULL），partial unique index `ix_users_username`（WHERE username IS NOT NULL）
   - 移除 `phone` 列的原 `unique=True`（由 partial unique index 接管）
-- [ ] 1.2 更新 `User` 模型关联关系：添加 `roles` relationship 到 `AdminRole`（secondary=`admin_user_roles`, back_populates="users", lazy="selectin"），需要 `from app.models.admin_role import AdminRole, admin_user_roles`
-- [ ] 1.3 更新 `AdminRole` 模型（`br-server/app/models/admin_role.py`）：
+- [x] 1.2 更新 `User` 模型关联关系：添加 `roles` relationship 到 `AdminRole`（secondary=`admin_user_roles`, back_populates="users", lazy="selectin"），需要 `from app.models.admin_role import AdminRole, admin_user_roles`
+- [x] 1.3 更新 `AdminRole` 模型（`br-server/app/models/admin_role.py`）：
   - `admin_user_roles` 联合表的 `ForeignKey("admin_users.id")` 改为 `ForeignKey("users.id")`，列名从 `admin_user_id` 改为 `user_id`，保持 UniqueConstraint
   - `AdminRole.users` relationship 的 back_populates 保持 `"users"`（对应 User.roles）
   - 更新 TYPE_CHECKING import：`from app.models.user import User` 替换 `from app.models.admin_user import AdminUser`
-- [ ] 1.4 删除 `AdminUser` 模型文件（`br-server/app/models/admin_user.py`）
-- [ ] 1.5 更新 `br-server/app/models/__init__.py`：移除 `AdminUser` 导出
+- [x] 1.4 删除 `AdminUser` 模型文件（`br-server/app/models/admin_user.py`）
+- [x] 1.5 更新 `br-server/app/models/__init__.py`：移除 `AdminUser` 导出
 
 ## 2. Schema 更新
 
-- [ ] 2.1 更新 `br-server/app/schemas/user.py`：`UserResponse` 新增 `user_type`、`username`、`email`、`mobile`、`avatar`、`balance`、`is_super_admin`、`roles`（list[AdminRoleSummary]）字段
-- [ ] 2.2 `br-server/app/schemas/admin_auth.py` 保持不变（AdminLoginRequest/AdminCurrentResponse 等仍用于 admin 端点，仅底层模型引用变更）
-- [ ] 2.3 新增 `br-server/app/schemas/admin_user_management.py`：用户管理 CRUD schema
+- [x] 2.1 更新 `br-server/app/schemas/user.py`：`UserResponse` 新增 `user_type`、`username`、`email`、`mobile`、`avatar`、`balance`、`is_super_admin`、`roles`（list[AdminRoleSummary]）字段
+- [x] 2.2 `br-server/app/schemas/admin_auth.py` 保持不变（AdminLoginRequest/AdminCurrentResponse 等仍用于 admin 端点，仅底层模型引用变更）
+- [x] 2.3 新增 `br-server/app/schemas/admin_user_management.py`：用户管理 CRUD schema
   - `AdminUserListParams`（可选 user_type/keyword/status 过滤）
   - `AdminUserListItem`（基础字段 + roles + booking_count + coupon_count）
   - `AdminUserListResponse`（items + total + page + page_size）
@@ -26,21 +26,21 @@
   - `AdminResetPassword`（new_password）
   - `AdminToggleStatus`（target_status）
   - `AdminAssignRoles`（role_ids: list[int]）
-- [ ] 2.4 更新 `br-server/app/schemas/__init__.py`（如存在导出列表）
+- [x] 2.4 更新 `br-server/app/schemas/__init__.py`（如存在导出列表）
 
 ## 3. Service 层更新
 
-- [ ] 3.1 更新 `br-server/app/services/auth_service.py`：
+- [x] 3.1 更新 `br-server/app/services/auth_service.py`：
   - 注册查询添加 `User.user_type == 'app'` 过滤
   - 登录查询添加 `User.user_type == 'app'` 过滤
   - 注册成功后查询 `app_register_user` 角色，若存在则插入 `admin_user_roles` 关联（容错：角色不存在时记录 warning 日志，不阻塞注册）
-- [ ] 3.2 更新 `br-server/app/services/admin_auth_service.py`：
+- [x] 3.2 更新 `br-server/app/services/admin_auth_service.py`：
   - 所有 `from app.models.admin_user import AdminUser` → `from app.models.user import User`
   - `login()`：`AdminUser` → `User`，查询添加 `.where(User.user_type == 'admin')`
   - `get_admin_by_id()`：同上
   - `permissions_for()`/`roles_for()`/`permission_codes_for()`：参数类型 `AdminUser` → `User`（接口不变，都是通过 roles relationship 访问）
   - `update_profile()`/`update_password()`：参数类型 `AdminUser` → `User`
-- [ ] 3.3 更新 `br-server/app/services/seed_admin.py`：
+- [x] 3.3 更新 `br-server/app/services/seed_admin.py`：
   - `from app.models.admin_user import AdminUser` → `from app.models.user import User`
   - `_get_or_create_admin()`：创建 `User(user_type='admin', ...)` 替代 `AdminUser(...)`
   - `_ensure_user_role()`：`admin_user_roles.c.admin_user_id` → `admin_user_roles.c.user_id`
@@ -50,13 +50,13 @@
 
 ## 4. API 路由更新
 
-- [ ] 4.1 更新 `br-server/app/api/routes/admin_auth.py`：
+- [x] 4.1 更新 `br-server/app/api/routes/admin_auth.py`：
   - `from app.models.admin_user import AdminUser` → `from app.models.user import User`
   - `/login`/`/me`/`/profile`/`/password`：`AdminUser` → `User`，service 调用不变（已通过 3.2 适配）
-- [ ] 4.2 更新 `br-server/app/api/dependencies.py`：
+- [x] 4.2 更新 `br-server/app/api/dependencies.py`：
   - `get_current_admin_context`：查询 `User` 表替代 `AdminUser`，添加 `user_type='admin'` 过滤
   - legacy token 处理中的 `AdminUser(...)` 构造改为 `User(user_type='admin', ...)`
-- [ ] 4.3 新增 `br-server/app/api/routes/admin_user.py`：统一用户管理路由
+- [x] 4.3 新增 `br-server/app/api/routes/admin_user.py`：统一用户管理路由
   - `router = APIRouter(prefix="/api/v1/admin/users", tags=["admin-users"])`
   - `GET ""` — `list_users(user_type/keyword/status/page/page_size)`，依赖 `require_admin_permission("system:user:view")`
   - `POST ""` — `create_user(data: AdminUserCreate)`，依赖 `require_admin_permission("system:user:create")`
@@ -65,7 +65,7 @@
   - `DELETE "/{user_id}"` — `delete_user(user_id)`，依赖 `require_admin_permission("system:user:delete")`
   - `PUT "/{user_id}/reset-password"` — `reset_password(user_id, data)`，依赖 `require_admin_permission("system:user:reset-password")`
   - `PUT "/{user_id}/status"` — `toggle_status(user_id, data)`，依赖 `require_admin_permission("system:user:status")`
-- [ ] 4.4 新增 `br-server/app/services/admin_user_service.py`：统一用户管理 Service
+- [x] 4.4 新增 `br-server/app/services/admin_user_service.py`：统一用户管理 Service
   - `list_users(db, user_type, keyword, status, page, page_size)` — 分页查询，含子查询统计 booking_count、coupon_count
   - `get_user(db, user_id)` — 查询单个用户含角色和统计
   - `create_user(db, data)` — 创建 app/admin 用户，app 用户自动分配 app_register_user 角色
@@ -74,7 +74,7 @@
   - `reset_password(db, user_id, new_password)` — 重置密码
   - `toggle_status(db, user_id, target_status)` — 切换状态
   - `assign_roles(db, user_id, role_ids)` — 分配角色
-- [ ] 4.5 注册路由（`br-server/app/main.py`）：新增 `from app.api.routes.admin_user import router as admin_user_router`，在 admin_auth_router 旁 `app.include_router(admin_user_router)`
+- [x] 4.5 注册路由（`br-server/app/main.py`）：新增 `from app.api.routes.admin_user import router as admin_user_router`，在 admin_auth_router 旁 `app.include_router(admin_user_router)`
 
 ## 5. Alembic 数据库迁移
 

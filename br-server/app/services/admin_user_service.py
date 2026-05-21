@@ -104,7 +104,7 @@ class AdminUserService:
         password_hash = bcrypt.hashpw(data.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         user = User(
             user_type=data.user_type,
-            phone=data.phone or "",
+            phone=data.phone,
             username=data.username,
             nickname=data.nickname or data.username or data.phone or "",
             password_hash=password_hash,

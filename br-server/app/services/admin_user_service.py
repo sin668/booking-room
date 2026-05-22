@@ -90,13 +90,13 @@ class AdminUserService:
         # Check uniqueness
         if data.phone:
             existing = await self._db.scalar(
-                select(User).where(User.phone == data.phone, User.user_type == 'app')
+                select(User).where(User.phone == data.phone)
             )
             if existing:
                 raise HTTPException(status_code=409, detail="该手机号已注册")
         if data.username:
             existing = await self._db.scalar(
-                select(User).where(User.username == data.username, User.user_type == 'admin')
+                select(User).where(User.username == data.username)
             )
             if existing:
                 raise HTTPException(status_code=409, detail="该用户名已存在")

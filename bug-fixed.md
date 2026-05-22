@@ -371,7 +371,100 @@ No match found for location with path "/room/list/1/seats"
 
 ---
 
-## 已知行为: /system/menu 初始路由解析警告
+## BUG-19: br-admin 菜单图标不显示 + 自习室管理菜单不可点击 + 座位管理菜单不应显示
+
+### 报错信息
+
+1. 左侧菜单所有图标位置为空白（无图标渲染）
+2. 点击「房间管理 > 自习室管理」菜单无响应，页面空白
+3. 左侧一级菜单出现一个不可点击的「座位管理」菜单项（数据库已设置 `hidden=True`）
+
+### 根本原因
+
+本次修复涉及三个相互关联的问题：
+
+**问题 1：菜单图标不显示**
+
+`br-admin/src/router/icons.ts` 的 `constantRouterIcon` 映射表仅注册了 `DashboardOutlined` 一个图标。后端菜单数据返回的图标名称（`HomeOutlined`、`SettingOutlined`、`MenuOutlined`、`TeamOutlined`、`UserOutlined`、`ToolOutlined`、`AppsOutlined`、`GiftOutlined`、`CalendarOutlined`）在映射表中均无对应条目，前端路由生成器将其设为 `null`，导致图标不渲染。
+
+另外 `AppsOutlined` 在 `@vicons/antd` 包中不存在，正确名称为 `AppstoreOutlined`。
+
+**问题 2：自习室管理菜单不可点击**
+
+后端 `seed_admin.py` 中目录类型菜单的 `path` 字段存储的是完整路径（如 `/room/list`、`/system/menu`），而非基路径（如 `/room`、`/system`）。前端路由生成器 `generator.ts` 会将父路径与子路径拼接：
+
+```typescript
+path: `${parentPath}/${itemPath}`
+```
+
+以 room 为例，父路径 `/room/list` + 子路径 `list` → 生成路由 `/room/list/list`，与实际页面路径 `/room/list` 不匹配，导致点击菜单后 Vue Router 找不到对应组件。
+
+**问题 3：座位管理菜单不应显示**
+
+前端在 BACK 权限模式下，为支持含动态参数的隐藏页面（如 `/room/list/:id/seats`），将静态路由模块中 `hideInMenu: true` 的子路由合并到动态路由中。但合并时仅在子路由的 `meta` 上设置了 `hideInMenu`，而前端菜单过滤函数 `filterRouter` 检查的是 `meta.hidden` 字段，两者不一致：
+
+- 静态路由使用：`meta.hideInMenu = true`
+- 菜单过滤检查：`meta.hidden === true`
+
+导致合并后的隐藏路由未被 `filterRouter` 过滤，其父级 `/room`（Layout）作为无 `hidden` 标记的常规路由被渲染到菜单中，唯一的子项「座位管理」因此显示在侧边栏。又因该路由需要 `:id` 参数，点击后路径 `/room/list//seats` 无法匹配，表现为不可点击。
+
+### 解决方案
+
+**问题 1 修复**：扩展 `constantRouterIcon` 映射表，注册所有后端使用的图标：
+
+```typescript
+// br-admin/src/router/icons.ts
+import { AppstoreOutlined, CalendarOutlined, DashboardOutlined, GiftOutlined,
+  HomeOutlined, MenuOutlined, SettingOutlined, TeamOutlined, ToolOutlined,
+  UserOutlined } from '@vicons/antd';
+
+export const constantRouterIcon = {
+  HomeOutlined, DashboardOutlined, SettingOutlined, MenuOutlined,
+  TeamOutlined, UserOutlined, ToolOutlined, AppstoreOutlined,
+  GiftOutlined, CalendarOutlined,
+};
+```
+
+同时修正后端 seed 中的图标名 `AppsOutlined` → `AppstoreOutlined`。
+
+**问题 2 修复**：将 `seed_admin.py` 中所有目录类型菜单的 `path` 改为基路径：
+
+| 菜单 | 修改前 | 修改后 |
+|------|--------|--------|
+| 控制台 | `/dashboard/console` | `/dashboard` |
+| 系统设置 | `/system/menu` | `/system` |
+| 设置页面 | `/setting/account` | `/setting` |
+| 房间管理 | `/room/list` | `/room` |
+| 活动管理 | `/activity/list` | `/activity` |
+| 预约管理 | `/booking/list` | `/booking` |
+
+子菜单 `path` 保持相对路径不变（如 `list`、`menu`），前端生成器拼接后得到正确路由。
+
+**问题 3 修复**：合并隐藏静态路由时，在父级和子级的 `meta` 上同时设置 `hidden: true`：
+
+```typescript
+// br-admin/src/store/modules/asyncRoute.ts
+const hiddenChildren = route.children
+  ?.filter((c) => c.meta?.hideInMenu)
+  .map((c) => ({ ...c, meta: { ...c.meta, hidden: true } }));
+if (hiddenChildren?.length) {
+  accessedRouters.push({
+    ...rest,
+    meta: { ...rest.meta, hidden: true },
+    children: hiddenChildren,
+  });
+}
+```
+
+同时在后端 `_build_route_tree` 中跳过 `hidden=True` 的菜单项，确保数据库中已设置 hidden 的菜单不会返回给前端。
+
+**文件**:
+- `br-admin/src/router/icons.ts`
+- `br-admin/src/store/modules/asyncRoute.ts`
+- `br-server/app/services/seed_admin.py`
+- `br-server/app/services/admin_menu_service.py`
+
+---
 
 ### 现象
 ```
@@ -410,3 +503,7 @@ br-admin 使用动态路由，路由在 `beforeEach` 导航守卫中从后端 AP
 | `br-server/app/services/admin_menu_service.py` | #16 |
 | 数据库 `admin_menus` id=11 | #17 |
 | `br-admin/src/components/Modal/src/hooks/useModal.ts` | #18 |
+| `br-admin/src/router/icons.ts` | #19 |
+| `br-admin/src/store/modules/asyncRoute.ts` | #19 |
+| `br-server/app/services/seed_admin.py` | #19 |
+| `br-server/app/services/admin_menu_service.py` | #19 |

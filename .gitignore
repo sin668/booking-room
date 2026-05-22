@@ -28,6 +28,9 @@ br-app/dist/
 .claude/worktrees/
 .claude/settings.local.json
 .omc/
+.agents/
+.codex/
+.claude/
 
 # OS
 .DS_Store

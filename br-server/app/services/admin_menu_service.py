@@ -23,6 +23,7 @@ COMPONENT_WHITELIST = {
     "/dashboard/console/console",
     "/system/menu/menu",
     "/system/role/role",
+    "/system/user/index",
     "/setting/account/account",
     "/setting/system/system",
     "/room/list/index",
@@ -181,6 +182,8 @@ class AdminMenuService:
         def build(parent_id: int | None) -> list[AdminMenuRoute]:
             routes: list[AdminMenuRoute] = []
             for menu in by_parent.get(parent_id, []):
+                if menu.hidden:
+                    continue
                 children = build(menu.id)
                 allowed = is_super_admin or menu.id in allowed_ids or bool(children)
                 if not allowed:

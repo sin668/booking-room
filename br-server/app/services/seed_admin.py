@@ -34,21 +34,21 @@ class MenuSeed:
 
 
 MENU_SEEDS = [
-    MenuSeed("dashboard", "directory", "控制台", "dashboard:view", "dashboard", "Dashboard", "LAYOUT", "/dashboard/console", "HomeOutlined", 10),
+    MenuSeed("dashboard", "directory", "控制台", "dashboard:view", "dashboard", "Dashboard", "LAYOUT", "/dashboard", "HomeOutlined", 10),
     MenuSeed("dashboard.console", "menu", "工作台", "dashboard:console:view", "console", "DashboardConsole", "/dashboard/console/console", None, "DashboardOutlined", 11, parent="dashboard"),
-    MenuSeed("system", "directory", "系统设置", "system:view", "system", "System", "LAYOUT", "/system/menu", "SettingOutlined", 20),
+    MenuSeed("system", "directory", "系统设置", "system:view", "system", "System", "LAYOUT", "/system", "SettingOutlined", 20),
     MenuSeed("system.menu", "menu", "菜单设置", "system:menu:view", "menu", "SystemMenu", "/system/menu/menu", None, "MenuOutlined", 21, parent="system"),
     MenuSeed("system.role", "menu", "角色权限", "system:role:view", "role", "SystemRole", "/system/role/role", None, "TeamOutlined", 22, parent="system"),
     MenuSeed("system.user", "menu", "用户管理", "system:user:view", "user", "SystemUser", "/system/user/index", None, "UserOutlined", 23, parent="system"),
-    MenuSeed("setting", "directory", "设置页面", "setting:view", "setting", "Setting", "LAYOUT", "/setting/account", "ToolOutlined", 30),
+    MenuSeed("setting", "directory", "设置页面", "setting:view", "setting", "Setting", "LAYOUT", "/setting", "ToolOutlined", 30),
     MenuSeed("setting.account", "menu", "个人设置", "admin:profile:view", "account", "AccountSetting", "/setting/account/account", None, "UserOutlined", 31, parent="setting"),
     MenuSeed("setting.system", "menu", "系统设置", "system:settings:view", "system", "SystemSetting", "/setting/system/system", None, "SettingOutlined", 32, parent="setting"),
-    MenuSeed("room", "directory", "房间管理", "room:manage", "room", "Room", "LAYOUT", "/room/list", "HomeOutlined", 40),
+    MenuSeed("room", "directory", "房间管理", "room:manage", "room", "Room", "LAYOUT", "/room", "HomeOutlined", 40),
     MenuSeed("room.list", "menu", "自习室管理", "room:view", "list", "RoomList", "/room/list/index", None, "HomeOutlined", 41, parent="room"),
-    MenuSeed("room.seats", "menu", "座位管理", "seat:view", "seats", "RoomSeats", "/room/seats/index", None, "AppsOutlined", 42, parent="room"),
-    MenuSeed("activity", "directory", "活动管理", "activity:manage", "activity", "Activity", "LAYOUT", "/activity/list", "GiftOutlined", 50),
+    MenuSeed("room.seats", "menu", "座位管理", "seat:view", "seats", "RoomSeats", "/room/seats/index", None, "AppstoreOutlined", 42, hidden=True, parent="room"),
+    MenuSeed("activity", "directory", "活动管理", "activity:manage", "activity", "Activity", "LAYOUT", "/activity", "GiftOutlined", 50),
     MenuSeed("activity.list", "menu", "活动列表", "activity:view", "list", "ActivityList", "/activity/list/index", None, "GiftOutlined", 51, parent="activity"),
-    MenuSeed("booking", "directory", "预约管理", "booking:manage", "booking", "Booking", "LAYOUT", "/booking/list", "CalendarOutlined", 60),
+    MenuSeed("booking", "directory", "预约管理", "booking:manage", "booking", "Booking", "LAYOUT", "/booking", "CalendarOutlined", 60),
     MenuSeed("booking.list", "menu", "预约列表", "booking:view", "list", "BookingList", "/booking/list/index", None, "CalendarOutlined", 61, parent="booking"),
 ]
 

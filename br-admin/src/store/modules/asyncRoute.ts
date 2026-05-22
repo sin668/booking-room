@@ -100,6 +100,21 @@ export const useAsyncRouteStore = defineStore({
         // 动态获取菜单
         try {
           accessedRouters = await generateDynamicRoutes();
+          // 合并静态模块中 hideInMenu 的路由（如 /room/list/:id/seats 等含动态参数的页面）
+          // 同时设置 hidden: true，确保前端 filterRouter 正确过滤，不会出现在菜单中
+          for (const route of asyncRoutes) {
+            const hiddenChildren = route.children
+              ?.filter((c) => c.meta?.hideInMenu)
+              .map((c) => ({ ...c, meta: { ...c.meta, hidden: true } }));
+            if (hiddenChildren?.length) {
+              const { name, redirect, ...rest } = route;
+              accessedRouters.push({
+                ...rest,
+                meta: { ...(rest as any).meta, hidden: true },
+                children: hiddenChildren,
+              });
+            }
+          }
         } catch (error) {
           console.log(error);
           accessedRouters = [];

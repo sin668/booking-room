@@ -156,7 +156,7 @@ async def _get_or_create_role(session) -> AdminRole:
 
 async def _get_or_create_admin(session, password: str) -> User:
     username = settings.ADMIN_DEFAULT_USERNAME or "admin"
-    admin = (await session.execute(select(User).where(User.username == username, User.user_type == 'admin'))).scalar_one_or_none()
+    admin = (await session.execute(select(User).where(User.username == username))).scalar_one_or_none()
     if admin is None:
         admin = User(
             user_type='admin',

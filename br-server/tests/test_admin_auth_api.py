@@ -92,3 +92,32 @@ async def test_password_update_validates_confirmation(client: AsyncClient, admin
     )
 
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_admin_login_with_phone(client: AsyncClient, db_session):
+    """Admin login with phone (no username) returns 200."""
+    user = User(
+        phone="13800138000",
+        password_hash=AdminAuthService.hash_password("secret123"),
+        nickname="PhoneUser",
+    )
+    db_session.add(user)
+    await db_session.commit()
+
+    resp = await client.post(
+        "/api/v1/admin/auth/login",
+        json={"phone": "13800138000", "password": "secret123"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["access_token"]
+
+
+@pytest.mark.asyncio
+async def test_admin_login_missing_both_fields(client: AsyncClient):
+    """Admin login with neither phone nor username returns 422."""
+    resp = await client.post(
+        "/api/v1/admin/auth/login",
+        json={"password": "secret123"},
+    )
+    assert resp.status_code == 422

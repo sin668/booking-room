@@ -197,6 +197,32 @@ class TestLogin:
         assert data["token_type"] == "bearer"
         assert "refresh_token" in resp.cookies
 
+    @pytest.mark.asyncio
+    @patch("app.api.routes.auth.AuthService")
+    async def test_login_success_with_username(self, MockAuthService, client: AsyncClient):
+        """Login with username (no phone) returns 200."""
+        mock_auth = AsyncMock()
+        mock_auth.login.return_value = _make_real_token_response(FIXED_USER_ID)
+        MockAuthService.return_value = mock_auth
+
+        resp = await client.post(
+            "/api/v1/auth/login",
+            json={"username": "testuser", "password": "test123456"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["token_type"] == "bearer"
+        assert data["access_token"]
+
+    @pytest.mark.asyncio
+    async def test_login_missing_both_fields(self, client: AsyncClient):
+        """Login with neither phone nor username returns 422."""
+        resp = await client.post(
+            "/api/v1/auth/login",
+            json={"password": "test123456"},
+        )
+        assert resp.status_code == 422
+
 
 # ---------------------------------------------------------------------------
 # refresh tests

@@ -266,7 +266,7 @@ class TestLogin:
         with pytest.raises(HTTPException) as exc_info:
             await auth_service.login(user_login_data)
         assert exc_info.value.status_code == 401
-        assert "手机号或密码错误" in exc_info.value.detail
+        assert "账号或密码错误" in exc_info.value.detail
 
     async def test_login_account_not_found(
         self,

@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 import bcrypt
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -69,7 +69,7 @@ class AdminAuthService:
         stmt = (
             select(User)
             .options(selectinload(User.roles).selectinload(AdminRole.menus))
-            .where(User.id == admin_id, User.user_type == 'admin')
+            .where(User.id == admin_id)
         )
         admin = (await self._db.execute(stmt)).scalar_one_or_none()
         if admin is None:
@@ -78,15 +78,24 @@ class AdminAuthService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="管理员已禁用")
         return admin
 
-    async def login(self, username: str, password: str) -> tuple[User, str]:
+    async def login(self, phone: str | None, username: str | None, password: str) -> tuple[User, str]:
+        conditions = []
+        if phone:
+            conditions.append(User.phone == phone)
+        if username:
+            conditions.append(User.username == username)
+
+        if not conditions:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="手机号或用户名至少需要提供一个")
+
         stmt = (
             select(User)
             .options(selectinload(User.roles).selectinload(AdminRole.menus))
-            .where(User.username == username, User.user_type == 'admin')
+            .where(or_(*conditions))
         )
         admin = (await self._db.execute(stmt)).scalar_one_or_none()
         if admin is None or not self.verify_password(password, admin.password_hash):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="用户名或密码错误")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="账号或密码错误")
         if admin.status == "disabled":
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="管理员已禁用")
         return admin, self.create_access_token(admin.id, self._config)

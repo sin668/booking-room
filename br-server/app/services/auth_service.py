@@ -8,7 +8,7 @@ import bcrypt
 import redis.asyncio as aioredis
 from fastapi import HTTPException, status
 from jose import jwt as jose_jwt
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
@@ -67,8 +67,8 @@ class AuthService:
             # SMSService not yet implemented -- skip SMS verification
             pass
 
-        # --- Step 3: Check phone uniqueness (app users only) ---
-        stmt = select(User).where(User.phone == data.phone, User.user_type == 'app')
+        # --- Step 3: Check phone uniqueness ---
+        stmt = select(User).where(User.phone == data.phone)
         result = await self._db.execute(stmt)
         existing_user = result.scalar_one_or_none()
         if existing_user is not None:
@@ -140,14 +140,23 @@ class AuthService:
 
     async def login(self, data: UserLogin) -> TokenResponse:
         """Authenticate a user by phone + password and return JWT tokens."""
-        # --- Find app user by phone ---
-        stmt = select(User).where(User.phone == data.phone, User.user_type == 'app')
+        # --- Find user by phone or username ---
+        conditions = []
+        if data.phone:
+            conditions.append(User.phone == data.phone)
+        if data.username:
+            conditions.append(User.username == data.username)
+
+        if not conditions:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="手机号或用户名至少需要提供一个")
+
+        stmt = select(User).where(or_(*conditions))
         result = await self._db.execute(stmt)
         user = result.scalar_one_or_none()
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="手机号或密码错误",
+                detail="账号或密码错误",
             )
 
         # --- Check banned status ---
@@ -163,7 +172,7 @@ class AuthService:
         ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="手机号或密码错误",
+                detail="账号或密码错误",
             )
 
         # --- Create tokens ---

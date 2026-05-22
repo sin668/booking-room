@@ -41,13 +41,11 @@ async def test_phone_uniqueness_constraint(db_session):
     """Test same phone can't create two users"""
     db_session.add_all([
         User(
-            user_type="app",
             phone="1234567890",
             nickname="User 1",
             password_hash="hash"
         ),
         User(
-            user_type="app",
             phone="1234567890",
             nickname="User 2",
             password_hash="hash"
@@ -63,13 +61,11 @@ async def test_username_uniqueness_constraint(db_session):
     """Test same username can't create two users"""
     db_session.add_all([
         User(
-            user_type="admin",
             username="admin_user",
             phone="1234567890",
             password_hash="hash"
         ),
         User(
-            user_type="admin",
             username="admin_user",
             phone="0987654321",
             password_hash="hash"

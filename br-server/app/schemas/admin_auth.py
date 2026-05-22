@@ -6,8 +6,15 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class AdminLoginRequest(BaseModel):
-    username: str = Field(..., min_length=1, max_length=50)
+    username: str | None = Field(None, max_length=50)
+    phone: str | None = Field(None, max_length=11)
     password: str = Field(..., min_length=1, max_length=128)
+
+    @model_validator(mode="after")
+    def validate_login_fields(self) -> "AdminLoginRequest":
+        if not self.username and not self.phone:
+            raise ValueError("用户名或手机号至少需要提供一个")
+        return self
 
 
 class AdminTokenResponse(BaseModel):

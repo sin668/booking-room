@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.admin_auth import AdminRoleSummary
 
@@ -19,8 +19,15 @@ class UserCreate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    phone: str
+    phone: str | None = Field(None, max_length=11)
+    username: str | None = Field(None, max_length=50)
     password: str
+
+    @model_validator(mode="after")
+    def validate_login_fields(self) -> "UserLogin":
+        if not self.phone and not self.username:
+            raise ValueError("手机号或用户名至少需要提供一个")
+        return self
 
 
 class SendCodeRequest(BaseModel):

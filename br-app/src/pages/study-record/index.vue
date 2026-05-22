@@ -28,11 +28,11 @@
       <view class="calendar-card">
         <view class="calendar-header">
           <view class="arrow-btn" @tap="prevMonth">
-            <text class="arrow-text">&lt;</text>
+            <text class="arrow-text">‹</text>
           </view>
           <text class="month-text">{{ currentYear }}年{{ currentMonth }}月</text>
           <view class="arrow-btn" @tap="nextMonth">
-            <text class="arrow-text">&gt;</text>
+            <text class="arrow-text">›</text>
           </view>
         </view>
 

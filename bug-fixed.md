@@ -476,6 +476,24 @@ br-admin 使用动态路由，路由在 `beforeEach` 导航守卫中从后端 AP
 
 ---
 
+## BUG-20: 微信小程序 WXML 编译错误 — unexpected character `<`
+
+### 报错信息
+```
+[ WXML 文件编译错误] ./pages/study-record/index.wxml
+unexpected character `<`
+```
+
+### 根本原因
+`br-app/src/pages/study-record/index.vue` 中日历组件的左右箭头使用 `&lt;` 和 `&gt;` HTML 实体。Vue 模板编译器在编译时将 HTML 实体解码回裸字符 `<` 和 `>`，生成的 WXML 中 `<text class="arrow-text"><</text>` 包含非法 XML 字符。微信小程序的 WXML 解析器将 `<` 误认为标签开始符，导致编译失败。
+
+### 解决方案
+将 `&lt;` 和 `&gt;` 替换为 Unicode 字符 `‹` (U+2039) 和 `›` (U+203A)。这两个字符是合法的 XML 文本内容，不会被 WXML 解析器误解，视觉上与 `<` `>` 接近。
+
+**文件**: `br-app/src/pages/study-record/index.vue`
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -496,7 +514,7 @@ br-admin 使用动态路由，路由在 `beforeEach` 导航守卫中从后端 AP
 | `br-app/src/api/rooms.js` | #13 |
 | `br-app/src/pages/booking/detail.vue` | #13 |
 | `br-app/src/pages/booking/seat-select.vue` | #13 |
-| `br-app/src/pages/study-record/index.vue` | #14 |
+| `br-app/src/pages/study-record/index.vue` | #14, #20 |
 | `br-server/app/services/seed_data.py` | #15 |
 | `br-server/app/services/coupon_service.py` | #15 |
 | `br-server/tests/test_api_booking.py` | #15 |

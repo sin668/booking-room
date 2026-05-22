@@ -27,7 +27,7 @@ class AdminUserListParams(BaseModel):
 
 class AdminUserListItem(BaseModel):
     id: UUID
-    phone: str
+    phone: str | None = None
     nickname: str | None = None
     user_type: str
     status: str
@@ -81,7 +81,7 @@ class AdminUserUpdate(BaseModel):
 
 class AdminUserDetail(BaseModel):
     id: UUID
-    phone: str
+    phone: str | None = None
     nickname: str | None = None
     user_type: str
     username: str | None = None

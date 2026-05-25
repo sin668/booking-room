@@ -27,7 +27,7 @@ from app.services.wallet_service import (
 router = APIRouter(prefix="/api/v1/admin/wallet", tags=["admin-wallet"])
 
 
-@router.get("", response_model=AdminWalletTransactionListResponse, dependencies=[Depends(require_admin_permission("wallet:view"))])
+@router.get("/transactions", response_model=AdminWalletTransactionListResponse, dependencies=[Depends(require_admin_permission("wallet:view"))])
 async def list_transactions(
     page: int = 1,
     page_size: int = 10,

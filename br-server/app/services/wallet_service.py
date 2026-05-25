@@ -663,7 +663,7 @@ async def admin_get_statistics(
         total_recharge=total_recharge,
         total_consume=total_consume,
         total_refund=total_refund,
-        net_income=total_recharge - total_consume - total_refund,
+        net_income=total_consume - total_refund,
         active_users=active_users,
         total_transactions=total_transactions,
     )

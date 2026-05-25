@@ -3,11 +3,9 @@
 import csv
 import io
 from datetime import date, datetime
-from decimal import Decimal
-from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import String, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
 
@@ -32,7 +30,7 @@ async def list_transactions(
     page: int = 1,
     page_size: int = 10,
     type: str | None = None,
-    status: str | None = None,
+    transaction_status: str | None = Query(default=None, alias="status"),
     user_id: str | None = None,
     date_start: date | None = None,
     date_end: date | None = None,
@@ -48,7 +46,7 @@ async def list_transactions(
         page=page,
         page_size=page_size,
         type=type,
-        status=status,
+        status=transaction_status,
         user_id=user_id,
         date_start=start_dt,
         date_end=end_dt,
@@ -76,7 +74,7 @@ async def get_statistics(
 @router.get("/transactions/export", dependencies=[Depends(require_admin_permission("wallet:export"))])
 async def export_transactions(
     type: str | None = None,
-    status: str | None = None,
+    transaction_status: str | None = Query(default=None, alias="status"),
     user_id: str | None = None,
     date_start: date | None = None,
     date_end: date | None = None,
@@ -91,8 +89,8 @@ async def export_transactions(
     conditions = []
     if type is not None:
         conditions.append(WalletTransaction.type == type)
-    if status is not None:
-        conditions.append(WalletTransaction.status == status)
+    if transaction_status is not None:
+        conditions.append(WalletTransaction.status == transaction_status)
     if user_id is not None:
         conditions.append(WalletTransaction.user_id == user_id)
     if start_dt is not None:
@@ -100,11 +98,9 @@ async def export_transactions(
     if end_dt is not None:
         conditions.append(WalletTransaction.created_at <= end_dt)
 
-    where_clause = func.and_(*conditions) if conditions else True
-
     # 查询总数
     count_result = await db.execute(
-        select(func.count()).select_from(WalletTransaction).where(where_clause)
+        select(func.count()).select_from(WalletTransaction).where(*conditions)
     )
     total = count_result.scalar_one()
 
@@ -118,8 +114,8 @@ async def export_transactions(
     # 查询数据
     stmt = (
         select(WalletTransaction, User.nickname, User.phone)
-        .join(User, WalletTransaction.user_id == User.id)
-        .where(where_clause)
+        .join(User, WalletTransaction.user_id == cast(User.id, String))
+        .where(*conditions)
         .order_by(WalletTransaction.created_at.desc(), WalletTransaction.id.desc())
     )
     result = await db.execute(stmt)

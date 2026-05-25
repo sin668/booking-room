@@ -106,3 +106,42 @@ class WechatDecryptedNotify(BaseModel):
     trade_state: str
     success_time: str | None = None
     amount: WechatNotifyAmount
+
+
+class AdminWalletTransactionResponse(BaseModel):
+    id: UUID
+    type: str
+    title: str
+    amount: Decimal
+    bonus_amount: Decimal = Decimal("0")
+    direction: str
+    status: str
+    payment_method: str | None = None
+    balance_after: Decimal | None = None
+    created_at: datetime
+    completed_at: datetime | None = None
+    order_id: UUID
+    user_id: UUID
+    user_nickname: str | None = None
+    user_phone: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminWalletTransactionListResponse(BaseModel):
+    items: list[AdminWalletTransactionResponse]
+    total: int
+    page: int
+    page_size: int
+    has_more: bool
+
+
+class AdminWalletStatisticsResponse(BaseModel):
+    total_recharge: Decimal
+    total_consume: Decimal
+    total_refund: Decimal
+    net_income: Decimal
+    active_users: int
+    total_transactions: int
+
+    model_config = ConfigDict(from_attributes=True)

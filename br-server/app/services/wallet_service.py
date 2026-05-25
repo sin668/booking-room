@@ -8,7 +8,7 @@ from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
-from sqlalchemy import func, select, text
+from sqlalchemy import String, cast, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
@@ -563,18 +563,16 @@ async def admin_list_transactions(
     if date_end is not None:
         conditions.append(WalletTransaction.created_at <= date_end)
 
-    where_clause = func.and_(*conditions) if conditions else True
-
     count_result = await db.execute(
-        select(func.count()).select_from(WalletTransaction).where(where_clause)
+        select(func.count()).select_from(WalletTransaction).where(*conditions)
     )
     total = count_result.scalar_one()
 
     offset = (page - 1) * page_size
     stmt = (
         select(WalletTransaction, User.nickname, User.phone)
-        .join(User, WalletTransaction.user_id == User.id)
-        .where(where_clause)
+        .join(User, WalletTransaction.user_id == cast(User.id, String))
+        .where(*conditions)
         .order_by(WalletTransaction.created_at.desc(), WalletTransaction.id.desc())
         .offset(offset)
         .limit(page_size)
@@ -631,8 +629,6 @@ async def admin_get_statistics(
     if date_end is not None:
         conditions.append(WalletTransaction.created_at <= date_end)
 
-    where_clause = func.and_(*conditions) if conditions else True
-
     # 按类型分组统计金额
     stmt = (
         select(
@@ -640,7 +636,7 @@ async def admin_get_statistics(
             func.coalesce(func.sum(WalletTransaction.amount), Decimal("0")).label("total_amount"),
             func.count(WalletTransaction.id).label("count"),
         )
-        .where(where_clause)
+        .where(*conditions)
         .group_by(WalletTransaction.type)
     )
     result = await db.execute(stmt)
@@ -654,7 +650,7 @@ async def admin_get_statistics(
     # 统计活跃用户数
     active_users_stmt = (
         select(func.count(func.distinct(WalletTransaction.user_id)))
-        .where(where_clause)
+        .where(*conditions)
     )
     active_users_result = await db.execute(active_users_stmt)
     active_users = active_users_result.scalar_one() or 0

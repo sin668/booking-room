@@ -20,6 +20,8 @@ from app.services.wallet_service import (
     SimulatedPaymentDisabledError,
     UnsupportedPaymentMethodError,
     WalletService,
+    admin_get_statistics,
+    admin_list_transactions,
 )
 
 
@@ -202,6 +204,89 @@ async def test_list_transactions_orders_newest_first(
     list_stmt = mock_db.execute.await_args_list[1].args[0]
     assert "ORDER BY wallet_transactions.created_at DESC" in str(list_stmt)
     assert "wallet_transactions.id DESC" in str(list_stmt)
+
+
+async def test_admin_list_transactions_joins_users_and_maps_user_fields(
+    mock_db: AsyncMock,
+) -> None:
+    user_id = _test_user_id()
+    transaction = SimpleNamespace(
+        id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
+        user_id=str(user_id),
+        type="recharge",
+        amount=Decimal("100.00"),
+        bonus_amount=Decimal("10.00"),
+        balance_after=Decimal("210.00"),
+        order_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        status="completed",
+        payment_method="wechat",
+        paid_at=datetime(2026, 5, 17, 10, 30, 0),
+        notify_processed_at=None,
+        created_at=datetime(2026, 5, 17, 10, 0, 0),
+    )
+    rows_result = MagicMock()
+    rows_result.all.return_value = [(transaction, "Alice", "13800138000")]
+    mock_db.execute = AsyncMock(
+        side_effect=[
+            _mock_scalar_one_result(1),
+            rows_result,
+        ]
+    )
+
+    result = await admin_list_transactions(
+        mock_db,
+        page=1,
+        page_size=20,
+        type="recharge",
+        status="completed",
+        user_id=str(user_id),
+        date_start=datetime(2026, 5, 17, 0, 0, 0),
+        date_end=datetime(2026, 5, 17, 23, 59, 59),
+    )
+
+    assert result.total == 1
+    assert result.has_more is False
+    assert result.items[0].user_id == user_id
+    assert result.items[0].user_nickname == "Alice"
+    assert result.items[0].user_phone == "13800138000"
+    list_stmt = mock_db.execute.await_args_list[1].args[0]
+    list_sql = str(list_stmt)
+    assert "JOIN users" in list_sql
+    assert "CAST(users.id AS VARCHAR)" in list_sql
+    assert "wallet_transactions.created_at >=" in list_sql
+    assert "wallet_transactions.created_at <=" in list_sql
+
+
+async def test_admin_get_statistics_aggregates_totals_and_active_users(
+    mock_db: AsyncMock,
+) -> None:
+    type_stats_result = MagicMock()
+    type_stats_result.all.return_value = [
+        SimpleNamespace(type="recharge", total_amount=Decimal("500.00"), count=3),
+        SimpleNamespace(type="consume", total_amount=Decimal("120.00"), count=2),
+        SimpleNamespace(type="refund", total_amount=Decimal("20.00"), count=1),
+    ]
+    mock_db.execute = AsyncMock(
+        side_effect=[
+            type_stats_result,
+            _mock_scalar_one_result(2),
+        ]
+    )
+
+    result = await admin_get_statistics(
+        mock_db,
+        date_start=datetime(2026, 5, 1, 0, 0, 0),
+        date_end=datetime(2026, 5, 31, 23, 59, 59),
+    )
+
+    assert result.total_recharge == Decimal("500.00")
+    assert result.total_consume == Decimal("120.00")
+    assert result.total_refund == Decimal("20.00")
+    assert result.net_income == Decimal("100.00")
+    assert result.active_users == 2
+    assert result.total_transactions == 6
+    active_users_stmt = mock_db.execute.await_args_list[1].args[0]
+    assert "count(distinct(wallet_transactions.user_id))" in str(active_users_stmt)
 
 
 async def test_list_transactions_maps_recharge_status_titles(

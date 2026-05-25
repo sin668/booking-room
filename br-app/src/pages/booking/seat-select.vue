@@ -103,6 +103,7 @@
                     :class="['seat', seatClass(seat)]"
                     @tap="onTapSeat(seat)"
                   >
+                    <text v-if="isBookedSeat(seat)" class="seat-person">🧑</text>
                     <text class="seat-number">{{ seat.seat_number }}</text>
                     <view v-if="!seat.is_available" class="seat-line" />
                   </view>
@@ -129,16 +130,20 @@
               <view class="legend-dot vip" />
               <text class="legend-text">VIP</text>
             </view>
+            <view v-if="isViewMode" class="legend-item">
+              <view class="legend-dot booked" />
+              <text class="legend-text">我的座位</text>
+            </view>
           </view>
         </view>
       </view>
 
       <!-- Bottom spacing for fixed bar -->
-      <view :style="{ height: selectedSeat ? '240rpx' : '40rpx' }" />
+      <view :style="{ height: (selectedSeat && !isViewMode) ? '240rpx' : '40rpx' }" />
     </scroll-view>
 
     <!-- Fixed bottom bar -->
-    <view v-if="selectedSeat" class="bottom-bar">
+    <view v-if="selectedSeat && !isViewMode" class="bottom-bar">
       <view class="bottom-info">
         <view class="bottom-seat-info">
           <text class="bottom-seat-number">{{ selectedSeat.seat_number }}号座位</text>
@@ -207,6 +212,8 @@ export default {
       seats: [],
       seatsLoading: false,
       selectedSeat: null,
+      isViewMode: false,
+      viewSeatId: null,
     }
   },
 
@@ -297,6 +304,11 @@ export default {
       this.selectedTimeSlot = `${options.start_time}-${options.end_time}`
     }
 
+    if (options.mode === 'view' && options.seat_id) {
+      this.isViewMode = true
+      this.viewSeatId = Number(options.seat_id)
+    }
+
     this.loadSeats()
   },
 
@@ -361,10 +373,15 @@ export default {
     },
 
     seatClass(seat) {
+      if (this.isViewMode && this.viewSeatId && seat.id === this.viewSeatId) return 'booked'
       if (this.selectedSeat && this.selectedSeat.id === seat.id) return 'selected'
       if (!seat.is_available) return 'occupied'
       if (seat.zone === 'vip') return 'vip'
       return 'available'
+    },
+
+    isBookedSeat(seat) {
+      return this.isViewMode && this.viewSeatId && seat.id === this.viewSeatId
     },
 
     zoneLabel(zone) {
@@ -373,6 +390,7 @@ export default {
     },
 
     onTapSeat(seat) {
+      if (this.isViewMode) return
       if (!seat.is_available) return
       if (this.selectedSeat && this.selectedSeat.id === seat.id) {
         this.selectedSeat = null
@@ -773,6 +791,11 @@ export default {
   transform: scale(0.9);
 }
 
+.seat.booked {
+  background: $primary-light;
+  border: 2rpx solid $primary;
+}
+
 .seat-number {
   font-size: 18rpx;
   color: #388E3C;
@@ -798,6 +821,13 @@ export default {
   height: 2rpx;
   background: #ccc;
   transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.seat-person {
+  position: absolute;
+  top: -12rpx;
+  font-size: 20rpx;
+  line-height: 1;
 }
 
 /* Legend */
@@ -840,6 +870,11 @@ export default {
 .legend-dot.vip {
   background: #FFF3E0;
   border: 2rpx solid #FFB74D;
+}
+
+.legend-dot.booked {
+  background: $primary-light;
+  border: 2rpx solid $primary;
 }
 
 .legend-text {

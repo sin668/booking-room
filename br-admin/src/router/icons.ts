@@ -10,6 +10,7 @@ import {
   TeamOutlined,
   ToolOutlined,
   UserOutlined,
+  WalletOutlined,
 } from '@vicons/antd';
 
 //前端路由图标映射表
@@ -24,4 +25,5 @@ export const constantRouterIcon = {
   AppstoreOutlined: renderIcon(AppstoreOutlined),
   GiftOutlined: renderIcon(GiftOutlined),
   CalendarOutlined: renderIcon(CalendarOutlined),
+  WalletOutlined: renderIcon(WalletOutlined),
 };

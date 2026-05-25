@@ -250,7 +250,7 @@ export default {
     viewSeat(order) {
       if (!order.room_id || !order.seat_id) return
       uni.navigateTo({
-        url: `/pages/booking/detail?room_id=${order.room_id}`,
+        url: `/pages/booking/seat-select?room_id=${order.room_id}&seat_id=${order.seat_id}&date=${order.date}&start_time=${order.start_time}&end_time=${order.end_time}&mode=view`,
       })
     },
 

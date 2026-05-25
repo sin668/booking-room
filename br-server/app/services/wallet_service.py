@@ -16,6 +16,9 @@ from app.models.coupon import Coupon
 from app.models.user import User
 from app.models.wallet import WalletTransaction
 from app.schemas.wallet import (
+    AdminWalletStatisticsResponse,
+    AdminWalletTransactionListResponse,
+    AdminWalletTransactionResponse,
     BalanceResponse,
     PromoCodeResponse,
     RechargeOrderResponse,
@@ -78,6 +81,38 @@ class SimulatedPaymentDisabledError(WalletServiceError):
 
 class WechatOpenIdRequiredError(WalletServiceError):
     pass
+
+
+def _transaction_title(transaction_type: str, status: str) -> str:
+    """获取交易标题."""
+    if transaction_type == "recharge":
+        return {
+            "completed": "充值到账",
+            "pending": "充值待支付",
+            "failed": "充值失败",
+        }.get(status, "钱包充值")
+    if transaction_type == "consume":
+        return "钱包消费"
+    if transaction_type == "refund":
+        return "钱包退款"
+    return "钱包流水"
+
+
+def _transaction_direction(transaction_type: str) -> str:
+    """获取交易方向."""
+    if transaction_type == "consume":
+        return "expense"
+    return "income"
+
+
+def _transaction_completed_at(transaction: WalletTransaction) -> datetime | None:
+    """获取交易完成时间."""
+    paid_at = getattr(transaction, "paid_at", None)
+    if paid_at is not None:
+        return paid_at
+    if transaction.status == "completed":
+        return getattr(transaction, "notify_processed_at", None) or transaction.created_at
+    return None
 
 
 class WalletService:
@@ -438,10 +473,10 @@ class WalletService:
         return WalletTransactionResponse(
             id=transaction.id,
             type=transaction_type,
-            title=self._transaction_title(transaction_type, status),
+            title=_transaction_title(transaction_type, status),
             amount=Decimal(str(transaction.amount)),
             bonus_amount=Decimal(str(transaction.bonus_amount)),
-            direction=self._transaction_direction(transaction_type),
+            direction=_transaction_direction(transaction_type),
             status=status,
             payment_method=transaction.payment_method,
             balance_after=(
@@ -450,35 +485,9 @@ class WalletService:
                 else None
             ),
             created_at=transaction.created_at,
-            completed_at=self._transaction_completed_at(transaction),
+            completed_at=_transaction_completed_at(transaction),
             order_id=uuid.UUID(transaction.order_id),
         )
-
-    def _transaction_title(self, transaction_type: str, status: str) -> str:
-        if transaction_type == "recharge":
-            return {
-                "completed": "充值到账",
-                "pending": "充值待支付",
-                "failed": "充值失败",
-            }.get(status, "钱包充值")
-        if transaction_type == "consume":
-            return "钱包消费"
-        if transaction_type == "refund":
-            return "钱包退款"
-        return "钱包流水"
-
-    def _transaction_direction(self, transaction_type: str) -> str:
-        if transaction_type == "consume":
-            return "expense"
-        return "income"
-
-    def _transaction_completed_at(self, transaction: WalletTransaction) -> datetime | None:
-        paid_at = getattr(transaction, "paid_at", None)
-        if paid_at is not None:
-            return paid_at
-        if transaction.status == "completed":
-            return getattr(transaction, "notify_processed_at", None) or transaction.created_at
-        return None
 
     def _validate_notify_payload(self, notify: dict[str, Any]) -> None:
         if notify.get("trade_state") != "SUCCESS":
@@ -529,3 +538,132 @@ class WalletService:
         value: Any,
     ) -> None:
         setattr(transaction, name, value)
+
+
+async def admin_list_transactions(
+    db: AsyncSession,
+    page: int = 1,
+    page_size: int = 10,
+    type: str | None = None,
+    status: str | None = None,
+    user_id: str | None = None,
+    date_start: datetime | None = None,
+    date_end: datetime | None = None,
+) -> AdminWalletTransactionListResponse:
+    """管理端查询钱包交易列表，支持多种筛选条件."""
+    conditions = []
+    if type is not None:
+        conditions.append(WalletTransaction.type == type)
+    if status is not None:
+        conditions.append(WalletTransaction.status == status)
+    if user_id is not None:
+        conditions.append(WalletTransaction.user_id == user_id)
+    if date_start is not None:
+        conditions.append(WalletTransaction.created_at >= date_start)
+    if date_end is not None:
+        conditions.append(WalletTransaction.created_at <= date_end)
+
+    where_clause = func.and_(*conditions) if conditions else True
+
+    count_result = await db.execute(
+        select(func.count()).select_from(WalletTransaction).where(where_clause)
+    )
+    total = count_result.scalar_one()
+
+    offset = (page - 1) * page_size
+    stmt = (
+        select(WalletTransaction, User.nickname, User.phone)
+        .join(User, WalletTransaction.user_id == User.id)
+        .where(where_clause)
+        .order_by(WalletTransaction.created_at.desc(), WalletTransaction.id.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    items = []
+    for transaction, nickname, phone in rows:
+        transaction_type = transaction.type
+        status = transaction.status
+        items.append(
+            AdminWalletTransactionResponse(
+                id=transaction.id,
+                type=transaction_type,
+                title=_transaction_title(transaction_type, status),
+                amount=Decimal(str(transaction.amount)),
+                bonus_amount=Decimal(str(transaction.bonus_amount)),
+                direction=_transaction_direction(transaction_type),
+                status=status,
+                payment_method=transaction.payment_method,
+                balance_after=(
+                    Decimal(str(transaction.balance_after))
+                    if transaction.balance_after is not None
+                    else None
+                ),
+                created_at=transaction.created_at,
+                completed_at=_transaction_completed_at(transaction),
+                order_id=uuid.UUID(transaction.order_id),
+                user_id=uuid.UUID(transaction.user_id),
+                user_nickname=nickname,
+                user_phone=phone,
+            )
+        )
+
+    return AdminWalletTransactionListResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        has_more=offset + len(items) < total,
+    )
+
+
+async def admin_get_statistics(
+    db: AsyncSession,
+    date_start: datetime | None = None,
+    date_end: datetime | None = None,
+) -> AdminWalletStatisticsResponse:
+    """管理端获取钱包统计信息，包括充值、消费、退款金额和活跃用户数."""
+    conditions = []
+    if date_start is not None:
+        conditions.append(WalletTransaction.created_at >= date_start)
+    if date_end is not None:
+        conditions.append(WalletTransaction.created_at <= date_end)
+
+    where_clause = func.and_(*conditions) if conditions else True
+
+    # 按类型分组统计金额
+    stmt = (
+        select(
+            WalletTransaction.type,
+            func.coalesce(func.sum(WalletTransaction.amount), Decimal("0")).label("total_amount"),
+            func.count(WalletTransaction.id).label("count"),
+        )
+        .where(where_clause)
+        .group_by(WalletTransaction.type)
+    )
+    result = await db.execute(stmt)
+    type_stats = {row.type: (row.total_amount, row.count) for row in result.all()}
+
+    total_recharge = type_stats.get("recharge", (Decimal("0"), 0))[0]
+    total_consume = type_stats.get("consume", (Decimal("0"), 0))[0]
+    total_refund = type_stats.get("refund", (Decimal("0"), 0))[0]
+    total_transactions = sum(count for _, count in type_stats.values())
+
+    # 统计活跃用户数
+    active_users_stmt = (
+        select(func.count(func.distinct(WalletTransaction.user_id)))
+        .where(where_clause)
+    )
+    active_users_result = await db.execute(active_users_stmt)
+    active_users = active_users_result.scalar_one() or 0
+
+    return AdminWalletStatisticsResponse(
+        total_recharge=total_recharge,
+        total_consume=total_consume,
+        total_refund=total_refund,
+        net_income=total_recharge - total_consume - total_refund,
+        active_users=active_users,
+        total_transactions=total_transactions,
+    )

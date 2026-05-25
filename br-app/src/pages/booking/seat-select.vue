@@ -58,6 +58,9 @@
       <!-- Seat map card -->
       <view class="seat-section">
         <view class="seat-card">
+          <!-- ViewMode: date/time -->
+          <text v-if="isViewMode" class="card-view-time">{{ selectedDate }} {{ selectedTimeSlot }}</text>
+
           <!-- Card header -->
           <view class="card-header">
             <text class="card-room-name">{{ roomName }}</text>
@@ -103,8 +106,8 @@
                     :class="['seat', seatClass(seat)]"
                     @tap="onTapSeat(seat)"
                   >
-                    <text v-if="isBookedSeat(seat)" class="seat-person">🧑</text>
                     <text class="seat-number">{{ seat.seat_number }}</text>
+                    <text v-if="isBookedSeat(seat)" class="seat-person">🧑</text>
                     <view v-if="!seat.is_available" class="seat-line" />
                   </view>
                 </view>
@@ -614,6 +617,14 @@ export default {
   color: $text-primary;
 }
 
+.card-view-time {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $primary;
+  margin-bottom: 12rpx;
+}
+
 .card-floor {
   font-size: 26rpx;
   color: $text-secondary;
@@ -824,8 +835,6 @@ export default {
 }
 
 .seat-person {
-  position: absolute;
-  top: -12rpx;
   font-size: 20rpx;
   line-height: 1;
 }

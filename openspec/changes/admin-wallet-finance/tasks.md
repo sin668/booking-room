@@ -152,7 +152,7 @@ router = APIRouter(prefix="/api/v1/admin/wallet", tags=["admin-wallet"])
 
 **依赖：** 需安装图标 `@vicons/antd` 中的 `WalletOutlined`
 
-- [ ] 实现
+- [x] 实现
 
 ### 2.3 实现交易流水列表页（含统计卡片 + 表格 + 筛选 + 导出）
 
@@ -196,13 +196,13 @@ router = APIRouter(prefix="/api/v1/admin/wallet", tags=["admin-wallet"])
    - 其他筛选条件变化 → 仅重新请求列表数据
    - `loadDataTable` 函数将筛选参数合并到 BasicTable 的分页参数中
 
-- [ ] 实现
+- [x] 实现
 
 ### 2.4 统计卡片与筛选条件联动
 
 此任务已在 2.3 中一并实现（作为页面的一部分），标记为独立任务以便验证：
 
-- [ ] 验证：修改时间范围筛选后，统计卡片数值同步更新
+- [x] 验证：修改时间范围筛选后，统计卡片数值同步更新（代码层面：`handleDateRangeChange` 同时调用统计和表格刷新）
 
 ### 2.5 端到端验证
 

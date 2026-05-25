@@ -1209,6 +1209,172 @@ must not be used by production recharge crediting.
 
 ---
 
+## 九、管理端 - 钱包管理
+
+管理端钱包接口支持 Bearer Token 或 `X-Admin-Token` 管理员认证，并需要对应 RBAC 权限。
+
+### GET /api/v1/admin/wallet/transactions
+
+分页查询钱包交易流水。
+
+**权限：** `wallet:view`
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | integer | 1 | 页码，最小值为 1 |
+| page_size | integer | 10 | 每页数量 |
+| type | string | - | 流水类型筛选：recharge / consume / refund |
+| status | string | - | 流水状态筛选：pending / completed / failed / cancelled |
+| user_id | string | - | 用户 ID |
+| date_start | date | - | 起始日期，格式 YYYY-MM-DD |
+| date_end | date | - | 截止日期，格式 YYYY-MM-DD |
+
+**响应 200：**
+```json
+{
+  "items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "type": "recharge",
+      "title": "充值到账",
+      "amount": "100.00",
+      "bonus_amount": "30.00",
+      "direction": "income",
+      "status": "completed",
+      "payment_method": "wechat",
+      "balance_after": "386.00",
+      "created_at": "2026-05-17T10:00:00",
+      "completed_at": "2026-05-17T10:01:30",
+      "order_id": "550e8400-e29b-41d4-a716-446655440000",
+      "user_id": "11111111-2222-3333-4444-555555555555",
+      "user_nickname": "学习达人",
+      "user_phone": "13800138000"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 10,
+  "has_more": false
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| items | array | 当前筛选条件下的钱包流水记录 |
+| total | integer | 总记录数 |
+| page | integer | 当前页码 |
+| page_size | integer | 当前每页数量 |
+| has_more | boolean | 是否还有下一页 |
+
+**items 字段：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | string | 流水记录 ID |
+| type | string | 流水类型：recharge / consume / refund |
+| title | string | 展示标题 |
+| amount | decimal string | 流水金额 |
+| bonus_amount | decimal string | 赠送金额 |
+| direction | string | 金额方向，例如 income / outcome |
+| status | string | 流水状态 |
+| payment_method | string \| null | 支付方式 |
+| balance_after | decimal string \| null | 交易后余额 |
+| created_at | datetime | 流水创建时间 |
+| completed_at | datetime \| null | 完成时间 |
+| order_id | string \| null | 关联充值/订单 ID |
+| user_id | string | 用户 ID |
+| user_nickname | string \| null | 用户昵称 |
+| user_phone | string \| null | 用户手机号 |
+
+**错误码：**
+- 401: 未认证
+- 403: 缺少 `wallet:view` 权限
+- 422: 查询参数格式无效
+
+---
+
+### GET /api/v1/admin/wallet/statistics
+
+查询钱包财务统计。
+
+**权限：** `wallet:view`
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| date_start | date | - | 起始日期，格式 YYYY-MM-DD |
+| date_end | date | - | 截止日期，格式 YYYY-MM-DD |
+
+**响应 200：**
+```json
+{
+  "total_recharge": "1200.00",
+  "total_consume": "860.00",
+  "total_refund": "40.00",
+  "net_income": "820.00",
+  "active_users": 18,
+  "total_transactions": 96
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| total_recharge | decimal string | 充值总额 |
+| total_consume | decimal string | 消费总额 |
+| total_refund | decimal string | 退款总额 |
+| net_income | decimal string | 净收入 |
+| active_users | integer | 有交易记录的去重用户数 |
+| total_transactions | integer | 交易总数 |
+
+**错误码：**
+- 401: 未认证
+- 403: 缺少 `wallet:view` 权限
+- 422: 查询参数格式无效
+
+---
+
+### GET /api/v1/admin/wallet/transactions/export
+
+按筛选条件导出钱包交易流水 CSV。导出不分页，单次最多 10000 条记录，超过上限会返回 400，需缩小筛选范围。
+
+**权限：** `wallet:export`
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| type | string | - | 流水类型筛选：recharge / consume / refund |
+| status | string | - | 流水状态筛选：pending / completed / failed / cancelled |
+| user_id | string | - | 用户 ID |
+| date_start | date | - | 起始日期，格式 YYYY-MM-DD |
+| date_end | date | - | 截止日期，格式 YYYY-MM-DD |
+
+**响应 200：** CSV 文件下载。
+
+响应头：
+
+| Header | 说明 |
+|------|------|
+| Content-Type | `text/csv; charset=utf-8-sig` |
+| Content-Disposition | `attachment; filename="wallet_transactions_{date}.csv"` |
+
+CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、金额、余额、状态、支付方式。
+
+**错误码：**
+- 400: 导出数据超过 10000 条上限
+- 401: 未认证
+- 403: 缺少 `wallet:export` 权限
+- 422: 查询参数格式无效
+
+### RBAC 操作说明
+
+`wallet:view` 和 `wallet:export` 权限需要通过管理后台「系统设置 → 菜单权限」或等价数据库运维流程手动配置。建议新增「钱包管理」菜单和「钱包流水」子菜单，将 `wallet:view` 绑定到页面访问权限，并将 `wallet:export` 分配给允许导出 CSV 的角色。
+
+---
+
 ## 九、预约
 
 所有预约接口需要通过 `Authorization` header 传递 Bearer Token。

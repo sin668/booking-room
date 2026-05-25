@@ -216,5 +216,5 @@ router = APIRouter(prefix="/api/v1/admin/wallet", tags=["admin-wallet"])
 ### 3 集成与收尾
 
 - [x] 3.1 API 文档更新（docs/api.md 补充新增的相关接口）
-- [ ] 3.2 代码审查与重构（确保 Clean Architecture 分层、消除重复代码）
+- [x] 3.2 代码审查与重构（确保 Clean Architecture 分层、消除重复代码）
 - [ ] 3.3 全量测试通过（单元测试 + 集成测试，覆盖率 > 80%）

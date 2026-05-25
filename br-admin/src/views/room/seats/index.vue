@@ -13,7 +13,7 @@
           返回
         </n-button>
         <n-text depth="3">|</n-text>
-        <n-text strong>{{ roomName }}</n-text>
+        <n-text strong>{{ roomName || '座位管理' }}</n-text>
       </n-space>
     </n-card>
     <n-card :bordered="false">
@@ -64,13 +64,14 @@
 </template>
 
 <script lang="ts" setup>
-  import { h, reactive, ref, computed } from 'vue';
+  import { h, reactive, ref, computed, onMounted } from 'vue';
   import { useRouter, useRoute } from 'vue-router';
   import { NTag, NButton } from 'naive-ui';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
   import { PlusOutlined, ArrowLeftOutlined } from '@vicons/antd';
   import { getSeatList, deleteSeat, toggleSeatStatus, type SeatItem } from '@/api/seat';
+  import { getRoomById } from '@/api/room';
   import SeatEditModal from './components/SeatEditModal.vue';
   import SeatBulkCreateModal from './components/SeatBulkCreateModal.vue';
 
@@ -78,7 +79,16 @@
   const route = useRoute();
 
   const roomId = computed(() => Number(route.params.id));
-  const roomName = ref('座位管理');
+  const roomName = ref('');
+
+  onMounted(async () => {
+    try {
+      const room = await getRoomById(roomId.value);
+      roomName.value = room.name;
+    } catch {
+      roomName.value = '座位管理';
+    }
+  });
 
   const schemas: FormSchema[] = [
     {

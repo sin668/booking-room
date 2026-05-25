@@ -113,6 +113,11 @@
             onClick: handleDelete.bind(null, record),
             auth: ['room:delete'],
           },
+          {
+            label: '管理座位',
+            onClick: handleManageSeats.bind(null, record),
+            auth: ['seat:view'],
+          },
         ],
         dropDownActions: [
           {
@@ -120,17 +125,10 @@
             key: 'toggleStatus',
             auth: ['room:status'],
           },
-          {
-            label: '管理座位',
-            key: 'manageSeats',
-            auth: ['seat:view'],
-          },
         ],
         select: (key: string) => {
           if (key === 'toggleStatus') {
             handleToggleStatus(record);
-          } else if (key === 'manageSeats') {
-            handleManageSeats(record);
           }
         },
       });

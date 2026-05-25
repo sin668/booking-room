@@ -37,6 +37,7 @@
         options: [
           { label: '全部', value: '' },
           { label: '已确认', value: 'confirmed' },
+          { label: '已完成', value: 'completed' },
           { label: '已取消', value: 'cancelled' },
         ],
       },
@@ -111,11 +112,13 @@
       key: 'status',
       width: 90,
       render(record: BookingItem) {
-        return h(
-          NTag,
-          { type: record.status === 'confirmed' ? 'success' : 'error' },
-          { default: () => (record.status === 'confirmed' ? '已确认' : '已取消') }
-        );
+        const statusMap: Record<string, { type: string; label: string }> = {
+          confirmed: { type: 'success', label: '已确认' },
+          completed: { type: 'info', label: '已完成' },
+          cancelled: { type: 'error', label: '已取消' },
+        };
+        const s = statusMap[record.status] || { type: 'default', label: record.status };
+        return h(NTag, { type: s.type }, { default: () => s.label });
       },
     },
     { title: '创建时间', key: 'created_at', width: 170 },

@@ -50,6 +50,8 @@ MENU_SEEDS = [
     MenuSeed("activity.list", "menu", "活动列表", "activity:view", "list", "ActivityList", "/activity/list/index", None, "GiftOutlined", 51, parent="activity"),
     MenuSeed("booking", "directory", "预约管理", "booking:manage", "booking", "Booking", "LAYOUT", "/booking", "CalendarOutlined", 60),
     MenuSeed("booking.list", "menu", "预约列表", "booking:view", "list", "BookingList", "/booking/list/index", None, "CalendarOutlined", 61, parent="booking"),
+    MenuSeed("wallet", "directory", "钱包管理", "wallet:manage", "wallet", "Wallet", "LAYOUT", "/wallet/transactions", "WalletOutlined", 70),
+    MenuSeed("wallet.transactions", "menu", "钱包流水", "wallet:view", "transactions", "WalletTransactions", "/wallet/transactions", None, "WalletOutlined", 71, parent="wallet"),
 ]
 
 BUTTON_SEEDS = [
@@ -83,6 +85,7 @@ BUTTON_SEEDS = [
     ("activity.list", "activity:delete", "活动-删除"),
     ("activity.list", "activity:status", "活动-状态"),
     ("booking.list", "booking:cancel", "预约-取消"),
+    ("wallet.transactions", "wallet:export", "钱包流水-导出"),
     ("booking.list", "upload:create", "文件-上传"),
 ]
 

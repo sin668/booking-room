@@ -1,14 +1,12 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.redis import get_redis
-from app.models.user import User
 from app.schemas.user import (
     RefreshRequest,
     SendCodeRequest,
@@ -20,6 +18,7 @@ from app.schemas.user import (
 from app.services.auth_service import AuthService
 from app.services.jwt_service import JWTService
 from app.services.sms_service import SMSService
+from app.services.user_profile_service import UserProfileService
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 REFRESH_TOKEN_COOKIE_KEY = "refresh_token"
@@ -164,13 +163,5 @@ async def get_me(
     db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
     """Get the current authenticated user's info."""
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="用户不存在",
-        )
-
+    user = await UserProfileService(db).get_current_user(user_id)
     return UserResponse.model_validate(user)

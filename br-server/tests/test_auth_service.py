@@ -136,6 +136,10 @@ class TestRegister:
         assert result.token_type == "bearer"
         assert len(result.access_token) > 0
         mock_db.add.assert_called_once()
+        added_user = mock_db.add.call_args[0][0]
+        assert added_user.username is not None
+        assert added_user.username[:-5].isalpha()
+        assert added_user.username[-5:].isdigit()
 
     @patch("app.services.sms_service.SMSService")
     async def test_register_duplicate_phone(

@@ -18,6 +18,7 @@ async def test_app_user_defaults_user_type_to_app(db_session):
     await db_session.refresh(user)
 
     assert user.user_type == "app"
+    assert user.username is not None
 
 
 @pytest.mark.asyncio
@@ -34,6 +35,7 @@ async def test_admin_user_sets_user_type_admin(db_session):
     await db_session.refresh(user)
 
     assert user.user_type == "admin"
+    assert user.username is not None
 
 
 @pytest.mark.asyncio
@@ -42,11 +44,13 @@ async def test_phone_uniqueness_constraint(db_session):
     db_session.add_all([
         User(
             phone="1234567890",
+            username="phone_user1",
             nickname="User 1",
             password_hash="hash"
         ),
         User(
             phone="1234567890",
+            username="phone_user2",
             nickname="User 2",
             password_hash="hash"
         )

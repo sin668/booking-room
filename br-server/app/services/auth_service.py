@@ -15,6 +15,7 @@ from app.core.config import Settings
 from app.models.user import User
 from app.schemas.user import TokenResponse, UserCreate, UserLogin
 from app.services.jwt_service import JWTService
+from app.services.username_service import UsernameService
 
 
 class AuthService:
@@ -86,11 +87,13 @@ class AuthService:
             nickname = f"学习者{random.randint(100000, 999999)}"
 
         # --- Step 6: Hash password & create user ---
+        username = await UsernameService(self._db).generate_unique_username()
         password_hash = bcrypt.hashpw(
             data.password.encode("utf-8"), bcrypt.gensalt()
         ).decode("utf-8")
         user = User(
             phone=data.phone,
+            username=username,
             nickname=nickname,
             password_hash=password_hash,
             status="active",

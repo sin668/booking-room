@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from decimal import Decimal
+import random
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Index, Numeric, String, func
@@ -12,6 +13,12 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.admin_role import AdminRole, admin_user_roles
+
+_DEFAULT_USERNAME_NAMES = ("Luna", "Mia", "Noah", "Ava", "Leo", "Ivy", "Eli", "Zoe")
+
+
+def _default_username() -> str:
+    return f"{random.choice(_DEFAULT_USERNAME_NAMES)}{random.randint(10000, 99999)}"
 
 
 class User(Base):
@@ -50,8 +57,13 @@ class User(Base):
         unique=True,
         nullable=True,
     )
-    username: Mapped[str | None] = mapped_column(
+    username: Mapped[str] = mapped_column(
         String(50),
+        default=_default_username,
+        nullable=False,
+    )
+    username_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
         nullable=True,
     )
     email: Mapped[str | None] = mapped_column(

@@ -125,5 +125,9 @@ export function post(url, data) {
   return request({ url, method: 'POST', data })
 }
 
+export function patch(url, data) {
+  return request({ url, method: 'PATCH', data })
+}
+
 export { getToken, getRefreshToken, setToken, setRefreshToken, removeToken, removeRefreshToken, doRefreshToken }
 export default request

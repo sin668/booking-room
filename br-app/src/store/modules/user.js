@@ -9,6 +9,7 @@ import {
   setToken,
 } from '@/utils/request'
 import * as authApi from '@/api/auth'
+import * as userProfileApi from '@/api/userProfile'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -21,6 +22,9 @@ export const useUserStore = defineStore('user', {
     isLoggedIn: (state) => !!state.token,
     nickname: (state) => state.userInfo?.nickname || '',
     phone: (state) => state.userInfo?.phone || '',
+    username: (state) => state.userInfo?.username || '',
+    avatar: (state) => state.userInfo?.avatar || '',
+    usernameUpdatedAt: (state) => state.userInfo?.username_updated_at || null,
   },
 
   actions: {
@@ -59,8 +63,15 @@ export const useUserStore = defineStore('user', {
 
     /** 获取当前用户信息 */
     async fetchUserInfo() {
-      const user = await authApi.getMe()
+      const user = await userProfileApi.getMe()
       this.userInfo = user
+    },
+
+    /** 更新当前用户资料 */
+    async updateProfile(payload) {
+      const user = await userProfileApi.updateMe(payload)
+      this.userInfo = user
+      return user
     },
 
     /** 退出登录 */

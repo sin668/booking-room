@@ -1,0 +1,846 @@
+<template>
+  <view class="page">
+    <view class="nav-bar">
+      <view class="nav-back press-effect" @tap="goBack">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">设置</text>
+      <view class="nav-spacer" />
+    </view>
+
+    <scroll-view scroll-y class="content">
+      <view class="profile-card">
+        <view class="avatar-wrap" @tap="showUnsupported('头像上传暂未开放')">
+          <image v-if="userStore.avatar" class="avatar-img" :src="userStore.avatar" mode="aspectFill" />
+          <view v-else class="avatar-fallback">
+            <text class="avatar-text">{{ avatarText }}</text>
+          </view>
+          <view class="avatar-camera">
+            <text class="camera-text">相</text>
+          </view>
+        </view>
+        <view class="profile-main">
+          <view class="profile-name-row">
+            <text class="profile-name">{{ displayNickname }}</text>
+            <view class="vip-badge">
+              <text class="vip-text">VIP</text>
+            </view>
+          </view>
+          <text class="profile-id">ID: {{ displayUsername || '未设置' }}</text>
+        </view>
+        <view class="edit-icon" @tap="openUsernameEditor">
+          <text class="edit-icon-text">✎</text>
+        </view>
+      </view>
+
+      <view class="section-card">
+        <view class="section-title-wrap">
+          <text class="section-title">个人资料</text>
+        </view>
+        <view class="simple-row press-effect" @tap="showUnsupported('昵称修改暂未开放')">
+          <text class="row-label">昵称</text>
+          <view class="row-value-wrap">
+            <text class="row-value">{{ displayNickname }}</text>
+            <text class="chevron">›</text>
+          </view>
+        </view>
+        <view class="simple-row press-effect" @tap="openUsernameEditor">
+          <text class="row-label">用户名</text>
+          <view class="row-value-wrap">
+            <text class="row-value">{{ displayUsername || '去设置' }}</text>
+            <text class="chevron">›</text>
+          </view>
+        </view>
+        <view class="simple-row press-effect" @tap="showUnsupported('手机号暂不支持在应用内修改')">
+          <text class="row-label">手机号</text>
+          <view class="row-value-wrap">
+            <text class="row-value">{{ maskedPhone }}</text>
+            <text class="chevron">›</text>
+          </view>
+        </view>
+        <view class="simple-row press-effect" @tap="showUnsupported('性别设置暂未开放')">
+          <text class="row-label">性别</text>
+          <view class="row-value-wrap">
+            <text class="row-value muted">未设置</text>
+            <text class="chevron">›</text>
+          </view>
+        </view>
+        <view class="simple-row press-effect" @tap="showUnsupported('生日设置暂未开放')">
+          <text class="row-label">生日</text>
+          <view class="row-value-wrap">
+            <text class="row-value muted">未设置</text>
+            <text class="chevron">›</text>
+          </view>
+        </view>
+        <view class="simple-row press-effect" @tap="showUnsupported('个性签名暂未开放')">
+          <text class="row-label">个性签名</text>
+          <view class="row-value-wrap value-limited">
+            <text class="row-value muted">越努力越幸运</text>
+            <text class="chevron">›</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section-card">
+        <view class="section-title-wrap">
+          <text class="section-title">账号与安全</text>
+        </view>
+        <view class="icon-row press-effect" @tap="showUnsupported('修改密码暂未开放')">
+          <view class="row-icon orange"><text class="row-icon-text">锁</text></view>
+          <text class="row-label">修改密码</text>
+          <text class="chevron">›</text>
+        </view>
+        <view class="icon-row press-effect" @tap="showUnsupported('微信绑定暂未开放')">
+          <view class="row-icon green"><text class="row-icon-text">微</text></view>
+          <text class="row-label">微信绑定</text>
+          <view class="status-pill success"><text class="status-pill-text success-text">已绑定</text></view>
+          <text class="chevron">›</text>
+        </view>
+        <view class="icon-row press-effect" @tap="showUnsupported('实名认证暂未开放')">
+          <view class="row-icon blue"><text class="row-icon-text">证</text></view>
+          <text class="row-label">实名认证</text>
+          <view class="status-pill primary"><text class="status-pill-text primary-text">已认证</text></view>
+          <text class="chevron">›</text>
+        </view>
+        <view class="icon-row press-effect" @tap="showUnsupported('账号注销请联系门店客服')">
+          <view class="row-icon red"><text class="row-icon-text">销</text></view>
+          <text class="row-label danger-text">注销账号</text>
+          <text class="chevron">›</text>
+        </view>
+      </view>
+
+      <view class="section-card">
+        <view class="section-title-wrap">
+          <text class="section-title">通知设置</text>
+        </view>
+        <view class="setting-row">
+          <view class="row-icon blue-soft"><text class="row-icon-text">铃</text></view>
+          <view class="setting-copy">
+            <text class="row-label">预约提醒</text>
+            <text class="row-desc">预约开始前15分钟推送提醒</text>
+          </view>
+          <view class="toggle" :class="{ active: notifications.booking }" @tap="toggleNotify('booking')">
+            <view class="toggle-dot" />
+          </view>
+        </view>
+        <view class="setting-row">
+          <view class="row-icon purple-soft"><text class="row-icon-text">告</text></view>
+          <view class="setting-copy">
+            <text class="row-label">活动通知</text>
+            <text class="row-desc">接收优惠活动和限时促销</text>
+          </view>
+          <view class="toggle" :class="{ active: notifications.activity }" @tap="toggleNotify('activity')">
+            <view class="toggle-dot" />
+          </view>
+        </view>
+        <view class="setting-row">
+          <view class="row-icon green-soft"><text class="row-icon-text">报</text></view>
+          <view class="setting-copy">
+            <text class="row-label">学习周报</text>
+            <text class="row-desc">每周一推送上周学习总结</text>
+          </view>
+          <view class="toggle" :class="{ active: notifications.report }" @tap="toggleNotify('report')">
+            <view class="toggle-dot" />
+          </view>
+        </view>
+        <view class="setting-row">
+          <view class="row-icon yellow-soft"><text class="row-icon-text">到</text></view>
+          <view class="setting-copy">
+            <text class="row-label">到店打卡提醒</text>
+            <text class="row-desc">到达门店附近时自动提醒</text>
+          </view>
+          <view class="toggle" :class="{ active: notifications.arrival }" @tap="toggleNotify('arrival')">
+            <view class="toggle-dot" />
+          </view>
+        </view>
+      </view>
+
+      <view class="section-card">
+        <view class="section-title-wrap">
+          <text class="section-title">通用</text>
+        </view>
+        <view class="setting-row">
+          <view class="row-icon indigo-soft"><text class="row-icon-text">月</text></view>
+          <text class="row-label">深色模式</text>
+          <view class="toggle" :class="{ active: darkMode }" @tap="darkMode = !darkMode">
+            <view class="toggle-dot" />
+          </view>
+        </view>
+        <view class="icon-row press-effect" @tap="showUnsupported('当前仅支持简体中文')">
+          <view class="row-icon cyan-soft"><text class="row-icon-text">文</text></view>
+          <text class="row-label">语言</text>
+          <text class="row-value">简体中文</text>
+          <text class="chevron">›</text>
+        </view>
+        <view class="icon-row press-effect" @tap="showUnsupported('默认门店设置暂未开放')">
+          <view class="row-icon teal-soft"><text class="row-icon-text">店</text></view>
+          <text class="row-label">默认门店</text>
+          <text class="row-value">光谷自习室</text>
+          <text class="chevron">›</text>
+        </view>
+        <view class="icon-row press-effect" @tap="clearCache">
+          <view class="row-icon gray-soft"><text class="row-icon-text">扫</text></view>
+          <text class="row-label">清除缓存</text>
+          <text class="row-value">{{ cacheSize }}</text>
+          <text class="chevron">›</text>
+        </view>
+      </view>
+
+      <view class="section-card">
+        <view class="section-title-wrap">
+          <text class="section-title">关于</text>
+        </view>
+        <view class="icon-row">
+          <view class="row-icon blue"><text class="row-icon-text">i</text></view>
+          <text class="row-label">当前版本</text>
+          <text class="row-value muted">v2.1.0</text>
+        </view>
+        <view class="icon-row press-effect" @tap="showUnsupported('用户协议暂未开放')">
+          <view class="row-icon gray-soft"><text class="row-icon-text">协</text></view>
+          <text class="row-label">用户协议</text>
+          <text class="chevron">›</text>
+        </view>
+        <view class="icon-row press-effect" @tap="showUnsupported('隐私政策暂未开放')">
+          <view class="row-icon gray-soft"><text class="row-icon-text">盾</text></view>
+          <text class="row-label">隐私政策</text>
+          <text class="chevron">›</text>
+        </view>
+        <view class="icon-row press-effect" @tap="showToast('已是最新版本')">
+          <view class="row-icon green-soft"><text class="row-icon-text">更</text></view>
+          <text class="row-label">检查更新</text>
+          <view class="status-pill success"><text class="status-pill-text success-text">已是最新</text></view>
+          <text class="chevron">›</text>
+        </view>
+      </view>
+
+      <button class="logout-btn" @tap="showLogoutSheet = true">退出登录</button>
+      <text class="copyright">去K书 v2.1.0 · © 2024 All Rights Reserved</text>
+    </scroll-view>
+
+    <view v-if="showUsernameSheet" class="sheet-mask" @tap="closeUsernameEditor">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">修改用户名</text>
+        <text class="sheet-desc">用户名修改后 24 小时内不可再次修改</text>
+        <input
+          v-model="usernameDraft"
+          class="username-input"
+          maxlength="32"
+          placeholder="请输入用户名"
+          placeholder-class="input-placeholder"
+          confirm-type="done"
+          @confirm="saveUsername"
+        />
+        <text class="input-hint">仅支持 6-32 位字母、数字或下划线</text>
+        <text v-if="usernameError" class="input-error">{{ usernameError }}</text>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="closeUsernameEditor">取消</button>
+          <button class="sheet-confirm" :loading="savingUsername" :disabled="savingUsername" @tap="saveUsername">保存</button>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="showLogoutSheet" class="sheet-mask" @tap="showLogoutSheet = false">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">确认退出登录？</text>
+        <text class="sheet-desc">退出后需要重新登录才能使用预约功能</text>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="showLogoutSheet = false">取消</button>
+          <button class="sheet-confirm danger" :loading="logoutLoading" :disabled="logoutLoading" @tap="confirmLogout">确认退出</button>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { useUserStore } from '@/store/modules/user'
+
+const USERNAME_PATTERN = /^[A-Za-z0-9_]{6,32}$/
+
+export default {
+  data() {
+    return {
+      userStore: useUserStore(),
+      notifications: {
+        booking: true,
+        activity: true,
+        report: false,
+        arrival: true,
+      },
+      darkMode: false,
+      cacheSize: '23.6 MB',
+      showUsernameSheet: false,
+      usernameDraft: '',
+      usernameError: '',
+      savingUsername: false,
+      showLogoutSheet: false,
+      logoutLoading: false,
+    }
+  },
+  computed: {
+    displayNickname() {
+      return this.userStore.nickname || '学习达人'
+    },
+    displayUsername() {
+      return this.userStore.username || ''
+    },
+    avatarText() {
+      return (this.displayNickname || this.userStore.phone || 'U').charAt(0).toUpperCase()
+    },
+    maskedPhone() {
+      const phone = this.userStore.phone || ''
+      if (!phone || phone.length < 7) return phone || '未绑定'
+      return `${phone.slice(0, 3)}****${phone.slice(-4)}`
+    },
+  },
+  onShow() {
+    if (this.userStore.isLoggedIn) {
+      this.userStore.fetchUserInfo().catch(() => {})
+    }
+  },
+  methods: {
+    goBack() {
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack()
+      } else {
+        uni.switchTab({ url: '/pages/profile/index' })
+      }
+    },
+    showToast(title) {
+      uni.showToast({ title, icon: 'none' })
+    },
+    showUnsupported(title) {
+      this.showToast(title)
+    },
+    toggleNotify(key) {
+      this.notifications[key] = !this.notifications[key]
+    },
+    clearCache() {
+      this.cacheSize = '0 MB'
+      this.showToast('缓存已清除')
+    },
+    openUsernameEditor() {
+      this.usernameDraft = this.displayUsername
+      this.usernameError = ''
+      this.showUsernameSheet = true
+    },
+    closeUsernameEditor() {
+      if (this.savingUsername) return
+      this.showUsernameSheet = false
+      this.usernameError = ''
+    },
+    async saveUsername() {
+      const username = this.usernameDraft.trim()
+      this.usernameDraft = username
+      if (!USERNAME_PATTERN.test(username)) {
+        this.usernameError = '用户名仅支持 6-32 位字母、数字或下划线'
+        return
+      }
+      if (username === this.displayUsername) {
+        this.showUsernameSheet = false
+        return
+      }
+
+      this.savingUsername = true
+      this.usernameError = ''
+      try {
+        await this.userStore.updateProfile({ username })
+        this.showUsernameSheet = false
+        this.showToast('用户名已更新')
+      } catch (error) {
+        this.usernameError = this.mapUsernameError(error)
+      } finally {
+        this.savingUsername = false
+      }
+    },
+    mapUsernameError(error) {
+      const detail = typeof error?.detail === 'string' ? error.detail : ''
+      if (error?.retry_after_seconds !== undefined) {
+        return `用户名修改冷却中，请在 ${this.formatCooldown(error.retry_after_seconds)} 后再试`
+      }
+      if (detail.includes('已存在')) return '该用户名已存在'
+      if (detail.includes('6-32') || detail.includes('下划线')) return '用户名仅支持 6-32 位字母、数字或下划线'
+      return detail || '用户名保存失败，请稍后再试'
+    },
+    formatCooldown(secondsValue) {
+      const totalMinutes = Math.max(1, Math.ceil(Number(secondsValue || 0) / 60))
+      const hours = Math.floor(totalMinutes / 60)
+      const minutes = totalMinutes % 60
+      if (hours > 0 && minutes > 0) return `${hours} 小时 ${minutes} 分钟`
+      if (hours > 0) return `${hours} 小时`
+      return `${minutes} 分钟`
+    },
+    async confirmLogout() {
+      this.logoutLoading = true
+      try {
+        await this.userStore.logout()
+        this.showLogoutSheet = false
+        uni.reLaunch({ url: '/pages/login/login' })
+      } finally {
+        this.logoutLoading = false
+      }
+    },
+  },
+}
+</script>
+
+<style lang="scss" scoped>
+.page {
+  min-height: 100vh;
+  background: $bg-color;
+  color: $text-primary;
+}
+
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  height: 96rpx;
+  padding: 28rpx 28rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $white;
+  border-bottom: 1rpx solid rgba(229, 231, 235, 0.9);
+}
+
+.nav-back,
+.nav-spacer {
+  width: 64rpx;
+  height: 64rpx;
+}
+
+.nav-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-text {
+  font-size: 52rpx;
+  line-height: 52rpx;
+  color: $text-primary;
+}
+
+.nav-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.content {
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 120rpx 0 40rpx;
+}
+
+.profile-card,
+.section-card {
+  margin: 24rpx 32rpx 0;
+  background: $white;
+  border-radius: 32rpx;
+  box-shadow: $shadow-sm;
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  padding: 32rpx;
+  gap: 24rpx;
+}
+
+.avatar-wrap {
+  position: relative;
+  width: 120rpx;
+  height: 120rpx;
+  flex-shrink: 0;
+}
+
+.avatar-img,
+.avatar-fallback {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $primary, $purple);
+}
+
+.avatar-text {
+  color: $white;
+  font-size: 42rpx;
+  font-weight: 800;
+}
+
+.avatar-camera {
+  position: absolute;
+  right: -2rpx;
+  bottom: -2rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 20rpx;
+  background: rgba(45, 52, 54, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid $white;
+}
+
+.camera-text {
+  font-size: 18rpx;
+  color: $white;
+}
+
+.profile-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.profile-name {
+  max-width: 280rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vip-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  background: #facc15;
+}
+
+.vip-text {
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #854d0e;
+}
+
+.profile-id {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: $text-muted;
+}
+
+.edit-icon {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-icon-text {
+  color: $primary;
+  font-size: 30rpx;
+}
+
+.section-card {
+  overflow: hidden;
+}
+
+.section-title-wrap {
+  padding: 24rpx 32rpx 6rpx;
+}
+
+.section-title {
+  color: #9ca3af;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.simple-row,
+.icon-row,
+.setting-row {
+  min-height: 104rpx;
+  padding: 0 32rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.row-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  color: $text-primary;
+}
+
+.row-value-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.row-value {
+  font-size: 26rpx;
+  color: $text-secondary;
+  max-width: 260rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value-limited {
+  max-width: 340rpx;
+}
+
+.muted {
+  color: $text-muted;
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: #d1d5db;
+  font-size: 38rpx;
+  line-height: 38rpx;
+}
+
+.row-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.row-icon-text {
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.orange { background: #fff7ed; color: #f97316; }
+.green { background: rgba(7, 193, 96, 0.1); color: $success; }
+.blue { background: rgba(79, 110, 247, 0.1); color: $primary; }
+.red { background: #fef2f2; color: #f87171; }
+.blue-soft { background: #eff6ff; color: #3b82f6; }
+.purple-soft { background: #f5f3ff; color: #8b5cf6; }
+.green-soft { background: #f0fdf4; color: #22c55e; }
+.yellow-soft { background: #fefce8; color: #eab308; }
+.indigo-soft { background: #eef2ff; color: #6366f1; }
+.cyan-soft { background: #ecfeff; color: #06b6d4; }
+.teal-soft { background: #f0fdfa; color: #14b8a6; }
+.gray-soft { background: #f3f4f6; color: #6b7280; }
+.danger-text { color: #f87171; }
+
+.status-pill {
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+}
+
+.status-pill.success {
+  background: #f0fdf4;
+}
+
+.status-pill.primary {
+  background: $primary-light;
+}
+
+.status-pill-text {
+  font-size: 22rpx;
+}
+
+.success-text { color: #22c55e; }
+.primary-text { color: $primary; }
+
+.setting-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.setting-copy .row-label {
+  flex: none;
+}
+
+.row-desc {
+  color: $text-muted;
+  font-size: 20rpx;
+}
+
+.toggle {
+  width: 88rpx;
+  height: 52rpx;
+  padding: 4rpx;
+  border-radius: 26rpx;
+  background: #d1d5db;
+  transition: background 0.2s ease;
+  box-sizing: border-box;
+}
+
+.toggle-dot {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 22rpx;
+  background: $white;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.16);
+  transition: transform 0.2s ease;
+}
+
+.toggle.active {
+  background: $primary;
+}
+
+.toggle.active .toggle-dot {
+  transform: translateX(36rpx);
+}
+
+.logout-btn {
+  margin: 48rpx 32rpx 24rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 28rpx;
+  color: #f87171;
+  background: $white;
+  font-size: 28rpx;
+  font-weight: 700;
+  box-shadow: 0 8rpx 28rpx rgba(225, 112, 85, 0.16);
+  border: none;
+
+  &::after {
+    border: none;
+  }
+}
+
+.copyright {
+  display: block;
+  text-align: center;
+  font-size: 20rpx;
+  color: $text-muted;
+  padding-bottom: 40rpx;
+}
+
+.sheet-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.sheet {
+  width: 100%;
+  padding: 20rpx 40rpx 56rpx;
+  border-radius: 40rpx 40rpx 0 0;
+  background: $white;
+  box-sizing: border-box;
+}
+
+.sheet-handle {
+  width: 80rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: #e5e7eb;
+  margin: 0 auto 32rpx;
+}
+
+.sheet-title {
+  display: block;
+  text-align: center;
+  font-size: 34rpx;
+  line-height: 44rpx;
+  font-weight: 800;
+  color: $text-primary;
+}
+
+.sheet-desc {
+  display: block;
+  margin-top: 12rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: $text-secondary;
+}
+
+.username-input {
+  height: 96rpx;
+  margin-top: 36rpx;
+  padding: 0 28rpx;
+  border-radius: 20rpx;
+  background: #f7f8fb;
+  color: $text-primary;
+  font-size: 30rpx;
+  box-sizing: border-box;
+}
+
+.input-placeholder,
+.input-hint {
+  color: $text-muted;
+}
+
+.input-hint {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 24rpx;
+}
+
+.input-error {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: $danger;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 40rpx;
+}
+
+.sheet-cancel,
+.sheet-confirm {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 22rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+}
+
+.sheet-cancel {
+  background: #f3f4f6;
+  color: $text-secondary;
+}
+
+.sheet-confirm {
+  background: $primary;
+  color: $white;
+}
+
+.sheet-confirm.danger {
+  background: #f87171;
+}
+
+.press-effect:active {
+  transform: scale(0.98);
+}
+</style>

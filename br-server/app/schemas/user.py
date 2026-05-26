@@ -53,6 +53,7 @@ class UserResponse(BaseModel):
     status: str
     user_type: str
     username: str | None = None
+    username_updated_at: datetime | None = None
     email: str | None = None
     mobile: str | None = None
     avatar: str | None = None
@@ -64,3 +65,25 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserProfileResponse(BaseModel):
+    id: UUID
+    phone: str | None = None
+    username: str
+    username_updated_at: datetime | None = None
+    nickname: str | None = None
+    avatar: str | None = None
+    status: str
+    user_type: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserProfileUpdate(BaseModel):
+    username: str | None = Field(None, min_length=6, max_length=32)
+    nickname: str | None = Field(None, max_length=50)
+    avatar: str | None = Field(None, max_length=512)
+
+    model_config = ConfigDict(extra="forbid")

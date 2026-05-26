@@ -77,7 +77,7 @@ Base URL: `http://localhost:8000`
 }
 ```
 
-同时通过 HttpOnly Cookie 设置 `refresh_token`（有效期 7 天）。
+同时通过 HttpOnly Cookie 设置 `refresh_token`（有效期 7 天）。注册流程会自动生成全局唯一用户名；客户端可在注册成功后请求 `GET /api/v1/users/me` 获取 `username` 和 `username_updated_at`。
 
 **错误码：**
 - 400: 验证码无效 / 邀请码无效
@@ -175,8 +175,12 @@ Authorization: Bearer <access_token>
 {
   "id": "uuid-string",
   "phone": "138****8000",
+  "username": "Luna48392",
+  "username_updated_at": null,
   "nickname": "学习达人",
+  "avatar": null,
   "status": "active",
+  "user_type": "app",
   "wechat_openid": null,
   "invite_code": null,
   "created_at": "2026-04-17T00:00:00"
@@ -193,7 +197,7 @@ Authorization: Bearer <access_token>
 
 ### GET /api/v1/users/me
 
-获取当前登录用户信息。与 `/auth/me` 功能相同。
+获取当前登录用户资料。该接口是小程序和 App 读取个人资料的首选接口；`/api/v1/auth/me` 仅保留为认证兼容接口。
 
 **认证：** Bearer Token
 
@@ -207,17 +211,111 @@ Authorization: Bearer <access_token>
 {
   "id": "uuid-string",
   "phone": "13800138000",
+  "username": "Luna48392",
+  "username_updated_at": "2026-04-17T08:30:00",
   "nickname": "学习达人",
+  "avatar": "https://example.com/avatar.png",
   "status": "active",
-  "wechat_openid": null,
-  "invite_code": null,
+  "user_type": "app",
   "created_at": "2026-04-17T00:00:00"
 }
 ```
 
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | string | 用户 ID |
+| phone | string | 当前用户手机号 |
+| username | string | 全局唯一用户名 |
+| username_updated_at | string \| null | 最近一次成功修改用户名的时间；未修改过时为 null |
+| nickname | string \| null | 昵称 |
+| avatar | string \| null | 头像 URL |
+| status | string | 用户状态 |
+| user_type | string | 用户类型，用户端为 `app` |
+| created_at | string | 创建时间 |
+
 **错误码：**
 - 401: 未认证
 - 404: 用户不存在
+
+---
+
+### PATCH /api/v1/users/me
+
+更新当前登录用户资料。仅允许更新安全资料字段：`username`、`nickname`、`avatar`。不能通过该接口修改 `phone`、`status`、`user_type`、`roles`、`balance`、密码或 Token 相关字段。
+
+**认证：** Bearer Token
+
+**请求头：**
+```
+Authorization: Bearer <access_token>
+```
+
+**请求体：**
+```json
+{
+  "username": "LunaStudy01",
+  "nickname": "学习达人",
+  "avatar": "https://example.com/avatar.png"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| username | string | 否 | 用户名，6-32 位字母、数字或下划线 |
+| nickname | string | 否 | 昵称 |
+| avatar | string | 否 | 头像 URL |
+
+**响应 200：**
+```json
+{
+  "id": "uuid-string",
+  "phone": "13800138000",
+  "username": "LunaStudy01",
+  "username_updated_at": "2026-04-17T08:30:00",
+  "nickname": "学习达人",
+  "avatar": "https://example.com/avatar.png",
+  "status": "active",
+  "user_type": "app",
+  "created_at": "2026-04-17T00:00:00"
+}
+```
+
+**错误响应示例：**
+
+HTTP 401 未认证：
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+HTTP 409 用户名重复：
+```json
+{
+  "detail": "该用户名已存在"
+}
+```
+
+HTTP 422 用户名格式无效或提交受保护字段：
+```json
+{
+  "detail": "用户名仅支持 6-32 位字母、数字或下划线"
+}
+```
+
+HTTP 429 用户名修改冷却中：
+```json
+{
+  "detail": "用户名修改后 24 小时内不可再次修改",
+  "retry_after_seconds": 43200
+}
+```
+
+**用户名规则：**
+- 注册时默认生成用户名，格式为随机英文名 + 5 位数字，例如 `Luna48392`。
+- 用户主动修改用户名时，只允许 6-32 位英文字母、数字或下划线，正则为 `^[A-Za-z0-9_]{6,32}$`。
+- 用户名在所有用户类型中全局唯一。
+- 每次成功修改用户名后进入滚动 24 小时冷却期；冷却期内再次修改用户名返回 HTTP 429，并在响应中包含 `retry_after_seconds`。
 
 ---
 

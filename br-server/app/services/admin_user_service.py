@@ -19,6 +19,7 @@ from app.schemas.admin_user_management import (
     AdminUserListResponse,
     AdminUserUpdate,
 )
+from app.services.username_service import UsernameService
 
 
 class AdminUserService:
@@ -87,6 +88,10 @@ class AdminUserService:
         if data.user_type == "admin" and not data.username:
             raise HTTPException(status_code=400, detail="admin用户需要用户名")
 
+        username = data.username
+        if data.user_type == "app" and not username:
+            username = await UsernameService(self._db).generate_unique_username()
+
         # Check uniqueness
         if data.phone:
             existing = await self._db.scalar(
@@ -94,9 +99,9 @@ class AdminUserService:
             )
             if existing:
                 raise HTTPException(status_code=409, detail="该手机号已注册")
-        if data.username:
+        if username:
             existing = await self._db.scalar(
-                select(User).where(User.username == data.username)
+                select(User).where(User.username == username)
             )
             if existing:
                 raise HTTPException(status_code=409, detail="该用户名已存在")
@@ -105,8 +110,8 @@ class AdminUserService:
         user = User(
             user_type=data.user_type,
             phone=data.phone,
-            username=data.username,
-            nickname=data.nickname or data.username or data.phone or "",
+            username=username,
+            nickname=data.nickname or username or data.phone or "",
             password_hash=password_hash,
         )
         self._db.add(user)

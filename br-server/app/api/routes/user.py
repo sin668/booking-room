@@ -1,30 +1,42 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id
 from app.core.database import get_db
-from app.models.user import User
-from app.schemas.user import UserResponse
+from app.schemas.user import UserProfileResponse, UserProfileUpdate
+from app.services.user_profile_service import UserProfileService, UsernameCooldownError
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserProfileResponse)
 async def get_me(
     user_id: uuid.UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
-) -> UserResponse:
+) -> UserProfileResponse:
     """Get the current authenticated user's info."""
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
+    user = await UserProfileService(db).get_current_user(user_id)
+    return UserProfileResponse.model_validate(user)
 
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="用户不存在",
+
+@router.patch("/me", response_model=UserProfileResponse)
+async def update_me(
+    data: UserProfileUpdate,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> UserProfileResponse | JSONResponse:
+    """Update the current authenticated user's safe profile fields."""
+    try:
+        user = await UserProfileService(db).update_profile(user_id, data)
+    except UsernameCooldownError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={
+                "detail": exc.detail,
+                "retry_after_seconds": exc.retry_after_seconds,
+            },
         )
-
-    return UserResponse.model_validate(user)
+    return UserProfileResponse.model_validate(user)

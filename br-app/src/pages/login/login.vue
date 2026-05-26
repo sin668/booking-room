@@ -559,6 +559,9 @@ function mapWechatLoginError(error) {
 
   const message = error?.message || error?.errMsg || ''
   const text = message
+  if (text.includes('webapi_getwxaasyncsecinfo')) {
+    return '微信开发者工具未使用真实小程序 AppID，请重新构建并导入项目'
+  }
   if (text.includes('provider') || text.includes('support') || text.includes('不支持')) {
     return '当前环境不支持微信登录，请使用手机号登录'
   }

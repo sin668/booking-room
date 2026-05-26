@@ -262,9 +262,10 @@ async def test_admin_get_statistics_aggregates_totals_and_active_users(
 ) -> None:
     type_stats_result = MagicMock()
     type_stats_result.all.return_value = [
-        SimpleNamespace(type="recharge", total_amount=Decimal("500.00"), count=3),
-        SimpleNamespace(type="consume", total_amount=Decimal("120.00"), count=2),
-        SimpleNamespace(type="refund", total_amount=Decimal("20.00"), count=1),
+        SimpleNamespace(type="recharge", status="completed", total_amount=Decimal("500.00"), count=2),
+        SimpleNamespace(type="recharge", status="pending", total_amount=Decimal("300.00"), count=1),
+        SimpleNamespace(type="consume", status="completed", total_amount=Decimal("120.00"), count=2),
+        SimpleNamespace(type="refund", status="completed", total_amount=Decimal("20.00"), count=1),
     ]
     mock_db.execute = AsyncMock(
         side_effect=[
@@ -285,6 +286,8 @@ async def test_admin_get_statistics_aggregates_totals_and_active_users(
     assert result.net_income == Decimal("100.00")
     assert result.active_users == 2
     assert result.total_transactions == 6
+    stats_stmt = mock_db.execute.await_args_list[0].args[0]
+    assert "wallet_transactions.status" in str(stats_stmt)
     active_users_stmt = mock_db.execute.await_args_list[1].args[0]
     assert "count(distinct(wallet_transactions.user_id))" in str(active_users_stmt)
 

@@ -633,19 +633,24 @@ async def admin_get_statistics(
     stmt = (
         select(
             WalletTransaction.type,
+            WalletTransaction.status,
             func.coalesce(func.sum(WalletTransaction.amount), Decimal("0")).label("total_amount"),
             func.count(WalletTransaction.id).label("count"),
         )
         .where(*conditions)
-        .group_by(WalletTransaction.type)
+        .group_by(WalletTransaction.type, WalletTransaction.status)
     )
     result = await db.execute(stmt)
-    type_stats = {row.type: (row.total_amount, row.count) for row in result.all()}
+    rows = result.all()
 
-    total_recharge = type_stats.get("recharge", (Decimal("0"), 0))[0]
-    total_consume = type_stats.get("consume", (Decimal("0"), 0))[0]
-    total_refund = type_stats.get("refund", (Decimal("0"), 0))[0]
-    total_transactions = sum(count for _, count in type_stats.values())
+    total_recharge = sum(
+        row.total_amount
+        for row in rows
+        if row.type == "recharge" and row.status == "completed"
+    )
+    total_consume = sum(row.total_amount for row in rows if row.type == "consume")
+    total_refund = sum(row.total_amount for row in rows if row.type == "refund")
+    total_transactions = sum(row.count for row in rows)
 
     # 统计活跃用户数
     active_users_stmt = (

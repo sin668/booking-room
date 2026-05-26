@@ -22,6 +22,27 @@ export function login(data) {
 }
 
 /**
+ * 微信快速登录
+ */
+export function wechatLogin(data) {
+  return post('/api/v1/auth/wechat-login', data)
+}
+
+/**
+ * 微信手机号授权绑定
+ */
+export function bindWechatPhone(data) {
+  return post('/api/v1/auth/wechat/bind-phone', data)
+}
+
+/**
+ * 短信备用绑定手机号
+ */
+export function bindPhoneBySms(data) {
+  return post('/api/v1/auth/wechat/bind-phone/sms', data)
+}
+
+/**
  * 刷新 Token
  */
 export function refreshToken() {

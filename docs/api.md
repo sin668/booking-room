@@ -72,6 +72,7 @@ Base URL: `http://localhost:8000`
 ```json
 {
   "access_token": "eyJhbG...",
+  "refresh_token": "eyJhbG...",
   "token_type": "bearer",
   "expires_in": 900
 }
@@ -102,6 +103,7 @@ Base URL: `http://localhost:8000`
 ```json
 {
   "access_token": "eyJhbG...",
+  "refresh_token": "eyJhbG...",
   "token_type": "bearer",
   "expires_in": 900
 }
@@ -112,6 +114,246 @@ Base URL: `http://localhost:8000`
 **错误码：**
 - 401: 手机号或密码错误
 - 403: 账号已被禁用
+
+---
+
+### POST /api/v1/auth/wechat-login
+
+微信快速登录。小程序端提交 `uni.login` 获取的微信登录 code，后端通过微信接口换取 OpenID，并签发与现有用户登录一致的 `TokenResponse`。
+
+**认证：** 无需 Bearer Token
+
+**请求体：**
+```json
+{
+  "code": "wx-login-code"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| code | string | 是 | 微信登录 code；有效期较短，客户端应在每次登录时重新获取 |
+
+**响应 200：**
+```json
+{
+  "access_token": "eyJhbG...",
+  "refresh_token": "eyJhbG...",
+  "token_type": "bearer",
+  "expires_in": 900
+}
+```
+
+同时通过 HttpOnly Cookie 设置 `refresh_token`。若 OpenID 已绑定用户，响应为该用户的登录会话；若 OpenID 未绑定用户，后端创建 `phone = null` 的 app 用户，写入 `wechat_openid`，生成全局唯一 username 和默认昵称后签发 token。响应不得包含微信 `session_key`。
+
+**错误码：**
+- 400: 微信登录 code 无效、过期或被微信接口拒绝；客户端应提示“微信登录已过期，请重试”
+- 401: 不适用；该接口不要求 Bearer Token，认证失败通过微信 code 校验错误返回 400
+- 403: OpenID 已绑定的用户不可登录或账号不可用
+- 409: 不适用；该接口只做 OpenID 登录或创建微信用户，不执行手机号绑定或账号合并
+- 503: 微信登录配置缺失或微信服务不可用；客户端可引导用户使用手机号登录
+- 422: 参数校验失败
+
+**错误示例：**
+
+HTTP 400：
+```json
+{
+  "detail": "微信登录已过期，请重试"
+}
+```
+
+HTTP 401：不适用。该接口无需 Bearer Token。
+
+HTTP 403：
+```json
+{
+  "detail": "账号不可用"
+}
+```
+
+HTTP 409：不适用。该接口不处理手机号冲突或账号合并冲突。
+
+HTTP 503：
+```json
+{
+  "detail": "微信登录暂不可用"
+}
+```
+
+---
+
+### POST /api/v1/auth/wechat/bind-phone
+
+通过微信手机号授权绑定手机号。适用于已登录但尚未绑定手机号的微信用户；手机号已属于已有账号时，按受限合并规则处理。
+
+**认证：** Bearer Token
+
+**请求头：**
+```
+Authorization: Bearer <access_token>
+```
+
+**请求体：**
+```json
+{
+  "code": "wx-phone-code"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| code | string | 是 | 微信手机号授权 code，用于后端向微信换取手机号 |
+
+**响应 200：**
+
+成功统一返回 `TokenResponse`；未触发账号合并时 token 属于当前用户，触发账号合并时 token 属于已有手机号主账号：
+```json
+{
+  "access_token": "eyJhbG...",
+  "refresh_token": "eyJhbG...",
+  "token_type": "bearer",
+  "expires_in": 900
+}
+```
+
+手机号未占用时，后端将手机号绑定到当前用户并签发新的 `TokenResponse`。手机号已属于已有 app 用户时，仅当当前用户是 `phone = null` 且 `wechat_openid` 非空的微信临时账号、目标手机号账号未绑定其他 OpenID、且临时账号没有余额、订单、优惠券等资产，才允许把当前 `wechat_openid` 合并到已有手机号账号，并为主账号签发新的 `TokenResponse`。
+
+**错误码：**
+- 400: 微信手机号授权 code 无效、过期或被微信接口拒绝；客户端应提示“手机号授权已过期，请重试”
+- 401: 未认证 / Token 已过期或失效
+- 403: 当前用户不可登录或账号不可用
+- 409: 目标手机号已被其他账号占用且不满足合并条件 / 目标手机号账号已绑定不同 OpenID / 临时账号存在资产，拒绝自动合并
+- 503: 微信手机号授权服务不可用
+- 422: 参数校验失败
+
+**错误示例：**
+
+HTTP 400：
+```json
+{
+  "detail": "手机号授权已过期，请重试"
+}
+```
+
+HTTP 401：
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+HTTP 403：
+```json
+{
+  "detail": "账号不可用"
+}
+```
+
+HTTP 409：
+```json
+{
+  "detail": "该手机号已绑定其他微信账号，无法合并"
+}
+```
+
+HTTP 503：
+```json
+{
+  "detail": "微信手机号授权暂不可用"
+}
+```
+
+---
+
+### POST /api/v1/auth/wechat/bind-phone/sms
+
+通过短信验证码绑定手机号，作为微信手机号授权失败或不可用时的备用路径。绑定和账号合并规则与微信手机号授权绑定一致，手机号来源改为短信验证码校验。
+
+**认证：** Bearer Token
+
+**请求头：**
+```
+Authorization: Bearer <access_token>
+```
+
+**请求体：**
+```json
+{
+  "phone": "13800138000",
+  "sms_code": "123456"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| phone | string | 是 | 待绑定手机号，11 位，以 1 开头 |
+| sms_code | string | 是 | 6 位短信验证码 |
+
+**响应 200：**
+
+成功统一返回 `TokenResponse`；未触发账号合并时 token 属于当前用户，触发账号合并时 token 属于已有手机号主账号：
+```json
+{
+  "access_token": "eyJhbG...",
+  "refresh_token": "eyJhbG...",
+  "token_type": "bearer",
+  "expires_in": 900
+}
+```
+
+手机号未占用时，后端将手机号绑定到当前用户并签发新的 `TokenResponse`。手机号已属于已有 app 用户时，仅当当前用户是无手机号微信临时账号且满足受限合并条件，才允许把当前 `wechat_openid` 绑定到已有手机号账号，并为主账号签发新的 `TokenResponse`。
+
+**错误码：**
+- 400: 短信验证码无效或已过期 / 验证码校验失败
+- 401: 未认证 / Token 已过期或失效
+- 403: 当前用户不可登录或账号不可用
+- 409: 目标手机号已被其他账号占用且不满足合并条件 / 目标手机号账号已绑定不同 OpenID / 临时账号存在资产，拒绝自动合并
+- 503: 短信验证码服务不可用
+- 422: 手机号格式不正确 / 参数校验失败
+
+**错误示例：**
+
+HTTP 400：
+```json
+{
+  "detail": "短信验证码无效或已过期"
+}
+```
+
+HTTP 401：
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+HTTP 403：
+```json
+{
+  "detail": "账号不可用"
+}
+```
+
+HTTP 409：
+```json
+{
+  "detail": "临时微信账号存在资产，无法自动合并"
+}
+```
+
+HTTP 503：
+```json
+{
+  "detail": "短信验证码服务暂不可用"
+}
+```
+
+---
+
+### 微信快速登录回滚说明
+
+回滚微信快速登录能力时，应关闭小程序微信登录入口和后端微信登录、微信手机号绑定、短信备用绑定接口；已写入的 `users.wechat_openid` 数据应保留，不作为回滚清理对象，避免破坏已经建立的微信绑定关系。手机号登录、密码登录和 refresh/logout 流程继续按原认证接口使用。
 
 ---
 
@@ -130,6 +372,7 @@ Base URL: `http://localhost:8000`
 ```json
 {
   "access_token": "eyJhbG...",
+  "refresh_token": "eyJhbG...",
   "token_type": "bearer",
   "expires_in": 900
 }

@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     WECHAT_PAY_NOTIFY_URL: str = ""
     WECHAT_PAY_API_BASE_URL: str = "https://api.mch.weixin.qq.com"
 
+    # WeChat mini program login
+    WECHAT_MINI_LOGIN_ENABLED: bool = False
+    WECHAT_MINI_APPID: str = ""
+    WECHAT_MINI_SECRET: str = ""
+    WECHAT_MINI_API_BASE_URL: str = "https://api.weixin.qq.com"
+    WECHAT_MINI_REQUEST_TIMEOUT_SECONDS: float = 5.0
+
     # Cookie
     COOKIE_SECURE: bool = False
 
@@ -89,6 +96,44 @@ class Settings(BaseSettings):
             )
         if len(self.WECHAT_PAY_API_V3_KEY.encode("utf-8")) != 32:
             raise ValueError("Invalid WeChat Pay configuration: WECHAT_PAY_API_V3_KEY")
+
+    @property
+    def wechat_mini_missing_settings(self) -> list[str]:
+        """Return missing mini program login settings without exposing values."""
+        if not self.WECHAT_MINI_LOGIN_ENABLED:
+            return []
+
+        required = {
+            "WECHAT_MINI_APPID": self.WECHAT_MINI_APPID,
+            "WECHAT_MINI_SECRET": self.WECHAT_MINI_SECRET,
+            "WECHAT_MINI_API_BASE_URL": self.WECHAT_MINI_API_BASE_URL,
+        }
+        return [name for name, value in required.items() if not value]
+
+    @property
+    def is_wechat_mini_login_usable(self) -> bool:
+        """Whether WeChat mini program login is enabled and configured."""
+        return (
+            self.WECHAT_MINI_LOGIN_ENABLED
+            and not self.wechat_mini_missing_settings
+            and self.WECHAT_MINI_REQUEST_TIMEOUT_SECONDS > 0
+        )
+
+    def require_wechat_mini_login_usable(self) -> None:
+        """Raise a sanitized error if WeChat mini program login cannot be used."""
+        if not self.WECHAT_MINI_LOGIN_ENABLED:
+            raise ValueError("WeChat mini program login is disabled")
+        missing = self.wechat_mini_missing_settings
+        if missing:
+            raise ValueError(
+                "Missing WeChat mini program login configuration: "
+                + ", ".join(sorted(missing))
+            )
+        if self.WECHAT_MINI_REQUEST_TIMEOUT_SECONDS <= 0:
+            raise ValueError(
+                "Invalid WeChat mini program login configuration: "
+                "WECHAT_MINI_REQUEST_TIMEOUT_SECONDS"
+            )
 
 
 settings = Settings()

@@ -138,7 +138,7 @@ sequenceDiagram
     S->>D: 查找手机号归属
     alt 手机号未占用
         S->>D: 更新当前用户phone
-        S-->>B: 当前用户TokenResponse或用户资料
+        S-->>B: 当前用户TokenResponse
     else 手机号属于已有账号且当前用户是微信临时账号
         S->>D: 将wechat_openid绑定到已有手机号账号
         S->>D: 失效临时账号refresh token并禁用临时账号

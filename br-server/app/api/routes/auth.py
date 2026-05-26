@@ -14,11 +14,15 @@ from app.schemas.user import (
     UserCreate,
     UserLogin,
     UserResponse,
+    WechatLoginRequest,
+    WechatPhoneBindRequest,
+    WechatSMSBindRequest,
 )
 from app.services.auth_service import AuthService
 from app.services.jwt_service import JWTService
 from app.services.sms_service import SMSService
 from app.services.user_profile_service import UserProfileService
+from app.services.wechat_auth_service import WechatAuthService
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 REFRESH_TOKEN_COOKIE_KEY = "refresh_token"
@@ -89,6 +93,62 @@ async def login(
     if token_response.refresh_token:
         _set_refresh_token_cookie(response, token_response.refresh_token)
 
+    return token_response
+
+
+@router.post("/wechat-login", response_model=TokenResponse)
+async def wechat_login(
+    body: WechatLoginRequest,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+) -> TokenResponse:
+    """Authenticate or create an app user with a WeChat mini program code."""
+    token_response = await WechatAuthService(
+        db=db,
+        redis=redis,
+        config=settings,
+    ).wechat_login(body.code)
+    if token_response.refresh_token:
+        _set_refresh_token_cookie(response, token_response.refresh_token)
+    return token_response
+
+
+@router.post("/wechat/bind-phone", response_model=TokenResponse)
+async def bind_wechat_phone(
+    body: WechatPhoneBindRequest,
+    response: Response,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+) -> TokenResponse:
+    """Bind a phone obtained from WeChat phone authorization code."""
+    token_response = await WechatAuthService(
+        db=db,
+        redis=redis,
+        config=settings,
+    ).bind_phone_with_wechat_code(user_id, body.code)
+    if token_response.refresh_token:
+        _set_refresh_token_cookie(response, token_response.refresh_token)
+    return token_response
+
+
+@router.post("/wechat/bind-phone/sms", response_model=TokenResponse)
+async def bind_wechat_phone_by_sms(
+    body: WechatSMSBindRequest,
+    response: Response,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+) -> TokenResponse:
+    """Bind a phone to a WeChat user with SMS fallback verification."""
+    token_response = await WechatAuthService(
+        db=db,
+        redis=redis,
+        config=settings,
+    ).bind_phone_with_sms(user_id, body.phone, body.sms_code)
+    if token_response.refresh_token:
+        _set_refresh_token_cookie(response, token_response.refresh_token)
     return token_response
 
 

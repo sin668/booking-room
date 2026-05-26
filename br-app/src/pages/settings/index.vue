@@ -51,10 +51,11 @@
             <text class="chevron">›</text>
           </view>
         </view>
-        <view class="simple-row press-effect" @tap="showUnsupported('手机号暂不支持在应用内修改')">
+        <view class="simple-row press-effect" @tap="openPhoneBinding">
           <text class="row-label">手机号</text>
           <view class="row-value-wrap">
-            <text class="row-value">{{ maskedPhone }}</text>
+            <text class="row-value" :class="{ muted: !hasBoundPhone }">{{ maskedPhone }}</text>
+            <view v-if="!hasBoundPhone" class="status-pill warning"><text class="status-pill-text warning-text">未绑定</text></view>
             <text class="chevron">›</text>
           </view>
         </view>
@@ -251,6 +252,72 @@
         </view>
       </view>
     </view>
+
+    <view v-if="showPhoneBindSheet" class="sheet-mask" @tap="closePhoneBinding">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">绑定手机号</text>
+        <text class="sheet-desc">绑定后可用于账号找回、订单通知和余额安全校验</text>
+
+        <button
+          v-if="!hasBoundPhone"
+          class="wechat-bind-btn"
+          open-type="getPhoneNumber"
+          :loading="bindingWechatPhone"
+          :disabled="bindingWechatPhone || bindingBySms"
+          @getphonenumber="handleWechatPhoneAuth"
+        >
+          微信手机号一键绑定
+        </button>
+
+        <view v-if="bindError" class="bind-error-box">
+          <text class="bind-error-text">{{ bindError }}</text>
+        </view>
+
+        <view v-if="showSmsBinding" class="sms-bind-form">
+          <view class="bind-input-row">
+            <input
+              v-model="bindPhoneForm.phone"
+              class="bind-input"
+              type="number"
+              maxlength="11"
+              placeholder="请输入手机号"
+              placeholder-class="input-placeholder"
+            />
+          </view>
+          <view class="bind-input-row code-input-row">
+            <input
+              v-model="bindPhoneForm.smsCode"
+              class="bind-input"
+              type="number"
+              maxlength="6"
+              placeholder="请输入验证码"
+              placeholder-class="input-placeholder"
+            />
+            <button
+              class="bind-code-btn"
+              :disabled="bindCodeCountdown > 0 || sendingBindCode"
+              :loading="sendingBindCode"
+              @tap="sendBindSmsCode"
+            >
+              {{ bindCodeCountdown > 0 ? bindCodeCountdown + 's' : '获取验证码' }}
+            </button>
+          </view>
+        </view>
+
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="showSmsBinding = true">短信绑定</button>
+          <button
+            class="sheet-confirm"
+            :loading="bindingBySms"
+            :disabled="!showSmsBinding || bindingWechatPhone || bindingBySms"
+            @tap="submitSmsBinding"
+          >
+            确认绑定
+          </button>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -277,6 +344,18 @@ export default {
       savingUsername: false,
       showLogoutSheet: false,
       logoutLoading: false,
+      showPhoneBindSheet: false,
+      showSmsBinding: false,
+      bindingWechatPhone: false,
+      bindingBySms: false,
+      sendingBindCode: false,
+      bindCodeCountdown: 0,
+      bindCountdownTimer: null,
+      bindError: '',
+      bindPhoneForm: {
+        phone: '',
+        smsCode: '',
+      },
     }
   },
   computed: {
@@ -294,6 +373,12 @@ export default {
       if (!phone || phone.length < 7) return phone || '未绑定'
       return `${phone.slice(0, 3)}****${phone.slice(-4)}`
     },
+    hasBoundPhone() {
+      return !!this.userStore.phone
+    },
+  },
+  beforeUnmount() {
+    this.clearBindCountdown()
   },
   onShow() {
     if (this.userStore.isLoggedIn) {
@@ -321,6 +406,153 @@ export default {
     clearCache() {
       this.cacheSize = '0 MB'
       this.showToast('缓存已清除')
+    },
+    openPhoneBinding() {
+      if (this.hasBoundPhone) {
+        this.showToast('手机号暂不支持在应用内修改')
+        return
+      }
+      this.bindError = ''
+      this.showSmsBinding = false
+      this.resetBindForm()
+      this.showPhoneBindSheet = true
+    },
+    closePhoneBinding() {
+      if (this.bindingWechatPhone || this.bindingBySms) return
+      this.showPhoneBindSheet = false
+      this.bindError = ''
+      this.showSmsBinding = false
+      this.resetBindForm()
+    },
+    async handleWechatPhoneAuth(event) {
+      if (this.bindingWechatPhone || this.bindingBySms) return
+      const detail = event?.detail || {}
+      if (!detail.code) {
+        this.bindError = this.mapPhoneBindError(detail, 'wechat')
+        this.showSmsBinding = true
+        return
+      }
+
+      this.bindingWechatPhone = true
+      this.bindError = ''
+      try {
+        await this.userStore.bindWechatPhone(detail.code)
+        this.onPhoneBindSuccess()
+      } catch (error) {
+        this.bindError = this.mapPhoneBindError(error, 'wechat')
+        this.showSmsBinding = true
+      } finally {
+        this.bindingWechatPhone = false
+      }
+    },
+    async sendBindSmsCode() {
+      if (this.sendingBindCode || this.bindCodeCountdown > 0) return
+      const phoneError = this.validateBindPhone()
+      if (phoneError) {
+        this.bindError = phoneError
+        return
+      }
+
+      this.sendingBindCode = true
+      this.bindError = ''
+      try {
+        await this.userStore.sendCode(this.bindPhoneForm.phone, '')
+        this.showToast('验证码已发送')
+        this.startBindCountdown()
+      } catch (error) {
+        this.bindError = this.mapPhoneBindError(error, 'sms')
+      } finally {
+        this.sendingBindCode = false
+      }
+    },
+    async submitSmsBinding() {
+      if (this.bindingBySms) return
+      const phoneError = this.validateBindPhone()
+      if (phoneError) {
+        this.bindError = phoneError
+        return
+      }
+      if (!/^\d{6}$/.test(this.bindPhoneForm.smsCode)) {
+        this.bindError = '请输入 6 位短信验证码'
+        return
+      }
+
+      this.bindingBySms = true
+      this.bindError = ''
+      try {
+        await this.userStore.bindPhoneBySms(this.bindPhoneForm.phone, this.bindPhoneForm.smsCode)
+        this.onPhoneBindSuccess()
+      } catch (error) {
+        this.bindError = this.mapPhoneBindError(error, 'sms')
+      } finally {
+        this.bindingBySms = false
+      }
+    },
+    onPhoneBindSuccess() {
+      this.showPhoneBindSheet = false
+      this.showSmsBinding = false
+      this.bindError = ''
+      this.resetBindForm()
+      this.showToast('手机号绑定成功')
+    },
+    resetBindForm() {
+      this.bindPhoneForm.phone = ''
+      this.bindPhoneForm.smsCode = ''
+      this.bindCodeCountdown = 0
+      this.clearBindCountdown()
+    },
+    validateBindPhone() {
+      const phone = this.bindPhoneForm.phone
+      if (!phone) return '请输入手机号'
+      if (!/^1[3-9]\d{9}$/.test(phone)) return '手机号格式不正确'
+      return ''
+    },
+    startBindCountdown() {
+      this.clearBindCountdown()
+      this.bindCodeCountdown = 60
+      this.bindCountdownTimer = setInterval(() => {
+        this.bindCodeCountdown -= 1
+        if (this.bindCodeCountdown <= 0) {
+          this.clearBindCountdown()
+        }
+      }, 1000)
+    },
+    clearBindCountdown() {
+      if (this.bindCountdownTimer) {
+        clearInterval(this.bindCountdownTimer)
+        this.bindCountdownTimer = null
+      }
+      if (this.bindCodeCountdown < 0) {
+        this.bindCodeCountdown = 0
+      }
+    },
+    mapPhoneBindError(error, mode) {
+      const detail = typeof error?.detail === 'string' ? error.detail : ''
+      const message = error?.errMsg || error?.message || ''
+      const text = detail || message
+
+      if (text.includes('getPhoneNumber:fail') || text.includes('deny') || text.includes('cancel') || text.includes('拒绝')) {
+        return '未获得微信手机号授权，可使用短信验证码绑定'
+      }
+      if (text.includes('过期') || text.includes('expired') || text.includes('invalid code') || text.includes('code')) {
+        return mode === 'sms' ? '验证码无效或已过期，请重新获取' : '手机号授权已过期，请重试'
+      }
+      if (text.includes('验证码') || text.includes('sms')) {
+        return '验证码无效或已过期，请重新获取'
+      }
+      if (text.includes('不同') || text.includes('其他微信') || text.includes('wechat_openid')) {
+        return '该手机号已绑定其他微信，无法覆盖绑定'
+      }
+      if (text.includes('资产') || text.includes('余额') || text.includes('订单') || text.includes('优惠券') || text.includes('不能自动合并')) {
+        return '当前账号已有资产，暂不能自动合并，请联系门店客服'
+      }
+      if (text.includes('已存在') || text.includes('已注册') || text.includes('冲突') || text.includes('409')) {
+        return '该手机号已存在账号，暂不能直接绑定'
+      }
+      if (text.includes('登录已过期') || text.includes('401') || text.includes('Unauthorized')) {
+        return '登录已过期，请重新登录后绑定'
+      }
+      return text || '手机号绑定失败，请稍后重试'
     },
     openUsernameEditor() {
       this.usernameDraft = this.displayUsername
@@ -657,12 +889,17 @@ export default {
   background: $primary-light;
 }
 
+.status-pill.warning {
+  background: #fef3c7;
+}
+
 .status-pill-text {
   font-size: 22rpx;
 }
 
 .success-text { color: #22c55e; }
 .primary-text { color: $primary; }
+.warning-text { color: #d97706; }
 
 .setting-copy {
   flex: 1;
@@ -803,6 +1040,80 @@ export default {
   margin-top: 16rpx;
   font-size: 24rpx;
   color: $danger;
+}
+
+.wechat-bind-btn {
+  height: 92rpx;
+  line-height: 92rpx;
+  margin-top: 36rpx;
+  border-radius: 24rpx;
+  background: #07c160;
+  color: $white;
+  font-size: 28rpx;
+  font-weight: 800;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+}
+
+.bind-error-box {
+  margin-top: 24rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 18rpx;
+  background: #fef2f2;
+}
+
+.bind-error-text {
+  font-size: 24rpx;
+  line-height: 34rpx;
+  color: $danger;
+}
+
+.sms-bind-form {
+  margin-top: 28rpx;
+}
+
+.bind-input-row {
+  display: flex;
+  align-items: center;
+  min-height: 92rpx;
+  margin-top: 20rpx;
+  padding: 0 24rpx;
+  border-radius: 20rpx;
+  background: #f7f8fb;
+  box-sizing: border-box;
+}
+
+.code-input-row {
+  gap: 18rpx;
+}
+
+.bind-input {
+  flex: 1;
+  min-width: 0;
+  height: 92rpx;
+  color: $text-primary;
+  font-size: 28rpx;
+}
+
+.bind-code-btn {
+  width: 188rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 18rpx;
+  background: $primary-light;
+  color: $primary;
+  font-size: 24rpx;
+  font-weight: 700;
+  border: none;
+
+  &::after {
+    border: none;
+  }
 }
 
 .sheet-actions {

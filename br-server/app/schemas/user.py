@@ -35,6 +35,19 @@ class SendCodeRequest(BaseModel):
     captcha_token: str | None = None
 
 
+class WechatLoginRequest(BaseModel):
+    code: str = Field(min_length=1)
+
+
+class WechatPhoneBindRequest(BaseModel):
+    code: str = Field(min_length=1)
+
+
+class WechatSMSBindRequest(BaseModel):
+    phone: str = Field(pattern=r"^1[3-9]\d{9}$")
+    sms_code: str = Field(min_length=6, max_length=6)
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str | None = None
@@ -48,7 +61,7 @@ class RefreshRequest(BaseModel):
 
 class UserResponse(BaseModel):
     id: UUID
-    phone: str
+    phone: str | None = None
     nickname: str
     status: str
     user_type: str

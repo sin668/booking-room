@@ -9,7 +9,7 @@
 - **AND** 该手机号未被任何用户占用
 - **WHEN** 用户提交手机号绑定请求
 - **THEN** 系统 SHALL 将该手机号写入当前用户 `phone`
-- **AND** 系统 SHALL 返回绑定后的用户资料或新的 token 响应
+- **AND** 系统 SHALL 返回当前用户新的 token 响应
 
 #### Scenario: Reject invalid WeChat phone code
 - **GIVEN** 用户已登录

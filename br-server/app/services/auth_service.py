@@ -27,6 +27,24 @@ class AuthService:
         self._config = config
         self._jwt = JWTService(config, redis)
 
+    async def issue_tokens(self, user_id: UUID) -> TokenResponse:
+        """Create an access/refresh token pair and persist the refresh token jti."""
+        access_token = self._jwt.create_access_token(user_id)
+        refresh_token = self._jwt.create_refresh_token(user_id)
+        rt_payload = jose_jwt.decode(
+            refresh_token,
+            self._config.JWT_SECRET_KEY,
+            algorithms=[self._config.JWT_ALGORITHM],
+        )
+        await self._jwt.store_refresh_token(user_id, rt_payload["jti"])
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=self._config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        )
+
     async def register(self, data: UserCreate) -> TokenResponse:
         """Register a new user and return JWT tokens.
 
@@ -125,21 +143,7 @@ class AuthService:
             logging.getLogger(__name__).warning("Failed to assign app_register_user role", exc_info=True)
 
         # --- Step 8: Create tokens ---
-        access_token = self._jwt.create_access_token(user.id)
-        refresh_token = self._jwt.create_refresh_token(user.id)
-        rt_payload = jose_jwt.decode(
-            refresh_token,
-            self._config.JWT_SECRET_KEY,
-            algorithms=[self._config.JWT_ALGORITHM],
-        )
-        await self._jwt.store_refresh_token(user.id, rt_payload["jti"])
-
-        return TokenResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            token_type="bearer",
-            expires_in=self._config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        )
+        return await self.issue_tokens(user.id)
 
     async def login(self, data: UserLogin) -> TokenResponse:
         """Authenticate a user by phone + password and return JWT tokens."""
@@ -179,21 +183,7 @@ class AuthService:
             )
 
         # --- Create tokens ---
-        access_token = self._jwt.create_access_token(user.id)
-        refresh_token = self._jwt.create_refresh_token(user.id)
-        rt_payload = jose_jwt.decode(
-            refresh_token,
-            self._config.JWT_SECRET_KEY,
-            algorithms=[self._config.JWT_ALGORITHM],
-        )
-        await self._jwt.store_refresh_token(user.id, rt_payload["jti"])
-
-        return TokenResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            token_type="bearer",
-            expires_in=self._config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        )
+        return await self.issue_tokens(user.id)
 
     async def refresh_token(self, refresh_token_str: str) -> TokenResponse | None:
         """Rotate a refresh token and return new tokens.

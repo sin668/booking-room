@@ -91,11 +91,15 @@
 
         <!-- 第三方登录 -->
         <view class="social-login">
-          <view class="social-item" @tap="onSocialLogin('wechat')">
+          <view
+            class="social-item"
+            :class="{ disabled: wechatLoginLoading }"
+            @tap="onSocialLogin('wechat')"
+          >
             <view class="social-icon social-wechat">
-              <text class="social-icon-text">微</text>
+              <text class="social-icon-text">{{ wechatLoginLoading ? '...' : '微' }}</text>
             </view>
-            <text class="social-label">微信</text>
+            <text class="social-label">{{ wechatLoginLoading ? '登录中' : '微信' }}</text>
           </view>
           <view class="social-item" @tap="onSocialLogin('apple')">
             <view class="social-icon social-apple">
@@ -307,6 +311,7 @@ const loginForm = reactive({
 })
 const showLoginPwd = ref(false)
 const loginLoading = ref(false)
+const wechatLoginLoading = ref(false)
 const loginAgreed = ref(true)
 
 // ===== 注册表单 =====
@@ -418,6 +423,18 @@ function startCountdown() {
 }
 
 // ===== 登录 =====
+function goAfterLogin() {
+  setTimeout(() => {
+    // 返回上一页或跳转首页
+    const pages = getCurrentPages()
+    if (pages.length > 1) {
+      uni.navigateBack()
+    } else {
+      uni.reLaunch({ url: '/pages/index/index' })
+    }
+  }, 500)
+}
+
 function handleLogin() {
   const phoneErr = validatePhone(loginForm.phone)
   if (phoneErr) {
@@ -441,15 +458,7 @@ function handleLogin() {
     .login(loginForm.phone, loginForm.password)
     .then(() => {
       showToast('登录成功', 'success')
-      setTimeout(() => {
-        // 返回上一页或跳转首页
-        const pages = getCurrentPages()
-        if (pages.length > 1) {
-          uni.navigateBack()
-        } else {
-          uni.reLaunch({ url: '/pages/index/index' })
-        }
-      }, 500)
+      goAfterLogin()
     })
     .catch((e) => {
       showToast(e.detail || '登录失败')
@@ -521,8 +530,74 @@ function handleRegister() {
     })
 }
 
+function getWechatLoginCode() {
+  return new Promise((resolve, reject) => {
+    if (!uni.login) {
+      reject(new Error('当前环境不支持微信登录'))
+      return
+    }
+
+    uni.login({
+      provider: 'weixin',
+      success: (res) => {
+        if (res.code) {
+          resolve(res.code)
+        } else {
+          reject(new Error('未获取到微信登录凭证'))
+        }
+      },
+      fail: (error) => {
+        reject(error)
+      },
+    })
+  })
+}
+
+function mapWechatLoginError(error) {
+  const detail = typeof error?.detail === 'string' ? error.detail : ''
+  if (detail.trim()) return detail
+
+  const message = error?.message || error?.errMsg || ''
+  const text = message
+  if (text.includes('provider') || text.includes('support') || text.includes('不支持')) {
+    return '当前环境不支持微信登录，请使用手机号登录'
+  }
+  if (text.includes('code') || text.includes('凭证') || text.includes('invalid') || text.includes('expired')) {
+    return '微信登录凭证获取失败，请重试'
+  }
+  if (text.includes('配置') || text.includes('不可用') || text.includes('503')) {
+    return '微信登录服务暂不可用，请使用手机号登录'
+  }
+  return text || '微信登录失败，请稍后重试'
+}
+
+async function handleWechatLogin() {
+  if (wechatLoginLoading.value || loginLoading.value) return
+
+  if (!loginAgreed.value) {
+    showToast('请先同意用户协议')
+    return
+  }
+
+  wechatLoginLoading.value = true
+  try {
+    const code = await getWechatLoginCode()
+    await userStore.wechatLogin(code)
+    showToast('登录成功', 'success')
+    goAfterLogin()
+  } catch (error) {
+    showToast(mapWechatLoginError(error))
+  } finally {
+    wechatLoginLoading.value = false
+  }
+}
+
 // ===== 第三方登录（预留） =====
 function onSocialLogin(platform) {
+  if (platform === 'wechat') {
+    handleWechatLogin()
+    return
+  }
   showToast('暂未开放，敬请期待')
 }
 
@@ -872,6 +947,13 @@ function openAgreement(type) {
 }
 .social-item:active {
   transform: scale(0.92);
+}
+.social-item.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+.social-item.disabled:active {
+  transform: none;
 }
 .social-icon {
   width: 96rpx;

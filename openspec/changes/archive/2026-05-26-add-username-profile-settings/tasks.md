@@ -65,9 +65,9 @@
 
 - [x] 7.1 Run backend targeted tests: `cd br-server && pytest tests/test_username_service.py tests/test_api_user_profile.py tests/test_api_auth.py tests/test_auth_service.py tests/test_unified_user_model.py -q`.
 - [x] 7.2 Run broader backend regression for auth/user/admin creation risk: `cd br-server && pytest tests/test_admin_user_management.py tests/test_admin_auth_api.py tests/test_app_default_role.py -q`.
-- [ ] 7.3 Run frontend validation from `br-app`: use the repository’s available build command, preferring `pnpm run build` if defined; otherwise run the existing project build/check script documented in `package.json`.
-- [ ] 7.4 Start the app preview/dev server only after implementation is complete and verify `/pages/settings/index` loads without route errors.
-- [ ] 7.5 Use gstack browser or the available app preview tooling to verify settings page visibility, username row rendering, edit success, duplicate error, cooldown error, masked phone, and logout confirmation.
+- [x] 7.3 Run frontend validation from `br-app`: use the repository’s available build command, preferring `pnpm run build` if defined; otherwise run the existing project build/check script documented in `package.json`.
+- [x] 7.4 Start the app preview/dev server only after implementation is complete and verify `/pages/settings/index` loads without route errors.
+- [x] 7.5 Use gstack browser or the available app preview tooling to verify settings page visibility, username row rendering, edit success, duplicate error, cooldown error, masked phone, and logout confirmation.
 - [x] 7.6 Review implementation for Clean Architecture boundaries: routes only parse/authenticate, services own username/profile business rules, schemas own validation shape, and frontend pages call API through modules/store.
 - [x] 7.7 Refactor duplicated username regex, cooldown formatting, or profile API handling discovered during implementation before final verification.
 - [x] 7.8 Update this `tasks.md` by checking completed tasks only after corresponding tests or manual verification pass.

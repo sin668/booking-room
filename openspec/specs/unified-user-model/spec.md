@@ -1,17 +1,20 @@
-## ADDED Requirements
+## Purpose
+Define the unified users table model shared by app users and administrators.
+
+## Requirements
 
 ### Requirement: Unified users table schema
-系统 SHALL 维护一张统一的 `users` 表存储所有类型用户，通过 `user_type` 字段区分小程序用户（`app`）和管理员（`admin`）。
+系统 SHALL 维护一张统一的 `users` 表存储所有类型用户，通过 `user_type` 字段区分小程序用户（`app`）和管理员（`admin`）。所有新建用户 SHALL 拥有全局唯一的非空 `username`，除历史兼容迁移期间允许既有 app 用户短暂为 NULL。
 
 #### Scenario: App user record
 - **GIVEN** 系统创建一个小程序用户
 - **WHEN** 用户注册完成
-- **THEN** `users` 表插入一条记录，`user_type` 为 `'app'`，`phone` 字段有值，`username` 字段为 NULL
+- **THEN** `users` 表插入一条记录，`user_type` 为 `'app'`，`phone` 字段有值，`username` 字段为全局唯一非空值
 
 #### Scenario: Admin user record
 - **GIVEN** 系统创建一个管理员用户
 - **WHEN** 管理员创建完成
-- **THEN** `users` 表插入一条记录，`user_type` 为 `'admin'`，`username` 字段有值，`phone` 字段可为 NULL
+- **THEN** `users` 表插入一条记录，`user_type` 为 `'admin'`，`username` 字段有全局唯一非空值，`phone` 字段可为 NULL
 
 #### Scenario: user_type column constraint
 - **GIVEN** `users` 表的 `user_type` 字段
@@ -37,17 +40,22 @@
 - **THEN** 创建成功，`phone` 为 NULL
 
 ### Requirement: Partial unique index on username
-系统 SHALL 对 `users.username` 字段创建 partial unique index，确保仅在 `user_type='admin'` 的记录中用户名唯一。
+系统 SHALL 对 `users.username` 字段创建唯一约束或唯一索引，确保所有非空用户名在全体用户中唯一。
 
 #### Scenario: Admin username uniqueness
 - **GIVEN** 已存在一个 `user_type='admin'`、`username='admin'` 的用户
 - **WHEN** 尝试创建另一个 `user_type='admin'`、`username='admin'` 的用户
 - **THEN** 数据库拒绝插入，抛出唯一约束违反错误
 
-#### Scenario: App user username can be null
-- **GIVEN** 创建一个 `user_type='app'` 的用户
-- **WHEN** 不提供 username 字段
-- **THEN** 创建成功，`username` 为 NULL
+#### Scenario: App user username uniqueness
+- **GIVEN** 已存在一个 `user_type='app'`、`username='Luna48392'` 的用户
+- **WHEN** 尝试创建另一个任意 `user_type`、`username='Luna48392'` 的用户
+- **THEN** 数据库拒绝插入，抛出唯一约束违反错误
+
+#### Scenario: App user username generated
+- **GIVEN** 创建一个 `user_type='app'` 的新用户
+- **WHEN** 注册流程完成
+- **THEN** `username` 为全局唯一非空值
 
 ### Requirement: Unified status field
 系统 SHALL 统一 `status` 字段枚举值为 `active`、`banned`、`disabled`。App 用户使用 `active`/`banned`，Admin 用户使用 `active`/`disabled`。

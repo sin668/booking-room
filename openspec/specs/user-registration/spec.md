@@ -1,12 +1,15 @@
-## ADDED Requirements
+## Purpose
+Define app user registration behavior, validation rules, default profile fields, and generated username requirements.
+
+## Requirements
 
 ### Requirement: Register with phone and password
-系统 SHALL 支持通过手机号 + 短信验证码 + 密码完成用户注册。注册成功后自动登录，返回 JWT Token。
+系统 SHALL 支持通过手机号 + 短信验证码 + 密码完成用户注册。注册成功后自动登录，返回 JWT Token，并为新用户生成全局唯一用户名。
 
 #### Scenario: Successful registration
 - **GIVEN** 用户手机号 13800138000 已通过图形验证码和短信验证码校验
 - **WHEN** 用户提交注册信息（手机号、验证码、密码 "Abc123456"、昵称 "学习达人"）
-- **THEN** 系统创建用户记录（手机号唯一），密码使用 bcrypt 加密存储，返回 JWT Access Token 和 Refresh Token
+- **THEN** 系统创建用户记录（手机号唯一），密码使用 bcrypt 加密存储，生成唯一用户名，返回 JWT Access Token 和 Refresh Token
 
 #### Scenario: Duplicate phone number
 - **GIVEN** 手机号 13800138000 已被注册
@@ -63,3 +66,18 @@
 - **GIVEN** 用户注册时未填写昵称
 - **WHEN** 注册成功
 - **THEN** 系统自动生成昵称，格式为 "学习者" + 6 位随机数字，如 "学习者583921"
+
+### Requirement: Default username generation
+系统 SHALL 在用户注册时自动生成全局唯一用户名，格式为随机英文名 + 5 位随机数。
+
+#### Scenario: Generate username on registration
+- **GIVEN** 用户提交有效注册信息
+- **WHEN** 注册成功
+- **THEN** 系统为用户设置 username
+- **AND** username 匹配格式“英文名 + 5 位数字”，如 `Luna48392`
+
+#### Scenario: Retry username collision
+- **GIVEN** 生成的用户名候选值已存在于 users 表
+- **WHEN** 用户注册
+- **THEN** 系统 SHALL 重新生成候选用户名并再次检查唯一性
+- **AND** 最终保存的 username 不与任何现有用户重复

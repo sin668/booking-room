@@ -206,15 +206,15 @@ router = APIRouter(prefix="/api/v1/admin/wallet", tags=["admin-wallet"])
 
 ### 2.5 端到端验证
 
-- [ ] 启动 br-server，确认 `/api/v1/admin/wallet/transactions` 和 `/api/v1/admin/wallet/statistics` 接口正常返回
-- [ ] 启动 br-admin，使用gstack browser技能确认「钱包管理 → 钱包流水」菜单可见，页面正常加载
-- [ ] 验证筛选功能：类型、状态、时间范围筛选正常工作
-- [ ] 验证统计联动：修改时间范围后卡片数值更新
-- [ ] 验证 CSV 导出：点击导出按钮可下载 CSV 文件
-- [ ] 验证权限控制：无 `wallet:view` 权限的用户返回 403；无 `wallet:export` 权限时导出按钮不显示
+- [x] 启动 br-server，确认 `/api/v1/admin/wallet/transactions` 和 `/api/v1/admin/wallet/statistics` 接口正常返回
+- [x] 启动 br-admin，使用gstack browser技能确认「钱包管理 → 钱包流水」菜单可见，页面正常加载
+- [x] 验证筛选功能：类型、状态、时间范围筛选正常工作
+- [x] 验证统计联动：修改时间范围后卡片数值更新
+- [x] 验证 CSV 导出：点击导出按钮可下载 CSV 文件
+- [x] 验证权限控制：无 `wallet:view` 权限的用户返回 403；无 `wallet:export` 权限时导出按钮不显示
 
 ### 3 集成与收尾
 
 - [x] 3.1 API 文档更新（docs/api.md 补充新增的相关接口）
 - [x] 3.2 代码审查与重构（确保 Clean Architecture 分层、消除重复代码）
-- [ ] 3.3 全量测试通过（单元测试 + 集成测试，覆盖率 > 80%）
+- [x] 3.3 全量测试通过（单元测试 + 集成测试，覆盖率 > 80%）

@@ -35,6 +35,14 @@ class BookingVerificationTokenResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class BookingVerificationTokenRequest(BaseModel):
+    booking_id: int | None = None
+
+
+class VerifiableBookingListResponse(BaseModel):
+    items: list[BookingVerificationBookingSummary]
+
+
 class BookingVerificationDetailResponse(BaseModel):
     booking: BookingVerificationBookingSummary
 

@@ -21,6 +21,7 @@ from app.schemas.booking_verification import (
     BookingVerificationConfirmResponse,
     BookingVerificationDetailResponse,
     BookingVerificationTokenResponse,
+    VerifiableBookingListResponse,
 )
 
 TOKEN_TTL_SECONDS = 5 * 60
@@ -216,19 +217,11 @@ def _build_booking_summary(
 async def issue_verification_token(
     db: AsyncSession,
     user_id: uuid.UUID,
+    booking_id: int | None = None,
 ) -> BookingVerificationTokenResponse:
     now = _booking_now()
-    result = await db.execute(
-        select(Booking, Seat, StudyRoom)
-        .join(Seat, Seat.id == Booking.seat_id)
-        .join(StudyRoom, StudyRoom.id == Booking.room_id)
-        .where(
-            Booking.user_id == str(user_id),
-            Booking.status == "confirmed",
-        )
-        .order_by(Booking.date.asc(), Booking.start_time.asc(), Booking.id.asc())
-    )
-    row = _select_nearest_booking(result.all(), now)
+    rows = await _load_verifiable_booking_rows(db, user_id)
+    row = _select_booking(rows, now, booking_id)
     if row is None:
         raise NoVerifiableBookingError("暂无可核销预约")
 
@@ -240,6 +233,23 @@ async def issue_verification_token(
         expires_at=expires_at,
         verify_url=_build_verify_url(token),
         booking=_build_booking_summary(booking, seat, room, user),
+    )
+
+
+async def list_verifiable_bookings(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> VerifiableBookingListResponse:
+    rows = await _load_verifiable_booking_rows(db, user_id)
+    if not rows:
+        raise NoVerifiableBookingError("暂无可核销预约")
+
+    user = await _load_user(db, str(user_id))
+    return VerifiableBookingListResponse(
+        items=[
+            _build_booking_summary(booking, seat, room, user)
+            for booking, seat, room in rows
+        ]
     )
 
 
@@ -332,6 +342,23 @@ async def _load_booking_for_status(db: AsyncSession, payload: VerificationTokenP
     return booking
 
 
+async def _load_verifiable_booking_rows(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> list[tuple[Booking, Seat, StudyRoom]]:
+    result = await db.execute(
+        select(Booking, Seat, StudyRoom)
+        .join(Seat, Seat.id == Booking.seat_id)
+        .join(StudyRoom, StudyRoom.id == Booking.room_id)
+        .where(
+            Booking.user_id == str(user_id),
+            Booking.status == "confirmed",
+        )
+        .order_by(Booking.date.asc(), Booking.start_time.asc(), Booking.id.asc())
+    )
+    return list(result.all())
+
+
 def _is_booking_in_verification_window(booking: Booking, now: datetime) -> bool:
     now = _ensure_booking_timezone(now)
     if booking.date != now.date():
@@ -381,6 +408,19 @@ def _select_nearest_booking(
         return 2, -end_at.timestamp(), booking.id
 
     return min(rows, key=sort_key)
+
+
+def _select_booking(
+    rows: list[tuple[Booking, Seat, StudyRoom]],
+    now: datetime,
+    booking_id: int | None,
+) -> tuple[Booking, Seat, StudyRoom] | None:
+    if booking_id is None:
+        return _select_nearest_booking(rows, now)
+    for row in rows:
+        if row[0].id == booking_id:
+            return row
+    return None
 
 
 def _build_verify_url(token: str) -> str:

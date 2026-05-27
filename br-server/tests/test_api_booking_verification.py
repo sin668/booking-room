@@ -95,6 +95,87 @@ async def test_user_can_issue_verification_token(
     assert data["booking"]["can_verify"] is True
 
 
+async def test_user_can_list_verifiable_bookings(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_verifiable_booking,
+):
+    seat = Seat(
+        room_id=seed_verifiable_booking["room"].id,
+        seat_number="A-02",
+        zone="quiet",
+        position="center",
+        floor=3,
+        price_per_hour=15.00,
+        status="available",
+        row=1,
+        col=2,
+    )
+    db_session.add(seat)
+    await db_session.flush()
+    second_booking = Booking(
+        seat_id=seat.id,
+        user_id=str(USER_ID),
+        room_id=seed_verifiable_booking["room"].id,
+        date=datetime.now(UTC).date(),
+        start_time=time(0, 0),
+        end_time=time(23, 59),
+        status="confirmed",
+        total_price=45.00,
+    )
+    db_session.add(second_booking)
+    await db_session.flush()
+
+    response = await auth_client.get("/api/v1/booking-verifications/bookings")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert [item["id"] for item in data["items"]] == [
+        seed_verifiable_booking["booking"].id,
+        second_booking.id,
+    ]
+
+
+async def test_user_can_issue_verification_token_for_selected_booking(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_verifiable_booking,
+):
+    seat = Seat(
+        room_id=seed_verifiable_booking["room"].id,
+        seat_number="A-03",
+        zone="vip",
+        position="corner",
+        floor=3,
+        price_per_hour=30.00,
+        status="available",
+        row=1,
+        col=3,
+    )
+    db_session.add(seat)
+    await db_session.flush()
+    selected_booking = Booking(
+        seat_id=seat.id,
+        user_id=str(USER_ID),
+        room_id=seed_verifiable_booking["room"].id,
+        date=datetime.now(UTC).date(),
+        start_time=time(0, 0),
+        end_time=time(23, 59),
+        status="confirmed",
+        total_price=90.00,
+    )
+    db_session.add(selected_booking)
+    await db_session.flush()
+
+    response = await auth_client.post(
+        "/api/v1/booking-verifications/token",
+        json={"booking_id": selected_booking.id},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["booking"]["id"] == selected_booking.id
+
+
 async def test_user_can_issue_verification_token_without_frontend_base_url(
     auth_client: AsyncClient,
     seed_verifiable_booking,

@@ -1,4 +1,4 @@
-import { post } from '@/utils/request'
+import { get, post } from '@/utils/request'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
@@ -46,8 +46,12 @@ function adminRequest(url, method) {
   })
 }
 
-export function issueVerificationToken() {
-  return post('/api/v1/booking-verifications/token')
+export function listVerifiableBookings() {
+  return get('/api/v1/booking-verifications/bookings')
+}
+
+export function issueVerificationToken(data) {
+  return post('/api/v1/booking-verifications/token', data)
 }
 
 export function inspectVerificationToken(token) {

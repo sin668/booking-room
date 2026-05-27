@@ -8,7 +8,9 @@ from app.core.database import get_db
 from app.schemas.booking_verification import (
     BookingVerificationConfirmResponse,
     BookingVerificationDetailResponse,
+    BookingVerificationTokenRequest,
     BookingVerificationTokenResponse,
+    VerifiableBookingListResponse,
 )
 from app.services import booking_verification_service
 
@@ -17,6 +19,7 @@ router = APIRouter(prefix="/api/v1/booking-verifications", tags=["booking-verifi
 
 @router.post("/token", response_model=BookingVerificationTokenResponse)
 async def issue_verification_token(
+    body: BookingVerificationTokenRequest | None = None,
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> BookingVerificationTokenResponse:
@@ -24,7 +27,21 @@ async def issue_verification_token(
         return await booking_verification_service.issue_verification_token(
             db,
             user_id,
+            booking_id=body.booking_id if body else None,
         )
+    except booking_verification_service.NoVerifiableBookingError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="暂无可核销预约")
+    except booking_verification_service.VerificationTokenConfigurationError:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="核销码服务未配置")
+
+
+@router.get("/bookings", response_model=VerifiableBookingListResponse)
+async def list_verifiable_bookings(
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+) -> VerifiableBookingListResponse:
+    try:
+        return await booking_verification_service.list_verifiable_bookings(db, user_id)
     except booking_verification_service.NoVerifiableBookingError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="暂无可核销预约")
     except booking_verification_service.VerificationTokenConfigurationError:

@@ -42,6 +42,29 @@
       </view>
 
       <view class="qr-card">
+        <view v-if="verifiableBookings.length > 1" class="booking-switch-row" @tap="toggleBookingSwitcher">
+          <view class="booking-switch-copy">
+            <text class="booking-switch-label">切换核销码</text>
+            <text class="booking-switch-meta">{{ selectedBookingLabel }}</text>
+          </view>
+          <text class="booking-switch-arrow">{{ showBookingSwitcher ? '收起' : '切换' }}</text>
+        </view>
+
+        <view v-if="showBookingSwitcher" class="booking-switch-list">
+          <view
+            v-for="item in verifiableBookings"
+            :key="item.id"
+            :class="['booking-switch-item', { active: item.id === selectedBookingId }]"
+            @tap.stop="selectBooking(item)"
+          >
+            <view class="booking-switch-main">
+              <text class="booking-switch-title">{{ item.room_name || '-' }}</text>
+              <text class="booking-switch-desc">{{ bookingOptionText(item) }}</text>
+            </view>
+            <text class="booking-switch-status">{{ item.id === selectedBookingId ? '当前' : '选择' }}</text>
+          </view>
+        </view>
+
         <view class="qr-shell">
           <image class="qr-image" :src="qrImageSrc" mode="aspectFit" />
         </view>
@@ -91,7 +114,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { issueVerificationToken } from '@/api/bookingVerifications'
+import { issueVerificationToken, listVerifiableBookings } from '@/api/bookingVerifications'
 import { useUserStore } from '@/store/modules/user'
 import { createQrSvgDataUrl } from '@/utils/qrcode'
 
@@ -100,12 +123,19 @@ const userStore = useUserStore()
 const loading = ref(false)
 const state = ref('loading')
 const verification = ref(null)
+const verifiableBookings = ref([])
+const selectedBookingId = ref(null)
+const showBookingSwitcher = ref(false)
 const qrImageSrc = ref('')
 const errorMessage = ref('网络异常，请稍后重试')
 const remainingSeconds = ref(0)
 let countdownTimer = null
 
 const booking = computed(() => verification.value?.booking || {})
+const selectedBookingLabel = computed(() => {
+  const current = verifiableBookings.value.find((item) => item.id === selectedBookingId.value)
+  return current ? bookingOptionText(current) : '选择其他预约'
+})
 const displayVerifyUrl = computed(() => toAbsoluteVerifyUrl(verification.value?.verify_url || ''))
 const displayName = computed(() => {
   return booking.value.user_nickname || userStore.nickname || '学习达人'
@@ -162,6 +192,14 @@ function normalizeError(err) {
   return { state: 'error', message: detail || '网络异常，请稍后重试' }
 }
 
+function bookingOptionText(item) {
+  const seat = item.seat_number || item.seat_name || '-'
+  const start = formatTime(item.start_time)
+  const end = formatTime(item.end_time)
+  const range = start || end ? `${start}-${end}` : '-'
+  return `${item.date || '-'} ${range} · ${seat}`
+}
+
 function toAbsoluteVerifyUrl(url) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url)) return url
@@ -179,7 +217,15 @@ function isScannableVerifyUrl(url) {
   return /^https?:\/\//i.test(url) && !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(url)
 }
 
-async function loadToken() {
+async function loadBookings() {
+  const data = await listVerifiableBookings()
+  verifiableBookings.value = data.items || []
+  if (!selectedBookingId.value && verifiableBookings.value.length > 0) {
+    selectedBookingId.value = verifiableBookings.value[0].id
+  }
+}
+
+async function loadToken(bookingId = selectedBookingId.value) {
   if (!userStore.isLoggedIn) {
     state.value = 'login'
     return
@@ -187,12 +233,16 @@ async function loadToken() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const data = await issueVerificationToken()
+    await loadBookings()
+    const targetBookingId = bookingId || selectedBookingId.value
+    selectedBookingId.value = targetBookingId
+    const data = await issueVerificationToken(targetBookingId ? { booking_id: targetBookingId } : undefined)
     const verifyUrl = toAbsoluteVerifyUrl(data.verify_url)
     if (!isScannableVerifyUrl(verifyUrl)) {
       throw new Error('核销链接不是可被微信打开的公网地址，请配置 FRONTEND_BASE_URL 或 VITE_FRONTEND_BASE_URL')
     }
     verification.value = data
+    selectedBookingId.value = data.booking?.id || targetBookingId
     qrImageSrc.value = createQrSvgDataUrl(verifyUrl)
     state.value = 'ready'
     startCountdown(data.expires_at)
@@ -206,6 +256,20 @@ async function loadToken() {
   } finally {
     loading.value = false
   }
+}
+
+function toggleBookingSwitcher() {
+  showBookingSwitcher.value = !showBookingSwitcher.value
+}
+
+async function selectBooking(item) {
+  if (!item || item.id === selectedBookingId.value) {
+    showBookingSwitcher.value = false
+    return
+  }
+  selectedBookingId.value = item.id
+  showBookingSwitcher.value = false
+  await loadToken(item.id)
 }
 
 function copyVerifyUrl() {
@@ -301,6 +365,97 @@ onUnmounted(() => {
   margin-top: 36rpx;
   padding: 40rpx 32rpx 34rpx;
   text-align: center;
+}
+
+.booking-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding: 0 0 28rpx;
+  margin-bottom: 28rpx;
+  border-bottom: 1rpx solid rgba(45, 52, 54, 0.08);
+  text-align: left;
+}
+
+.booking-switch-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.booking-switch-label {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.booking-switch-meta {
+  font-size: 22rpx;
+  color: $text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-switch-arrow {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: $primary;
+}
+
+.booking-switch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 28rpx;
+}
+
+.booking-switch-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 18rpx;
+  background: $bg-color;
+  border: 2rpx solid transparent;
+  text-align: left;
+}
+
+.booking-switch-item.active {
+  background: rgba(79, 110, 247, 0.08);
+  border-color: rgba(79, 110, 247, 0.28);
+}
+
+.booking-switch-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.booking-switch-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.booking-switch-desc {
+  font-size: 22rpx;
+  color: $text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-switch-status {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: $primary;
 }
 
 .qr-shell {

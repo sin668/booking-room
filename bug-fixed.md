@@ -494,6 +494,36 @@ unexpected character `<`
 
 ---
 
+## BUG-21: 微信支付商户订单号长度不足导致下单失败
+
+### 报错信息
+在 `br-app` 订单确认页选择微信支付并点击确认支付时，后端调用微信支付 JSAPI 下单失败：
+
+```
+WeChat Pay API error [PARAM_ERROR] 商户订单号错误，请核实后再试
+```
+
+### 根本原因
+微信支付对商户订单号 `out_trade_no` 有长度限制：必须为 6-32 位。
+
+订单微信支付服务 `br-server/app/services/booking_payment_service.py` 原先使用 `BK-{booking_id}` 作为商户订单号。对于早期预约记录，`booking_id` 很小，例如 `booking_id=1` 时生成 `BK-1`，总长度只有 4 位，不满足微信支付 6 位下限，因此微信接口返回 `PARAM_ERROR`。
+
+钱包充值流程使用 UUID 截断后的订单号，长度满足要求，所以该问题只影响新接入的预约订单微信支付。
+
+### 解决方案
+将预约订单微信支付商户订单号格式改为 `BK-{booking_id:03d}`：
+
+- `booking_id=1` 生成 `BK-001`，长度为 6 位，满足微信 6-32 位限制。
+- `booking_id>=1000` 仍生成完整 ID，例如 `BK-1000`，不会破坏原有唯一性。
+- 回调解析逻辑继续通过 `int(value[len("BK-"):])` 还原预约 ID，兼容补零格式。
+- 增加回归测试，断言小 ID 订单号长度在 6-32 位内，并验证回调解析能还原原始预约 ID。
+
+**文件**: `br-server/app/services/booking_payment_service.py`, `br-server/tests/test_booking_payment_service.py`
+
+**提交**: `e6cffde` fix: pad booking wechat payment order numbers
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -525,3 +555,5 @@ unexpected character `<`
 | `br-admin/src/store/modules/asyncRoute.ts` | #19 |
 | `br-server/app/services/seed_admin.py` | #19 |
 | `br-server/app/services/admin_menu_service.py` | #19 |
+| `br-server/app/services/booking_payment_service.py` | #21 |
+| `br-server/tests/test_booking_payment_service.py` | #21 |

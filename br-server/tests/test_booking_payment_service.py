@@ -101,10 +101,21 @@ async def test_create_booking_payment_sets_prepay_and_returns_params(
     wechat_client.create_jsapi_prepay.assert_awaited_once()
     call = wechat_client.create_jsapi_prepay.await_args.kwargs
     assert call["openid"] == "openid-123"
-    assert call["out_trade_no"] == f"BK-{booking_payment_seed.booking.id}"
+    assert call["out_trade_no"] == f"BK-{booking_payment_seed.booking.id:03d}"
+    assert 6 <= len(call["out_trade_no"]) <= 32
     assert call["amount_cents"] == 4500
     assert "Alpha Room" in call["description"]
     assert "A-01" in call["description"]
+
+
+def test_booking_out_trade_no_meets_wechat_length_limit_for_small_ids(db_session: AsyncSession):
+    service = BookingPaymentService(db_session, wechat_client=None, config=PAY_CONFIG)
+
+    out_trade_no = service._booking_out_trade_no(1)
+
+    assert out_trade_no == "BK-001"
+    assert 6 <= len(out_trade_no) <= 32
+    assert service._parse_booking_out_trade_no(out_trade_no) == 1
 
 
 @pytest.mark.asyncio
@@ -130,7 +141,7 @@ async def test_process_wechat_notify_marks_booking_paid(
     wechat_client.verify_and_decrypt_notify.return_value = {
         "appid": "appid",
         "mchid": "mchid",
-        "out_trade_no": f"BK-{booking_payment_seed.booking.id}",
+        "out_trade_no": f"BK-{booking_payment_seed.booking.id:03d}",
         "transaction_id": "txn-123",
         "trade_state": "SUCCESS",
         "success_time": "2026-05-01T01:02:03+08:00",
@@ -163,7 +174,7 @@ async def test_process_wechat_notify_duplicate_paid_is_idempotent(
     wechat_client.verify_and_decrypt_notify.return_value = {
         "appid": "appid",
         "mchid": "mchid",
-        "out_trade_no": f"BK-{booking_payment_seed.booking.id}",
+        "out_trade_no": f"BK-{booking_payment_seed.booking.id:03d}",
         "transaction_id": "txn-duplicate",
         "trade_state": "SUCCESS",
         "success_time": "2026-05-01T01:02:03+08:00",
@@ -190,7 +201,7 @@ async def test_process_wechat_notify_amount_mismatch_rejected(
     wechat_client.verify_and_decrypt_notify.return_value = {
         "appid": "appid",
         "mchid": "mchid",
-        "out_trade_no": f"BK-{booking_payment_seed.booking.id}",
+        "out_trade_no": f"BK-{booking_payment_seed.booking.id:03d}",
         "transaction_id": "txn-123",
         "trade_state": "SUCCESS",
         "success_time": "2026-05-01T01:02:03+08:00",

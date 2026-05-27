@@ -214,7 +214,7 @@ class BookingPaymentService:
             raise InvalidBookingPaymentCallbackError("Invalid booking payment order") from exc
 
     def _booking_out_trade_no(self, booking_id: int) -> str:
-        return f"BK-{booking_id}"
+        return f"BK-{booking_id:03d}"
 
     def _parse_wechat_success_time(self, value: str | None) -> datetime | None:
         if not value:

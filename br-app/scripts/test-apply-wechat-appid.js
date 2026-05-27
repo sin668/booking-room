@@ -9,6 +9,9 @@ const {
   resolveOutputDirFromArgs,
 } = require('./apply-wechat-appid')
 
+const TEST_APPID = 'test-wechat-mini-appid'
+const TEST_ENV_APPID = 'test-env-wechat-mini-appid'
+
 function makeTempProject(appid = 'touristappid') {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'wechat-appid-test-'))
   const outputDir = path.join(root, 'dist/build/mp-weixin')
@@ -30,11 +33,11 @@ function readProjectAppId(outputDir) {
   const { outputDir } = makeTempProject()
   const result = applyWechatAppId({
     outputDir,
-    appid: 'wx1234567890abcdef',
+    appid: TEST_APPID,
   })
 
   assert.equal(result.applied, true)
-  assert.equal(readProjectAppId(outputDir), 'wx1234567890abcdef')
+  assert.equal(readProjectAppId(outputDir), TEST_APPID)
 }
 
 {
@@ -49,14 +52,14 @@ function readProjectAppId(outputDir) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'wechat-env-test-'))
   const envPath = path.join(root, 'br-server/.env')
   fs.mkdirSync(path.dirname(envPath), { recursive: true })
-  fs.writeFileSync(envPath, 'WECHAT_MINI_APPID=wxabcdef1234567890\n')
+  fs.writeFileSync(envPath, `WECHAT_MINI_APPID=${TEST_ENV_APPID}\n`)
 
   const appid = resolveWechatAppId({
     env: {},
     serverEnvPath: envPath,
   })
 
-  assert.equal(appid, 'wxabcdef1234567890')
+  assert.equal(appid, TEST_ENV_APPID)
 }
 
 assert.ok(resolveOutputDirFromArgs(['--mode', 'dev']).endsWith('dist/dev/mp-weixin'))

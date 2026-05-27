@@ -4,7 +4,7 @@ Define current-user profile read and update APIs for app settings.
 ## Requirements
 
 ### Requirement: Current user profile read API
-系统 SHALL 提供当前登录用户资料读取接口，返回设置页所需的个人资料字段。
+系统 SHALL 提供当前登录用户资料读取接口，返回设置页所需的个人资料字段，并允许微信快速登录用户在绑定手机号前 `phone` 为 null。
 
 #### Scenario: Read current profile
 - **GIVEN** 用户已登录
@@ -16,6 +16,13 @@ Define current-user profile read and update APIs for app settings.
 - **GIVEN** 请求未携带有效 Access Token
 - **WHEN** 用户请求当前用户资料接口
 - **THEN** 系统返回 HTTP 401
+
+#### Scenario: Read WeChat user without bound phone
+- **GIVEN** 用户通过微信快速登录创建账号
+- **AND** 用户尚未绑定手机号
+- **WHEN** 用户请求当前用户资料接口
+- **THEN** 响应中的 `phone` SHALL 为 null
+- **AND** 响应 SHALL 包含可用于前端展示的 `username`、`nickname`、`avatar`、`status` 和 `user_type`
 
 ### Requirement: Current user profile update API
 系统 SHALL 提供当前登录用户资料更新接口，允许用户更新自己的用户名、昵称和头像等安全资料字段。用户名不限制总修改次数，但每次成功修改后 SHALL 进入滚动 24 小时冷却期。

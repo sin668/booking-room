@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const DEFAULT_OUTPUT_DIR = path.resolve(__dirname, '../dist/build/mp-weixin')
+const DEFAULT_DEV_OUTPUT_DIR = path.resolve(__dirname, '../dist/dev/mp-weixin')
 const DEFAULT_SERVER_ENV_PATH = path.resolve(__dirname, '../../br-server/.env')
 
 function parseEnvFile(filePath) {
@@ -64,8 +65,24 @@ function applyWechatAppId({
   return { applied: true, appid }
 }
 
+function resolveOutputDirFromArgs(argv = process.argv.slice(2)) {
+  const modeIndex = argv.indexOf('--mode')
+  const mode = modeIndex >= 0 ? argv[modeIndex + 1] : ''
+  if (mode === 'dev') return DEFAULT_DEV_OUTPUT_DIR
+  if (mode === 'build') return DEFAULT_OUTPUT_DIR
+
+  const outputIndex = argv.indexOf('--output-dir')
+  if (outputIndex >= 0 && argv[outputIndex + 1]) {
+    return path.resolve(process.cwd(), argv[outputIndex + 1])
+  }
+
+  return DEFAULT_OUTPUT_DIR
+}
+
 if (require.main === module) {
-  const result = applyWechatAppId()
+  const result = applyWechatAppId({
+    outputDir: resolveOutputDirFromArgs(),
+  })
   if (result.applied) {
     console.log(`已写入微信小程序 AppID: ${result.appid}`)
   } else {
@@ -78,4 +95,5 @@ if (require.main === module) {
 module.exports = {
   applyWechatAppId,
   resolveWechatAppId,
+  resolveOutputDirFromArgs,
 }

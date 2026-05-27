@@ -6,6 +6,7 @@ const path = require('path')
 const {
   applyWechatAppId,
   resolveWechatAppId,
+  resolveOutputDirFromArgs,
 } = require('./apply-wechat-appid')
 
 function makeTempProject(appid = 'touristappid') {
@@ -57,5 +58,8 @@ function readProjectAppId(outputDir) {
 
   assert.equal(appid, 'wxabcdef1234567890')
 }
+
+assert.ok(resolveOutputDirFromArgs(['--mode', 'dev']).endsWith('dist/dev/mp-weixin'))
+assert.ok(resolveOutputDirFromArgs(['--mode', 'build']).endsWith('dist/build/mp-weixin'))
 
 console.log('微信小程序 AppID 注入脚本验证通过')

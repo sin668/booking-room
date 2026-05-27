@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev:mp-weixin": "uni -p mp-weixin",
+    "dev:mp-weixin": "uni -p mp-weixin && node scripts/apply-wechat-appid.js --mode dev",
     "build:mp-weixin": "uni build -p mp-weixin && node scripts/apply-wechat-appid.js",
     "dev:h5": "uni",
     "build:h5": "uni build",

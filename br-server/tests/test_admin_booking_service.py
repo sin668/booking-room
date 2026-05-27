@@ -12,6 +12,7 @@ from app.models.booking import Booking
 from app.models.coupon import Coupon, UserCoupon
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
+from app.models.user import User
 from app.schemas.booking import BookingCreate
 from app.services.booking_service import (
     BookingAlreadyCancelledError,
@@ -63,6 +64,22 @@ def _make_seat(db: AsyncSession, seat_id: int = 1, room_id: int = 1):
     )
     db.add(seat)
     return seat
+
+
+def _make_user(
+    db: AsyncSession,
+    user_id: uuid.UUID = USER_ID,
+    balance: Decimal = Decimal("100.00"),
+):
+    user = User(
+        id=user_id,
+        phone="18800009999",
+        nickname="Booking User",
+        password_hash="hash",
+        balance=balance,
+    )
+    db.add(user)
+    return user
 
 
 def _make_booking(
@@ -134,6 +151,7 @@ async def test_create_booking_service_without_coupon_sets_original_and_zero_disc
 ):
     _make_room(db_session, 1)
     seat = _make_seat(db_session, 1, 1)
+    _make_user(db_session)
     await db_session.flush()
 
     result = await create_booking(
@@ -159,6 +177,7 @@ async def test_create_booking_service_with_coupon_marks_coupon_used(
 ):
     _make_room(db_session, 1)
     seat = _make_seat(db_session, 1, 1)
+    _make_user(db_session)
     user_coupon = await _make_user_coupon(db_session)
 
     result = await create_booking(

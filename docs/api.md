@@ -1325,6 +1325,7 @@ Required environment variables when `WECHAT_PAY_ENABLED=true`:
 | WECHAT_PAY_PLATFORM_CERT_SERIAL_NO | WeChat Pay platform certificate/public-key serial expected on notify headers |
 | WECHAT_PAY_PLATFORM_PUBLIC_KEY_PATH | Filesystem path to the WeChat Pay platform public key used to verify notify signatures |
 | WECHAT_PAY_NOTIFY_URL | Public HTTPS callback URL routed to `/api/v1/wallet/wechat/notify` |
+| WECHAT_PAY_BOOKING_NOTIFY_URL | Public HTTPS callback URL routed to `/api/v1/bookings/wechat/notify`; falls back to `WECHAT_PAY_NOTIFY_URL` if unset |
 | WECHAT_PAY_API_BASE_URL | WeChat Pay API base URL; use the official production URL unless testing against a controlled mock |
 
 Operational cautions:
@@ -1733,6 +1734,7 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
   "date": "2026-05-01",
   "start_time": "09:00",
   "end_time": "12:00",
+  "payment_method": "balance",
   "coupon_id": 12
 }
 ```
@@ -1743,7 +1745,12 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
 | date | string | 是 | 预约日期，格式 YYYY-MM-DD |
 | start_time | string | 是 | 开始时间，格式 HH:MM |
 | end_time | string | 是 | 结束时间，格式 HH:MM |
+| payment_method | string | 否 | 支付方式：`balance` 账户余额支付（默认）/ `wechat` 微信支付 |
 | coupon_id | integer \| null | 否 | 用户卡券 ID，每个订单最多使用 1 张卡券 |
+
+当 `payment_method="balance"` 时，后端使用账户余额即时扣款，创建成功后预约 `payment_status="paid"`。
+
+当 `payment_method="wechat"` 时，后端创建待支付预约并调用微信 JSAPI 预下单，响应额外返回 `payment_params`。客户端应将 `payment_params` 原样传给 `uni.requestPayment`。若微信支付配置不可用或预下单失败，后端不会创建预约记录。
 
 **响应 201：**
 ```json
@@ -1760,6 +1767,10 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
   "discount_amount": "3.00",
   "total_price": "15.00",
   "coupon_id": 12,
+  "payment_method": "balance",
+  "payment_status": "paid",
+  "payment_provider": null,
+  "paid_at": "2026-05-01T08:00:00",
   "created_at": "2026-05-01T08:00:00",
   "seat": {
     "id": 1,
@@ -1776,13 +1787,71 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
 }
 ```
 
+微信支付创建成功时，响应中的支付字段示例：
+
+```json
+{
+  "id": 2,
+  "seat_id": 1,
+  "user_id": "11111111-2222-3333-4444-555555555555",
+  "room_id": 1,
+  "date": "2026-05-01",
+  "start_time": "09:00:00",
+  "end_time": "12:00:00",
+  "status": "confirmed",
+  "original_price": "18.00",
+  "discount_amount": "3.00",
+  "total_price": "15.00",
+  "coupon_id": 12,
+  "payment_method": "wechat",
+  "payment_status": "pending",
+  "payment_provider": "wechat",
+  "paid_at": null,
+  "payment_params": {
+    "timeStamp": "1777603200",
+    "nonceStr": "c1f7b8d9e0a2",
+    "package": "prepay_id=wx201410272009395522657a690389285100",
+    "signType": "RSA",
+    "paySign": "base64-signature"
+  },
+  "created_at": "2026-05-01T08:00:00",
+  "seat": {
+    "id": 1,
+    "seat_number": "A1-01",
+    "zone": "quiet",
+    "position": "靠窗",
+    "price_per_hour": "6.00"
+  },
+  "room": {
+    "id": 1,
+    "name": "安静自习室·油城店",
+    "address": "茂名市茂南区油城三路88号"
+  }
+}
+```
+
+| 响应字段 | 类型 | 说明 |
+|------|------|------|
+| payment_method | string | 支付方式：`balance` / `wechat` |
+| payment_status | string | 支付状态：`pending` / `paid` / `failed` |
+| payment_provider | string \| null | 第三方支付渠道；余额支付为 `null`，微信支付为 `wechat` |
+| paid_at | string \| null | 支付完成时间；待支付时为 `null` |
+| payment_params | object \| null | 仅微信支付创建成功时返回，供小程序端调用 `uni.requestPayment` |
+| payment_params.timeStamp | string | 微信 JSAPI 支付时间戳 |
+| payment_params.nonceStr | string | 微信 JSAPI 支付随机串 |
+| payment_params.package | string | 微信 JSAPI 支付包，格式为 `prepay_id=...` |
+| payment_params.signType | string | 签名类型，通常为 `RSA` |
+| payment_params.paySign | string | 微信 JSAPI 支付签名 |
+
 **错误码：**
 - 401: 未认证
 - 404: 座位不存在
+- 402: 余额不足
 - 409: 该座位该时段已被预约
 - 422: 结束时间必须晚于开始时间
 - 400: 该座位正在维护中
 - 400: 卡券不可用，请重新选择（不存在、不属于当前用户、已使用、未生效、已过期、停用、门槛不足或适用范围不匹配）
+- 503: 微信支付暂不可用 / 微信预下单失败
 
 ---
 
@@ -1851,6 +1920,133 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
 **错误码：**
 - 401: 未认证
 - 404: 预约不存在 / 无权查看
+
+---
+
+### GET /api/v1/bookings/{booking_id}/payment-status
+
+查询预约支付状态。微信支付成功后，客户端可轮询该接口确认异步回调是否已完成。仅能查询自己的预约；查询他人预约时返回 404。
+
+**认证：** Bearer Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| booking_id | integer | 预约 ID |
+
+**响应 200：**
+```json
+{
+  "booking_id": 2,
+  "payment_status": "paid",
+  "paid_at": "2026-05-01T08:03:12",
+  "transaction_id": "4200002401202605011234567890"
+}
+```
+
+待支付时：
+```json
+{
+  "booking_id": 2,
+  "payment_status": "pending",
+  "paid_at": null,
+  "transaction_id": null
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| booking_id | integer | 预约 ID |
+| payment_status | string | 支付状态：`pending` / `paid` / `failed` |
+| paid_at | string \| null | 支付完成时间 |
+| transaction_id | string \| null | 微信支付交易号；未支付或余额支付无微信交易号时为 `null` |
+
+**错误码：**
+- 401: 未认证
+- 404: 预约不存在 / 无权查看
+
+---
+
+### POST /api/v1/bookings/wechat/notify
+
+微信支付 API v3 异步通知回调，用于预约直接微信支付。该接口由微信支付平台调用，不要求 Bearer Token；后端必须校验微信支付签名并解密通知资源，只有签名有效、`trade_state="SUCCESS"` 且金额匹配时才更新预约支付状态。
+
+**认证：** 微信支付回调签名
+
+**请求头：**
+
+| Header | 说明 |
+|------|------|
+| Wechatpay-Timestamp | 微信支付通知时间戳 |
+| Wechatpay-Nonce | 微信支付通知随机串 |
+| Wechatpay-Signature | 微信支付通知签名 |
+| Wechatpay-Serial | 微信支付平台证书序列号 |
+
+**请求体：**
+```json
+{
+  "id": "EV-2018022511223320873",
+  "create_time": "2026-05-01T08:03:12+08:00",
+  "event_type": "TRANSACTION.SUCCESS",
+  "resource_type": "encrypt-resource",
+  "summary": "支付成功",
+  "resource": {
+    "algorithm": "AEAD_AES_256_GCM",
+    "ciphertext": "base64-ciphertext",
+    "associated_data": "transaction",
+    "nonce": "resource-nonce",
+    "original_type": "transaction"
+  }
+}
+```
+
+解密后的资源应包含微信交易信息，关键字段如下：
+
+```json
+{
+  "out_trade_no": "BK-2",
+  "transaction_id": "4200002401202605011234567890",
+  "trade_state": "SUCCESS",
+  "amount": {
+    "total": 1500,
+    "payer_total": 1500,
+    "currency": "CNY",
+    "payer_currency": "CNY"
+  },
+  "success_time": "2026-05-01T08:03:12+08:00"
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| out_trade_no | string | 商户订单号，预约支付格式为 `BK-{booking_id}` |
+| transaction_id | string | 微信支付交易号 |
+| trade_state | string | 仅 `SUCCESS` 会确认预约支付 |
+| amount.total | integer | 订单金额，单位为分；必须与预约 `total_price` 匹配 |
+| success_time | string | 微信支付完成时间 |
+
+**成功响应 200：**
+```json
+{
+  "code": "SUCCESS",
+  "message": "成功"
+}
+```
+
+**失败响应：**
+```json
+{
+  "code": "FAIL",
+  "message": "签名校验失败"
+}
+```
+
+**处理说明：**
+- 通知是预约微信支付确认的可信来源；前端支付成功回调只用于触发轮询。
+- 重复成功通知必须幂等处理：若预约已是 `payment_status="paid"`，仍返回成功响应，不重复更新。
+- 金额不匹配、签名无效、解密失败或预约不存在时，不更新预约状态，并返回失败响应。
+- 回调仅处理商户订单号前缀为 `BK-` 的预约支付；钱包充值回调继续使用 `POST /api/v1/wallet/wechat/notify`。
 
 ---
 

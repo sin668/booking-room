@@ -16,6 +16,7 @@ from app.schemas.booking import (
     BookingCreate,
     BookingListResponse,
     BookingResponse,
+    PaymentMethodEnum,
     RoomBrief,
     SeatBrief,
 )
@@ -81,6 +82,10 @@ def _build_booking_response(booking: Booking, seat: Seat, room: StudyRoom) -> Bo
         discount_amount=booking.discount_amount,
         total_price=booking.total_price,
         coupon_id=booking.coupon_id,
+        payment_method=booking.payment_method,
+        payment_status=booking.payment_status,
+        payment_provider=booking.payment_provider,
+        paid_at=booking.paid_at,
         created_at=booking.created_at,
         seat=SeatBrief.model_validate(seat),
         room=RoomBrief.model_validate(room),
@@ -148,11 +153,11 @@ async def create_booking(
         total_price = coupon_result.payable_amount
         user_coupon = coupon_result.user_coupon
 
-    wallet_payment = data.payment_method == "wallet"
+    balance_payment = data.payment_method == PaymentMethodEnum.balance
     user = None
     total_price = total_price.quantize(Decimal("0.01"))
 
-    if wallet_payment:
+    if balance_payment:
         user_result = await db.execute(
             select(User).where(User.id == user_id).with_for_update()
         )
@@ -176,12 +181,15 @@ async def create_booking(
         discount_amount=discount_amount,
         total_price=total_price,
         coupon_id=data.coupon_id,
+        payment_method=data.payment_method.value,
+        payment_status="paid" if balance_payment else "pending",
+        payment_provider=None if balance_payment else data.payment_method.value,
     )
     db.add(booking)
     await db.flush()
 
     wallet_transaction = None
-    if wallet_payment and user is not None:
+    if balance_payment and user is not None:
         wallet_transaction = WalletTransaction(
             user_id=str(user_id),
             type="consume",
@@ -190,10 +198,10 @@ async def create_booking(
             balance_after=Decimal(str(user.balance)),
             order_id=str(uuid.uuid4()),
             status="completed",
-            payment_method="wallet",
+            payment_method="balance",
         )
-        setattr(wallet_transaction, "payment_provider", "wallet")
-        setattr(wallet_transaction, "payment_status", "completed")
+        setattr(wallet_transaction, "payment_provider", "balance")
+        setattr(wallet_transaction, "payment_status", "paid")
         db.add(wallet_transaction)
 
     if user_coupon is not None:
@@ -308,6 +316,10 @@ def _build_admin_booking_response(booking: Booking, seat: Seat, room: StudyRoom)
         discount_amount=booking.discount_amount,
         total_price=booking.total_price,
         coupon_id=booking.coupon_id,
+        payment_method=booking.payment_method,
+        payment_status=booking.payment_status,
+        payment_provider=booking.payment_provider,
+        paid_at=booking.paid_at,
         created_at=booking.created_at,
         updated_at=booking.updated_at,
         seat=SeatBrief.model_validate(seat),

@@ -16,7 +16,7 @@
             </view>
             <view class="info-text-wrap">
               <text class="info-title">{{ roomName }}</text>
-              <text class="info-sub">{{ roomAddress }}</text>
+              <text class="info-sub">{{ floorLabel }}</text>
             </view>
           </view>
 
@@ -63,73 +63,56 @@
           </view>
         </view>
 
-        <!-- Coupon Card -->
-        <view class="card coupon-card">
-          <view class="coupon-header">
-            <view class="coupon-title-wrap">
-              <text class="coupon-title">卡券优惠</text>
-              <text class="coupon-sub">{{ couponSummaryText }}</text>
+        <!-- Coupon Row -->
+        <view class="card coupon-row-card" @tap="openCouponSheet">
+          <view class="coupon-row-left">
+            <view class="small-icon-wrap coupon-icon">
+              <view class="ticket-icon" />
             </view>
-            <view v-if="couponLoading" class="coupon-loading">
-              <view class="coupon-spinner" />
-              <text class="coupon-loading-text">加载中</text>
-            </view>
+            <text class="coupon-row-title">优惠券</text>
           </view>
-
-          <view v-if="couponLoadError" class="coupon-error">
-            <text class="coupon-error-text">{{ couponLoadError }}</text>
-            <text class="coupon-retry" @tap="loadAvailableCoupons">重试</text>
-          </view>
-
-          <view
-            :class="['coupon-option', { active: !selectedCouponId }]"
-            @tap="clearCoupon"
-          >
-            <view class="coupon-option-main">
-              <text class="coupon-option-name">不使用卡券</text>
-              <text class="coupon-option-desc">按原价支付</text>
-            </view>
-            <view class="coupon-radio">
-              <view v-if="!selectedCouponId" class="coupon-radio-dot" />
-            </view>
-          </view>
-
-          <view v-if="availableCoupons.length" class="coupon-list">
-            <view
-              v-for="coupon in availableCoupons"
-              :key="coupon.id"
-              :class="['coupon-option', 'coupon-item', { active: selectedCouponId === coupon.id }]"
-              @tap="selectCoupon(coupon)"
-            >
-              <view class="coupon-option-main">
-                <view class="coupon-name-row">
-                  <text class="coupon-option-name">{{ coupon.name }}</text>
-                  <text class="coupon-discount">-¥{{ money(coupon.discount_amount) }}</text>
-                </view>
-                <text class="coupon-option-desc">{{ coupon.description || couponMetaText(coupon) }}</text>
-                <text class="coupon-payable">使用后实付 ¥{{ money(coupon.payable_amount) }}</text>
-              </view>
-              <view class="coupon-radio">
-                <view v-if="selectedCouponId === coupon.id" class="coupon-radio-dot" />
-              </view>
-            </view>
+          <view class="coupon-row-right">
+            <text v-if="couponLoading" class="coupon-row-muted">加载中</text>
+            <text v-else-if="selectedCoupon" class="coupon-row-discount">-¥{{ discountAmount }}</text>
+            <text v-else-if="couponLoadError" class="coupon-row-muted">加载失败</text>
+            <text v-else class="coupon-row-muted">{{ couponSummaryText }}</text>
+            <text class="chevron">›</text>
           </view>
         </view>
 
-        <!-- Wallet Balance Card -->
-        <view class="card wallet-card">
-          <view class="wallet-card-main">
-            <view class="wallet-copy">
-              <text class="wallet-title">钱包余额</text>
+        <!-- Payment Method Card -->
+        <view class="card payment-card">
+          <view class="payment-title">支付方式</view>
+          <view class="payment-option" @tap="selectPaymentMethod('balance')">
+            <view class="payment-option-left">
+              <view class="small-icon-wrap balance-icon">
+                <view class="wallet-shape-icon" />
+              </view>
+              <view class="payment-copy">
+                <view class="payment-name-row">
+                  <text class="payment-name">账户余额</text>
+                  <text class="payment-balance">¥{{ walletBalanceText }}</text>
+                </view>
+              </view>
             </view>
-            <view class="wallet-amount-wrap">
-              <text class="wallet-symbol">¥</text>
-              <text class="wallet-amount">{{ walletBalanceText }}</text>
+            <view class="payment-option-right">
+              <text v-if="isBalanceInsufficient" class="balance-warning">余额不足</text>
+              <view :class="['payment-radio', { active: paymentMethod === 'balance' }]">
+                <view v-if="paymentMethod === 'balance'" class="payment-radio-dot" />
+              </view>
             </view>
           </view>
-          <view class="wallet-footer">
-            <text :class="['wallet-status', { error: walletLoadError }]">{{ walletStatusText }}</text>
-            <text class="wallet-refresh" @tap="loadWalletBalance">刷新</text>
+          <view class="payment-divider" />
+          <view class="payment-option" @tap="selectPaymentMethod('wechat')">
+            <view class="payment-option-left">
+              <view class="small-icon-wrap wechat-icon">
+                <text class="wechat-mark">微</text>
+              </view>
+              <text class="payment-name">微信支付</text>
+            </view>
+            <view :class="['payment-radio', { active: paymentMethod === 'wechat' }]">
+              <view v-if="paymentMethod === 'wechat'" class="payment-radio-dot" />
+            </view>
           </view>
         </view>
 
@@ -190,13 +173,10 @@
         </view>
 
         <text class="success-title">预约成功</text>
+        <text class="success-order-id">订单编号：#{{ bookingId }}</text>
 
         <!-- Booking summary -->
         <view class="summary-card">
-          <view class="summary-row">
-            <text class="summary-label">订单编号</text>
-            <text class="summary-value">#{{ bookingId }}</text>
-          </view>
           <view class="summary-row">
             <text class="summary-label">门店</text>
             <text class="summary-value">{{ bookingRoomName }}</text>
@@ -210,17 +190,7 @@
             <text class="summary-value">{{ bookingDate }} {{ bookingStartTime }} - {{ bookingEndTime }}</text>
           </view>
           <view class="summary-row">
-            <text class="summary-label">原价</text>
-            <text class="summary-value">¥{{ bookingOriginalPrice }}</text>
-          </view>
-          <view class="summary-row">
-            <text class="summary-label">优惠抵扣</text>
-            <text :class="['summary-value', { 'summary-discount': bookingDiscountAmountNum > 0 }]">
-              {{ bookingDiscountAmountNum > 0 ? '-¥' + bookingDiscountAmount : '¥0.00' }}
-            </text>
-          </view>
-          <view class="summary-row">
-            <text class="summary-label">实付金额</text>
+            <text class="summary-label">支付金额</text>
             <text class="summary-value summary-price">¥{{ bookingPayableAmount }}</text>
           </view>
         </view>
@@ -230,17 +200,67 @@
         </view>
       </view>
     </view>
+
+    <!-- Coupon Bottom Sheet -->
+    <view v-if="showCouponSheet" class="sheet-overlay" @tap="closeCouponSheet">
+      <view class="coupon-sheet" @tap.stop>
+        <view class="drag-handle" />
+        <view class="sheet-header">
+          <text class="sheet-title">选择优惠券</text>
+          <text class="sheet-close" @tap="closeCouponSheet">×</text>
+        </view>
+
+        <view
+          :class="['sheet-coupon-option', { active: !selectedCouponId }]"
+          @tap="clearCouponAndClose"
+        >
+          <view class="sheet-coupon-main">
+            <text class="sheet-coupon-name">不使用卡券</text>
+            <text class="sheet-coupon-desc">按原价支付</text>
+          </view>
+          <view class="coupon-radio">
+            <view v-if="!selectedCouponId" class="coupon-radio-dot" />
+          </view>
+        </view>
+
+        <scroll-view class="sheet-coupon-list" scroll-y>
+          <view v-if="!availableCoupons.length" class="coupon-empty">
+            <text class="coupon-empty-text">暂无可用卡券</text>
+          </view>
+          <view
+            v-for="coupon in availableCoupons"
+            :key="coupon.id"
+            :class="['sheet-coupon-option', 'sheet-coupon-item', { active: selectedCouponId === coupon.id }]"
+            @tap="selectCoupon(coupon)"
+          >
+            <view class="sheet-coupon-main">
+              <view class="coupon-name-row">
+                <text class="sheet-coupon-name">{{ coupon.name }}</text>
+                <text class="coupon-discount">-¥{{ money(coupon.discount_amount) }}</text>
+              </view>
+              <text class="sheet-coupon-desc">{{ coupon.description || couponMetaText(coupon) }}</text>
+              <text class="coupon-payable">使用后实付 ¥{{ money(coupon.payable_amount) }}</text>
+            </view>
+            <view class="coupon-radio">
+              <view v-if="selectedCouponId === coupon.id" class="coupon-radio-dot" />
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
   </view>
 </template>
 
 <script>
 import { getSeats } from '@/api/seats'
-import { createBooking } from '@/api/bookings'
+import { createBooking, getBookingPaymentStatus } from '@/api/bookings'
 import { getRoom } from '@/api/rooms'
 import { getAvailableCouponsForBooking } from '@/api/coupons'
 import { getBalance } from '@/api/wallet'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const PAYMENT_POLL_INTERVAL = 2000
+const PAYMENT_POLL_MAX_ATTEMPTS = 10
 
 const ZONE_LABELS = {
   quiet: '静音区',
@@ -261,6 +281,7 @@ export default {
       // Fetched data
       roomName: '',
       roomAddress: '',
+      roomFloor: '',
       seatNumber: '',
       seatZone: '',
       seatPosition: '',
@@ -275,12 +296,15 @@ export default {
       selectedCoupon: null,
       couponLoading: false,
       couponLoadError: '',
+      showCouponSheet: false,
       couponOriginalPrice: '',
       couponRequestId: 0,
       walletBalance: 0,
       walletLoading: false,
       walletLoadError: false,
       walletRequestId: 0,
+      paymentMethod: 'balance',
+      paymentPollTimer: null,
 
       // Booking result for success modal
       bookingId: '',
@@ -290,8 +314,6 @@ export default {
       bookingDate: '',
       bookingStartTime: '',
       bookingEndTime: '',
-      bookingOriginalPrice: '',
-      bookingDiscountAmount: '',
       bookingPayableAmount: '',
     }
   },
@@ -328,29 +350,35 @@ export default {
       return this.originalPrice
     },
 
+    payableAmountNum() {
+      const value = Number(this.payableAmount)
+      return Number.isFinite(value) ? value : 0
+    },
+
+    isBalanceInsufficient() {
+      if (this.walletLoading || this.walletLoadError) return false
+      return Number(this.walletBalance) < this.payableAmountNum
+    },
+
     walletBalanceText() {
       return this.money(this.walletBalance)
     },
 
-    walletStatusText() {
-      if (this.walletLoading) return '正在更新余额'
-      if (this.walletLoadError) return '余额加载失败'
-      return '将使用钱包余额支付'
-    },
-
     couponSummaryText() {
-      if (this.couponLoading && !this.availableCoupons.length) return '正在匹配可用卡券'
       if (this.selectedCoupon) return `已选择：${this.selectedCoupon.name}`
-      return `可用 ${this.availableCoupons.length} 张`
-    },
-
-    bookingDiscountAmountNum() {
-      const value = Number(this.bookingDiscountAmount)
-      return Number.isFinite(value) ? value : 0
+      if (this.availableCoupons.length) return `可用 ${this.availableCoupons.length} 张`
+      return '暂无可用'
     },
 
     zoneLabel() {
       return ZONE_LABELS[this.seatZone] || this.seatZone
+    },
+
+    floorLabel() {
+      if (this.roomFloor !== '' && this.roomFloor != null) {
+        return `${this.roomFloor}楼`
+      }
+      return this.roomAddress || '楼层待确认'
     },
 
     dateLabel() {
@@ -375,6 +403,10 @@ export default {
     this.loadData()
   },
 
+  onUnload() {
+    this.clearPaymentPollTimer()
+  },
+
   methods: {
     async loadData() {
       this.pageLoading = true
@@ -391,11 +423,15 @@ export default {
           this.seatZone = seat.zone
           this.seatPosition = seat.position
           this.pricePerHour = seat.price_per_hour
+          this.roomFloor = seat.floor ?? ''
         }
 
         const room = await getRoom(this.room_id)
         this.roomName = room.name
         this.roomAddress = room.address || ''
+        if ((this.roomFloor === '' || this.roomFloor == null) && room.floor != null) {
+          this.roomFloor = room.floor
+        }
 
         await Promise.all([
           this.loadAvailableCoupons(),
@@ -461,6 +497,7 @@ export default {
     selectCoupon(coupon) {
       this.selectedCouponId = coupon.id
       this.selectedCoupon = coupon
+      this.closeCouponSheet()
     },
 
     clearCoupon() {
@@ -468,8 +505,40 @@ export default {
       this.selectedCoupon = null
     },
 
+    clearCouponAndClose() {
+      this.clearCoupon()
+      this.closeCouponSheet()
+    },
+
+    openCouponSheet() {
+      if (this.couponLoadError) {
+        this.loadAvailableCoupons()
+        return
+      }
+      if (!this.availableCoupons.length) {
+        uni.showToast({ title: '暂无可用卡券', icon: 'none' })
+        return
+      }
+      this.showCouponSheet = true
+    },
+
+    closeCouponSheet() {
+      this.showCouponSheet = false
+    },
+
+    selectPaymentMethod(method) {
+      if (method === 'balance' || method === 'wechat') {
+        this.paymentMethod = method
+      }
+    },
+
     async onPay() {
       if (this.submitting) return
+      if (this.paymentMethod === 'balance' && this.isBalanceInsufficient) {
+        uni.showToast({ title: '余额不足，请切换微信支付或先充值', icon: 'none' })
+        return
+      }
+
       this.submitting = true
       try {
         const payload = {
@@ -477,26 +546,31 @@ export default {
           date: this.date,
           start_time: this.start_time,
           end_time: this.end_time,
-          payment_method: 'wallet',
+          payment_method: this.paymentMethod,
         }
         if (this.selectedCouponId) {
           payload.coupon_id = this.selectedCouponId
         }
 
         const booking = await createBooking(payload)
-        // Fill success modal data
-        this.bookingId = booking.id || ''
-        this.bookingRoomName = booking.room?.name || this.roomName
-        this.bookingSeatNumber = booking.seat?.seat_number || this.seatNumber
-        this.bookingZone = booking.seat?.zone ? (ZONE_LABELS[booking.seat.zone] || booking.seat.zone) : this.zoneLabel
-        this.bookingDate = booking.date || this.date
-        this.bookingStartTime = booking.start_time || this.start_time
-        this.bookingEndTime = booking.end_time || this.end_time
-        this.bookingOriginalPrice = this.money(booking.original_price != null ? booking.original_price : this.originalPrice)
-        this.bookingDiscountAmount = this.money(booking.discount_amount != null ? booking.discount_amount : this.discountAmount)
-        this.bookingPayableAmount = this.money(booking.total_price != null ? booking.total_price : this.payableAmount)
-        this.showSuccess = true
-        this.loadWalletBalance()
+
+        if (this.paymentMethod === 'wechat') {
+          const paymentParams = booking.payment_params || booking.paymentParams
+          if (!paymentParams) {
+            throw new Error('missing payment params')
+          }
+          await this.requestWechatPayment(paymentParams)
+          const paidStatus = await this.pollBookingPaymentStatus(booking.id)
+          if (!paidStatus) {
+            uni.showToast({ title: '支付处理中，请稍后在订单中查看', icon: 'none' })
+            return
+          }
+        }
+
+        this.showBookingSuccess(booking)
+        if (this.paymentMethod === 'balance') {
+          this.loadWalletBalance()
+        }
       } catch (err) {
         if (this.isCouponUnavailableError(err)) {
           uni.showToast({ title: '卡券不可用，请重新选择', icon: 'none' })
@@ -505,7 +579,13 @@ export default {
         } else if (this.isBookingConflictError(err)) {
           uni.showToast({ title: '该座位该时段已被预约，请重新选择', icon: 'none' })
         } else if (this.isWalletBalanceInsufficientError(err)) {
-          uni.showToast({ title: '钱包余额不足，请先充值', icon: 'none' })
+          uni.showToast({ title: '余额不足，请切换微信支付或先充值', icon: 'none' })
+        } else if (this.isPaymentCancel(err)) {
+          uni.showToast({ title: '支付已取消', icon: 'none' })
+        } else if (err?.paymentFailed) {
+          uni.showToast({ title: '支付失败，请重试', icon: 'none' })
+        } else if (err?.paymentStatus) {
+          uni.showToast({ title: '支付失败，请重试', icon: 'none' })
         } else {
           uni.showToast({ title: '预约失败，请重试', icon: 'none' })
         }
@@ -516,6 +596,73 @@ export default {
 
     onDone() {
       uni.switchTab({ url: '/pages/orders/index' })
+    },
+
+    showBookingSuccess(booking) {
+      this.bookingId = booking.id || ''
+      this.bookingRoomName = booking.room?.name || this.roomName
+      this.bookingSeatNumber = booking.seat?.seat_number || this.seatNumber
+      this.bookingZone = booking.seat?.zone ? (ZONE_LABELS[booking.seat.zone] || booking.seat.zone) : this.zoneLabel
+      this.bookingDate = booking.date || this.date
+      this.bookingStartTime = booking.start_time || this.start_time
+      this.bookingEndTime = booking.end_time || this.end_time
+      this.bookingPayableAmount = this.money(booking.total_price != null ? booking.total_price : this.payableAmount)
+      this.showSuccess = true
+    },
+
+    requestWechatPayment(paymentParams) {
+      return new Promise((resolve, reject) => {
+        uni.requestPayment({
+          ...paymentParams,
+          success: resolve,
+          fail: (err) => {
+            if (!this.isPaymentCancel(err)) {
+              err.paymentFailed = true
+            }
+            reject(err)
+          },
+        })
+      })
+    },
+
+    async pollBookingPaymentStatus(bookingId) {
+      for (let attempt = 0; attempt < PAYMENT_POLL_MAX_ATTEMPTS; attempt += 1) {
+        const statusRes = await getBookingPaymentStatus(bookingId)
+        const status = statusRes?.payment_status || statusRes?.paymentStatus
+        if (status === 'paid') {
+          return statusRes
+        }
+        if (status === 'failed' || status === 'cancelled' || status === 'closed') {
+          throw this.createPaymentStatusError(status)
+        }
+        if (attempt < PAYMENT_POLL_MAX_ATTEMPTS - 1) {
+          await this.wait(PAYMENT_POLL_INTERVAL)
+        }
+      }
+      return null
+    },
+
+    wait(ms) {
+      return new Promise((resolve) => {
+        this.clearPaymentPollTimer()
+        this.paymentPollTimer = setTimeout(() => {
+          this.paymentPollTimer = null
+          resolve()
+        }, ms)
+      })
+    },
+
+    clearPaymentPollTimer() {
+      if (this.paymentPollTimer) {
+        clearTimeout(this.paymentPollTimer)
+        this.paymentPollTimer = null
+      }
+    },
+
+    createPaymentStatusError(status) {
+      const error = new Error(`payment ${status}`)
+      error.paymentStatus = status
+      return error
     },
 
     money(value) {
@@ -550,6 +697,11 @@ export default {
     isWalletBalanceInsufficientError(err) {
       const text = this.errorText(err)
       return err?.statusCode === 402 || /wallet balance is insufficient/i.test(text)
+    },
+
+    isPaymentCancel(err) {
+      const text = this.errorText(err).toLowerCase()
+      return text.includes('cancel')
     },
   },
 }
@@ -598,79 +750,187 @@ export default {
   animation-delay: 0.1s;
 }
 
-.coupon-card {
+.coupon-row-card {
   animation-delay: 0.05s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx;
 }
 
-.wallet-card {
-  border: 1rpx solid rgba(79, 110, 247, 0.12);
-  background: #fff;
+.payment-card {
   animation-delay: 0.08s;
+  padding: 0;
+  overflow: hidden;
 }
 
-.wallet-card-main {
+.payment-title {
+  padding: 30rpx 32rpx 14rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.payment-option {
+  min-height: 104rpx;
+  padding: 24rpx 32rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24rpx;
+  transition: background 0.2s;
 }
 
-.wallet-copy {
-  min-width: 0;
+.payment-option:active,
+.coupon-row-card:active {
+  background: #FAFBFC;
+}
+
+.payment-option-left,
+.coupon-row-left,
+.coupon-row-right,
+.payment-option-right,
+.payment-name-row {
   display: flex;
-  flex-direction: column;
-  gap: 10rpx;
+  align-items: center;
+  gap: 16rpx;
 }
 
-.wallet-title {
+.payment-option-left,
+.coupon-row-left {
+  min-width: 0;
+  flex: 1;
+}
+
+.payment-copy {
+  min-width: 0;
+}
+
+.payment-name,
+.coupon-row-title {
   font-size: 28rpx;
-  font-weight: 600;
   color: $text-primary;
 }
 
-.wallet-amount-wrap {
-  flex-shrink: 0;
-  display: flex;
-  align-items: baseline;
-  color: $primary;
+.payment-balance,
+.coupon-row-muted {
+  font-size: 24rpx;
+  color: $text-muted;
 }
 
-.wallet-symbol {
+.balance-warning,
+.coupon-row-discount {
   font-size: 24rpx;
   font-weight: 600;
+  color: #E64A19;
 }
 
-.wallet-amount {
-  font-size: 28rpx;
-  line-height: 1;
-  font-weight: 600;
+.payment-divider {
+  height: 1rpx;
+  margin: 0 32rpx;
+  background: $border-color;
 }
 
-.wallet-footer {
-  margin-top: 18rpx;
-  padding-top: 16rpx;
-  border-top: 1rpx solid rgba(79, 110, 247, 0.12);
+.payment-radio {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  border: 3rpx solid $border-color;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.wallet-status {
-  min-width: 0;
-  font-size: 24rpx;
-  color: $text-secondary;
-}
-
-.wallet-status.error {
-  color: $danger;
-}
-
-.wallet-refresh {
+  justify-content: center;
   flex-shrink: 0;
+}
+
+.payment-radio.active {
+  border-color: $primary;
+}
+
+.payment-radio-dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: $primary;
+}
+
+.small-icon-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.coupon-icon {
+  background: #FFEBEE;
+}
+
+.balance-icon {
+  background: $primary-light;
+}
+
+.wechat-icon {
+  background: #E8F5E9;
+}
+
+.ticket-icon {
+  width: 34rpx;
+  height: 24rpx;
+  border-radius: 6rpx;
+  background: #EF5350;
+  position: relative;
+}
+
+.ticket-icon::before,
+.ticket-icon::after {
+  content: '';
+  position: absolute;
+  top: 8rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.ticket-icon::before {
+  left: -4rpx;
+}
+
+.ticket-icon::after {
+  right: -4rpx;
+}
+
+.wallet-shape-icon {
+  width: 34rpx;
+  height: 28rpx;
+  border-radius: 8rpx;
+  border: 4rpx solid $primary;
+  position: relative;
+}
+
+.wallet-shape-icon::after {
+  content: '';
+  position: absolute;
+  right: -4rpx;
+  top: 7rpx;
+  width: 12rpx;
+  height: 10rpx;
+  border-radius: 6rpx 0 0 6rpx;
+  background: $primary;
+}
+
+.wechat-mark {
   font-size: 24rpx;
-  font-weight: 600;
-  color: $primary;
+  font-weight: 700;
+  color: $success;
+}
+
+.chevron {
+  font-size: 38rpx;
+  line-height: 1;
+  color: $text-muted;
 }
 
 @keyframes fadeInUp {
@@ -706,7 +966,7 @@ export default {
 .icon-wrap {
   width: 72rpx;
   height: 72rpx;
-  border-radius: 50%;
+  border-radius: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -870,92 +1130,7 @@ export default {
   margin: 24rpx 0;
 }
 
-/* Coupon card */
-.coupon-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24rpx;
-  margin-bottom: 24rpx;
-}
-
-.coupon-title-wrap {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-
-.coupon-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-.coupon-sub {
-  max-width: 480rpx;
-  font-size: 24rpx;
-  color: $text-secondary;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.coupon-loading {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  flex-shrink: 0;
-}
-
-.coupon-spinner {
-  width: 24rpx;
-  height: 24rpx;
-  border: 3rpx solid rgba(79, 110, 247, 0.18);
-  border-top-color: $primary;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-.coupon-loading-text {
-  font-size: 22rpx;
-  color: $text-muted;
-}
-
-.coupon-error {
-  min-height: 64rpx;
-  padding: 0 20rpx;
-  margin-bottom: 16rpx;
-  border-radius: 16rpx;
-  background: #FFF3E0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-
-.coupon-error-text {
-  min-width: 0;
-  flex: 1;
-  font-size: 24rpx;
-  color: #E67900;
-}
-
-.coupon-retry {
-  flex-shrink: 0;
-  font-size: 24rpx;
-  font-weight: 600;
-  color: $primary;
-}
-
-.coupon-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  margin-top: 16rpx;
-}
-
-.coupon-option {
+.sheet-coupon-option {
   min-height: 96rpx;
   padding: 20rpx;
   border: 2rpx solid $border-color;
@@ -968,16 +1143,16 @@ export default {
   transition: all 0.2s;
 }
 
-.coupon-option.active {
+.sheet-coupon-option.active {
   border-color: $primary;
   background: rgba(79, 110, 247, 0.06);
 }
 
-.coupon-item {
+.sheet-coupon-item {
   align-items: flex-start;
 }
 
-.coupon-option-main {
+.sheet-coupon-main {
   min-width: 0;
   flex: 1;
   display: flex;
@@ -993,7 +1168,7 @@ export default {
   gap: 16rpx;
 }
 
-.coupon-option-name {
+.sheet-coupon-name {
   min-width: 0;
   font-size: 28rpx;
   font-weight: 600;
@@ -1010,7 +1185,7 @@ export default {
   color: #E64A19;
 }
 
-.coupon-option-desc,
+.sheet-coupon-desc,
 .coupon-payable {
   max-width: 100%;
   font-size: 23rpx;
@@ -1035,7 +1210,7 @@ export default {
   flex-shrink: 0;
 }
 
-.coupon-option.active .coupon-radio {
+.sheet-coupon-option.active .coupon-radio {
   border-color: $primary;
 }
 
@@ -1230,7 +1405,17 @@ export default {
   font-size: 36rpx;
   font-weight: 700;
   color: $text-primary;
+  margin-bottom: 8rpx;
+}
+
+.success-order-id {
+  max-width: 100%;
+  font-size: 24rpx;
+  color: $text-muted;
   margin-bottom: 32rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Summary card */
@@ -1264,14 +1449,82 @@ export default {
   white-space: nowrap;
 }
 
-.summary-discount {
-  font-weight: 600;
-  color: #E64A19;
-}
-
 .summary-price {
   font-weight: 600;
   color: $primary;
+}
+
+/* Coupon sheet */
+.sheet-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 210;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-end;
+}
+
+.coupon-sheet {
+  width: 100%;
+  max-height: 76vh;
+  background: #fff;
+  border-radius: 48rpx 48rpx 0 0;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+}
+
+.coupon-sheet .drag-handle {
+  margin: 0 auto 28rpx;
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.sheet-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.sheet-close {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38rpx;
+  line-height: 1;
+  color: $text-muted;
+  background: #F8F9FA;
+}
+
+.sheet-coupon-list {
+  max-height: 52vh;
+  margin-top: 16rpx;
+}
+
+.sheet-coupon-list .sheet-coupon-option {
+  margin-bottom: 16rpx;
+}
+
+.coupon-empty {
+  min-height: 160rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coupon-empty-text {
+  font-size: 26rpx;
+  color: $text-muted;
 }
 
 /* Done button */

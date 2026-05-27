@@ -1,9 +1,21 @@
 from datetime import datetime
+from enum import Enum
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Time, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+
+
+class PaymentMethod(str, Enum):
+    balance = "balance"
+    wechat = "wechat"
+
+
+class PaymentStatus(str, Enum):
+    pending = "pending"
+    paid = "paid"
+    failed = "failed"
 
 
 class Booking(Base):
@@ -21,6 +33,12 @@ class Booking(Base):
     discount_amount: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     total_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     coupon_id: Mapped[int | None] = mapped_column(ForeignKey("user_coupons.id"), nullable=True)
+    payment_method: Mapped[str] = mapped_column(String(20), default="balance", nullable=False)
+    payment_status: Mapped[str] = mapped_column(String(20), default="paid", nullable=False)
+    payment_provider: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    prepay_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    transaction_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False

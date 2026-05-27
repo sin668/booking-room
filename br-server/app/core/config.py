@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     # Booking verification
     FRONTEND_BASE_URL: str = ""
     BOOKING_TIMEZONE: str = "Asia/Shanghai"
+    BOOKING_CLEANUP_INTERVAL_SECONDS: int = 300
 
     # WeChat Pay
     WECHAT_PAY_ENABLED: bool = False
@@ -44,6 +45,7 @@ class Settings(BaseSettings):
     WECHAT_PAY_PLATFORM_CERT_SERIAL_NO: str = ""
     WECHAT_PAY_PLATFORM_PUBLIC_KEY_PATH: str = ""
     WECHAT_PAY_NOTIFY_URL: str = ""
+    WECHAT_PAY_BOOKING_NOTIFY_URL: str = ""
     WECHAT_PAY_API_BASE_URL: str = "https://api.mch.weixin.qq.com"
 
     # WeChat mini program login

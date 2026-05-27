@@ -30,7 +30,25 @@ from app.api.routes.study_room import router as study_room_router
 from app.api.routes.upload import router as upload_router
 from app.api.routes.user import router as user_router
 from app.api.routes.wallet import router as wallet_router
+from app.core.config import settings
+from app.core.database import async_session
 from app.core.redis import close_redis, init_redis
+from app.services.booking_cleanup_service import cleanup_unpaid_bookings
+
+try:
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+except ImportError:
+    AsyncIOScheduler = None
+
+
+async def _cleanup_unpaid_bookings_job() -> None:
+    async with async_session() as session:
+        try:
+            await cleanup_unpaid_bookings(session)
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
 @asynccontextmanager
@@ -38,8 +56,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: startup and shutdown events."""
     # Startup
     await init_redis()
+    scheduler = None
+    if AsyncIOScheduler is not None:
+        scheduler = AsyncIOScheduler()
+        scheduler.add_job(
+            _cleanup_unpaid_bookings_job,
+            "interval",
+            seconds=settings.BOOKING_CLEANUP_INTERVAL_SECONDS,
+        )
+        scheduler.start()
+        app.state.booking_cleanup_scheduler = scheduler
     yield
     # Shutdown
+    if scheduler is not None:
+        scheduler.shutdown(wait=False)
     await close_redis()
 
 

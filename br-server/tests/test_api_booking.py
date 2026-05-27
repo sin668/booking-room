@@ -3,6 +3,7 @@
 import uuid
 from datetime import UTC, date, datetime, timedelta, time
 from decimal import Decimal
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import AsyncClient
@@ -16,6 +17,7 @@ from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.models.user import User
 from app.models.wallet import WalletTransaction
+from app.services.booking_payment_service import PaymentProviderUnavailableError
 
 USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
 OTHER_USER_ID = uuid.UUID("22222222-2222-2222-2222-222222222222")
@@ -126,7 +128,23 @@ class TestCreateBooking:
     """POST /api/v1/bookings"""
 
     @pytest.mark.asyncio
-    async def test_create_booking_success(self, auth_client: AsyncClient, seed_room_seat):
+    async def test_create_booking_success(
+        self,
+        auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+    ):
+        db_session.add(
+            User(
+                id=USER_ID,
+                phone="18800000010",
+                nickname="Balance User",
+                password_hash="hash",
+                balance=Decimal("100.00"),
+            )
+        )
+        await db_session.flush()
+
         seat = seed_room_seat["seat_a"]
         resp = await auth_client.post(
             "/api/v1/bookings",
@@ -149,6 +167,8 @@ class TestCreateBooking:
         assert data["discount_amount"] == "0.00"
         assert data["total_price"] == "45.00"  # 3 hours * 15.00
         assert data["coupon_id"] is None
+        assert data["payment_method"] == "balance"
+        assert data["payment_status"] == "paid"
         assert data["seat"]["seat_number"] == "A-01"
         assert data["seat"]["zone"] == "quiet"
         assert data["seat"]["position"] == "window"
@@ -166,6 +186,17 @@ class TestCreateBooking:
         seed_room_seat,
         seed_booking_coupon: UserCoupon,
     ):
+        db_session.add(
+            User(
+                id=USER_ID,
+                phone="18800000011",
+                nickname="Coupon Balance User",
+                password_hash="hash",
+                balance=Decimal("100.00"),
+            )
+        )
+        await db_session.flush()
+
         seat = seed_room_seat["seat_a"]
         resp = await auth_client.post(
             "/api/v1/bookings",
@@ -227,7 +258,7 @@ class TestCreateBooking:
         assert seed_booking_coupon.used_at is None
 
     @pytest.mark.asyncio
-    async def test_create_booking_with_wallet_payment_deducts_balance_and_creates_consume_transaction(
+    async def test_create_booking_with_balance_payment_deducts_balance_and_creates_consume_transaction(
         self,
         auth_client: AsyncClient,
         db_session: AsyncSession,
@@ -252,12 +283,14 @@ class TestCreateBooking:
                 "date": "2026-05-01",
                 "start_time": "09:00",
                 "end_time": "12:00",
-                "payment_method": "wallet",
+                "payment_method": "balance",
             },
         )
         assert resp.status_code == 201
         data = resp.json()
         assert data["total_price"] == "45.00"
+        assert data["payment_method"] == "balance"
+        assert data["payment_status"] == "paid"
 
         user = await db_session.get(User, USER_ID)
         assert user is not None
@@ -270,11 +303,11 @@ class TestCreateBooking:
         assert tx.type == "consume"
         assert tx.amount == Decimal("45.00")
         assert tx.status == "completed"
-        assert tx.payment_method == "wallet"
+        assert tx.payment_method == "balance"
         assert tx.balance_after == Decimal("55.00")
 
     @pytest.mark.asyncio
-    async def test_create_booking_with_wallet_payment_insufficient_balance_does_not_create_booking_or_transaction(
+    async def test_create_booking_with_balance_payment_insufficient_balance_does_not_create_booking_or_transaction(
         self,
         auth_client: AsyncClient,
         db_session: AsyncSession,
@@ -299,7 +332,7 @@ class TestCreateBooking:
                 "date": "2026-05-01",
                 "start_time": "09:00",
                 "end_time": "12:00",
-                "payment_method": "wallet",
+                "payment_method": "balance",
             },
         )
         assert resp.status_code == 402
@@ -315,6 +348,100 @@ class TestCreateBooking:
             select(func.count()).select_from(WalletTransaction).where(WalletTransaction.user_id == str(USER_ID))
         )
         assert tx_count == 0
+
+    @pytest.mark.asyncio
+    async def test_create_booking_with_wechat_payment_returns_params_without_deducting_balance(
+        self,
+        auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+    ):
+        user = User(
+            id=USER_ID,
+            phone="18800000003",
+            nickname="WeChat Booking User",
+            password_hash="hash",
+            balance=Decimal("100.00"),
+            wechat_openid="openid-123",
+        )
+        db_session.add(user)
+        await db_session.flush()
+        payment_service = AsyncMock()
+        payment_service.create_booking_payment.return_value = {
+            "timeStamp": "1",
+            "nonceStr": "nonce",
+            "package": "prepay_id=prepay-123",
+            "signType": "RSA",
+            "paySign": "sig",
+        }
+
+        seat = seed_room_seat["seat_a"]
+        with patch("app.api.routes.booking._payment_service", return_value=payment_service):
+            resp = await auth_client.post(
+                "/api/v1/bookings",
+                json={
+                    "seat_id": seat.id,
+                    "date": "2026-05-01",
+                    "start_time": "09:00",
+                    "end_time": "12:00",
+                    "payment_method": "wechat",
+                },
+            )
+
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["payment_method"] == "wechat"
+        assert data["payment_status"] == "pending"
+        assert data["payment_params"]["package"] == "prepay_id=prepay-123"
+        await db_session.refresh(user)
+        assert user.balance == Decimal("100.00")
+
+        tx_count = await db_session.scalar(
+            select(func.count()).select_from(WalletTransaction).where(WalletTransaction.user_id == str(USER_ID))
+        )
+        assert tx_count == 0
+
+    @pytest.mark.asyncio
+    async def test_create_booking_with_wechat_payment_unavailable_returns_503(
+        self,
+        auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+    ):
+        user = User(
+            id=USER_ID,
+            phone="18800000013",
+            nickname="WeChat Unavailable User",
+            password_hash="hash",
+            balance=Decimal("100.00"),
+            wechat_openid="openid-123",
+        )
+        db_session.add(user)
+        await db_session.flush()
+
+        payment_service = AsyncMock()
+        payment_service.create_booking_payment.side_effect = (
+            PaymentProviderUnavailableError("WeChat Pay is disabled or misconfigured")
+        )
+
+        seat = seed_room_seat["seat_a"]
+        with patch("app.api.routes.booking._payment_service", return_value=payment_service):
+            resp = await auth_client.post(
+                "/api/v1/bookings",
+                json={
+                    "seat_id": seat.id,
+                    "date": "2026-05-01",
+                    "start_time": "09:00",
+                    "end_time": "12:00",
+                    "payment_method": "wechat",
+                },
+            )
+
+        assert resp.status_code == 503
+        booking_count = await db_session.scalar(
+            select(func.count()).select_from(Booking).where(Booking.user_id == str(USER_ID))
+        )
+        assert booking_count == 0
 
     @pytest.mark.asyncio
     async def test_create_booking_no_auth(self, client: AsyncClient, seed_room_seat):
@@ -407,6 +534,17 @@ class TestCreateBooking:
 
     @pytest.mark.asyncio
     async def test_create_booking_cancelled_does_not_conflict(self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat):
+        db_session.add(
+            User(
+                id=USER_ID,
+                phone="18800000012",
+                nickname="Conflict Balance User",
+                password_hash="hash",
+                balance=Decimal("100.00"),
+            )
+        )
+        await db_session.flush()
+
         seat = seed_room_seat["seat_a"]
         room = seed_room_seat["room"]
         # Create cancelled booking
@@ -583,6 +721,93 @@ class TestGetBooking:
     async def test_get_booking_no_auth(self, client: AsyncClient):
         resp = await client.get("/api/v1/bookings/1")
         assert resp.status_code == 401
+
+
+class TestBookingPaymentEndpoints:
+    @pytest.mark.asyncio
+    async def test_get_payment_status_own_booking(
+        self,
+        auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+    ):
+        seat = seed_room_seat["seat_a"]
+        room = seed_room_seat["room"]
+        paid_at = datetime(2026, 5, 1, 10, 0, 0)
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=date(2026, 5, 1),
+            start_time=time(9, 0),
+            end_time=time(12, 0),
+            status="confirmed",
+            total_price=Decimal("45.00"),
+            payment_method="wechat",
+            payment_status="paid",
+            payment_provider="wechat",
+            paid_at=paid_at,
+            transaction_id="txn-123",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        resp = await auth_client.get(f"/api/v1/bookings/{booking.id}/payment-status")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["booking_id"] == booking.id
+        assert data["payment_status"] == "paid"
+        assert data["transaction_id"] == "txn-123"
+        assert data["paid_at"] == "2026-05-01T10:00:00"
+
+    @pytest.mark.asyncio
+    async def test_get_payment_status_other_user_returns_404(
+        self,
+        other_auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+    ):
+        seat = seed_room_seat["seat_a"]
+        room = seed_room_seat["room"]
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=date(2026, 5, 1),
+            start_time=time(9, 0),
+            end_time=time(12, 0),
+            status="confirmed",
+            total_price=Decimal("45.00"),
+            payment_method="wechat",
+            payment_status="pending",
+            payment_provider="wechat",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        resp = await other_auth_client.get(f"/api/v1/bookings/{booking.id}/payment-status")
+
+        assert resp.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_wechat_notify_success(self, client: AsyncClient):
+        payment_service = AsyncMock()
+        payment_service.process_wechat_notify.return_value = {
+            "code": "SUCCESS",
+            "message": "success",
+        }
+
+        with patch("app.api.routes.booking._payment_service", return_value=payment_service):
+            resp = await client.post(
+                "/api/v1/bookings/wechat/notify",
+                content=b"{}",
+                headers={"Wechatpay-Signature": "valid"},
+            )
+
+        assert resp.status_code == 200
+        assert resp.json() == {"code": "SUCCESS", "message": "success"}
+        payment_service.process_wechat_notify.assert_awaited_once()
 
 
 class TestCancelBooking:

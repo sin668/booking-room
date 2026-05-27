@@ -57,13 +57,24 @@
 - **THEN** 返回 HTTP 404
 
 ### Requirement: Create booking API
-系统 SHALL 提供 `POST /api/v1/bookings/` 接口，允许已登录用户创建座位预约。请求体包含 `seat_id`（整数，必填）、`date`（日期字符串 YYYY-MM-DD，必填）、`start_time`（时间字符串 HH:MM，必填）、`end_time`（时间字符串 HH:MM，必填）、`coupon_id`（整数，可选，指向当前用户持有的用户卡券）。创建成功返回 HTTP 201，响应包含预约详情。若传入 `coupon_id`，系统 MUST 在后端校验卡券归属、状态、有效期、适用范围和订单门槛，并计算抵扣后金额。
+系统 SHALL 提供 `POST /api/v1/bookings/` 接口，允许已登录用户创建座位预约。请求体包含 `seat_id`（整数，必填）、`date`（日期字符串 YYYY-MM-DD，必填）、`start_time`（时间字符串 HH:MM，必填）、`end_time`（时间字符串 HH:MM，必填）、`payment_method`（字符串，必填，枚举值 "balance"/"wechat"，默认 "balance"）、`coupon_id`（整数，可选，指向当前用户持有的用户卡券）。创建成功返回 HTTP 201，响应包含预约详情。若传入 `coupon_id`，系统 MUST 在后端校验卡券归属、状态、有效期、适用范围和订单门槛，并计算抵扣后金额。
 
-#### Scenario: Successful booking creation
-- **GIVEN** 用户已登录
-- **WHEN** 用户发送 `POST /api/v1/bookings/`，body 为 `{"seat_id": 1, "date": "2026-05-01", "start_time": "09:00", "end_time": "12:00"}`
+当 `payment_method='balance'` 时，系统 SHALL 原子扣除用户余额并创建 `payment_status='paid'` 的预约。
+
+当 `payment_method='wechat'` 时，系统 SHALL 创建 `payment_status='pending'` 的预约，调用微信支付 JSAPI 下单，响应额外包含 `payment_params` 字段。若微信支付配置不可用或下单失败，SHALL NOT 创建预约记录。
+
+#### Scenario: Successful booking creation with balance payment
+- **GIVEN** 用户已登录且余额充足
+- **WHEN** 用户发送 `POST /api/v1/bookings/`，body 为 `{"seat_id": 1, "date": "2026-05-01", "start_time": "09:00", "end_time": "12:00", "payment_method": "balance"}`
 - **THEN** 返回 HTTP 201
-- **AND** 响应包含 `id`、`seat_id`、`user_id`、`room_id`、`date`、`start_time`、`end_time`、`status`（值为 "confirmed"）、`original_price`、`discount_amount`、`total_price`、`coupon_id`、`created_at`
+- **AND** 响应包含 `id`、`seat_id`、`user_id`、`room_id`、`date`、`start_time`、`end_time`、`status`（值为 "confirmed"）、`original_price`、`discount_amount`、`total_price`、`coupon_id`、`payment_method`（值为 "balance"）、`payment_status`（值为 "paid"）、`created_at`
+
+#### Scenario: Successful booking creation with WeChat payment
+- **GIVEN** 用户已登录且微信支付配置可用
+- **WHEN** 用户发送 `POST /api/v1/bookings/`，body 为 `{"seat_id": 1, "date": "2026-05-01", "start_time": "09:00", "end_time": "12:00", "payment_method": "wechat"}`
+- **THEN** 返回 HTTP 201
+- **AND** 响应包含预约详情及 `payment_method="wechat"`、`payment_status="pending"`、`payment_params`（包含 timeStamp、nonceStr、package、signType、paySign）
+- **AND** 用户余额不变
 
 #### Scenario: Successful booking creation with coupon
 - **GIVEN** 用户已登录且拥有一张可用于该预约的卡券
@@ -99,6 +110,19 @@
 - **GIVEN** 用户已登录
 - **WHEN** 用户发送 `POST /api/v1/bookings/`，座位状态为 "maintenance"
 - **THEN** 返回 HTTP 400，错误信息为"该座位正在维护中"
+
+#### Scenario: Balance payment insufficient balance
+- **GIVEN** 用户已登录且 `payment_method='balance'`
+- **WHEN** 用户余额不足
+- **THEN** 返回 HTTP 402
+- **AND** 错误信息为"余额不足"
+
+#### Scenario: WeChat Pay disabled
+- **GIVEN** 用户已登录且 `payment_method='wechat'`
+- **AND** `WECHAT_PAY_ENABLED=false`
+- **WHEN** 用户创建预约
+- **THEN** 返回 HTTP 503
+- **AND** 错误信息说明微信支付暂不可用
 
 #### Scenario: Booking requires authentication
 - **GIVEN** 用户未登录
@@ -158,30 +182,24 @@
 - **THEN** 返回 HTTP 404
 
 ### Requirement: Booking database model
-系统 SHALL 创建 `bookings` 表，包含字段：`id`（主键，自增）、`seat_id`（外键关联 seats.id，非空）、`user_id`（外键关联 users.id，非空）、`room_id`（外键关联 study_rooms.id，非空）、`date`（DATE，非空）、`start_time`（TIME，非空）、`end_time`（TIME，非空）、`status`（VARCHAR(20)，默认 "confirmed"，枚举值 "confirmed"/"cancelled"/"completed"）、`original_price`（DECIMAL(10,2)，非空）、`discount_amount`（DECIMAL(10,2)，默认 0，非空）、`total_price`（DECIMAL(10,2)，非空，表示抵扣后实付金额）、`coupon_id`（外键关联 user_coupons.id，可空）、`created_at`、`updated_at`。
+系统 SHALL 更新 `bookings` 表，包含字段：`id`（主键，自增）、`seat_id`（外键关联 seats.id，非空）、`user_id`（外键关联 users.id，非空）、`room_id`（外键关联 study_rooms.id，非空）、`date`（DATE，非空）、`start_time`（TIME，非空）、`end_time`（TIME，非空）、`status`（VARCHAR(20)，默认 "confirmed"，枚举值 "confirmed"/"cancelled"/"completed"）、`original_price`（DECIMAL(10,2)，非空）、`discount_amount`（DECIMAL(10,2)，默认 0，非空）、`total_price`（DECIMAL(10,2)，非空，表示抵扣后实付金额）、`coupon_id`（外键关联 user_coupons.id，可空）、`payment_method`（VARCHAR(20)，默认 "balance"，枚举值 "balance"/"wechat"）、`payment_status`（VARCHAR(20)，默认 "paid"，枚举值 "pending"/"paid"/"failed"）、`payment_provider`（VARCHAR(20)，可空）、`prepay_id`（VARCHAR(64)，可空）、`transaction_id`（VARCHAR(64)，可空）、`paid_at`（TIMESTAMP，可空）、`created_at`、`updated_at`。
 
-#### Scenario: Create booking record without coupon
-- **GIVEN** 用户创建不使用卡券的预约
-- **WHEN** 向 `bookings` 表插入一条记录，原价为 18.00
+#### Scenario: Create booking record with balance payment
+- **GIVEN** 用户使用余额支付创建预约
+- **WHEN** 向 `bookings` 表插入一条记录
 - **THEN** 记录成功创建
-- **AND** `original_price=18.00`
-- **AND** `discount_amount=0.00`
-- **AND** `total_price=18.00`
-- **AND** `coupon_id` 为空
+- **AND** `payment_method='balance'`、`payment_status='paid'`
 
-#### Scenario: Create booking record with coupon
-- **GIVEN** 用户创建使用卡券的预约
-- **WHEN** 向 `bookings` 表插入一条记录，原价为 24.00，抵扣为 3.00
+#### Scenario: Create booking record with WeChat payment
+- **GIVEN** 用户使用微信支付创建预约
+- **WHEN** 向 `bookings` 表插入一条记录
 - **THEN** 记录成功创建
-- **AND** `original_price=24.00`
-- **AND** `discount_amount=3.00`
-- **AND** `total_price=21.00`
-- **AND** `coupon_id` 指向被使用的用户卡券
+- **AND** `payment_method='wechat'`、`payment_status='pending'`、`prepay_id` 不为空
 
 ### Requirement: Booking response schema
-预约列表/详情响应 SHALL 包含以下字段：`id`（整数）、`seat_id`（整数）、`user_id`（整数）、`room_id`（整数）、`date`（日期字符串 YYYY-MM-DD）、`start_time`（时间字符串 HH:MM）、`end_time`（时间字符串 HH:MM）、`status`（枚举字符串）、`original_price`（数字）、`discount_amount`（数字）、`total_price`（数字）、`coupon_id`（整数或 null）、`created_at`（ISO 时间字符串）、`seat`（对象，包含 id、seat_number、zone、position、price_per_hour）、`room`（对象，包含 id、name、address）。
+预约列表/详情响应 SHALL 包含以下字段：`id`（整数）、`seat_id`（整数）、`user_id`（整数）、`room_id`（整数）、`date`（日期字符串 YYYY-MM-DD）、`start_time`（时间字符串 HH:MM）、`end_time`（时间字符串 HH:MM）、`status`（枚举字符串）、`original_price`（数字）、`discount_amount`（数字）、`total_price`（数字）、`coupon_id`（整数或 null）、`payment_method`（字符串，枚举值 "balance"/"wechat"）、`payment_status`（字符串，枚举值 "pending"/"paid"/"failed"）、`paid_at`（ISO 时间字符串或 null）、`created_at`（ISO 时间字符串）、`seat`（对象，包含 id、seat_number、zone、position、price_per_hour）、`room`（对象，包含 id、name、address）。
 
 #### Scenario: Response field validation
 - **GIVEN** 客户端请求预约详情
 - **WHEN** 后端返回预约详情
-- **THEN** 响应包含 `id`、`seat_id`、`room_id`、`date`、`start_time`、`end_time`、`status`、`original_price`、`discount_amount`、`total_price`、`coupon_id`、`created_at`、`seat`、`room` 字段
+- **THEN** 响应包含 `id`、`seat_id`、`room_id`、`date`、`start_time`、`end_time`、`status`、`original_price`、`discount_amount`、`total_price`、`coupon_id`、`payment_method`、`payment_status`、`paid_at`、`created_at`、`seat`、`room` 字段

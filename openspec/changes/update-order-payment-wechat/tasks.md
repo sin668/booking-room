@@ -3,7 +3,7 @@
 - [x] 1.1 创建 alembic 迁移文件 `br-server/alembic/versions/`：`bookings` 表新增 `payment_method`（VARCHAR(20), default 'balance', nullable=False）、`payment_status`（VARCHAR(20), default 'paid', nullable=False）、`payment_provider`（VARCHAR(20), nullable）、`prepay_id`（VARCHAR(64), nullable）、`transaction_id`（VARCHAR(64), nullable）、`paid_at`（TIMESTAMP, nullable）
 - [x] 1.2 迁移数据回填：所有现有 `bookings` 记录设置 `payment_method='balance'`、`payment_status='paid'`
 - [x] 1.3 更新 SQLAlchemy 模型 `br-server/app/models/booking.py`：添加上述 6 个字段及 `PaymentMethod`、`PaymentStatus` 枚举类型
-- [ ] 1.4 执行迁移验证：`alembic upgrade head` 成功，确认现有 booking 数据的 `payment_method` 和 `payment_status` 已正确回填
+- [x] 1.4 执行迁移验证：`alembic upgrade head` 成功，确认现有 booking 数据的 `payment_method` 和 `payment_status` 已正确回填
 
 ## 2. 后端 — Schema 和 Service 层
 

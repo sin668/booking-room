@@ -209,7 +209,6 @@ export default {
       hasTimeParams: false,
       selectedDate: formatDate(today),
       dateList: this.generateDateList(today),
-      timeSlots: TIME_SLOTS,
       selectedTimeSlot: TIME_SLOTS[0].value,
       selectedZone: '',
       seats: [],
@@ -228,6 +227,13 @@ export default {
         tabs.push({ label: `${ZONE_CONFIG[key].label} ${prices[key]}`, value: key })
       })
       return tabs
+    },
+
+    timeSlots() {
+      return TIME_SLOTS.map(slot => ({
+        ...slot,
+        disabled: this.isPastTimeSlot(slot),
+      }))
     },
 
     hours() {
@@ -312,6 +318,10 @@ export default {
       this.viewSeatId = Number(options.seat_id)
     }
 
+    if (!this.hasTimeParams) {
+      this.ensureSelectableTimeSlot()
+    }
+
     this.loadSeats()
   },
 
@@ -333,6 +343,11 @@ export default {
 
     async loadSeats() {
       if (!this.roomId) return
+      if (!this.selectedTimeSlot) {
+        this.seats = []
+        this.selectedSeat = null
+        return
+      }
       this.seatsLoading = true
       this.selectedSeat = null
       try {
@@ -366,6 +381,7 @@ export default {
 
     onSelectDate(day) {
       this.selectedDate = day.dateStr
+      this.ensureSelectableTimeSlot()
       this.loadSeats()
     },
 
@@ -373,6 +389,20 @@ export default {
       if (slot.disabled) return
       this.selectedTimeSlot = slot.value
       this.loadSeats()
+    },
+
+    isPastTimeSlot(slot) {
+      if (this.selectedDate !== formatDate(new Date())) return false
+      const now = new Date()
+      const nowMinutes = now.getHours() * 60 + now.getMinutes()
+      const [hour, minute] = slot.start.split(':').map(Number)
+      return hour * 60 + minute <= nowMinutes
+    },
+
+    ensureSelectableTimeSlot() {
+      const nextSlot = this.timeSlots.find(slot => !slot.disabled)
+      this.selectedTimeSlot = nextSlot ? nextSlot.value : ''
+      this.selectedSeat = null
     },
 
     seatClass(seat) {
@@ -394,6 +424,7 @@ export default {
 
     onTapSeat(seat) {
       if (this.isViewMode) return
+      if (!this.selectedTimeSlot) return
       if (!seat.is_available) return
       if (this.selectedSeat && this.selectedSeat.id === seat.id) {
         this.selectedSeat = null
@@ -404,6 +435,10 @@ export default {
 
     onConfirm() {
       if (!this.selectedSeat || !this.roomId) return
+      if (!this.selectedTimeSlot) {
+        uni.showToast({ title: '请选择可预约时间段', icon: 'none' })
+        return
+      }
       const parts = this.selectedTimeSlot.split('-')
       const url = `/pages/booking/confirm?seat_id=${this.selectedSeat.id}&room_id=${this.roomId}&date=${this.selectedDate}&start_time=${parts[0]}&end_time=${parts[1]}`
       uni.navigateTo({ url })

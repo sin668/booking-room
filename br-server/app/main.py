@@ -1,5 +1,8 @@
 from contextlib import asynccontextmanager
+import asyncio
+import logging
 from pathlib import Path
+from contextlib import suppress
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
@@ -33,22 +36,50 @@ from app.api.routes.wallet import router as wallet_router
 from app.core.config import settings
 from app.core.database import async_session
 from app.core.redis import close_redis, init_redis
-from app.services.booking_cleanup_service import cleanup_unpaid_bookings
+from app.services.booking_payment_service import BookingPaymentService
+from app.services.wechat_pay_client import WechatPayClient
 
 try:
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
 except ImportError:
     AsyncIOScheduler = None
 
+logger = logging.getLogger(__name__)
+
 
 async def _cleanup_unpaid_bookings_job() -> None:
     async with async_session() as session:
         try:
-            await cleanup_unpaid_bookings(session)
+            wechat_client = (
+                WechatPayClient(settings)
+                if getattr(settings, "WECHAT_PAY_ENABLED", False)
+                else None
+            )
+            if wechat_client is None:
+                logger.info("Booking payment reconciliation skipped: WeChat Pay disabled")
+                return
+            count = await BookingPaymentService(
+                session,
+                wechat_client=wechat_client,
+                config=settings,
+            ).reconcile_pending_payments()
             await session.commit()
+            logger.info("Booking payment reconciliation processed %s booking(s)", count)
         except Exception:
             await session.rollback()
+            logger.exception("Booking payment reconciliation failed")
             raise
+
+
+async def _booking_payment_reconciliation_loop() -> None:
+    """Fallback periodic runner for environments without APScheduler."""
+    while True:
+        await asyncio.sleep(settings.BOOKING_CLEANUP_INTERVAL_SECONDS)
+        try:
+            await _cleanup_unpaid_bookings_job()
+        except Exception:
+            # The job logs failures. Keep the loop alive for later retries.
+            pass
 
 
 @asynccontextmanager
@@ -66,10 +97,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         )
         scheduler.start()
         app.state.booking_cleanup_scheduler = scheduler
+        logger.info(
+            "Booking payment reconciliation scheduler started: interval=%s seconds",
+            settings.BOOKING_CLEANUP_INTERVAL_SECONDS,
+        )
+    else:
+        fallback_task = asyncio.create_task(_booking_payment_reconciliation_loop())
+        app.state.booking_cleanup_fallback_task = fallback_task
+        logger.warning(
+            "Booking payment reconciliation using asyncio fallback: "
+            "apscheduler is not installed; interval=%s seconds",
+            settings.BOOKING_CLEANUP_INTERVAL_SECONDS,
+        )
     yield
     # Shutdown
     if scheduler is not None:
         scheduler.shutdown(wait=False)
+    fallback_task = getattr(app.state, "booking_cleanup_fallback_task", None)
+    if fallback_task is not None:
+        fallback_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await fallback_task
     await close_redis()
 
 

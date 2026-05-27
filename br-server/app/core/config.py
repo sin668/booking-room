@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # Booking verification
     FRONTEND_BASE_URL: str = ""
     BOOKING_TIMEZONE: str = "Asia/Shanghai"
-    BOOKING_CLEANUP_INTERVAL_SECONDS: int = 300
+    BOOKING_CLEANUP_INTERVAL_SECONDS: int = 60
 
     # WeChat Pay
     WECHAT_PAY_ENABLED: bool = False

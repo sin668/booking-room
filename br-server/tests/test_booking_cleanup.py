@@ -64,7 +64,7 @@ async def test_cleanup_unpaid_bookings_cancels_stale_and_restores_coupon(
         date=date(2026, 5, 1),
         start_time=time(9, 0),
         end_time=time(12, 0),
-        status="confirmed",
+        status="pending",
         total_price=Decimal("42.00"),
         coupon_id=user_coupon.id,
         payment_method="wechat",
@@ -100,7 +100,7 @@ async def test_cleanup_unpaid_bookings_keeps_recent_pending(
         date=date(2026, 5, 1),
         start_time=time(9, 0),
         end_time=time(12, 0),
-        status="confirmed",
+        status="pending",
         total_price=Decimal("45.00"),
         payment_method="wechat",
         payment_status="pending",
@@ -113,7 +113,7 @@ async def test_cleanup_unpaid_bookings_keeps_recent_pending(
     count = await cleanup_unpaid_bookings(db_session)
 
     assert count == 0
-    assert booking.status == "confirmed"
+    assert booking.status == "pending"
 
 
 @pytest.mark.asyncio

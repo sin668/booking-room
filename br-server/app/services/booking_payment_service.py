@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import inspect
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -17,6 +17,7 @@ from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.models.user import User
 from app.schemas.booking import PaymentStatusResponse
+from app.services import coupon_service
 from app.services.wechat_pay_client import (
     WechatPayConfigError,
     WechatPayDecryptError,
@@ -55,6 +56,20 @@ class BookingPaymentSignatureError(BookingPaymentError):
 
 class BookingPaymentAlreadyProcessedError(BookingPaymentError):
     pass
+
+
+PAYMENT_QUERY_DELAYS = (
+    timedelta(minutes=1),
+    timedelta(minutes=3),
+    timedelta(minutes=5),
+)
+PENDING_TRADE_STATES = {"NOTPAY", "USERPAYING", "ACCEPT"}
+FAILED_TRADE_STATES = {
+    "CLOSED",
+    "REVOKED",
+    "PAYERROR",
+    "REFUND",
+}
 
 
 class BookingPaymentService:
@@ -103,6 +118,8 @@ class BookingPaymentService:
             raise PaymentProviderUnavailableError(str(exc)) from exc
 
         booking.prepay_id = prepay_id
+        booking.payment_check_count = 0
+        booking.next_payment_check_at = datetime.now() + PAYMENT_QUERY_DELAYS[0]
         await self._db.flush()
         return payment_params
 
@@ -149,11 +166,43 @@ class BookingPaymentService:
         if booking.payment_status != "pending":
             raise BookingPaymentAlreadyProcessedError("Booking payment already processed")
 
+        booking.status = "confirmed"
         booking.payment_status = "paid"
         booking.transaction_id = notify.get("transaction_id")
         booking.paid_at = self._parse_wechat_success_time(notify.get("success_time")) or datetime.now()
+        booking.next_payment_check_at = None
         await self._db.flush()
         return {"code": "SUCCESS", "message": "success"}
+
+    async def reconcile_pending_payments(self, *, now: datetime | None = None) -> int:
+        """Query due pending WeChat bookings and advance their payment state."""
+        if self._wechat_client is None:
+            raise PaymentProviderUnavailableError("WeChat Pay is disabled or misconfigured")
+
+        now = now or datetime.now()
+        result = await self._db.execute(
+            select(Booking)
+            .where(
+                Booking.status == "pending",
+                Booking.payment_status == "pending",
+                Booking.payment_provider == "wechat",
+                or_(
+                    Booking.next_payment_check_at.is_(None),
+                    Booking.next_payment_check_at <= now,
+                ),
+            )
+            .with_for_update()
+        )
+        bookings = result.scalars().all()
+
+        for booking in bookings:
+            trade = await self._wechat_client.query_order(
+                self._booking_out_trade_no(booking.id)
+            )
+            await self._apply_query_result(booking, trade, now)
+
+        await self._db.flush()
+        return len(bookings)
 
     async def query_payment_status(
         self,
@@ -225,3 +274,39 @@ class BookingPaymentService:
     def _decimal_to_cents(self, value: Decimal) -> int:
         cents = (value * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         return int(cents)
+
+    async def _apply_query_result(
+        self,
+        booking: Booking,
+        trade: dict[str, Any],
+        now: datetime,
+    ) -> None:
+        trade_state = trade.get("trade_state")
+        if trade_state == "SUCCESS":
+            expected_cents = self._decimal_to_cents(Decimal(str(booking.total_price)))
+            paid_cents = int(trade.get("amount", {}).get("total", -1))
+            if paid_cents != expected_cents:
+                raise InvalidBookingPaymentCallbackError("WeChat Pay amount mismatch")
+            booking.status = "confirmed"
+            booking.payment_status = "paid"
+            booking.transaction_id = trade.get("transaction_id")
+            booking.paid_at = self._parse_wechat_success_time(trade.get("success_time")) or now
+            booking.next_payment_check_at = None
+            return
+
+        booking.payment_check_count = int(booking.payment_check_count or 0) + 1
+        if trade_state in FAILED_TRADE_STATES or booking.payment_check_count >= len(PAYMENT_QUERY_DELAYS):
+            booking.status = "cancelled"
+            booking.payment_status = "failed"
+            booking.next_payment_check_at = None
+            await coupon_service.restore_user_coupon_for_booking(self._db, booking)
+            return
+
+        if trade_state in PENDING_TRADE_STATES or not trade_state:
+            booking.next_payment_check_at = now + PAYMENT_QUERY_DELAYS[booking.payment_check_count]
+            return
+
+        booking.status = "cancelled"
+        booking.payment_status = "failed"
+        booking.next_payment_check_at = None
+        await coupon_service.restore_user_coupon_for_booking(self._db, booking)

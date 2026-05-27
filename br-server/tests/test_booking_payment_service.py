@@ -1,7 +1,7 @@
 """Tests for booking WeChat payment service."""
 
 import uuid
-from datetime import date, time
+from datetime import date, datetime, timedelta, time
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
@@ -156,6 +156,7 @@ async def test_process_wechat_notify_marks_booking_paid(
     result = await service.process_wechat_notify(headers={}, body=b"{}")
 
     assert result == {"code": "SUCCESS", "message": "success"}
+    assert booking_payment_seed.booking.status == "confirmed"
     assert booking_payment_seed.booking.payment_status == "paid"
     assert booking_payment_seed.booking.transaction_id == "txn-123"
     assert booking_payment_seed.booking.paid_at is not None
@@ -217,3 +218,125 @@ async def test_process_wechat_notify_amount_mismatch_rejected(
         await service.process_wechat_notify(headers={}, body=b"{}")
 
     assert booking_payment_seed.booking.payment_status == "pending"
+
+
+@pytest.mark.asyncio
+async def test_reconcile_pending_payments_schedules_first_second_and_third_queries(
+    db_session: AsyncSession,
+    booking_payment_seed,
+):
+    now = datetime(2026, 5, 1, 10, 0, 0)
+    booking_payment_seed.booking.status = "pending"
+    booking_payment_seed.booking.payment_check_count = 0
+    booking_payment_seed.booking.next_payment_check_at = now - timedelta(seconds=1)
+    await db_session.flush()
+    wechat_client = AsyncMock()
+    wechat_client.query_order.return_value = {"trade_state": "USERPAYING"}
+    service = BookingPaymentService(
+        db_session,
+        wechat_client=wechat_client,
+        config=PAY_CONFIG,
+    )
+
+    count = await service.reconcile_pending_payments(now=now)
+
+    assert count == 1
+    assert booking_payment_seed.booking.status == "pending"
+    assert booking_payment_seed.booking.payment_status == "pending"
+    assert booking_payment_seed.booking.payment_check_count == 1
+    assert booking_payment_seed.booking.next_payment_check_at == now + timedelta(minutes=3)
+
+    count = await service.reconcile_pending_payments(now=now + timedelta(minutes=3))
+
+    assert count == 1
+    assert booking_payment_seed.booking.payment_check_count == 2
+    assert booking_payment_seed.booking.next_payment_check_at == now + timedelta(minutes=8)
+
+    count = await service.reconcile_pending_payments(now=now + timedelta(minutes=8))
+
+    assert count == 1
+    assert booking_payment_seed.booking.status == "cancelled"
+    assert booking_payment_seed.booking.payment_status == "failed"
+    assert booking_payment_seed.booking.payment_check_count == 3
+
+
+@pytest.mark.asyncio
+async def test_reconcile_pending_payments_picks_up_pending_booking_without_next_check_time(
+    db_session: AsyncSession,
+    booking_payment_seed,
+):
+    now = datetime(2026, 5, 1, 10, 0, 0)
+    booking_payment_seed.booking.status = "pending"
+    booking_payment_seed.booking.payment_check_count = 0
+    booking_payment_seed.booking.next_payment_check_at = None
+    await db_session.flush()
+    wechat_client = AsyncMock()
+    wechat_client.query_order.return_value = {"trade_state": "USERPAYING"}
+    service = BookingPaymentService(
+        db_session,
+        wechat_client=wechat_client,
+        config=PAY_CONFIG,
+    )
+
+    count = await service.reconcile_pending_payments(now=now)
+
+    assert count == 1
+    assert booking_payment_seed.booking.payment_check_count == 1
+    assert booking_payment_seed.booking.next_payment_check_at == now + timedelta(minutes=3)
+
+
+@pytest.mark.asyncio
+async def test_reconcile_pending_payments_confirms_successful_wechat_query(
+    db_session: AsyncSession,
+    booking_payment_seed,
+):
+    now = datetime(2026, 5, 1, 10, 0, 0)
+    booking_payment_seed.booking.status = "pending"
+    booking_payment_seed.booking.payment_check_count = 0
+    booking_payment_seed.booking.next_payment_check_at = now - timedelta(seconds=1)
+    await db_session.flush()
+    wechat_client = AsyncMock()
+    wechat_client.query_order.return_value = {
+        "trade_state": "SUCCESS",
+        "transaction_id": "txn-query-123",
+        "success_time": "2026-05-01T10:01:02+08:00",
+        "amount": {"total": 4500, "currency": "CNY"},
+    }
+    service = BookingPaymentService(
+        db_session,
+        wechat_client=wechat_client,
+        config=PAY_CONFIG,
+    )
+
+    count = await service.reconcile_pending_payments(now=now)
+
+    assert count == 1
+    assert booking_payment_seed.booking.status == "confirmed"
+    assert booking_payment_seed.booking.payment_status == "paid"
+    assert booking_payment_seed.booking.transaction_id == "txn-query-123"
+    assert booking_payment_seed.booking.paid_at is not None
+
+
+@pytest.mark.asyncio
+async def test_reconcile_pending_payments_cancels_immediate_failed_wechat_state(
+    db_session: AsyncSession,
+    booking_payment_seed,
+):
+    now = datetime(2026, 5, 1, 10, 0, 0)
+    booking_payment_seed.booking.status = "pending"
+    booking_payment_seed.booking.payment_check_count = 0
+    booking_payment_seed.booking.next_payment_check_at = now - timedelta(seconds=1)
+    await db_session.flush()
+    wechat_client = AsyncMock()
+    wechat_client.query_order.return_value = {"trade_state": "PAYERROR"}
+    service = BookingPaymentService(
+        db_session,
+        wechat_client=wechat_client,
+        config=PAY_CONFIG,
+    )
+
+    count = await service.reconcile_pending_payments(now=now)
+
+    assert count == 1
+    assert booking_payment_seed.booking.status == "cancelled"
+    assert booking_payment_seed.booking.payment_status == "failed"

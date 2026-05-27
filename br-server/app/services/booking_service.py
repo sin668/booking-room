@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, time
+from datetime import date, datetime, timedelta, time
 from decimal import Decimal
 
 from sqlalchemy import and_, func, select
@@ -176,7 +176,7 @@ async def create_booking(
         date=data.date,
         start_time=data.start_time,
         end_time=data.end_time,
-        status="confirmed",
+        status="confirmed" if balance_payment else "pending",
         original_price=original_price,
         discount_amount=discount_amount,
         total_price=total_price,
@@ -184,6 +184,8 @@ async def create_booking(
         payment_method=data.payment_method.value,
         payment_status="paid" if balance_payment else "pending",
         payment_provider=None if balance_payment else data.payment_method.value,
+        payment_check_count=0,
+        next_payment_check_at=None if balance_payment else datetime.now() + timedelta(minutes=1),
     )
     db.add(booking)
     await db.flush()

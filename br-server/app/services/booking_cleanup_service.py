@@ -21,7 +21,7 @@ async def cleanup_unpaid_bookings(
     result = await db.execute(
         select(Booking).where(
             Booking.payment_status == "pending",
-            Booking.status == "confirmed",
+            Booking.status == "pending",
             Booking.created_at < cutoff,
         )
     )

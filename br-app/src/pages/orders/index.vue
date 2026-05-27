@@ -144,6 +144,7 @@ const TABS = [
 ]
 
 const STATUS_MAP = {
+  pending: '待确认',
   confirmed: '已确认',
   cancelled: '已取消',
   completed: '已完成',
@@ -493,6 +494,11 @@ export default {
   box-shadow: 0 0 0 8rpx rgba(7, 193, 96, 0.1);
 }
 
+.dot-pending {
+  background: #FFB800;
+  box-shadow: 0 0 0 8rpx rgba(255, 184, 0, 0.12);
+}
+
 .dot-cancelled {
   background: $danger;
   box-shadow: 0 0 0 8rpx rgba(255, 107, 107, 0.1);
@@ -528,6 +534,14 @@ export default {
 
 .badge-confirmed .status-badge-text {
   color: $success;
+}
+
+.badge-pending {
+  background: rgba(255, 184, 0, 0.12);
+}
+
+.badge-pending .status-badge-text {
+  color: #B77900;
 }
 
 .badge-cancelled {

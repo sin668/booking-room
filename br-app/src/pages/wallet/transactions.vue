@@ -200,18 +200,31 @@ export default {
       }
 
       try {
-        const data = await getWalletTransactions({
-          page: nextPage,
-          page_size: PAGE_SIZE,
-          type: requestType,
-        })
-        if (requestVersion !== this.requestVersion || requestType !== this.currentType) {
-          return
-        }
-        const items = Array.isArray(data.items) ? data.items : []
+        const items = []
+        let pageToLoad = nextPage
+        let loadedPage = nextPage
+        let hasMore = false
+
+        do {
+          const data = await getWalletTransactions({
+            page: pageToLoad,
+            page_size: PAGE_SIZE,
+            type: requestType,
+          })
+          if (requestVersion !== this.requestVersion || requestType !== this.currentType) {
+            return
+          }
+
+          const pageItems = Array.isArray(data.items) ? data.items : []
+          items.push(...this.visibleTransactions(pageItems))
+          loadedPage = data.page || pageToLoad
+          hasMore = Boolean(data.has_more || data.hasMore)
+          pageToLoad = loadedPage + 1
+        } while (items.length === 0 && hasMore)
+
         this.transactions = reset ? items : this.transactions.concat(items)
-        this.page = data.page || nextPage
-        this.hasMore = Boolean(data.has_more || data.hasMore)
+        this.page = loadedPage
+        this.hasMore = hasMore
         this.loadError = false
       } catch {
         if (requestVersion !== this.requestVersion || requestType !== this.currentType) {
@@ -258,6 +271,14 @@ export default {
 
     goRecharge() {
       uni.navigateTo({ url: '/pages/recharge/index' })
+    },
+
+    isHiddenPendingRecharge(item) {
+      return item?.type === 'recharge' && item?.status === 'pending'
+    },
+
+    visibleTransactions(items) {
+      return items.filter((item) => !this.isHiddenPendingRecharge(item))
     },
 
     getTransactionTitle(item) {

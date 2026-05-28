@@ -9,6 +9,205 @@ Base URL: `http://localhost:8000`
 
 ---
 
+## 消息通知
+
+以下接口均为用户端接口，必须携带 Bearer Token。服务端从认证上下文确定当前用户，不接受客户端传入 `user_id` 作为查询或更新范围。
+
+### GET /api/v1/notifications
+
+获取当前用户的通知分页列表，按 `created_at` 倒序返回。
+
+**认证：** Bearer Token
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| type | string | - | 可选通知类型：`booking` / `activity` / `report` / `arrival` |
+| page | integer | 1 | 页码，最小 1 |
+| page_size | integer | 20 | 每页数量，最大 50 |
+
+**响应 200：**
+
+```json
+{
+  "items": [
+    {
+      "id": "11111111-2222-3333-4444-555555555555",
+      "type": "booking",
+      "title": "预约成功",
+      "content": "您的预约已确认",
+      "target_url": "/pages/booking/detail?id=1",
+      "target_type": "booking",
+      "target_id": "1",
+      "is_read": false,
+      "created_at": "2026-05-28T09:00:00",
+      "read_at": null
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 20
+}
+```
+
+**失败行为：**
+
+- 401: 未认证或 Token 无效
+- 422: `type` 不在允许范围内，或分页参数不合法
+- 客户端传入 `user_id` 时不得改变查询范围，响应仍只包含当前用户通知
+
+### GET /api/v1/notifications/unread-summary
+
+获取当前用户未读摘要。各类型字段返回该类型未读数；`total_unread` 只统计用户偏好中已开启的通知类型。
+
+**认证：** Bearer Token
+
+**响应 200：**
+
+```json
+{
+  "total_unread": 3,
+  "booking_count": 1,
+  "activity_count": 0,
+  "report_count": 1,
+  "arrival_count": 1
+}
+```
+
+**失败行为：**
+
+- 401: 未认证或 Token 无效
+- 已关闭类型的未读数仍可在对应 `*_count` 字段中返回，但不得计入 `total_unread`
+
+### POST /api/v1/notifications/{id}/read
+
+将当前用户拥有的一条通知标记为已读，并设置 `read_at`。
+
+**认证：** Bearer Token
+
+**路径参数：**
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| id | string | 是 | 通知 UUID |
+
+**响应 200：**
+
+```json
+{
+  "id": "11111111-2222-3333-4444-555555555555",
+  "type": "booking",
+  "title": "预约成功",
+  "content": "您的预约已确认",
+  "target_url": "/pages/booking/detail?id=1",
+  "target_type": "booking",
+  "target_id": "1",
+  "is_read": true,
+  "created_at": "2026-05-28T09:00:00",
+  "read_at": "2026-05-28T09:05:00"
+}
+```
+
+**失败行为：**
+
+- 401: 未认证或 Token 无效
+- 404 或 403: 通知不存在，或通知不属于当前用户
+- 跨用户通知 ID 不得被读取、标记或泄露详情
+
+### POST /api/v1/notifications/read-all
+
+批量将当前用户未读通知标记为已读。传入 `type` 时只处理该类型；未传入时处理当前用户全部类型。
+
+**认证：** Bearer Token
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| type | string | - | 可选通知类型：`booking` / `activity` / `report` / `arrival` |
+
+**响应 200：**
+
+```json
+{
+  "updated_count": 3
+}
+```
+
+**失败行为：**
+
+- 401: 未认证或 Token 无效
+- 422: `type` 不在允许范围内
+- 只更新当前用户通知，不得修改其他用户通知
+
+### GET /api/v1/notifications/preferences
+
+获取当前用户通知偏好。没有偏好记录时返回默认值，四类通知均开启；服务端可同时创建默认偏好记录。
+
+**认证：** Bearer Token
+
+**响应 200：**
+
+```json
+{
+  "booking_enabled": true,
+  "activity_enabled": true,
+  "report_enabled": true,
+  "arrival_enabled": true,
+  "updated_at": "2026-05-28T09:00:00"
+}
+```
+
+**失败行为：**
+
+- 401: 未认证或 Token 无效
+- 客户端传入 `user_id` 时不得改变读取范围
+
+### PUT /api/v1/notifications/preferences
+
+更新当前用户通知偏好。请求体包含四类开关；服务端必须保存到当前认证用户。
+
+**认证：** Bearer Token
+
+**请求体：**
+
+```json
+{
+  "booking_enabled": true,
+  "activity_enabled": false,
+  "report_enabled": true,
+  "arrival_enabled": true
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| booking_enabled | boolean | 是 | 预约提醒开关 |
+| activity_enabled | boolean | 是 | 活动通知开关 |
+| report_enabled | boolean | 是 | 学习报告开关 |
+| arrival_enabled | boolean | 是 | 到店提醒开关 |
+
+**响应 200：**
+
+```json
+{
+  "booking_enabled": true,
+  "activity_enabled": false,
+  "report_enabled": true,
+  "arrival_enabled": true,
+  "updated_at": "2026-05-28T09:05:00"
+}
+```
+
+**失败行为：**
+
+- 401: 未认证或 Token 无效
+- 422: 请求体字段缺失或类型错误
+- 请求体或查询参数中的 `user_id` 不得改变更新目标
+
+---
+
 ## 一、用户认证
 
 ### POST /api/v1/auth/send-code

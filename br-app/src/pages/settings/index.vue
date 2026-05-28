@@ -114,46 +114,28 @@
         <view class="section-title-wrap">
           <text class="section-title">通知设置</text>
         </view>
-        <view class="setting-row">
-          <view class="row-icon blue-soft"><text class="row-icon-text">铃</text></view>
+        <view
+          v-for="item in notificationTypes"
+          :key="item.key"
+          class="setting-row"
+        >
+          <view class="row-icon" :class="item.colorClass"><text class="row-icon-text">{{ item.iconText }}</text></view>
           <view class="setting-copy">
-            <text class="row-label">预约提醒</text>
-            <text class="row-desc">预约开始前15分钟推送提醒</text>
+            <text class="row-label">{{ item.settingLabel }}</text>
+            <text class="row-desc">{{ item.settingDescription }}</text>
           </view>
-          <view class="toggle" :class="{ active: notifications.booking }" @tap="toggleNotify('booking')">
+          <view
+            class="toggle"
+            :class="{
+              active: notifications[item.key],
+              disabled: notificationPreferencesLoading || savingNotificationPreferenceKey === item.key,
+            }"
+            @tap="toggleNotify(item.key)"
+          >
             <view class="toggle-dot" />
           </view>
         </view>
-        <view class="setting-row">
-          <view class="row-icon purple-soft"><text class="row-icon-text">告</text></view>
-          <view class="setting-copy">
-            <text class="row-label">活动通知</text>
-            <text class="row-desc">接收优惠活动和限时促销</text>
-          </view>
-          <view class="toggle" :class="{ active: notifications.activity }" @tap="toggleNotify('activity')">
-            <view class="toggle-dot" />
-          </view>
-        </view>
-        <view class="setting-row">
-          <view class="row-icon green-soft"><text class="row-icon-text">报</text></view>
-          <view class="setting-copy">
-            <text class="row-label">学习周报</text>
-            <text class="row-desc">每周一推送上周学习总结</text>
-          </view>
-          <view class="toggle" :class="{ active: notifications.report }" @tap="toggleNotify('report')">
-            <view class="toggle-dot" />
-          </view>
-        </view>
-        <view class="setting-row">
-          <view class="row-icon yellow-soft"><text class="row-icon-text">到</text></view>
-          <view class="setting-copy">
-            <text class="row-label">到店打卡提醒</text>
-            <text class="row-desc">到达门店附近时自动提醒</text>
-          </view>
-          <view class="toggle" :class="{ active: notifications.arrival }" @tap="toggleNotify('arrival')">
-            <view class="toggle-dot" />
-          </view>
-        </view>
+        <text v-if="notificationPreferencesLoading" class="preference-loading">通知设置同步中</text>
       </view>
 
       <view class="section-card">
@@ -322,7 +304,9 @@
 </template>
 
 <script>
+import { getNotificationPreferences, updateNotificationPreferences } from '@/api/notifications'
 import { useUserStore } from '@/store/modules/user'
+import { NOTIFICATION_TYPE_CONFIGS, getNotificationPreferenceField } from '@/utils/notificationTypes'
 
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{6,32}$/
 
@@ -330,12 +314,15 @@ export default {
   data() {
     return {
       userStore: useUserStore(),
+      notificationTypes: NOTIFICATION_TYPE_CONFIGS,
       notifications: {
         booking: true,
         activity: true,
-        report: false,
+        report: true,
         arrival: true,
       },
+      notificationPreferencesLoading: false,
+      savingNotificationPreferenceKey: '',
       darkMode: false,
       cacheSize: '23.6 MB',
       showUsernameSheet: false,
@@ -383,6 +370,7 @@ export default {
   onShow() {
     if (this.userStore.isLoggedIn) {
       this.userStore.fetchUserInfo().catch(() => {})
+      this.loadNotificationPreferences()
     }
   },
   methods: {
@@ -400,8 +388,46 @@ export default {
     showUnsupported(title) {
       this.showToast(title)
     },
-    toggleNotify(key) {
-      this.notifications[key] = !this.notifications[key]
+    async loadNotificationPreferences() {
+      if (this.notificationPreferencesLoading) return
+      this.notificationPreferencesLoading = true
+      try {
+        const preferences = await getNotificationPreferences()
+        this.applyNotificationPreferences(preferences)
+      } catch {
+        this.showToast('通知设置加载失败')
+      } finally {
+        this.notificationPreferencesLoading = false
+      }
+    },
+    applyNotificationPreferences(preferences = {}) {
+      this.notificationTypes.forEach((item) => {
+        const field = getNotificationPreferenceField(item.key)
+        if (typeof preferences[field] === 'boolean') {
+          this.notifications[item.key] = preferences[field]
+        }
+      })
+    },
+    buildNotificationPreferencePayload() {
+      return this.notificationTypes.reduce((payload, item) => {
+        payload[getNotificationPreferenceField(item.key)] = !!this.notifications[item.key]
+        return payload
+      }, {})
+    },
+    async toggleNotify(key) {
+      if (this.notificationPreferencesLoading || this.savingNotificationPreferenceKey) return
+      const previousValue = this.notifications[key]
+      this.notifications[key] = !previousValue
+      this.savingNotificationPreferenceKey = key
+      try {
+        const savedPreferences = await updateNotificationPreferences(this.buildNotificationPreferencePayload())
+        this.applyNotificationPreferences(savedPreferences)
+      } catch {
+        this.notifications[key] = previousValue
+        this.showToast('通知设置保存失败')
+      } finally {
+        this.savingNotificationPreferenceKey = ''
+      }
     },
     clearCache() {
       this.cacheSize = '0 MB'
@@ -928,6 +954,10 @@ export default {
   box-sizing: border-box;
 }
 
+.toggle.disabled {
+  opacity: 0.58;
+}
+
 .toggle-dot {
   width: 44rpx;
   height: 44rpx;
@@ -943,6 +973,13 @@ export default {
 
 .toggle.active .toggle-dot {
   transform: translateX(36rpx);
+}
+
+.preference-loading {
+  display: block;
+  padding: 0 32rpx 24rpx 116rpx;
+  color: $text-muted;
+  font-size: 22rpx;
 }
 
 .logout-btn {

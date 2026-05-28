@@ -56,6 +56,12 @@
       }
     },
     {
+      "path": "pages/notifications/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/study-record/index",
       "style": {
         "navigationBarTitleText": "学习记录"

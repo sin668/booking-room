@@ -166,6 +166,7 @@
 <script>
 import { getBanners } from '@/api/banners'
 import { getActivities } from '@/api/activities'
+import { getNotificationUnreadSummary } from '@/api/notifications'
 import { getRooms } from '@/api/rooms'
 import { useCityStore } from '@/store/modules/city'
 
@@ -180,7 +181,7 @@ export default {
     return {
       statusBarHeight: 0,
       refreshing: false,
-      hasNotification: true,
+      hasNotification: false,
       banners: [],
       currentBanner: 0,
       activities: [],
@@ -219,10 +220,20 @@ export default {
     async loadData() {
       const cityChanged = this.lastCityId !== this.currentCityId
       await Promise.allSettled([
+        this.loadNotificationUnreadSummary(),
         this.loadBanners(),
         this.loadActivities(),
         this.loadRooms(cityChanged || this.rooms.length === 0),
       ])
+    },
+
+    async loadNotificationUnreadSummary() {
+      try {
+        const summary = await getNotificationUnreadSummary()
+        this.hasNotification = Number(summary?.total_unread || 0) > 0
+      } catch {
+        this.hasNotification = false
+      }
     },
 
     async loadBanners() {
@@ -324,7 +335,7 @@ export default {
     },
 
     onTapBell() {
-      // Future: notifications
+      uni.navigateTo({ url: '/pages/notifications/index' })
     },
   },
 }

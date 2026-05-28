@@ -1,64 +1,112 @@
 ## 1. Backend Data Model and Migration
 
-- [ ] 1.1 Add br-server notification type enum for `booking`, `activity`, `report`, and `arrival`.
-- [ ] 1.2 Add `notifications` model/table with current-user ownership, type, title, content, target fields, read state, timestamps, and indexes for `user_id/type/is_read/created_at`.
-- [ ] 1.3 Add `notification_preferences` model/table with four enabled flags and one row per user.
-- [ ] 1.4 Add database migration for both tables with safe defaults and rollback.
+- [ ] 1.1 Inspect existing SQLAlchemy model conventions in `br-server/app/models/*.py`, especially user ownership, timestamps, enum/string fields, and relationship imports.
+- [ ] 1.2 Create `br-server/app/models/notification.py` with `NotificationType`, `Notification`, and `NotificationPreference`.
+- [ ] 1.3 Add `NotificationType` values `booking`, `activity`, `report`, and `arrival`.
+- [ ] 1.4 Add `notifications` table fields: `id`, `user_id`, `type`, `title`, `content`, `target_url`, `target_type`, `target_id`, `is_read`, `created_at`, and `read_at`.
+- [ ] 1.5 Add `notifications` indexes for current-user list and unread summary queries: `user_id`, `user_id/type`, `user_id/is_read`, and `user_id/created_at`.
+- [ ] 1.6 Add `notification_preferences` table fields: `id`, `user_id`, `booking_enabled`, `activity_enabled`, `report_enabled`, `arrival_enabled`, and `updated_at`.
+- [ ] 1.7 Add a unique constraint/index on `notification_preferences.user_id`.
+- [ ] 1.8 Import the notification models from `br-server/app/models/__init__.py` so Alembic metadata and tests can discover them.
+- [ ] 1.9 Create an Alembic migration in `br-server/alembic/versions/` for both tables.
+- [ ] 1.10 Ensure the migration downgrade drops indexes and tables in reverse dependency order.
 
-## 2. Backend REST API
+## 2. Backend Schemas and Service
 
-- [ ] 2.1 Add notification schemas for list items, paginated list response, unread summary, preferences, and preference update request.
-- [ ] 2.2 Add notification service methods for list pagination, unread summary filtered by enabled preferences, mark read, mark all read, get/update preferences, and `create_notification(...)`.
-- [ ] 2.3 Add authenticated routes for `GET /api/v1/notifications`, `GET /api/v1/notifications/unread-summary`, `POST /api/v1/notifications/{id}/read`, and `POST /api/v1/notifications/read-all`.
-- [ ] 2.4 Add authenticated routes for `GET /api/v1/notifications/preferences` and `PUT /api/v1/notifications/preferences`.
-- [ ] 2.5 Ensure all routes derive `user_id` from the current user and reject or ignore any cross-user access.
-- [ ] 2.6 Update `docs/api.md` with the notification API contract.
+- [ ] 2.1 Inspect existing Pydantic schema conventions in `br-server/app/schemas/*.py` for response model naming and ORM serialization style.
+- [ ] 2.2 Create `br-server/app/schemas/notification.py` with schemas for notification list item, paginated list response, unread summary, preferences response, and preferences update request.
+- [ ] 2.3 Validate schema field names match the OpenSpec contract: `total_unread`, per-type counts, `is_read`, `created_at`, `read_at`, and enabled flags.
+- [ ] 2.4 Create `br-server/app/services/notification_service.py`.
+- [ ] 2.5 Add service method to get or create default preferences with all four types enabled.
+- [ ] 2.6 Add service method to list current-user notifications with optional `type`, `page`, and `page_size`.
+- [ ] 2.7 Add service method to calculate unread summary while excluding disabled notification types from `total_unread`.
+- [ ] 2.8 Add service method to mark one current-user notification as read and set `read_at`.
+- [ ] 2.9 Add service method to mark all current-user notifications as read, optionally limited by type.
+- [ ] 2.10 Add service method to update preferences for the current user.
+- [ ] 2.11 Add `create_notification(...)` service method for future backend producers, with type validation and default unread state.
 
-## 3. Backend Tests
+## 3. Backend Routes and API Documentation
 
-- [ ] 3.1 Test notification list returns only current user's messages with type filter and pagination.
-- [ ] 3.2 Test unread summary counts only enabled notification types.
-- [ ] 3.3 Test single notification read and all-read operations are scoped to the current user.
-- [ ] 3.4 Test preference defaults, updates, and save/read round trip.
-- [ ] 3.5 Test cross-user notification IDs cannot be read or modified.
+- [ ] 3.1 Inspect existing authenticated route patterns in `br-server/app/api/routes/*.py` and current-user dependency usage in `br-server/app/api/dependencies.py`.
+- [ ] 3.2 Create `br-server/app/api/routes/notification.py` with authenticated user routes.
+- [ ] 3.3 Add `GET /api/v1/notifications` with `type?`, `page`, and `page_size` query parameters.
+- [ ] 3.4 Add `GET /api/v1/notifications/unread-summary`.
+- [ ] 3.5 Add `POST /api/v1/notifications/{id}/read`.
+- [ ] 3.6 Add `POST /api/v1/notifications/read-all` with optional `type`.
+- [ ] 3.7 Add `GET /api/v1/notifications/preferences`.
+- [ ] 3.8 Add `PUT /api/v1/notifications/preferences`.
+- [ ] 3.9 Register the notification router in `br-server/app/main.py`.
+- [ ] 3.10 Confirm every route derives `user_id` from the authenticated current user and does not accept client-supplied `user_id`.
+- [ ] 3.11 Update `docs/api.md` with request parameters, response fields, auth requirement, and failure behavior for all notification endpoints.
 
-## 4. Frontend Notification Contracts
+## 4. Backend Tests
 
-- [ ] 4.1 Define shared notification type config for `booking`, `activity`, `report`, and `arrival` labels, icons, colors, and setting keys.
-- [ ] 4.2 Add `br-app/src/api/notifications.js` with `getNotifications`, `getNotificationUnreadSummary`, `markNotificationRead`, `markAllNotificationsRead`, `getNotificationPreferences`, and `updateNotificationPreferences`.
-- [ ] 4.3 Keep all page components behind the API wrapper and avoid direct request-path duplication.
+- [ ] 4.1 Inspect existing API test fixtures in `br-server/tests/conftest.py` and current authenticated client patterns.
+- [ ] 4.2 Add `br-server/tests/test_notification_service.py` for service-level behavior.
+- [ ] 4.3 Test default preferences are all enabled when no preference row exists.
+- [ ] 4.4 Test updating preferences persists all four enabled flags.
+- [ ] 4.5 Test unread summary excludes disabled types from `total_unread`.
+- [ ] 4.6 Test `create_notification(...)` creates an unread notification for the target user.
+- [ ] 4.7 Add `br-server/tests/test_api_notifications.py` for route-level behavior.
+- [ ] 4.8 Test `GET /api/v1/notifications` returns only the current user's messages.
+- [ ] 4.9 Test notification list type filtering and pagination.
+- [ ] 4.10 Test `POST /api/v1/notifications/{id}/read` marks only current-user notification IDs.
+- [ ] 4.11 Test `POST /api/v1/notifications/read-all` marks all or one filtered type for the current user only.
+- [ ] 4.12 Test cross-user notification IDs cannot be read or modified.
+- [ ] 4.13 Run focused backend tests: `pytest tests/test_notification_service.py tests/test_api_notifications.py -v` from `br-server`.
 
-## 5. Settings Integration
+## 5. Frontend Notification API and Shared Types
 
-- [ ] 5.1 Refactor `pages/settings/index.vue` notification switches to use the shared 4-type config.
-- [ ] 5.2 Load notification preferences from `GET /api/v1/notifications/preferences` when the settings page opens.
-- [ ] 5.3 Save notification preferences through `PUT /api/v1/notifications/preferences`.
-- [ ] 5.4 Roll back the changed switch and show a toast when preference save fails.
-- [ ] 5.5 Ensure preference updates are reflected by the notification center and home unread red dot.
+- [ ] 5.1 Inspect existing br-app API wrappers in `br-app/src/api/*.js` and request helper behavior in `br-app/src/utils/request.js`.
+- [ ] 5.2 Create a shared notification type config in an appropriate frontend module, with keys, labels, setting labels, color/icon metadata, and default target routes.
+- [ ] 5.3 Add `br-app/src/api/notifications.js`.
+- [ ] 5.4 Implement API wrapper methods: `getNotifications`, `getNotificationUnreadSummary`, `markNotificationRead`, `markAllNotificationsRead`, `getNotificationPreferences`, and `updateNotificationPreferences`.
+- [ ] 5.5 Ensure all page code imports notification API methods instead of duplicating request paths.
+- [ ] 5.6 Ensure frontend field names match backend schemas exactly, especially enabled flags and unread summary fields.
 
-## 6. Notification Center Page
+## 6. Settings Integration
 
-- [ ] 6.1 Add `pages/notifications/index` route to `br-app/src/pages.json`.
-- [ ] 6.2 Build the notification center page with header, filter tabs, list, unread markers, and mark-all-read action.
-- [ ] 6.3 Implement loading, empty, error, retry, and pull-to-refresh states.
-- [ ] 6.4 Implement type filtering for all, booking, activity, report, and arrival.
-- [ ] 6.5 Respect disabled notification preferences by showing a type-disabled hint and excluding disabled types from active unread prompting.
-- [ ] 6.6 Implement click behavior to mark individual notifications as read and route to `target_url` or the type default page after read succeeds.
-- [ ] 6.7 Keep the message unread when mark-read fails and show a toast without navigating.
+- [ ] 6.1 Inspect current settings switch state and save behavior in `br-app/src/pages/settings/index.vue`.
+- [ ] 6.2 Refactor notification switches in `br-app/src/pages/settings/index.vue` to render from the shared 4-type config.
+- [ ] 6.3 Load preferences with `getNotificationPreferences()` when the settings page opens.
+- [ ] 6.4 Show a non-blocking loading state for notification preferences without preventing other settings content from rendering.
+- [ ] 6.5 Save changed preferences with `updateNotificationPreferences(payload)` when a switch changes.
+- [ ] 6.6 Roll back only the changed switch and show a toast when preference save fails.
+- [ ] 6.7 Ensure saved preferences are available to the notification center and home unread red dot after returning from settings.
 
-## 7. Home Page Integration
+## 7. Notification Center Page
 
-- [ ] 7.1 Update `pages/index/index.vue` notification bell click to navigate to `/pages/notifications/index`.
-- [ ] 7.2 Load unread summary on home page show and pull refresh.
-- [ ] 7.3 Show the red dot only when enabled notification types have unread messages.
-- [ ] 7.4 Hide the red dot without blocking homepage rendering when unread summary loading fails.
-- [ ] 7.5 Refresh unread state after returning from the notification center.
+- [ ] 7.1 Add `pages/notifications/index` to `br-app/src/pages.json`.
+- [ ] 7.2 Create `br-app/src/pages/notifications/index.vue`.
+- [ ] 7.3 Build the page header and filter tabs for `all`, `booking`, `activity`, `report`, and `arrival`.
+- [ ] 7.4 Load notification preferences and notification list when the page opens.
+- [ ] 7.5 Implement list loading, empty, error, retry, and pull-to-refresh states.
+- [ ] 7.6 Implement type filtering by calling the backend list API with the selected type.
+- [ ] 7.7 Show unread markers and read styling based on `is_read`.
+- [ ] 7.8 Implement mark-all-read for the current filter scope.
+- [ ] 7.9 Show a disabled-type hint when the selected type is turned off, while still allowing historical messages to display.
+- [ ] 7.10 Implement click behavior: call `markNotificationRead(id)` first, update local read state after success, then route to `target_url` or the type default page.
+- [ ] 7.11 Keep the message unread, show a toast, and do not navigate when mark-read fails.
+- [ ] 7.12 Ensure `booking`, `activity`, `report`, and `arrival` default targets resolve to existing app pages.
 
-## 8. Review, Refactor, and Verification
+## 8. Home Page Integration
 
-- [ ] 8.1 Review code layering to keep page components, API calls, backend services, and notification type config separated.
-- [ ] 8.2 Remove duplicated notification label/type logic across home, settings, and notification pages.
-- [ ] 8.3 Run focused br-server notification tests.
-- [ ] 8.4 Run `pnpm run build:h5` in `br-app`.
-- [ ] 8.5 Manually verify home red dot, notification filtering, mark-read behavior, settings preference save/rollback, disabled-type hint, and type jump behavior.
-- [ ] 8.6 Confirm no unrelated files are modified and prepare implementation notes for review.
+- [ ] 8.1 Inspect current notification bell markup and `onTapBell` behavior in `br-app/src/pages/index/index.vue`.
+- [ ] 8.2 Update `onTapBell` to navigate to `/pages/notifications/index`.
+- [ ] 8.3 Load unread summary with `getNotificationUnreadSummary()` on page show.
+- [ ] 8.4 Refresh unread summary during home pull refresh if the page already supports pull refresh.
+- [ ] 8.5 Show the red dot only when `total_unread > 0`.
+- [ ] 8.6 Hide the red dot and keep the homepage usable when unread summary loading fails.
+- [ ] 8.7 Refresh unread state after returning from notification center or settings.
+
+## 9. Verification and Cleanup
+
+- [ ] 9.1 Run focused backend notification tests from `br-server`.
+- [ ] 9.2 Run the existing backend test subset most likely to be affected by auth, users, and route registration.
+- [ ] 9.3 Run `pnpm run build:h5` from `br-app`.
+- [ ] 9.4 Manually verify homepage bell navigation and red dot behavior.
+- [ ] 9.5 Manually verify notification center filtering, empty state, error retry, pull refresh, read state, mark-all-read, disabled-type hint, and target navigation.
+- [ ] 9.6 Manually verify settings preference load, save, failure rollback, and return-to-home red dot refresh.
+- [ ] 9.7 Confirm `docs/api.md` and OpenSpec stay aligned with implemented endpoint paths and field names.
+- [ ] 9.8 Run `git diff --check`.
+- [ ] 9.9 Confirm no unrelated files are staged or modified before commit.

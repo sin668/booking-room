@@ -155,12 +155,6 @@
           <text class="row-value">简体中文</text>
           <text class="chevron">›</text>
         </view>
-        <view class="icon-row press-effect" @tap="showUnsupported('默认门店设置暂未开放')">
-          <view class="row-icon teal-soft"><text class="row-icon-text">店</text></view>
-          <text class="row-label">默认门店</text>
-          <text class="row-value">光谷自习室</text>
-          <text class="chevron">›</text>
-        </view>
         <view class="icon-row press-effect" @tap="clearCache">
           <view class="row-icon gray-soft"><text class="row-icon-text">扫</text></view>
           <text class="row-label">清除缓存</text>

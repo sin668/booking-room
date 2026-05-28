@@ -50,6 +50,33 @@
           <text class="menu-item-meta">查看全部</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
+        <view class="menu-item" @tap="toggleFollowedRooms">
+          <view class="menu-icon teal">
+            <view class="store-icon" />
+          </view>
+          <text class="menu-item-text">关注门店</text>
+          <text class="menu-item-meta">{{ followedRoomsSummary }}</text>
+          <text class="dropdown-arrow">{{ showFollowedRoomsDropdown ? '⌃' : '⌄' }}</text>
+        </view>
+        <view v-if="showFollowedRoomsDropdown" class="followed-dropdown">
+          <view v-if="followedRooms.length === 0" class="followed-empty">
+            <text class="followed-empty-text">暂无关注门店</text>
+          </view>
+          <block v-else>
+            <view
+              v-for="room in followedRooms"
+              :key="room.id"
+              class="followed-room press-effect"
+              @tap="openFollowedRoom(room)"
+            >
+              <view class="followed-room-main">
+                <text class="followed-room-name">{{ room.name }}</text>
+                <text class="followed-room-address">{{ room.address || '地址待完善' }}</text>
+              </view>
+              <view class="icon icon-arrow-right menu-arrow" />
+            </view>
+          </block>
+        </view>
 
         <view class="menu-divider" />
         <view class="menu-section-label">
@@ -125,6 +152,7 @@ import { useUserStore } from '@/store/modules/user'
 import { getCoupons } from '@/api/coupons'
 import { getMonthlySummary } from '@/api/studyRecords'
 import { getBalance } from '@/api/wallet'
+import { getFollowedRooms } from '@/utils/followedRooms'
 
 export default {
   data() {
@@ -134,6 +162,8 @@ export default {
       availableCouponCount: 0,
       totalStudyHours: 0,
       profileRequestId: 0,
+      followedRooms: [],
+      showFollowedRoomsDropdown: false,
     }
   },
   computed: {
@@ -146,9 +176,15 @@ export default {
     studyHoursText() {
       return `${this.formatHours(this.totalStudyHours)}h`
     },
+    followedRoomsSummary() {
+      if (this.followedRooms.length === 0) return '暂无关注'
+      if (this.followedRooms.length === 1) return this.followedRooms[0].name
+      return `${this.followedRooms[0].name}等${this.followedRooms.length}家`
+    },
   },
   onShow() {
     if (this.userStore.isLoggedIn) {
+      this.loadFollowedRooms()
       this.loadProfileStats()
     }
   },
@@ -161,6 +197,18 @@ export default {
     },
     navigateTo(url) {
       uni.navigateTo({ url })
+    },
+    loadFollowedRooms() {
+      this.followedRooms = getFollowedRooms()
+    },
+    toggleFollowedRooms() {
+      this.loadFollowedRooms()
+      this.showFollowedRoomsDropdown = !this.showFollowedRoomsDropdown
+    },
+    openFollowedRoom(room) {
+      if (!room?.id) return
+      this.showFollowedRoomsDropdown = false
+      uni.navigateTo({ url: `/pages/booking/detail?room_id=${room.id}` })
     },
     async loadProfileStats() {
       const requestId = ++this.profileRequestId
@@ -468,6 +516,10 @@ export default {
   background: rgba(99, 110, 114, 0.1);
 }
 
+.menu-icon.teal {
+  background: rgba(0, 184, 148, 0.11);
+}
+
 .menu-item-text {
   flex: 1;
   font-size: 28rpx;
@@ -484,6 +536,103 @@ export default {
   height: 24rpx;
   font-size: 24rpx;
   color: $text-muted;
+}
+
+.dropdown-arrow {
+  width: 28rpx;
+  font-size: 30rpx;
+  line-height: 30rpx;
+  text-align: center;
+  color: $text-muted;
+}
+
+.store-icon {
+  width: 36rpx;
+  height: 30rpx;
+  border: 4rpx solid #00a884;
+  border-top: none;
+  border-radius: 0 0 7rpx 7rpx;
+  position: relative;
+}
+
+.store-icon::before {
+  content: '';
+  position: absolute;
+  left: -5rpx;
+  right: -5rpx;
+  top: -14rpx;
+  height: 14rpx;
+  border-radius: 8rpx 8rpx 4rpx 4rpx;
+  background: #00a884;
+}
+
+.store-icon::after {
+  content: '';
+  position: absolute;
+  left: 12rpx;
+  bottom: -4rpx;
+  width: 8rpx;
+  height: 16rpx;
+  border-radius: 4rpx 4rpx 0 0;
+  background: #00a884;
+}
+
+.followed-dropdown {
+  margin: 0 28rpx 14rpx 112rpx;
+  border-radius: 22rpx;
+  overflow: hidden;
+  background: #f7f8ff;
+  border: 1rpx solid rgba(79, 110, 247, 0.1);
+}
+
+.followed-empty {
+  min-height: 88rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+}
+
+.followed-empty-text {
+  font-size: 25rpx;
+  color: $text-muted;
+}
+
+.followed-room {
+  min-height: 96rpx;
+  padding: 16rpx 18rpx 16rpx 24rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  border-top: 1rpx solid rgba(79, 110, 247, 0.08);
+}
+
+.followed-room:first-child {
+  border-top: none;
+}
+
+.followed-room-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.followed-room-name {
+  font-size: 27rpx;
+  font-weight: 700;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.followed-room-address {
+  font-size: 23rpx;
+  color: $text-muted;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .history-icon {

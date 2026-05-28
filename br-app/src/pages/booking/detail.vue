@@ -168,7 +168,7 @@
 
     <view class="bottom-bar">
       <view class="fav-btn" @tap="onToggleFav">
-        <view :class="['heart-icon', { active: isFav }]" />
+        <text :class="['heart-icon', { active: isFav }]">♥</text>
       </view>
       <view class="book-btn" @tap="onBook">
         <text class="book-btn-sub">{{ seatStats.available }} 个座位可选</text>
@@ -181,6 +181,7 @@
 <script>
 import { getRoom } from '@/api/rooms'
 import { getSeatStats } from '@/api/seats'
+import { followRoom, isRoomFollowed, unfollowRoom } from '@/utils/followedRooms'
 
 const REAL_ROOM_PHOTOS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&h=560&fit=crop&q=85',
@@ -272,6 +273,7 @@ export default {
 
     if (options.room_id) {
       this.roomId = options.room_id
+      this.isFav = isRoomFollowed(this.roomId)
       this.loadData()
     }
   },
@@ -290,6 +292,7 @@ export default {
       try {
         const data = await getRoom(this.roomId)
         this.room = data || {}
+        this.isFav = isRoomFollowed(this.roomId)
       } catch {
         // room stays empty
       }
@@ -317,7 +320,24 @@ export default {
     },
 
     onToggleFav() {
-      this.isFav = !this.isFav
+      if (!this.roomId) return
+
+      if (this.isFav) {
+        unfollowRoom(this.roomId)
+        this.isFav = false
+        uni.showToast({ title: '已取消关注', icon: 'none' })
+        return
+      }
+
+      followRoom({
+        ...this.room,
+        id: this.room.id || this.roomId,
+        name: this.roomName,
+        address: this.displayAddress,
+        cover_image: this.heroImage,
+      })
+      this.isFav = true
+      uni.showToast({ title: '已加入关注门店', icon: 'none' })
     },
 
     onBook() {
@@ -990,42 +1010,22 @@ export default {
 }
 
 .heart-icon {
-  width: 32rpx;
-  height: 28rpx;
-  position: relative;
-  transform: rotate(-45deg);
-  border-radius: 0 0 0 6rpx;
-  background: transparent;
-  border-left: 4rpx solid $text-muted;
-  border-bottom: 4rpx solid $text-muted;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  font-size: 50rpx;
+  line-height: 56rpx;
+  color: $white;
+  -webkit-text-stroke: 3rpx $text-muted;
+  font-family: Arial, Helvetica, sans-serif;
+  transform: translateY(1rpx);
 }
 
-.heart-icon::before,
-.heart-icon::after {
-  content: '';
-  position: absolute;
-  width: 18rpx;
-  height: 18rpx;
-  border-radius: 50%;
-  border: 4rpx solid $text-muted;
-  background: $white;
-}
-
-.heart-icon::before {
-  left: -5rpx;
-  top: -14rpx;
-}
-
-.heart-icon::after {
-  left: 11rpx;
-  top: 2rpx;
-}
-
-.heart-icon.active,
-.heart-icon.active::before,
-.heart-icon.active::after {
-  background: $danger;
-  border-color: $danger;
+.heart-icon.active {
+  color: $danger;
+  -webkit-text-stroke-color: $danger;
 }
 
 .book-btn {

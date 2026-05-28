@@ -15,6 +15,7 @@ from app.core.database import async_session
 from app.models.activity import Activity
 from app.models.banner import Banner
 from app.models.coupon import Coupon, UserCoupon
+from app.models.notification import Notification, NotificationPreference
 from app.models.study_room import StudyRoom
 from app.models.user import User
 
@@ -147,6 +148,138 @@ SEED_COUPONS = [
     },
 ]
 
+DEMO_APP_USER = {
+    "phone": "13900000001",
+    "nickname": "消息演示用户",
+    "username": "notify_demo_user",
+    "password_hash": "seed-demo-user-not-for-login",
+    "user_type": "app",
+    "status": "active",
+}
+
+SEED_NOTIFICATIONS = [
+    {
+        "type": "booking",
+        "title": "预约成功通知",
+        "content": "您已成功预约安静自习室·油城店 A区 08 号座位，请按时到店学习。",
+        "target_url": "/pages/orders/index",
+        "target_type": "booking",
+        "target_id": "seed-booking-success",
+        "minutes_ago": 8,
+        "is_read": False,
+    },
+    {
+        "type": "booking",
+        "title": "预约开始提醒",
+        "content": "您的预约将在 15 分钟后开始，请提前准备学习用品并到店签到。",
+        "target_url": "/pages/qrcode/index",
+        "target_type": "arrival",
+        "target_id": "seed-booking-arrival",
+        "minutes_ago": 36,
+        "is_read": False,
+    },
+    {
+        "type": "booking",
+        "title": "预约变更提醒",
+        "content": "您预约的座位已完成变更，新的座位信息可在订单列表中查看。",
+        "target_url": "/pages/orders/index",
+        "target_type": "booking",
+        "target_id": "seed-booking-change",
+        "minutes_ago": 160,
+        "is_read": True,
+    },
+    {
+        "type": "activity",
+        "title": "早起鸟计划上线",
+        "content": "早 8 点前到店签到可获得额外学习积分，本周活动名额有限。",
+        "target_url": "/pages/index/index",
+        "target_type": "activity",
+        "target_id": "seed-activity-early-bird",
+        "minutes_ago": 18,
+        "is_read": False,
+    },
+    {
+        "type": "activity",
+        "title": "周末冲刺班报名中",
+        "content": "周末 8 小时沉浸学习挑战开启，连续打卡可领取优惠券。",
+        "target_url": "/pages/index/index",
+        "target_type": "activity",
+        "target_id": "seed-activity-weekend",
+        "minutes_ago": 240,
+        "is_read": False,
+    },
+    {
+        "type": "activity",
+        "title": "充值福利到账",
+        "content": "充值满 100 送 30 活动进行中，优惠可用于后续预约订单。",
+        "target_url": "/pages/recharge/index",
+        "target_type": "activity",
+        "target_id": "seed-activity-recharge",
+        "minutes_ago": 720,
+        "is_read": True,
+    },
+    {
+        "type": "report",
+        "title": "本周学习报告已生成",
+        "content": "您本周累计学习 18.5 小时，专注力超过 82% 的同城用户。",
+        "target_url": "/pages/study-record/index",
+        "target_type": "report",
+        "target_id": "seed-report-weekly",
+        "minutes_ago": 52,
+        "is_read": False,
+    },
+    {
+        "type": "report",
+        "title": "连续学习成就达成",
+        "content": "您已连续 5 天完成学习打卡，继续保持稳定节奏。",
+        "target_url": "/pages/study-record/index",
+        "target_type": "report",
+        "target_id": "seed-report-streak",
+        "minutes_ago": 300,
+        "is_read": False,
+    },
+    {
+        "type": "report",
+        "title": "月度学习趋势提醒",
+        "content": "本月晚间学习时长占比提升，建议继续固定高效时间段。",
+        "target_url": "/pages/study-record/index",
+        "target_type": "report",
+        "target_id": "seed-report-monthly",
+        "minutes_ago": 1080,
+        "is_read": True,
+    },
+    {
+        "type": "arrival",
+        "title": "到店签到提醒",
+        "content": "检测到您已接近门店，请打开我的学习码完成到店核销。",
+        "target_url": "/pages/qrcode/index",
+        "target_type": "arrival",
+        "target_id": "seed-arrival-checkin",
+        "minutes_ago": 5,
+        "is_read": False,
+    },
+    {
+        "type": "arrival",
+        "title": "学习码即将过期",
+        "content": "当前学习码即将刷新，如需核销请在页面展示最新二维码。",
+        "target_url": "/pages/qrcode/index",
+        "target_type": "arrival",
+        "target_id": "seed-arrival-qrcode",
+        "minutes_ago": 84,
+        "is_read": False,
+    },
+    {
+        "type": "arrival",
+        "title": "离店核销完成",
+        "content": "本次学习已完成离店核销，学习时长已计入记录。",
+        "target_url": "/pages/study-record/index",
+        "target_type": "arrival",
+        "target_id": "seed-arrival-finished",
+        "minutes_ago": 420,
+        "is_read": True,
+    },
+]
+
 
 async def seed_coupons(session: AsyncSession) -> None:
     now = _china_now_naive()
@@ -191,6 +324,75 @@ async def seed_coupons(session: AsyncSession) -> None:
                 print(f"  + UserCoupon: {coupon.name} -> {user.phone}")
 
 
+async def _get_or_create_demo_user(session: AsyncSession) -> User:
+    existing = await session.execute(
+        select(User).where(User.username == DEMO_APP_USER["username"])
+    )
+    user = existing.scalar_one_or_none()
+    if user is not None:
+        user.status = "active"
+        return user
+
+    user = User(**DEMO_APP_USER)
+    session.add(user)
+    await session.flush()
+    print(f"  + DemoUser: {user.nickname} ({user.username})")
+    return user
+
+
+async def _seed_notification_preferences(session: AsyncSession, user: User) -> None:
+    existing = await session.execute(
+        select(NotificationPreference).where(NotificationPreference.user_id == user.id)
+    )
+    if existing.scalar_one_or_none() is None:
+        session.add(NotificationPreference(user_id=user.id))
+        print(f"  + NotificationPreference: {user.username}")
+
+
+async def seed_notifications(session: AsyncSession) -> None:
+    users = (
+        await session.execute(
+            select(User).where(
+                User.user_type == "app",
+                User.status == "active",
+            )
+        )
+    ).scalars().all()
+    if not users:
+        users = [await _get_or_create_demo_user(session)]
+
+    now = _china_now_naive()
+    for user in users:
+        await _seed_notification_preferences(session, user)
+        for item in SEED_NOTIFICATIONS:
+            existing = await session.execute(
+                select(Notification).where(
+                    Notification.user_id == user.id,
+                    Notification.type == item["type"],
+                    Notification.title == item["title"],
+                )
+            )
+            if existing.scalar_one_or_none() is not None:
+                continue
+
+            created_at = now - timedelta(minutes=item["minutes_ago"])
+            session.add(
+                Notification(
+                    user_id=user.id,
+                    type=item["type"],
+                    title=item["title"],
+                    content=item["content"],
+                    target_url=item["target_url"],
+                    target_type=item["target_type"],
+                    target_id=item["target_id"],
+                    is_read=item["is_read"],
+                    created_at=created_at,
+                    read_at=created_at + timedelta(minutes=2) if item["is_read"] else None,
+                )
+            )
+            print(f"  + Notification: {item['type']} / {item['title']} -> {user.username}")
+
+
 async def seed_all() -> None:
     async with async_session() as session:
         for banner in SEED_BANNERS:
@@ -218,6 +420,7 @@ async def seed_all() -> None:
                 print(f"  + StudyRoom: {room.name}")
 
         await seed_coupons(session)
+        await seed_notifications(session)
 
         await session.commit()
         print("Seed data complete.")

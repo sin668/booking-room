@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Homepage top navigation bar
-首页 SHALL 展示固定顶部导航栏，包含三个区域：左侧城市定位（显示当前城市名+下拉箭头图标，可点击切换城市）、中间搜索框（灰色背景圆形搜索框，显示"搜索自习室"占位文案，点击跳转搜索页面）、右侧通知铃铛（带红色未读提示点）。导航栏背景为白色，固定在页面顶部。
+首页 SHALL 展示固定顶部导航栏，包含三个区域：左侧城市定位（显示当前城市名+下拉箭头图标，可点击切换城市）、中间搜索框（灰色背景圆形搜索框，显示"搜索自习室"占位文案，点击跳转搜索页面）、右侧通知铃铛（带红色未读提示点）。导航栏背景为白色，固定在页面顶部。通知铃铛 SHALL 作为消息通知页面入口；当 br-server 未读摘要显示存在用户已开启类型的未读消息时，铃铛 SHALL 展示红色未读提示点。
 
 #### Scenario: Display navigation bar
 - **WHEN** 用户进入首页
@@ -13,7 +13,23 @@
 
 #### Scenario: Tap notification bell
 - **WHEN** 用户点击通知铃铛
-- **THEN** V1 不执行任何操作，铃铛仅做展示（后续版本实现通知功能）
+- **THEN** 系统 SHALL 跳转到消息通知页面
+
+#### Scenario: Display unread notification dot
+- **GIVEN** br-server 未读摘要返回用户存在已开启类型的未读消息
+- **WHEN** 用户进入首页
+- **THEN** 通知铃铛 SHALL 展示红色未读提示点
+
+#### Scenario: Hide unread notification dot
+- **GIVEN** br-server 未读摘要返回用户不存在未读消息或未读消息类型均已在设置中关闭
+- **WHEN** 用户进入首页
+- **THEN** 通知铃铛 SHALL 不展示红色未读提示点
+
+#### Scenario: Unread summary load failure
+- **GIVEN** br-server 未读摘要接口加载失败
+- **WHEN** 用户进入首页
+- **THEN** 首页 SHALL 正常展示主要内容
+- **AND** 通知铃铛 SHALL 不展示红色未读提示点
 
 ### Requirement: Homepage carousel display
 首页 SHALL 展示轮播图区域，从后端 `/api/v1/banners/` 接口获取数据，自动轮播，间隔 3.5 秒。仅展示 `is_active=true` 且按 `sort_order` 升序排列的轮播图。每张轮播图 SHALL 展示：底部渐变遮罩层、标题文字、副标题文字、CTA 按钮（圆角胶囊按钮）。支持手势左右滑动切换，底部展示圆点指示器（当前项为长条蓝色，其余为短条灰色）。点击 CTA 按钮根据 `link_type` 执行跳转：`page` 跳转小程序页面，`room` 跳转自习室详情，`none` 不跳转。

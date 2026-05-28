@@ -19,7 +19,7 @@ Define the mobile wallet transactions page, entry points, list states, paginatio
 - **AND** 页面标题显示“钱包流水”
 
 ### Requirement: 钱包流水摘要
-钱包流水页面 SHALL 在顶部展示账户余额摘要，并展示本页可理解的收入、支出统计入口或统计值。余额数据 SHALL 来自现有余额查询接口。
+钱包流水页面 SHALL 在顶部展示账户余额摘要，并展示本页可理解的收入、支出统计入口或统计值。统计数据 SHALL 按“累计充值 / 消费支出 / 取消退款”的顺序展示。余额数据 SHALL 来自现有余额查询接口。
 
 #### Scenario: 页面加载余额摘要
 - **GIVEN** 用户进入钱包流水页面
@@ -33,8 +33,13 @@ Define the mobile wallet transactions page, entry points, list states, paginatio
 - **THEN** 页面展示“余额加载失败”提示
 - **AND** 流水列表仍可继续加载
 
+#### Scenario: 展示统计顺序
+- **GIVEN** 用户进入钱包流水页面
+- **WHEN** 页面渲染顶部统计区域
+- **THEN** 统计项从左到右依次为“累计充值”、“消费支出”、“取消退款”
+
 ### Requirement: 钱包流水筛选
-钱包流水页面 SHALL 提供紧凑的流水类型筛选，至少包含“全部”和“充值”。筛选项切换后 SHALL 重新从第一页加载流水。
+钱包流水页面 SHALL 提供紧凑的流水类型筛选，至少包含“全部”、“充值”和“退款”。筛选项切换后 SHALL 重新从第一页加载流水。
 
 #### Scenario: 默认展示全部流水
 - **GIVEN** 用户首次进入钱包流水页面
@@ -47,6 +52,12 @@ Define the mobile wallet transactions page, entry points, list states, paginatio
 - **WHEN** 用户点击“充值”筛选项
 - **THEN** “充值”筛选项变为激活状态
 - **AND** 页面清空旧列表并通过 `type=recharge` 从第一页重新加载
+
+#### Scenario: 切换到退款流水
+- **GIVEN** 用户正在查看全部流水
+- **WHEN** 用户点击“退款”筛选项
+- **THEN** “退款”筛选项变为激活状态
+- **AND** 页面清空旧列表并通过 `type=booking_refund` 从第一页重新加载
 
 ### Requirement: 钱包流水列表
 钱包流水页面 SHALL 将每条流水展示为列表项，包含标题、状态、创建时间、金额、优惠赠送金额、支付方式和交易后余额。收入类金额 SHALL 使用正向视觉样式，支出类金额 SHALL 使用弱化或负向视觉样式。
@@ -68,6 +79,14 @@ Define the mobile wallet transactions page, entry points, list states, paginatio
 - **WHEN** 页面渲染流水列表
 - **THEN** 列表项展示“充值失败”标题和失败状态
 - **AND** 金额不得展示为已到账成功样式
+
+#### Scenario: 展示预约取消退款流水
+- **GIVEN** 后端返回一条 `type=booking_refund` 且 `status=completed` 的流水
+- **WHEN** 页面渲染流水列表
+- **THEN** 列表项展示“取消退款”标题
+- **AND** 图标文字显示为“退”
+- **AND** 金额以收入样式展示为 `+¥amount`
+- **AND** 若响应包含预约关联字段，页面可展示或保留该关联信息用于追踪
 
 ### Requirement: 钱包流水分页加载
 钱包流水页面 SHALL 支持分页加载更多；当后端返回 `has_more=false` 时 SHALL 停止继续请求下一页并展示到底状态。
@@ -108,5 +127,4 @@ Define the mobile wallet transactions page, entry points, list states, paginatio
 - **WHEN** 用户查看页面
 - **THEN** 页面布局、配色、间距与个人中心、充值页和卡券页风格一致
 - **AND** 文本在常见移动端宽度下不得溢出或互相遮挡
-
 

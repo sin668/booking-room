@@ -239,7 +239,7 @@
 - **THEN** 图标使用原型中的颜色和尺寸：门店 primary-blue、座位 green、日期 amber、时钟 purple、钱包 primary-blue、微信 green、卡券 red
 
 ### Requirement: My bookings list page
-系统 SHALL 将 br-app"订单"tab 页改造为我的预约列表页，参照 `prototype/orders.html`。每条记录展示门店名称、座位号、预约日期、时间段、状态标签（不同状态不同颜色）。支持按状态筛选（全部/已确认/已取消/已完成）。已确认状态的订单 SHALL 显示"查看座位"按钮，点击后跳转到座位选择页的只读查看模式。
+系统 SHALL 将 br-app"订单"tab 页改造为我的预约列表页，参照 `prototype/orders.html`。每条记录展示门店名称、座位号、预约日期、时间段、状态标签（不同状态不同颜色）。支持按状态筛选（全部/已确认/已取消/已完成）。已确认状态的订单 SHALL 显示"查看座位"按钮，点击后跳转到座位选择页的只读查看模式。对于 `can_cancel=true` 的已确认订单，页面 SHALL 在“查看座位”按钮右侧展示“取消”按钮。
 
 #### Scenario: Display bookings on orders tab
 - **WHEN** 用户点击底部"订单" tab
@@ -266,3 +266,50 @@
 - **GIVEN** 订单列表中存在 status 为 "cancelled" 或 "completed" 的订单
 - **WHEN** 订单卡片渲染
 - **THEN** 不显示"查看座位"按钮
+
+#### Scenario: Display cancel button next to view seat
+- **GIVEN** 用户进入订单列表
+- **AND** 列表中存在状态为 "confirmed" 且 `can_cancel=true` 的预约
+- **WHEN** 订单卡片渲染
+- **THEN** “查看座位”按钮右侧显示“取消”按钮
+
+#### Scenario: Hide cancel button for non-cancellable booking
+- **GIVEN** 用户进入订单列表
+- **AND** 列表中存在状态为 "cancelled"、"completed" 或 `can_cancel=false` 的预约
+- **WHEN** 订单卡片渲染
+- **THEN** 不显示“取消”按钮
+
+#### Scenario: Confirm before cancellation
+- **GIVEN** 订单卡片显示“取消”按钮
+- **WHEN** 用户点击“取消”
+- **THEN** 页面展示确认弹窗
+- **AND** 弹窗说明取消后剩余金额退回钱包
+- **AND** 如果本次取消需要扣款，弹窗展示扣款金额提醒
+- **AND** 用户可选择确认或放弃
+
+#### Scenario: Submit cancellation after confirmation
+- **GIVEN** 用户已打开取消确认弹窗
+- **WHEN** 用户确认取消
+- **THEN** 前端调用 `POST /api/v1/bookings/{booking_id}/cancel/`
+- **AND** 取消请求进行中时禁用重复点击
+
+#### Scenario: Cancellation success updates order list
+- **GIVEN** 用户确认取消且后端返回 HTTP 200
+- **WHEN** 前端收到取消结果
+- **THEN** 页面提示取消成功及退款金额
+- **AND** 刷新订单列表
+- **AND** 对应订单状态显示为“已取消”
+- **AND** 不再展示“取消”按钮
+
+#### Scenario: Cancellation rejected because booking started
+- **GIVEN** 用户确认取消
+- **WHEN** 后端返回预约已开始不可取消错误
+- **THEN** 页面展示不可取消提示
+- **AND** 刷新订单列表
+- **AND** 对应订单状态显示为“已完成”
+
+#### Scenario: Cancellation network failure
+- **GIVEN** 用户确认取消
+- **WHEN** 取消请求失败或网络异常
+- **THEN** 页面展示“取消失败，请重试”提示
+- **AND** 订单列表保持当前状态

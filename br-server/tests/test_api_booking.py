@@ -935,27 +935,61 @@ class TestBookingPaymentEndpoints:
 class TestCancelBooking:
     """POST /api/v1/bookings/{booking_id}/cancel"""
 
+    async def _seed_user(self, db_session: AsyncSession, balance=Decimal("10.00")) -> User:
+        user = User(
+            id=USER_ID,
+            phone="18800009999",
+            nickname="Cancel User",
+            password_hash="hash",
+            balance=balance,
+        )
+        db_session.add(user)
+        await db_session.flush()
+        return user
+
     @pytest.mark.asyncio
     async def test_cancel_booking_success(self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat):
+        user = await self._seed_user(db_session, Decimal("10.00"))
         seat = seed_room_seat["seat_a"]
         room = seed_room_seat["room"]
         booking = Booking(
             seat_id=seat.id,
             user_id=str(USER_ID),
             room_id=room.id,
-            date=date(2026, 5, 1),
+            date=date.today() + timedelta(days=3),
             start_time=time(9, 0),
             end_time=time(12, 0),
             status="confirmed",
-            total_price=45.00,
+            total_price=Decimal("45.00"),
+            payment_method="balance",
+            payment_status="paid",
         )
         db_session.add(booking)
         await db_session.flush()
 
-        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel")
+        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel/")
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "cancelled"
+        assert data["cancel_policy"] == "over_48h"
+        assert data["penalty_amount"] == "0.00"
+        assert data["refund_amount"] == "45.00"
+        assert data["can_cancel"] is False
+        assert data["refund_transaction_id"] is not None
+
+        await db_session.refresh(user)
+        assert user.balance == Decimal("55.00")
+        tx = (
+            await db_session.execute(
+                select(WalletTransaction).where(
+                    WalletTransaction.booking_id == booking.id,
+                    WalletTransaction.type == "booking_refund",
+                )
+            )
+        ).scalar_one()
+        assert tx.amount == Decimal("45.00")
+        assert tx.balance_after == Decimal("55.00")
+        assert tx.status == "completed"
 
     @pytest.mark.asyncio
     async def test_cancel_booking_restores_used_coupon(
@@ -965,13 +999,14 @@ class TestCancelBooking:
         seed_room_seat,
         seed_booking_coupon: UserCoupon,
     ):
+        await self._seed_user(db_session, Decimal("10.00"))
         seat = seed_room_seat["seat_a"]
         room = seed_room_seat["room"]
         booking = Booking(
             seat_id=seat.id,
             user_id=str(USER_ID),
             room_id=room.id,
-            date=date(2026, 5, 1),
+            date=date.today() + timedelta(days=3),
             start_time=time(9, 0),
             end_time=time(12, 0),
             status="confirmed",
@@ -979,6 +1014,8 @@ class TestCancelBooking:
             discount_amount=Decimal("3.00"),
             total_price=Decimal("42.00"),
             coupon_id=seed_booking_coupon.id,
+            payment_method="balance",
+            payment_status="paid",
         )
         db_session.add(booking)
         await db_session.flush()
@@ -987,7 +1024,7 @@ class TestCancelBooking:
         seed_booking_coupon.used_at = NOW
         await db_session.flush()
 
-        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel")
+        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel/")
         assert resp.status_code == 200
         assert resp.json()["status"] == "cancelled"
 
@@ -998,53 +1035,312 @@ class TestCancelBooking:
 
     @pytest.mark.asyncio
     async def test_cancel_already_cancelled(self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat):
+        await self._seed_user(db_session)
         seat = seed_room_seat["seat_a"]
         room = seed_room_seat["room"]
         booking = Booking(
             seat_id=seat.id,
             user_id=str(USER_ID),
             room_id=room.id,
-            date=date(2026, 5, 1),
+            date=date.today() + timedelta(days=3),
             start_time=time(9, 0),
             end_time=time(12, 0),
             status="cancelled",
-            total_price=45.00,
+            total_price=Decimal("45.00"),
+            payment_method="balance",
+            payment_status="paid",
         )
         db_session.add(booking)
         await db_session.flush()
 
-        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel")
+        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel/")
         assert resp.status_code == 400
         assert resp.json()["detail"] == "该预约已取消"
 
     @pytest.mark.asyncio
     async def test_cancel_other_users_booking(self, other_auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat):
+        await self._seed_user(db_session)
         seat = seed_room_seat["seat_a"]
         room = seed_room_seat["room"]
         booking = Booking(
             seat_id=seat.id,
             user_id=str(USER_ID),
             room_id=room.id,
-            date=date(2026, 5, 1),
+            date=date.today() + timedelta(days=3),
             start_time=time(9, 0),
             end_time=time(12, 0),
             status="confirmed",
-            total_price=45.00,
+            total_price=Decimal("45.00"),
+            payment_method="balance",
+            payment_status="paid",
         )
         db_session.add(booking)
         await db_session.flush()
 
-        resp = await other_auth_client.post(f"/api/v1/bookings/{booking.id}/cancel")
+        resp = await other_auth_client.post(f"/api/v1/bookings/{booking.id}/cancel/")
         assert resp.status_code == 404
         assert resp.json()["detail"] == "预约不存在"
 
     @pytest.mark.asyncio
     async def test_cancel_nonexistent_booking(self, auth_client: AsyncClient):
-        resp = await auth_client.post("/api/v1/bookings/99999/cancel")
+        resp = await auth_client.post("/api/v1/bookings/99999/cancel/")
         assert resp.status_code == 404
         assert resp.json()["detail"] == "预约不存在"
 
     @pytest.mark.asyncio
     async def test_cancel_no_auth(self, client: AsyncClient):
-        resp = await client.post("/api/v1/bookings/1/cancel")
+        resp = await client.post("/api/v1/bookings/1/cancel/")
         assert resp.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_24_to_48_hours_charges_10_percent(
+        self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
+    ):
+        user = await self._seed_user(db_session, Decimal("0.00"))
+        start_at = datetime.now() + timedelta(hours=36)
+        seat = seed_room_seat["seat_a"]
+        room = seed_room_seat["room"]
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=start_at.date(),
+            start_time=start_at.time().replace(microsecond=0),
+            end_time=(start_at + timedelta(hours=2)).time().replace(microsecond=0),
+            status="confirmed",
+            total_price=Decimal("45.00"),
+            payment_method="wechat",
+            payment_status="paid",
+            payment_provider="wechat",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel/")
+
+        assert resp.status_code == 200
+        assert resp.json()["penalty_amount"] == "4.50"
+        assert resp.json()["refund_amount"] == "40.50"
+        await db_session.refresh(user)
+        assert user.balance == Decimal("40.50")
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("hours_before_start", "expected_policy", "expected_penalty", "expected_refund"),
+        [
+            (12, "2h_24h", "20.00", "80.00"),
+            (1, "within_2h", "50.00", "50.00"),
+        ],
+    )
+    async def test_cancel_booking_refund_tiers(
+        self,
+        auth_client: AsyncClient,
+        db_session: AsyncSession,
+        seed_room_seat,
+        hours_before_start,
+        expected_policy,
+        expected_penalty,
+        expected_refund,
+    ):
+        user = await self._seed_user(db_session, Decimal("0.00"))
+        start_at = datetime.now() + timedelta(hours=hours_before_start)
+        seat = seed_room_seat["seat_a"]
+        room = seed_room_seat["room"]
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=start_at.date(),
+            start_time=start_at.time().replace(microsecond=0),
+            end_time=(start_at + timedelta(hours=2)).time().replace(microsecond=0),
+            status="confirmed",
+            total_price=Decimal("100.00"),
+            payment_method="balance",
+            payment_status="paid",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel/")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["cancel_policy"] == expected_policy
+        assert data["penalty_amount"] == expected_penalty
+        assert data["refund_amount"] == expected_refund
+        await db_session.refresh(user)
+        assert user.balance == Decimal(expected_refund)
+
+    @pytest.mark.asyncio
+    async def test_cancel_started_booking_marks_completed_and_no_refund(
+        self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
+    ):
+        user = await self._seed_user(db_session, Decimal("0.00"))
+        started_at = datetime.now() - timedelta(minutes=1)
+        seat = seed_room_seat["seat_a"]
+        room = seed_room_seat["room"]
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=started_at.date(),
+            start_time=started_at.time().replace(microsecond=0),
+            end_time=(started_at + timedelta(hours=2)).time().replace(microsecond=0),
+            status="confirmed",
+            total_price=Decimal("45.00"),
+            payment_method="balance",
+            payment_status="paid",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel/")
+
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == "预约已开始不可取消"
+        await db_session.refresh(booking)
+        await db_session.refresh(user)
+        assert booking.status == "completed"
+        assert user.balance == Decimal("0.00")
+        count = (
+            await db_session.execute(
+                select(func.count()).select_from(WalletTransaction).where(
+                    WalletTransaction.booking_id == booking.id,
+                    WalletTransaction.type == "booking_refund",
+                )
+            )
+        ).scalar_one()
+        assert count == 0
+
+    @pytest.mark.asyncio
+    async def test_cancel_unpaid_booking_rejected_without_refund(
+        self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
+    ):
+        user = await self._seed_user(db_session, Decimal("0.00"))
+        seat = seed_room_seat["seat_a"]
+        room = seed_room_seat["room"]
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=date.today() + timedelta(days=3),
+            start_time=time(9, 0),
+            end_time=time(12, 0),
+            status="confirmed",
+            total_price=Decimal("45.00"),
+            payment_method="wechat",
+            payment_status="pending",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        resp = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel/")
+
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == "未支付预约不可取消"
+        await db_session.refresh(user)
+        assert user.balance == Decimal("0.00")
+
+    @pytest.mark.asyncio
+    async def test_duplicate_cancel_does_not_refund_twice(
+        self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
+    ):
+        user = await self._seed_user(db_session, Decimal("0.00"))
+        seat = seed_room_seat["seat_a"]
+        room = seed_room_seat["room"]
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=date.today() + timedelta(days=3),
+            start_time=time(9, 0),
+            end_time=time(12, 0),
+            status="confirmed",
+            total_price=Decimal("45.00"),
+            payment_method="balance",
+            payment_status="paid",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        first = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel/")
+        second = await auth_client.post(f"/api/v1/bookings/{booking.id}/cancel/")
+
+        assert first.status_code == 200
+        assert second.status_code == 400
+        await db_session.refresh(user)
+        assert user.balance == Decimal("45.00")
+        count = (
+            await db_session.execute(
+                select(func.count()).select_from(WalletTransaction).where(
+                    WalletTransaction.booking_id == booking.id,
+                    WalletTransaction.type == "booking_refund",
+                )
+            )
+        ).scalar_one()
+        assert count == 1
+
+    @pytest.mark.asyncio
+    async def test_list_and_detail_sync_started_booking_to_completed(
+        self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
+    ):
+        await self._seed_user(db_session, Decimal("0.00"))
+        started_at = datetime.now() - timedelta(minutes=1)
+        seat = seed_room_seat["seat_a"]
+        room = seed_room_seat["room"]
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=started_at.date(),
+            start_time=started_at.time().replace(microsecond=0),
+            end_time=(started_at + timedelta(hours=2)).time().replace(microsecond=0),
+            status="confirmed",
+            total_price=Decimal("45.00"),
+            payment_method="balance",
+            payment_status="paid",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        list_resp = await auth_client.get("/api/v1/bookings")
+        detail_resp = await auth_client.get(f"/api/v1/bookings/{booking.id}")
+
+        assert list_resp.status_code == 200
+        assert list_resp.json()["items"][0]["status"] == "completed"
+        assert list_resp.json()["items"][0]["can_cancel"] is False
+        assert detail_resp.status_code == 200
+        assert detail_resp.json()["status"] == "completed"
+        assert detail_resp.json()["can_cancel"] is False
+
+    @pytest.mark.asyncio
+    async def test_list_future_same_day_booking_returns_cancel_penalty_preview(
+        self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
+    ):
+        await self._seed_user(db_session, Decimal("0.00"))
+        start_at = datetime.now() + timedelta(hours=3)
+        seat = seed_room_seat["seat_a"]
+        room = seed_room_seat["room"]
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=start_at.date(),
+            start_time=start_at.time().replace(microsecond=0),
+            end_time=(start_at + timedelta(hours=2)).time().replace(microsecond=0),
+            status="confirmed",
+            total_price=Decimal("100.00"),
+            payment_method="balance",
+            payment_status="paid",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        resp = await auth_client.get("/api/v1/bookings")
+
+        assert resp.status_code == 200
+        item = resp.json()["items"][0]
+        assert item["can_cancel"] is True
+        assert Decimal(item["penalty_amount"]) == Decimal("0.00")
+        assert Decimal(item["cancel_penalty_amount"]) == Decimal("20.00")
+        assert Decimal(item["cancel_refund_amount"]) == Decimal("80.00")

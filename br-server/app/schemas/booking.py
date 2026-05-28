@@ -1,6 +1,7 @@
 from datetime import date, datetime, time
 from decimal import Decimal
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -60,6 +61,14 @@ class BookingResponse(BaseModel):
     payment_status: str
     payment_provider: str | None = None
     paid_at: datetime | None = None
+    cancelled_at: datetime | None = None
+    penalty_amount: Decimal = Decimal("0.00")
+    refund_amount: Decimal = Decimal("0.00")
+    cancel_policy: str | None = None
+    refund_transaction_id: UUID | None = None
+    cancel_penalty_amount: Decimal = Decimal("0.00")
+    cancel_refund_amount: Decimal = Decimal("0.00")
+    can_cancel: bool = False
     created_at: datetime
     seat: SeatBrief
     room: RoomBrief
@@ -110,6 +119,10 @@ class BookingAdminResponse(BaseModel):
     payment_status: str
     payment_provider: str | None = None
     paid_at: datetime | None = None
+    cancelled_at: datetime | None = None
+    penalty_amount: Decimal = Decimal("0.00")
+    refund_amount: Decimal = Decimal("0.00")
+    cancel_policy: str | None = None
     created_at: datetime
     updated_at: datetime
     seat: SeatBrief

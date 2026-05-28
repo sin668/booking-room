@@ -13,6 +13,7 @@ from app.models.coupon import Coupon, UserCoupon
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.models.user import User
+from app.models.wallet import WalletTransaction
 from app.schemas.booking import BookingCreate
 from app.services.booking_service import (
     BookingAlreadyCancelledError,
@@ -348,11 +349,31 @@ async def test_admin_get_booking_not_found(db_session: AsyncSession):
 async def test_admin_cancel_booking(db_session: AsyncSession):
     _make_room(db_session, 1)
     _make_seat(db_session, 1, 1)
-    _make_booking(db_session, 1, 1, 1, "user-1", status="confirmed")
+    _make_user(db_session, USER_ID, Decimal("0.00"))
+    _make_booking(
+        db_session,
+        1,
+        1,
+        1,
+        str(USER_ID),
+        booking_date=date.today() + timedelta(days=3),
+        status="confirmed",
+    )
     await db_session.flush()
 
     result = await admin_cancel_booking(db_session, 1)
     assert result.status == "cancelled"
+    assert result.refund_amount == Decimal("20.00")
+    assert result.cancel_policy == "over_48h"
+    transaction = (
+        await db_session.execute(
+            select(WalletTransaction).where(
+                WalletTransaction.booking_id == 1,
+                WalletTransaction.type == "booking_refund",
+            )
+        )
+    ).scalar_one()
+    assert transaction.amount == Decimal("20.00")
 
 
 @pytest.mark.asyncio

@@ -55,7 +55,7 @@ class BalanceResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-WalletTransactionType = Literal["all", "recharge", "consume", "refund"]
+WalletTransactionType = Literal["all", "recharge", "consume", "refund", "booking_refund"]
 
 
 class WalletTransactionResponse(BaseModel):
@@ -71,6 +71,7 @@ class WalletTransactionResponse(BaseModel):
     created_at: datetime
     completed_at: datetime | None = None
     order_id: UUID
+    booking_id: int | None = None
 
 
 class WalletTransactionListResponse(BaseModel):
@@ -121,6 +122,7 @@ class AdminWalletTransactionResponse(BaseModel):
     created_at: datetime
     completed_at: datetime | None = None
     order_id: UUID
+    booking_id: int | None = None
     user_id: UUID
     user_nickname: str | None = None
     user_phone: str | None = None

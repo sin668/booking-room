@@ -56,6 +56,12 @@ class WalletTransaction(Base):
         ForeignKey("coupons.id"),
         nullable=True,
     )
+    booking_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("bookings.id"),
+        nullable=True,
+        index=True,
+    )
     payment_method: Mapped[str | None] = mapped_column(
         String(20),
         nullable=True,

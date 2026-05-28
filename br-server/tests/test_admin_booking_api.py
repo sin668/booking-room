@@ -1,7 +1,8 @@
 """Integration tests for admin booking API endpoints."""
 
 import pytest
-from datetime import date
+import uuid
+from datetime import date, timedelta
 from decimal import Decimal
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,7 @@ from app.api.dependencies import get_current_admin
 from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
+from app.models.user import User
 
 
 @pytest.fixture
@@ -27,15 +29,24 @@ async def seed_data(db_session: AsyncSession):
     )
     db_session.add(room)
     db_session.add(seat)
+    db_session.add(
+        User(
+            id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
+            phone="18800008888",
+            nickname="Admin Cancel User",
+            password_hash="hash",
+            balance=Decimal("0.00"),
+        )
+    )
 
     from datetime import time
 
     confirmed = Booking(
         id=1,
         seat_id=1,
-        user_id="user-1",
+        user_id="11111111-1111-1111-1111-111111111111",
         room_id=1,
-        date=date(2026, 5, 1),
+        date=date.today() + timedelta(days=3),
         start_time=time(9, 0),
         end_time=time(11, 0),
         status="confirmed",
@@ -121,6 +132,8 @@ class TestAdminCancelBooking:
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "cancelled"
+        assert data["refund_amount"] == "20.00"
+        assert data["cancel_policy"] == "over_48h"
 
     @pytest.mark.asyncio
     async def test_cancel_already_cancelled_returns_400(self, client: AsyncClient, seed_data):

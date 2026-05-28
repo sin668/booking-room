@@ -29,13 +29,13 @@
           </view>
           <view class="summary-divider" />
           <view class="summary-stat">
-            <text class="summary-stat-value income">¥{{ formatMoney(pageIncome) }}</text>
-            <text class="summary-stat-label">本页收入</text>
+            <text class="summary-stat-value expense">¥{{ formatMoney(consumeExpense) }}</text>
+            <text class="summary-stat-label">消费支出</text>
           </view>
           <view class="summary-divider" />
           <view class="summary-stat">
-            <text class="summary-stat-value expense">¥{{ formatMoney(pageExpense) }}</text>
-            <text class="summary-stat-label">本页支出</text>
+            <text class="summary-stat-value income">¥{{ formatMoney(cancelRefund) }}</text>
+            <text class="summary-stat-label">取消退款</text>
           </view>
         </view>
       </view>
@@ -131,6 +131,7 @@ export default {
         { label: '全部', value: 'all' },
         { label: '充值', value: 'recharge' },
         { label: '消费', value: 'consume' },
+        { label: '退款', value: 'booking_refund' },
       ],
       transactions: [],
       page: 1,
@@ -144,18 +145,18 @@ export default {
   },
 
   computed: {
-    pageIncome() {
+    consumeExpense() {
       return this.transactions.reduce((sum, item) => {
-        if (item.direction === 'income' && item.status === 'completed') {
+        if (item.type === 'consume' && item.status === 'completed') {
           return sum + this.toNumber(item.amount)
         }
         return sum
       }, 0)
     },
 
-    pageExpense() {
+    cancelRefund() {
       return this.transactions.reduce((sum, item) => {
-        if (item.direction === 'expense') {
+        if (item.type === 'booking_refund' && item.status === 'completed') {
           return sum + this.toNumber(item.amount)
         }
         return sum
@@ -319,6 +320,7 @@ export default {
 
     transactionIconText(item) {
       if (item.type === 'recharge') return '充'
+      if (item.type === 'booking_refund') return '退'
       if (item.direction === 'expense') return '支'
       return '收'
     },

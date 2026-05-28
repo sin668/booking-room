@@ -1657,7 +1657,7 @@ must not be used by production recharge crediting.
 |------|------|--------|------|
 | page | integer | 1 | 页码，最小值为 1 |
 | page_size | integer | 20 | 每页数量，最小值为 1，最大值为 50 |
-| type | string | all | 流水类型筛选：all / recharge / consume / refund |
+| type | string | all | 流水类型筛选：all / recharge / consume / refund / booking_refund |
 
 **响应 200：**
 ```json
@@ -1675,7 +1675,8 @@ must not be used by production recharge crediting.
       "balance_after": "386.00",
       "created_at": "2026-05-17T10:00:00",
       "completed_at": "2026-05-17T10:01:30",
-      "order_id": "550e8400-e29b-41d4-a716-446655440000"
+      "order_id": "550e8400-e29b-41d4-a716-446655440000",
+      "booking_id": null
     }
   ],
   "total": 1,
@@ -1698,8 +1699,8 @@ must not be used by production recharge crediting.
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | string | 流水记录 ID |
-| type | string | 流水类型：recharge / consume / refund |
-| title | string | 展示标题，例如 `充值到账`、`充值待支付`、`充值失败` |
+| type | string | 流水类型：recharge / consume / refund / booking_refund |
+| title | string | 展示标题，例如 `充值到账`、`充值待支付`、`充值失败`、`取消退款` |
 | amount | decimal string | 流水金额；客户端不得用浮点数参与资金计算 |
 | bonus_amount | decimal string | 赠送金额，无赠送时为 `0.00` |
 | direction | string | 金额方向，例如 `income` |
@@ -1709,8 +1710,9 @@ must not be used by production recharge crediting.
 | created_at | datetime | 流水创建时间 |
 | completed_at | datetime \| null | 支付完成时间或等价完成时间 |
 | order_id | string \| null | 关联充值/订单 ID |
+| booking_id | integer \| null | 预约取消退款关联的预约 ID；非预约退款为空 |
 
-当 `type=consume` 或 `type=refund` 暂无匹配记录时，接口仍返回 200，`items` 为空数组，`total` 为 0，并返回请求对应的分页元数据。
+当 `type=consume`、`type=refund` 或 `type=booking_refund` 暂无匹配记录时，接口仍返回 200，`items` 为空数组，`total` 为 0，并返回请求对应的分页元数据。`booking_refund` 流水表示预约取消退款，方向为 `income`，状态为 `completed`，钱包流水标题展示为“取消退款”。
 
 **错误码：**
 - 401: 未认证 / Token 已过期或失效
@@ -1966,11 +1968,17 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
   "discount_amount": "3.00",
   "total_price": "15.00",
   "coupon_id": 12,
-  "payment_method": "balance",
-  "payment_status": "paid",
-  "payment_provider": null,
-  "paid_at": "2026-05-01T08:00:00",
-  "created_at": "2026-05-01T08:00:00",
+      "payment_method": "balance",
+      "payment_status": "paid",
+      "payment_provider": null,
+      "paid_at": "2026-05-01T08:00:00",
+      "cancelled_at": null,
+      "penalty_amount": "0.00",
+      "refund_amount": "0.00",
+      "cancel_policy": null,
+      "refund_transaction_id": null,
+      "can_cancel": true,
+      "created_at": "2026-05-01T08:00:00",
   "seat": {
     "id": 1,
     "seat_number": "A1-01",
@@ -2114,7 +2122,7 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
 |------|------|------|
 | booking_id | integer | 预约 ID |
 
-**响应 200：** 同创建预约的响应格式。
+**响应 200：** 同创建预约的响应格式。列表和详情都会返回 `can_cancel`、`cancelled_at`、`penalty_amount`、`refund_amount`、`cancel_policy`、`refund_transaction_id` 等取消相关字段。后端会在列表/详情返回前把已到开始时间的已支付确认预约同步为 `completed`，因此这类订单 `can_cancel=false`。
 
 **错误码：**
 - 401: 未认证
@@ -2249,9 +2257,9 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
 
 ---
 
-### POST /api/v1/bookings/{booking_id}/cancel
+### POST /api/v1/bookings/{booking_id}/cancel/
 
-取消预约。仅 `confirmed` 状态的预约可取消。若该预约使用了卡券，取消成功后对应用户卡券恢复为 `available`，并清空 `used_booking_id` 和 `used_at`。
+取消预约。仅当前用户自己的、`status="confirmed"`、`payment_status="paid"`、且尚未到预约开始时间的预约可取消。若该预约使用了卡券，取消成功后对应用户卡券恢复为 `available`，并清空 `used_booking_id` 和 `used_at`。余额支付和微信支付预约取消后均退回钱包，不做微信原路退款。
 
 **认证：** Bearer Token
 
@@ -2261,11 +2269,24 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
 |------|------|------|
 | booking_id | integer | 预约 ID |
 
-**响应 200：** 返回更新后的预约对象，`status` 变为 `"cancelled"`。若订单使用过卡券，该卡券已恢复为可使用状态。
+**扣费规则：**
+
+| 距预约开始时间 | 扣费 | 退款 |
+|------|------|------|
+| 大于 48 小时 | 0% | 全额退回钱包 |
+| 大于 24 小时且小于等于 48 小时 | 10% | 剩余 90% 退回钱包 |
+| 大于 2 小时且小于等于 24 小时 | 20% | 剩余 80% 退回钱包 |
+| 大于 0 且小于等于 2 小时 | 50% | 剩余 50% 退回钱包 |
+| 已到预约开始时间 | 不允许取消 | 订单同步为已完成 |
+
+**响应 200：** 返回更新后的预约对象，`status` 变为 `"cancelled"`。响应包含 `cancelled_at`、`penalty_amount`、`refund_amount`、`cancel_policy`、`refund_transaction_id`、`can_cancel=false`。后端会增加用户钱包余额，并创建一条 `type="booking_refund"` 的钱包流水，标题展示为“取消退款”，`booking_id` 关联被取消的预约。
 
 **错误码：**
 - 401: 未认证
-- 400: 该预约已取消（非 confirmed 状态）
+- 400: 该预约已取消
+- 400: 未支付预约不可取消
+- 400: 预约已开始不可取消（订单会同步为 `completed`，不创建退款流水）
+- 400: 该预约不可取消
 - 404: 预约不存在 / 无权操作
 
 ## 九、学习记录
@@ -2456,18 +2477,6 @@ Response (200):
 ### GET /api/v1/bookings/{booking_id}/
 
 Get a single booking detail. Requires authentication. Only returns bookings belonging to the current user.
-
-### POST /api/v1/bookings/{booking_id}/cancel/
-
-Cancel a confirmed booking. Requires authentication.
-
-Response (200): Returns the updated booking with `status: "cancelled"`.
-
-Error Responses:
-- `404` — Booking not found
-- `400` — Booking already cancelled
-
----
 
 ## 九、管理端 - 自习室管理
 

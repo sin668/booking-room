@@ -201,6 +201,29 @@ async def test_get_wallet_transactions_reserved_type_empty(
     )
 
 
+async def test_get_wallet_transactions_booking_refund_type(
+    auth_client: AsyncClient,
+    wallet_service: AsyncMock,
+) -> None:
+    wallet_service.list_transactions.return_value = {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "page_size": 20,
+        "has_more": False,
+    }
+
+    response = await auth_client.get("/api/v1/wallet/transactions?type=booking_refund")
+
+    assert response.status_code == 200
+    wallet_service.list_transactions.assert_awaited_once_with(
+        user_id=USER_ID,
+        page=1,
+        page_size=20,
+        type="booking_refund",
+    )
+
+
 async def test_get_wallet_transactions_invalid_type_returns_422(
     auth_client: AsyncClient,
     wallet_service: AsyncMock,

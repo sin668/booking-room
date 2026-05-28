@@ -104,6 +104,15 @@
               <text class="action-btn-text">查看座位</text>
             </view>
             <view
+              v-if="order.can_cancel === true"
+              :class="['action-btn', 'cancel-action-btn', { disabled: cancellingOrderId === order.id }]"
+              @tap.stop="confirmCancelBooking(order)"
+            >
+              <text class="action-btn-text cancel-action-text">
+                {{ cancellingOrderId === order.id ? '取消中' : '取消' }}
+              </text>
+            </view>
+            <view
               v-if="order.status === 'completed'"
               class="action-btn"
               @tap="rebook(order)"
@@ -134,7 +143,7 @@
 </template>
 
 <script>
-import { getBookings } from '@/api/bookings'
+import { cancelBooking, getBookings } from '@/api/bookings'
 
 const TABS = [
   { label: '全部', value: 'all' },
@@ -169,6 +178,7 @@ export default {
       loading: false,
       refreshing: false,
       hasMore: true,
+      cancellingOrderId: null,
     }
   },
 
@@ -253,6 +263,58 @@ export default {
       uni.navigateTo({
         url: `/pages/booking/seat-select?room_id=${order.room_id}&seat_id=${order.seat_id}&date=${order.date}&start_time=${order.start_time}&end_time=${order.end_time}&mode=view`,
       })
+    },
+
+    confirmCancelBooking(order) {
+      if (!order || this.cancellingOrderId === order.id) return
+      const penaltyValue = order.cancel_penalty_amount !== undefined
+        ? order.cancel_penalty_amount
+        : order.penalty_amount
+      const penaltyAmount = Number(penaltyValue || 0)
+      const content = penaltyAmount > 0
+        ? `取消后将扣款¥${this.formatMoney(penaltyValue)}，剩余退款将退回钱包，是否继续？`
+        : '取消后退款将退回钱包，是否继续？'
+      uni.showModal({
+        title: '取消预约',
+        content,
+        confirmText: '取消预约',
+        confirmColor: '#FF6B6B',
+        success: (res) => {
+          if (res.confirm) {
+            this.handleCancelBooking(order)
+          }
+        },
+      })
+    },
+
+    async handleCancelBooking(order) {
+      if (!order || this.cancellingOrderId === order.id) return
+      this.cancellingOrderId = order.id
+      try {
+        const result = await cancelBooking(order.id)
+        const refund = result && result.refund_amount ? result.refund_amount : '0.00'
+        uni.showToast({
+          title: `已取消，退款¥${refund}`,
+          icon: 'none',
+        })
+        await this.resetAndLoad()
+      } catch (error) {
+        const message = error && (error.detail || error.message)
+        if (message && message.includes('已开始')) {
+          uni.showToast({ title: '已开始不可取消', icon: 'none' })
+          await this.resetAndLoad()
+        } else {
+          uni.showToast({ title: '取消失败，请重试', icon: 'none' })
+        }
+      } finally {
+        this.cancellingOrderId = null
+      }
+    },
+
+    formatMoney(value) {
+      const amount = Number(value || 0)
+      if (Number.isNaN(amount)) return '0.00'
+      return amount.toFixed(2)
     },
 
     rebook(order) {
@@ -670,6 +732,7 @@ export default {
 .card-action-row {
   display: flex;
   justify-content: flex-end;
+  gap: 16rpx;
   padding-top: 20rpx;
   border-top: 2rpx solid $bg-color;
   margin-top: 16rpx;
@@ -690,9 +753,25 @@ export default {
   background: $primary-light;
 }
 
+.action-btn.disabled {
+  opacity: 0.55;
+}
+
 .action-btn-text {
   font-size: 24rpx;
   color: $primary;
+}
+
+.cancel-action-btn {
+  border-color: $danger;
+}
+
+.cancel-action-btn:active {
+  background: rgba(255, 107, 107, 0.08);
+}
+
+.cancel-action-text {
+  color: $danger;
 }
 
 /* Load more */

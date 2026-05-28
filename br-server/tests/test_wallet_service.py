@@ -184,6 +184,46 @@ async def test_list_transactions_filters_by_recharge_type(
     assert ":type_1" in executed_sql
 
 
+async def test_list_transactions_maps_booking_refund_title_and_linkage(
+    wallet_service: WalletService, mock_db: AsyncMock
+) -> None:
+    user_id = _test_user_id()
+    transaction = SimpleNamespace(
+        id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
+        user_id=str(user_id),
+        type="booking_refund",
+        amount=Decimal("40.50"),
+        bonus_amount=Decimal("0.00"),
+        balance_after=Decimal("140.50"),
+        order_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        status="completed",
+        payment_method="wechat",
+        paid_at=None,
+        notify_processed_at=None,
+        created_at=datetime(2026, 5, 28, 10, 0, 0),
+        booking_id=123,
+    )
+    mock_db.execute = AsyncMock(
+        side_effect=[
+            _mock_scalar_one_result(1),
+            _mock_scalars_result([transaction]),
+        ]
+    )
+
+    result = await wallet_service.list_transactions(
+        user_id=user_id,
+        page=1,
+        page_size=20,
+        type="booking_refund",
+    )
+
+    item = result.items[0]
+    assert item.title == "取消退款"
+    assert item.direction == "income"
+    assert item.amount == Decimal("40.50")
+    assert item.booking_id == 123
+
+
 async def test_list_transactions_orders_newest_first(
     wallet_service: WalletService, mock_db: AsyncMock
 ) -> None:

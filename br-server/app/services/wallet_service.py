@@ -95,6 +95,8 @@ def _transaction_title(transaction_type: str, status: str) -> str:
         return "钱包消费"
     if transaction_type == "refund":
         return "钱包退款"
+    if transaction_type == "booking_refund":
+        return "取消退款"
     return "钱包流水"
 
 
@@ -487,6 +489,7 @@ class WalletService:
             created_at=transaction.created_at,
             completed_at=_transaction_completed_at(transaction),
             order_id=uuid.UUID(transaction.order_id),
+            booking_id=getattr(transaction, "booking_id", None),
         )
 
     def _validate_notify_payload(self, notify: dict[str, Any]) -> None:
@@ -602,6 +605,7 @@ async def admin_list_transactions(
                 created_at=transaction.created_at,
                 completed_at=_transaction_completed_at(transaction),
                 order_id=uuid.UUID(transaction.order_id),
+                booking_id=getattr(transaction, "booking_id", None),
                 user_id=uuid.UUID(transaction.user_id),
                 user_nickname=nickname,
                 user_phone=phone,
@@ -649,7 +653,9 @@ async def admin_get_statistics(
         if row.type == "recharge" and row.status == "completed"
     )
     total_consume = sum(row.total_amount for row in rows if row.type == "consume")
-    total_refund = sum(row.total_amount for row in rows if row.type == "refund")
+    total_refund = sum(
+        row.total_amount for row in rows if row.type in ("refund", "booking_refund")
+    )
     total_transactions = sum(row.count for row in rows)
 
     # 统计活跃用户数

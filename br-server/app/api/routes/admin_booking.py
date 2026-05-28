@@ -42,3 +42,5 @@ async def cancel_booking(booking_id: int, db: AsyncSession = Depends(get_db)) ->
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="预约不存在")
     except booking_service.BookingAlreadyCancelledError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该预约已取消")
+    except booking_service.BookingCancellationNotAllowedError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))

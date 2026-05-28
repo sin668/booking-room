@@ -20,7 +20,13 @@ from app.schemas.booking import (
     RoomBrief,
     SeatBrief,
 )
+from app.core.config import settings
 from app.services import coupon_service
+from app.services.booking_cancellation_policy import (
+    booking_start_datetime,
+    booking_now,
+    calculate_cancellation_policy,
+)
 
 MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
@@ -54,6 +60,10 @@ class BookingAlreadyCancelledError(BookingError):
     pass
 
 
+class BookingCancellationNotAllowedError(BookingError):
+    pass
+
+
 class BookingCouponUnavailableError(BookingError):
     pass
 
@@ -68,7 +78,74 @@ def _calculate_hours(start_time: time, end_time: time) -> float:
     return (end_seconds - start_seconds) / 3600.0
 
 
-def _build_booking_response(booking: Booking, seat: Seat, room: StudyRoom) -> BookingResponse:
+def _is_booking_started(booking: Booking, now: datetime | None = None) -> bool:
+    current_time = now or booking_now(settings.BOOKING_TIMEZONE)
+    return booking_start_datetime(booking.date, booking.start_time) <= current_time
+
+
+def _sync_booking_completion(booking: Booking, now: datetime | None = None) -> bool:
+    if (
+        booking.status == "confirmed"
+        and booking.payment_status == "paid"
+        and _is_booking_started(booking, now)
+    ):
+        booking.status = "completed"
+        return True
+    return False
+
+
+async def _sync_user_booking_completions(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    now: datetime | None = None,
+) -> None:
+    result = await db.execute(
+        select(Booking).where(
+            Booking.user_id == str(user_id),
+            Booking.status == "confirmed",
+            Booking.payment_status == "paid",
+        )
+    )
+    changed = False
+    for booking in result.scalars().all():
+        changed = _sync_booking_completion(booking, now) or changed
+    if changed:
+        await db.flush()
+
+
+def _can_cancel_booking(booking: Booking, now: datetime | None = None) -> bool:
+    if booking.status != "confirmed" or booking.payment_status != "paid":
+        return False
+    return not _is_booking_started(booking, now)
+
+
+def _build_cancellation_preview(
+    booking: Booking,
+    now: datetime,
+) -> tuple[Decimal, Decimal, bool]:
+    can_cancel = _can_cancel_booking(booking, now)
+    if not can_cancel:
+        return Decimal("0.00"), Decimal("0.00"), False
+    policy = calculate_cancellation_policy(
+        total_price=Decimal(str(booking.total_price)),
+        booking_date=booking.date,
+        start_time=booking.start_time,
+        now=now,
+    )
+    return policy.penalty_amount, policy.refund_amount, policy.can_cancel
+
+
+def _build_booking_response(
+    booking: Booking,
+    seat: Seat,
+    room: StudyRoom,
+    refund_transaction_id: uuid.UUID | None = None,
+) -> BookingResponse:
+    now = booking_now(settings.BOOKING_TIMEZONE)
+    cancel_penalty_amount, cancel_refund_amount, can_cancel = _build_cancellation_preview(
+        booking,
+        now,
+    )
     return BookingResponse(
         id=booking.id,
         seat_id=booking.seat_id,
@@ -86,6 +163,14 @@ def _build_booking_response(booking: Booking, seat: Seat, room: StudyRoom) -> Bo
         payment_status=booking.payment_status,
         payment_provider=booking.payment_provider,
         paid_at=booking.paid_at,
+        cancelled_at=booking.cancelled_at,
+        penalty_amount=booking.penalty_amount,
+        refund_amount=booking.refund_amount,
+        cancel_policy=booking.cancel_policy,
+        refund_transaction_id=refund_transaction_id,
+        cancel_penalty_amount=cancel_penalty_amount,
+        cancel_refund_amount=cancel_refund_amount,
+        can_cancel=can_cancel,
         created_at=booking.created_at,
         seat=SeatBrief.model_validate(seat),
         room=RoomBrief.model_validate(room),
@@ -225,6 +310,8 @@ async def list_bookings(
     page_size = min(page_size, MAX_PAGE_SIZE)
     offset = (page - 1) * page_size
 
+    await _sync_user_booking_completions(db, user_id)
+
     conditions = [Booking.user_id == str(user_id)]
     if status is not None:
         conditions.append(Booking.status == status)
@@ -275,6 +362,9 @@ async def get_booking(
     if booking is None or booking.user_id != str(user_id):
         raise BookingNotFoundError("预约不存在")
 
+    if _sync_booking_completion(booking):
+        await db.flush()
+
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
 
@@ -284,24 +374,90 @@ async def get_booking(
 async def cancel_booking(
     db: AsyncSession, booking_id: int, user_id: uuid.UUID
 ) -> BookingResponse:
-    """Cancel own booking. Only confirmed bookings can be cancelled."""
-    result = await db.execute(select(Booking).where(Booking.id == booking_id))
+    """Cancel own paid future booking and refund the remaining amount to wallet."""
+    result = await db.execute(
+        select(Booking).where(Booking.id == booking_id).with_for_update()
+    )
     booking = result.scalar_one_or_none()
 
     if booking is None or booking.user_id != str(user_id):
         raise BookingNotFoundError("预约不存在")
 
-    if booking.status != "confirmed":
+    if _sync_booking_completion(booking):
+        await db.flush()
+        raise BookingCancellationNotAllowedError("预约已开始不可取消")
+
+    if booking.status == "cancelled":
         raise BookingAlreadyCancelledError("该预约已取消")
 
+    if booking.status != "confirmed":
+        raise BookingCancellationNotAllowedError("该预约不可取消")
+
+    if booking.payment_status != "paid":
+        raise BookingCancellationNotAllowedError("未支付预约不可取消")
+
+    policy = calculate_cancellation_policy(
+        total_price=Decimal(str(booking.total_price)),
+        booking_date=booking.date,
+        start_time=booking.start_time,
+    )
+    if not policy.can_cancel:
+        _sync_booking_completion(booking)
+        await db.flush()
+        raise BookingCancellationNotAllowedError("预约已开始不可取消")
+
+    user_result = await db.execute(select(User).where(User.id == user_id).with_for_update())
+    user = user_result.scalar_one_or_none()
+    if user is None:
+        raise BookingError("User not found")
+
+    existing_refund_result = await db.execute(
+        select(WalletTransaction).where(
+            WalletTransaction.booking_id == booking.id,
+            WalletTransaction.type == "booking_refund",
+        )
+    )
+    if existing_refund_result.scalar_one_or_none() is not None:
+        raise BookingAlreadyCancelledError("该预约已取消")
+
+    user.balance = (
+        Decimal(str(user.balance)) + policy.refund_amount
+    ).quantize(Decimal("0.01"))
+
+    now = booking_now(settings.BOOKING_TIMEZONE)
     booking.status = "cancelled"
+    booking.cancelled_at = now
+    booking.penalty_amount = policy.penalty_amount
+    booking.refund_amount = policy.refund_amount
+    booking.cancel_policy = policy.policy
     await coupon_service.restore_user_coupon_for_booking(db, booking)
+
+    wallet_transaction = WalletTransaction(
+        user_id=str(user_id),
+        type="booking_refund",
+        amount=policy.refund_amount,
+        bonus_amount=Decimal("0.00"),
+        balance_after=Decimal(str(user.balance)),
+        order_id=str(uuid.uuid4()),
+        status="completed",
+        payment_method=booking.payment_method,
+        booking_id=booking.id,
+    )
+    setattr(wallet_transaction, "payment_provider", booking.payment_provider or booking.payment_method)
+    setattr(wallet_transaction, "payment_status", "paid")
+    setattr(wallet_transaction, "paid_at", now)
+    db.add(wallet_transaction)
     await db.flush()
 
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
 
-    return _build_booking_response(booking, seat, room)
+    return _build_booking_response(
+        booking,
+        seat,
+        room,
+        refund_transaction_id=wallet_transaction.id,
+    )
 
 
 def _build_admin_booking_response(booking: Booking, seat: Seat, room: StudyRoom) -> BookingAdminResponse:
@@ -322,6 +478,10 @@ def _build_admin_booking_response(booking: Booking, seat: Seat, room: StudyRoom)
         payment_status=booking.payment_status,
         payment_provider=booking.payment_provider,
         paid_at=booking.paid_at,
+        cancelled_at=booking.cancelled_at,
+        penalty_amount=booking.penalty_amount,
+        refund_amount=booking.refund_amount,
+        cancel_policy=booking.cancel_policy,
         created_at=booking.created_at,
         updated_at=booking.updated_at,
         seat=SeatBrief.model_validate(seat),
@@ -403,19 +563,17 @@ async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminRe
 
 
 async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
-    """Cancel any booking (admin view). Only confirmed bookings can be cancelled."""
+    """Cancel any booking with the same refund settlement as user cancellation."""
     result = await db.execute(select(Booking).where(Booking.id == booking_id))
     booking = result.scalar_one_or_none()
 
     if booking is None:
         raise BookingNotFoundError("预约不存在")
 
-    if booking.status != "confirmed":
+    if booking.status == "cancelled":
         raise BookingAlreadyCancelledError("该预约已取消")
 
-    booking.status = "cancelled"
-    await coupon_service.restore_user_coupon_for_booking(db, booking)
-    await db.flush()
+    await cancel_booking(db, booking.id, uuid.UUID(booking.user_id))
     await db.refresh(booking)
 
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()

@@ -92,14 +92,14 @@
 
   const typeOptions = [
     { label: '全部', value: null },
-    { label: '充值', value: 'recharge' },
-    { label: '消费', value: 'consume' },
-    { label: '退款', value: 'refund' },
+    { label: '钱包充值', value: 'recharge' },
+    { label: '预约消费', value: 'consume' },
+    { label: '预约退款', value: 'booking_refund' },
+    { label: '钱包退款', value: 'refund' },
   ];
 
   const statusOptions = [
     { label: '全部', value: null },
-    { label: '待处理', value: 'pending' },
     { label: '已完成', value: 'completed' },
     { label: '失败', value: 'failed' },
     { label: '已取消', value: 'cancelled' },
@@ -108,9 +108,11 @@
   type TagType = 'success' | 'warning' | 'error' | 'default';
 
   const transactionTypeMap: Record<string, { label: string; type: TagType }> = {
-    recharge: { label: '充值', type: 'success' },
-    consume: { label: '消费', type: 'warning' },
-    refund: { label: '退款', type: 'error' },
+    recharge: { label: '钱包充值', type: 'success' },
+    consume: { label: '预约消费', type: 'warning' },
+    booking_refund: { label: '预约退款', type: 'success' },
+    refund: { label: '钱包退款', type: 'error' },
+    wallet_refund: { label: '钱包退款', type: 'error' },
   };
 
   const statusMap: Record<string, { label: string; type: TagType }> = {
@@ -120,22 +122,28 @@
     cancelled: { label: '已取消', type: 'default' },
   };
 
+  const paymentMethodMap: Record<string, string> = {
+    wechat: '微信',
+    alipay: '支付宝',
+    balance: '钱包余额',
+  };
+
   const statCards = computed(() => [
     {
       key: 'total_recharge',
-      label: '总充值',
+      label: '钱包充值',
       value: statistics.total_recharge,
       className: 'text-green',
     },
     {
       key: 'total_consume',
-      label: '总消费',
+      label: '预约消费',
       value: statistics.total_consume,
       className: 'text-orange',
     },
     {
       key: 'total_refund',
-      label: '总退款',
+      label: '预约退款',
       value: statistics.total_refund,
       className: 'text-red',
     },
@@ -181,11 +189,13 @@
       key: 'amount',
       width: 130,
       render(record) {
-        const isRecharge = record.type === 'recharge';
+        const isIncome = ['recharge', 'refund', 'booking_refund', 'wallet_refund'].includes(
+          record.type
+        );
         return h(
           'span',
-          { class: isRecharge ? 'amount-positive' : 'amount-negative' },
-          `${isRecharge ? '+' : '-'}${formatMoney(record.amount)}`
+          { class: isIncome ? 'amount-positive' : 'amount-negative' },
+          `${isIncome ? '+' : '-'}${formatMoney(record.amount)}`
         );
       },
     },
@@ -211,7 +221,7 @@
       key: 'payment_method',
       width: 130,
       render(record) {
-        return record.payment_method || '-';
+        return formatPaymentMethod(record.payment_method);
       },
     },
   ];
@@ -238,6 +248,11 @@
       '0'
     )}`;
     return `${formatDate(date.getTime())} ${time}`;
+  }
+
+  function formatPaymentMethod(value: string | null | undefined) {
+    if (!value) return '-';
+    return paymentMethodMap[value] || value;
   }
 
   function buildFilterParams(): WalletListParams {

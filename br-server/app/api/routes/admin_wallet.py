@@ -25,6 +25,11 @@ from app.services.wallet_service import (
 router = APIRouter(prefix="/api/v1/admin/wallet", tags=["admin-wallet"])
 
 
+def _admin_wallet_base_conditions() -> list:
+    """管理端钱包流水默认不导出待处理记录."""
+    return [WalletTransaction.status != "pending"]
+
+
 @router.get("/transactions", response_model=AdminWalletTransactionListResponse, dependencies=[Depends(require_admin_permission("wallet:view"))])
 async def list_transactions(
     page: int = 1,
@@ -86,7 +91,7 @@ async def export_transactions(
     end_dt = datetime.combine(date_end, datetime.max.time()) if date_end else None
 
     # 构建查询条件
-    conditions = []
+    conditions = _admin_wallet_base_conditions()
     if type is not None:
         conditions.append(WalletTransaction.type == type)
     if transaction_status is not None:
@@ -146,9 +151,11 @@ async def export_transactions(
 
         # 交易类型中文
         type_map = {
-            "recharge": "充值",
-            "consume": "消费",
-            "refund": "退款",
+            "recharge": "钱包充值",
+            "consume": "预约消费",
+            "booking_refund": "预约退款",
+            "refund": "钱包退款",
+            "wallet_refund": "钱包退款",
         }
         type_cn = type_map.get(transaction_type, transaction_type)
 

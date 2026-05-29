@@ -107,6 +107,11 @@ def _transaction_direction(transaction_type: str) -> str:
     return "income"
 
 
+def _admin_wallet_base_conditions() -> list:
+    """管理端钱包流水默认不展示待处理记录."""
+    return [WalletTransaction.status != "pending"]
+
+
 def _transaction_completed_at(transaction: WalletTransaction) -> datetime | None:
     """获取交易完成时间."""
     paid_at = getattr(transaction, "paid_at", None)
@@ -554,7 +559,7 @@ async def admin_list_transactions(
     date_end: datetime | None = None,
 ) -> AdminWalletTransactionListResponse:
     """管理端查询钱包交易列表，支持多种筛选条件."""
-    conditions = []
+    conditions = _admin_wallet_base_conditions()
     if type is not None:
         conditions.append(WalletTransaction.type == type)
     if status is not None:
@@ -627,7 +632,7 @@ async def admin_get_statistics(
     date_end: datetime | None = None,
 ) -> AdminWalletStatisticsResponse:
     """管理端获取钱包统计信息，包括充值、消费、退款金额和活跃用户数."""
-    conditions = []
+    conditions = _admin_wallet_base_conditions()
     if date_start is not None:
         conditions.append(WalletTransaction.created_at >= date_start)
     if date_end is not None:

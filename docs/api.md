@@ -1131,34 +1131,73 @@ HTTP 429 用户名修改冷却中：
 
 ---
 
-## 五、管理端 - 文件上传
+## 五、图片上传
 
-### POST /admin/upload
+### POST /api/v1/admin/upload
 
-上传图片文件。
+管理端上传图片文件。服务端校验图片后上传到阿里 OSS；生产环境响应 URL 使用 `OSS_PUBLIC_BASE_URL` 配置的 CDN/自定义公开域名。开发或回滚模式可通过 `UPLOAD_STORAGE_DRIVER=local` 返回 `/uploads/...` 本地路径。
 
-**认证：** X-Admin-Token
+**认证：** Bearer 管理员 Token；兼容 legacy `X-Admin-Token`；必须具备 `upload:create` 权限。
 
 **请求：** `multipart/form-data`
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | file | File | 是 | 图片文件 |
+| scope | string | 否 | 图片业务范围，允许值：`avatar`、`activity-cover`、`room-cover`、`common`；默认 `common` |
 
 **限制：**
 - 支持格式：`.jpg`、`.jpeg`、`.png`、`.gif`、`.webp`
-- 最大文件大小：5MB
+- `avatar` 最大 2MB
+- `activity-cover`、`room-cover`、`common` 最大 5MB
 
 **响应 200：**
 ```json
 {
-  "url": "/uploads/2026/04/24/a1b2c3d4e5f6.png"
+  "url": "https://cdn.example.com/images/activity-cover/2026/05/29/a1b2c3d4e5f6.png",
+  "object_key": "images/activity-cover/2026/05/29/a1b2c3d4e5f6.png",
+  "size": 123456,
+  "content_type": "image/png"
 }
 ```
 
 **错误码：**
 - 401: 管理员凭证无效
-- 422: 缺少文件 / 仅支持图片文件 / 文件大小不能超过5MB
+- 403: 缺少 `upload:create` 权限
+- 422: 缺少文件 / scope 不受支持 / 仅支持图片文件 / 文件大小超过当前 scope 限制
+- 503: 图片上传服务暂不可用，例如 OSS 必填配置缺失或 OSS 上传失败
+
+### POST /api/v1/upload/image
+
+用户端上传图片文件。当前用于 br-app 用户头像上传，服务端同样上传到阿里 OSS 并返回公开 URL。
+
+**认证：** Bearer Token
+
+**请求：** `multipart/form-data`
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| file | File | 是 | 图片文件 |
+| scope | string | 否 | 图片业务范围。用户端当前仅允许 `avatar`；默认 `avatar` |
+
+**限制：**
+- 支持格式：`.jpg`、`.jpeg`、`.png`、`.gif`、`.webp`
+- `avatar` 最大 2MB
+
+**响应 200：**
+```json
+{
+  "url": "https://cdn.example.com/images/avatar/2026/05/29/a1b2c3d4e5f6.png",
+  "object_key": "images/avatar/2026/05/29/a1b2c3d4e5f6.png",
+  "size": 123456,
+  "content_type": "image/png"
+}
+```
+
+**错误码：**
+- 401: 未认证或 Token 无效
+- 422: 缺少文件 / 非 `avatar` scope / 仅支持图片文件 / 文件大小超过 2MB
+- 503: 图片上传服务暂不可用，例如 OSS 必填配置缺失或 OSS 上传失败
 
 ---
 

@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
 import {
-  doRefreshToken,
   getRefreshToken,
   getToken,
   removeRefreshToken,
   removeToken,
+  refreshAccessToken,
   setRefreshToken,
   setToken,
 } from '@/utils/request'
@@ -136,7 +136,7 @@ export const useUserStore = defineStore('user', {
 
       try {
         if (!this.token && this.refreshToken) {
-          const res = await doRefreshToken()
+          const res = await refreshAccessToken()
           this.token = res
         }
         await this.fetchUserInfo()

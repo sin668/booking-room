@@ -1,4 +1,5 @@
 import { Alova } from '@/utils/http/alova/index';
+import { uploadImage, type UploadResult } from '@/api/upload';
 
 // --- Types ---
 
@@ -44,10 +45,6 @@ export interface ActivityListParams {
   page_size?: number;
   keyword?: string;
   is_active?: boolean;
-}
-
-export interface UploadResult {
-  url: string;
 }
 
 // --- Common meta for admin API calls ---
@@ -96,9 +93,7 @@ export function toggleActivityStatus(id: number, is_active: boolean) {
 }
 
 export function uploadFile(file: File) {
-  const formData = new FormData();
-  formData.append('file', file);
-  return Alova.Post<UploadResult>('/v1/admin/upload', formData, {
-    meta: adminMeta,
-  });
+  return uploadImage(file, 'common');
 }
+
+export type { UploadResult };

@@ -99,7 +99,7 @@
     type RoomFormParams,
     type RoomItem,
   } from '@/api/room';
-  import { uploadFile as uploadActivityFile } from '@/api/activity';
+  import { uploadImage } from '@/api/upload';
 
   const props = defineProps<{
     show: boolean;
@@ -166,7 +166,7 @@
       return;
     }
     try {
-      const result = await uploadActivityFile(file.file);
+      const result = await uploadImage(file.file, 'room-cover');
       formValues.cover_image = result.url;
       onFinish();
     } catch {

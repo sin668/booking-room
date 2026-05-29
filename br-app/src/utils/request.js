@@ -32,7 +32,12 @@ function removeRefreshToken() {
 }
 
 function resolvePendingRequests(token) {
-  pendingRequests.forEach((cb) => cb(token))
+  pendingRequests.forEach(({ resolve }) => resolve(token))
+  pendingRequests = []
+}
+
+function rejectPendingRequests(error) {
+  pendingRequests.forEach(({ reject }) => reject(error))
   pendingRequests = []
 }
 
@@ -65,6 +70,29 @@ async function doRefreshToken() {
   return res.access_token
 }
 
+async function refreshAccessToken() {
+  if (isRefreshing) {
+    return new Promise((resolve, reject) => {
+      pendingRequests.push({ resolve, reject })
+    })
+  }
+
+  isRefreshing = true
+  try {
+    const newToken = await doRefreshToken()
+    resolvePendingRequests(newToken)
+    return newToken
+  } catch (error) {
+    removeToken()
+    removeRefreshToken()
+    rejectPendingRequests(error)
+    uni.reLaunch({ url: '/pages/login/login' })
+    throw new Error('登录已过期')
+  } finally {
+    isRefreshing = false
+  }
+}
+
 function request(options) {
   const buildRequest = (tokenValue) => {
     const header = {
@@ -84,27 +112,11 @@ function request(options) {
           if (res.statusCode === 200 || res.statusCode === 201) {
             resolve(res.data)
           } else if (res.statusCode === 401) {
-            if (!isRefreshing) {
-              isRefreshing = true
-              doRefreshToken()
-                .then((newToken) => {
-                  isRefreshing = false
-                  resolvePendingRequests(newToken)
-                  buildRequest(newToken).then(resolve).catch(reject)
-                })
-                .catch(() => {
-                  isRefreshing = false
-                  pendingRequests = []
-                  removeToken()
-                  removeRefreshToken()
-                  uni.reLaunch({ url: '/pages/login/login' })
-                  reject(new Error('登录已过期'))
-                })
-            } else {
-              pendingRequests.push((newToken) => {
+            refreshAccessToken()
+              .then((newToken) => {
                 buildRequest(newToken).then(resolve).catch(reject)
               })
-            }
+              .catch(reject)
           } else {
             reject(res.data)
           }
@@ -129,5 +141,14 @@ export function patch(url, data) {
   return request({ url, method: 'PATCH', data })
 }
 
-export { getToken, getRefreshToken, setToken, setRefreshToken, removeToken, removeRefreshToken, doRefreshToken }
+export {
+  getToken,
+  getRefreshToken,
+  setToken,
+  setRefreshToken,
+  removeToken,
+  removeRefreshToken,
+  doRefreshToken,
+  refreshAccessToken,
+}
 export default request

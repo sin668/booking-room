@@ -1,40 +1,45 @@
 import uuid
-from datetime import datetime
-from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
 
-from app.api.dependencies import require_admin_permission
-from app.schemas.activity import UploadResponse
+from app.api.dependencies import get_current_user_id, require_admin_permission
+from app.schemas.upload import UploadResponse
+from app.services.upload_service import ImageUploadService, UploadError
 
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-upload"])
-
-UPLOAD_DIR = Path("uploads")
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+router = APIRouter(tags=["upload"])
 
 
-@router.post("/upload", response_model=UploadResponse, dependencies=[Depends(require_admin_permission("upload:create"))])
-async def upload_file(file: UploadFile) -> UploadResponse:
-    if not file.filename:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="缺少文件")
+async def _upload_image(file: UploadFile, scope: str) -> UploadResponse:
+    try:
+        return await ImageUploadService().upload_image(
+            filename=file.filename,
+            content_type=file.content_type,
+            content=await file.read(),
+            scope=scope,
+        )
+    except UploadError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
 
-    ext = Path(file.filename).suffix.lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="仅支持图片文件")
 
-    content = await file.read()
-    if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="文件大小不能超过5MB")
+@router.post(
+    "/api/v1/admin/upload",
+    response_model=UploadResponse,
+    dependencies=[Depends(require_admin_permission("upload:create"))],
+)
+async def upload_admin_image(
+    file: UploadFile,
+    scope: str = Form("common"),
+) -> UploadResponse:
+    return await _upload_image(file, scope)
 
-    today = datetime.now().strftime("%Y/%m/%d")
-    dir_path = UPLOAD_DIR / today
-    dir_path.mkdir(parents=True, exist_ok=True)
 
-    filename = f"{uuid.uuid4().hex}{ext}"
-    file_path = dir_path / filename
-
-    with open(file_path, "wb") as f:
-        f.write(content)
-
-    return UploadResponse(url=f"/uploads/{today}/{filename}")
+@router.post("/api/v1/upload/image", response_model=UploadResponse)
+async def upload_user_image(
+    file: UploadFile,
+    scope: str = Form("avatar"),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+) -> UploadResponse:
+    _ = user_id
+    if scope != "avatar":
+        raise HTTPException(status_code=422, detail="上传场景不支持")
+    return await _upload_image(file, scope)

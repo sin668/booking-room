@@ -15,7 +15,24 @@
         </n-form-item>
 
         <n-form-item label="头像" path="avatar">
-          <n-input v-model:value="formValue.avatar" placeholder="请输入头像地址" />
+          <n-space vertical>
+            <n-upload
+              :max="1"
+              accept="image/*"
+              :custom-request="handleAvatarUpload"
+            >
+              <n-button>上传头像</n-button>
+            </n-upload>
+            <n-image
+              v-if="formValue.avatar"
+              :src="formValue.avatar"
+              width="80"
+              height="80"
+              object-fit="cover"
+              preview-disabled
+            />
+            <n-input v-model:value="formValue.avatar" placeholder="请输入头像地址" />
+          </n-space>
         </n-form-item>
 
         <div>
@@ -32,9 +49,10 @@
 
 <script lang="ts" setup>
   import { onMounted, reactive, ref } from 'vue';
-  import { useMessage } from 'naive-ui';
+  import { useMessage, type UploadFileInfo } from 'naive-ui';
   import * as userApi from '@/api/system/user';
   import { useUser } from '@/store/modules/user';
+  import { uploadImage } from '@/api/upload';
 
   const rules = {
     nickname: {
@@ -73,6 +91,30 @@
       email: result.email || '',
       avatar: result.avatar || '',
     });
+  }
+
+  async function handleAvatarUpload({
+    file,
+    onFinish,
+    onError,
+  }: {
+    file: UploadFileInfo;
+    onFinish: () => void;
+    onError: () => void;
+  }) {
+    if (!file.file) {
+      onError();
+      return;
+    }
+
+    try {
+      const result = await uploadImage(file.file, 'avatar');
+      formValue.avatar = result.url;
+      onFinish();
+    } catch (error: any) {
+      onError();
+      message.error(error?.message || '头像上传失败');
+    }
   }
 
   async function formSubmit() {

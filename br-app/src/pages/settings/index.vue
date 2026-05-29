@@ -10,13 +10,13 @@
 
     <scroll-view scroll-y class="content">
       <view class="profile-card">
-        <view class="avatar-wrap" @tap="showUnsupported('头像上传暂未开放')">
+        <view class="avatar-wrap" :class="{ uploading: avatarUploading }" @tap="handleAvatarTap">
           <image v-if="userStore.avatar" class="avatar-img" :src="userStore.avatar" mode="aspectFill" />
           <view v-else class="avatar-fallback">
             <text class="avatar-text">{{ avatarText }}</text>
           </view>
           <view class="avatar-camera">
-            <text class="camera-text">相</text>
+            <text class="camera-text">{{ avatarUploading ? '传' : '相' }}</text>
           </view>
         </view>
         <view class="profile-main">
@@ -299,6 +299,7 @@
 
 <script>
 import { getNotificationPreferences, updateNotificationPreferences } from '@/api/notifications'
+import { uploadImage } from '@/api/upload'
 import { useUserStore } from '@/store/modules/user'
 import { NOTIFICATION_TYPE_CONFIGS, getNotificationPreferenceField } from '@/utils/notificationTypes'
 
@@ -330,6 +331,7 @@ export default {
       bindingWechatPhone: false,
       bindingBySms: false,
       sendingBindCode: false,
+      avatarUploading: false,
       bindCodeCountdown: 0,
       bindCountdownTimer: null,
       bindError: '',
@@ -381,6 +383,64 @@ export default {
     },
     showUnsupported(title) {
       this.showToast(title)
+    },
+    chooseAvatarImage() {
+      return new Promise((resolve, reject) => {
+        uni.chooseImage({
+          count: 1,
+          sizeType: ['compressed'],
+          sourceType: ['album', 'camera'],
+          success: (res) => {
+            const filePath = res.tempFilePaths?.[0] || res.tempFiles?.[0]?.path || ''
+            resolve(filePath)
+          },
+          fail: (error) => {
+            if (this.isChooseImageCancel(error)) {
+              resolve('')
+              return
+            }
+            reject(error)
+          },
+        })
+      })
+    },
+    isChooseImageCancel(error) {
+      const message = error?.errMsg || error?.message || ''
+      return message.includes('cancel') || message.includes('取消')
+    },
+    async handleAvatarTap() {
+      if (this.avatarUploading) return
+
+      let filePath = ''
+      try {
+        filePath = await this.chooseAvatarImage()
+      } catch {
+        this.showToast('图片选择失败，请重试')
+        return
+      }
+      if (!filePath) return
+
+      this.avatarUploading = true
+      let toastTitle = ''
+      uni.showLoading({ title: '上传中', mask: true })
+      try {
+        const result = await uploadImage(filePath, 'avatar')
+        try {
+          await this.userStore.updateProfile({ avatar: result.url })
+          await this.userStore.fetchUserInfo().catch(() => {})
+          toastTitle = '头像已更新'
+        } catch {
+          toastTitle = '头像保存失败，请重试'
+        }
+      } catch {
+        toastTitle = '头像上传失败，请重试'
+      } finally {
+        this.avatarUploading = false
+        uni.hideLoading()
+        if (toastTitle) {
+          this.showToast(toastTitle)
+        }
+      }
     },
     async loadNotificationPreferences() {
       if (this.notificationPreferencesLoading) return
@@ -711,6 +771,11 @@ export default {
   width: 120rpx;
   height: 120rpx;
   flex-shrink: 0;
+}
+
+.avatar-wrap.uploading {
+  opacity: 0.72;
+  pointer-events: none;
 }
 
 .avatar-img,

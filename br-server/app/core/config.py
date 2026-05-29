@@ -58,6 +58,14 @@ class Settings(BaseSettings):
     # Cookie
     COOKIE_SECURE: bool = False
 
+    # Upload storage
+    UPLOAD_STORAGE_DRIVER: str = "local"
+    OSS_ENDPOINT: str = ""
+    OSS_BUCKET_NAME: str = ""
+    OSS_ACCESS_KEY_ID: str = ""
+    OSS_ACCESS_KEY_SECRET: str = ""
+    OSS_PUBLIC_BASE_URL: str = ""
+
     # Feature flags
     REGISTRATION_ENABLED: bool = True
     WALLET_SIMULATED_CONFIRM_ENABLED: bool = False
@@ -135,6 +143,37 @@ class Settings(BaseSettings):
             raise ValueError(
                 "Invalid WeChat mini program login configuration: "
                 "WECHAT_MINI_REQUEST_TIMEOUT_SECONDS"
+            )
+
+    @property
+    def upload_storage_driver(self) -> str:
+        """Return the normalized upload storage driver."""
+        return self.UPLOAD_STORAGE_DRIVER.strip().lower()
+
+    @property
+    def oss_missing_settings(self) -> list[str]:
+        """Return missing OSS setting names without exposing configured values."""
+        if self.upload_storage_driver != "oss":
+            return []
+
+        required = {
+            "OSS_ENDPOINT": self.OSS_ENDPOINT,
+            "OSS_BUCKET_NAME": self.OSS_BUCKET_NAME,
+            "OSS_ACCESS_KEY_ID": self.OSS_ACCESS_KEY_ID,
+            "OSS_ACCESS_KEY_SECRET": self.OSS_ACCESS_KEY_SECRET,
+            "OSS_PUBLIC_BASE_URL": self.OSS_PUBLIC_BASE_URL,
+        }
+        return [name for name, value in required.items() if not value]
+
+    def require_upload_storage_usable(self) -> None:
+        """Raise a sanitized error if upload storage cannot be used."""
+        driver = self.upload_storage_driver
+        if driver not in {"local", "oss"}:
+            raise ValueError("Invalid upload storage configuration: UPLOAD_STORAGE_DRIVER")
+        missing = self.oss_missing_settings
+        if missing:
+            raise ValueError(
+                "Missing OSS upload configuration: " + ", ".join(sorted(missing))
             )
 
 

@@ -16,6 +16,7 @@ dependencies = [
     "redis[hiredis]",
     "httpx",
     "apscheduler",
+    "oss2",
 ]
 
 [project.optional-dependencies]

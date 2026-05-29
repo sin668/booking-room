@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.upload import UploadResponse
+
 
 class ActivityResponse(BaseModel):
     id: int
@@ -54,7 +56,3 @@ class ActivityListResponse(BaseModel):
 
 class ActivityStatusUpdate(BaseModel):
     is_active: bool
-
-
-class UploadResponse(BaseModel):
-    url: str

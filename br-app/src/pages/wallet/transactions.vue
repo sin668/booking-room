@@ -35,7 +35,7 @@
           <view class="summary-divider" />
           <view class="summary-stat">
             <text class="summary-stat-value income">¥{{ formatMoney(cancelRefund) }}</text>
-            <text class="summary-stat-label">取消退款</text>
+            <text class="summary-stat-label">预约退款</text>
           </view>
         </view>
       </view>
@@ -131,7 +131,7 @@ export default {
         { label: '全部', value: 'all' },
         { label: '充值', value: 'recharge' },
         { label: '消费', value: 'consume' },
-        { label: '退款', value: 'booking_refund' },
+        { label: '预约退款', value: 'booking_refund' },
       ],
       transactions: [],
       page: 1,
@@ -283,6 +283,7 @@ export default {
     },
 
     getTransactionTitle(item) {
+      if (item.type === 'booking_refund') return '预约退款'
       if (item.title) return item.title
       if (item.type === 'recharge') {
         if (item.status === 'pending') return '充值待支付'

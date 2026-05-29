@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import posixpath
 import uuid
+import logging
 from asyncio import to_thread
 from dataclasses import dataclass
 from datetime import datetime
@@ -14,6 +15,7 @@ from app.core.config import Settings, settings
 from app.schemas.upload import UploadResponse
 
 
+logger = logging.getLogger(__name__)
 MB = 1024 * 1024
 UPLOAD_SCOPES = {"avatar", "activity-cover", "room-cover", "common"}
 SCOPE_SIZE_LIMITS = {
@@ -106,6 +108,13 @@ class OssStorageAdapter:
                 headers={"Content-Type": upload.content_type},
             )
         except Exception as exc:
+            logger.warning(
+                "OSS image upload failed: bucket=%s endpoint=%s object_key=%s error=%s",
+                self._config.OSS_BUCKET_NAME,
+                self._config.OSS_ENDPOINT,
+                upload.object_key,
+                type(exc).__name__,
+            )
             raise UploadStorageError("图片上传服务暂不可用") from exc
 
         return UploadResponse(
@@ -273,4 +282,7 @@ def _content_type_for_extension(ext: str) -> str:
 
 
 def _join_public_url(base_url: str, object_key: str) -> str:
-    return f"{base_url.rstrip('/')}/{posixpath.normpath(object_key).lstrip('/')}"
+    normalized_base_url = base_url.strip()
+    if "://" not in normalized_base_url:
+        normalized_base_url = f"https://{normalized_base_url}"
+    return f"{normalized_base_url.rstrip('/')}/{posixpath.normpath(object_key).lstrip('/')}"

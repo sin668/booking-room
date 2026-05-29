@@ -177,6 +177,32 @@ def test_oss_storage_adapter_puts_object_and_returns_public_url():
     assert result.content_type == "image/png"
 
 
+def test_oss_storage_adapter_adds_https_scheme_to_public_url():
+    class FakeBucket:
+        def put_object(self, object_key, content, headers=None):
+            return None
+
+    config = Settings(
+        UPLOAD_STORAGE_DRIVER="oss",
+        OSS_ENDPOINT="https://oss-cn.example.aliyuncs.com",
+        OSS_BUCKET_NAME="booking-room",
+        OSS_ACCESS_KEY_ID="access-key-id",
+        OSS_ACCESS_KEY_SECRET="access-key-secret",
+        OSS_PUBLIC_BASE_URL="cdn.example.com",
+    )
+    adapter = OssStorageAdapter(config, bucket=FakeBucket())
+    upload = UploadObject(
+        content=PNG_BYTES,
+        object_key="images/avatar/2026/05/29/file.png",
+        content_type="image/png",
+        size=len(PNG_BYTES),
+    )
+
+    result = adapter.upload(upload)
+
+    assert result.url == "https://cdn.example.com/images/avatar/2026/05/29/file.png"
+
+
 def test_oss_storage_error_is_sanitized():
     class FailingBucket:
         def put_object(self, object_key, content, headers=None):

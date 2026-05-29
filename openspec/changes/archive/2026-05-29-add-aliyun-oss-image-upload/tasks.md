@@ -109,7 +109,7 @@
 - [x] 11.3 更新 `.env.example` 或部署说明，记录 OSS Bucket、Endpoint、AccessKey、Secret、`OSS_PUBLIC_BASE_URL`、`UPLOAD_STORAGE_DRIVER`。
 - [x] 11.4 文档中明确生产图片 URL 使用 CDN/自定义公开域名，小程序需配置该域名为合法域名。
 - [x] 11.5 文档中明确回滚方式：`UPLOAD_STORAGE_DRIVER=local`，前端无需改接口。
-- [ ] 11.6 实现完成后同步 OpenSpec 主规格：`file-upload`、`profile-settings-ui`、`activity-admin-ui`、`study-room-admin-ui`。
+- [x] 11.6 实现完成后同步 OpenSpec 主规格：`file-upload`、`profile-settings-ui`、`activity-admin-ui`、`study-room-admin-ui`。
 
 ## 12. 验证和审查
 

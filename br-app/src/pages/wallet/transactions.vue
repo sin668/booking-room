@@ -131,7 +131,7 @@ export default {
         { label: '全部', value: 'all' },
         { label: '充值', value: 'recharge' },
         { label: '消费', value: 'consume' },
-        { label: '预约退款', value: 'booking_refund' },
+        { label: '退款', value: 'booking_refund' },
       ],
       transactions: [],
       page: 1,

@@ -142,7 +142,6 @@
   const message = useMessage();
   const loading = ref(false);
   const autoLogin = ref(true);
-  const LOGIN_NAME = PageEnum.BASE_LOGIN_NAME;
 
   const formInline = reactive({
     username: 'admin',
@@ -159,6 +158,17 @@
 
   const router = useRouter();
   const route = useRoute();
+
+  const resolveLoginRedirect = () => {
+    const defaultPath = PageEnum.BASE_HOME_REDIRECT;
+    const redirect = decodeURIComponent((route.query?.redirect || defaultPath) as string);
+    return !redirect ||
+      redirect === '/' ||
+      redirect === PageEnum.BASE_LOGIN ||
+      redirect === PageEnum.BASE_HOME
+      ? defaultPath
+      : redirect;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -177,12 +187,8 @@
           const { code, message: msg } = await userStore.login(params);
           message.destroyAll();
           if (code == ResultEnum.SUCCESS) {
-            const defaultPath = PageEnum.BASE_HOME_REDIRECT;
-            const toPath = decodeURIComponent((route.query?.redirect || defaultPath) as string);
             message.success('登录成功，即将进入系统');
-            if (route.name === LOGIN_NAME) {
-              router.replace(defaultPath);
-            } else router.replace(toPath);
+            router.replace(resolveLoginRedirect());
           } else {
             message.info(msg || '登录失败');
           }

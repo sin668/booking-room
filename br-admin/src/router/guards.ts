@@ -12,6 +12,15 @@ const LOGIN_PATH = PageEnum.BASE_LOGIN;
 
 const whitePathList = [LOGIN_PATH]; // no redirect whitelist
 
+function normalizeLoginRedirect(redirect?: string | string[] | null) {
+  const defaultPath = PageEnum.BASE_HOME_REDIRECT;
+  const value = Array.isArray(redirect) ? redirect[0] : redirect;
+  const path = value ? decodeURIComponent(value) : defaultPath;
+  return !path || path === '/' || path === LOGIN_PATH || path === PageEnum.BASE_HOME
+    ? defaultPath
+    : path;
+}
+
 export function createRouterGuards(router: Router) {
   const userStore = useUser();
   const asyncRouteStore = useAsyncRoute();
@@ -23,13 +32,18 @@ export function createRouterGuards(router: Router) {
       return;
     }
 
+    const token = storage.get(ACCESS_TOKEN);
+
+    if (to.path === LOGIN_PATH && token) {
+      next({ path: normalizeLoginRedirect(to.query.redirect), replace: true });
+      return;
+    }
+
     // Whitelist can be directly entered
     if (whitePathList.includes(to.path as PageEnum)) {
       next();
       return;
     }
-
-    const token = storage.get(ACCESS_TOKEN);
 
     if (!token) {
       // You can access without permissions. You need to set the routing meta.ignoreAuth to true
@@ -45,7 +59,7 @@ export function createRouterGuards(router: Router) {
       if (to.path) {
         redirectData.query = {
           ...redirectData.query,
-          redirect: to.path,
+          redirect: normalizeLoginRedirect(to.path),
         };
       }
       next(redirectData);
@@ -53,6 +67,11 @@ export function createRouterGuards(router: Router) {
     }
 
     if (asyncRouteStore.getIsDynamicRouteAdded) {
+      const normalizedPath = normalizeLoginRedirect(to.path);
+      if (to.path !== normalizedPath) {
+        next({ path: normalizedPath, replace: true });
+        return;
+      }
       next();
       return;
     }
@@ -72,8 +91,7 @@ export function createRouterGuards(router: Router) {
       router.addRoute(ErrorPageRoute as unknown as RouteRecordRaw);
     }
 
-    const redirectPath = (from.query.redirect || to.path) as string;
-    const redirect = decodeURIComponent(redirectPath);
+    const redirect = normalizeLoginRedirect((from.query.redirect || to.path) as string);
     const nextData = to.path === redirect ? { ...to, replace: true } : { path: redirect };
     asyncRouteStore.setDynamicRouteAdded(true);
     next(nextData);

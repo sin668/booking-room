@@ -22,7 +22,7 @@ routeModuleList.sort(sortRoute);
 export const RootRoute: RouteRecordRaw = {
   path: '/',
   name: 'Root',
-  redirect: PageEnum.BASE_HOME,
+  redirect: PageEnum.BASE_HOME_REDIRECT,
   meta: {
     title: 'Root',
   },

@@ -115,8 +115,8 @@
 
 - [x] 12.1 运行后端上传单元测试和接口测试：`DATABASE_URL=sqlite+aiosqlite:///:memory: pytest tests/test_upload.py tests/test_api_upload.py tests/test_api_user_profile.py -q`，30 passed。
 - [x] 12.2 运行现有用户资料测试，确认头像字段更新未回归：同 12.1 覆盖 `tests/test_api_user_profile.py`，通过。
-- [ ] 12.3 运行 br-admin 类型检查或构建，确认活动、自习室、账号头像、系统用户头像上传入口编译通过。已尝试 `pnpm run build`，因 worktree 缺少 `node_modules` / `vite: command not found` 阻塞，待安装依赖后复跑。
-- [ ] 12.4 运行 br-app 构建，确认设置页头像上传流程无编译错误。已尝试 `npm run build:mp-weixin`，因 worktree 缺少 `node_modules` / `uni: command not found` 阻塞，待安装依赖后复跑。
+- [x] 12.3 运行 br-admin 类型检查或构建，确认活动、自习室、账号头像、系统用户头像上传入口编译通过：`pnpm run build` 通过。
+- [x] 12.4 运行 br-app 构建，确认设置页头像上传流程无编译错误：`npm run build:mp-weixin` 通过。
 - [x] 12.5 使用 `rg` 复查 br-admin/br-app 生产上传入口，确认没有绕过统一上传客户端。
 - [x] 12.6 审查 Clean Architecture 分层：路由不包含 OSS 细节，存储适配器不包含 HTTP 认证逻辑，前端业务页不重复封装上传协议。
 - [x] 12.7 审查安全边界：AccessKey Secret 只存在服务端配置，前端源码和构建配置不包含密钥。

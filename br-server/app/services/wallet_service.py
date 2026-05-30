@@ -20,6 +20,7 @@ from app.domain.wallet_rules import (
 from app.models.coupon import Coupon
 from app.models.user import User
 from app.models.wallet import WalletTransaction
+from app.repositories.wallet_repository import WalletRepository
 from app.schemas.wallet import (
     AdminWalletStatisticsResponse,
     AdminWalletTransactionListResponse,
@@ -120,6 +121,7 @@ class WalletService:
         self._redis = redis
         self._config = config
         self._wechat_client = wechat_client
+        self._wallet_repository = WalletRepository(db)
 
     async def get_balance(self, user_id: uuid.UUID) -> BalanceResponse:
         """Get user's current balance and total recharged amount."""
@@ -216,9 +218,9 @@ class WalletService:
                 promo_code, amount
             )
 
-        transaction = WalletTransaction(
+        transaction = await self._wallet_repository.create_transaction(
             user_id=str(user_id),
-            type="recharge",
+            transaction_type="recharge",
             amount=Decimal(str(amount)).quantize(Decimal("0.01")),
             bonus_amount=bonus_amount,
             order_id=str(uuid.uuid4()),
@@ -228,8 +230,6 @@ class WalletService:
         )
         self._set_payment_attr(transaction, "payment_provider", "wechat")
         self._set_payment_attr(transaction, "payment_status", "pending")
-        self._db.add(transaction)
-        await self._db.flush()
 
         try:
             prepay_id = await self._wechat_client.create_jsapi_prepay(

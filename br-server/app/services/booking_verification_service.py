@@ -1,6 +1,3 @@
-import base64
-import hashlib
-import hmac
 import secrets
 import uuid
 from dataclasses import dataclass
@@ -12,6 +9,14 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.domain.verification_rules import (
+    COMPACT_TOKEN_VERSION,
+    TOKEN_TTL_SECONDS,
+    ExpiredVerificationToken,
+    InvalidVerificationToken,
+    create_compact_verification_token,
+    decode_compact_verification_token,
+)
 from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
@@ -24,8 +29,6 @@ from app.schemas.booking_verification import (
     VerifiableBookingListResponse,
 )
 
-TOKEN_TTL_SECONDS = 5 * 60
-COMPACT_TOKEN_VERSION = "v1"
 VERIFICATION_TOKEN_PURPOSE = "booking_verification"
 VERIFICATION_AUDIENCE = "booking-verification"
 VERIFICATION_EARLY_ARRIVAL_MINUTES = 30
@@ -73,58 +76,31 @@ def _get_signing_secret() -> str:
 
 
 def _create_verification_token(booking_id: int, user_id: str, now: datetime) -> tuple[str, datetime]:
-    now = _ensure_utc(now)
-    expires_at = now + timedelta(seconds=TOKEN_TTL_SECONDS)
-    expires_at_timestamp = int(expires_at.timestamp())
-    nonce = secrets.token_urlsafe(3)
-    signing_input = f"{COMPACT_TOKEN_VERSION}.{booking_id}.{expires_at_timestamp}.{nonce}"
-    signature = _sign_compact_token(signing_input)
-    token = f"{signing_input}.{signature}"
-    return token, expires_at
-
-
-def _sign_compact_token(signing_input: str) -> str:
-    digest = hmac.new(
-        _get_signing_secret().encode("utf-8"),
-        signing_input.encode("utf-8"),
-        hashlib.sha256,
-    ).digest()
-    return _base64url_encode(digest[:16])
-
-
-def _base64url_encode(value: bytes) -> str:
-    return base64.urlsafe_b64encode(value).decode("ascii").rstrip("=")
+    return create_compact_verification_token(
+        booking_id=booking_id,
+        secret=_get_signing_secret(),
+        now=now,
+        nonce=secrets.token_urlsafe(3),
+    )
 
 
 def _decode_compact_verification_token(token: str, now: datetime) -> VerificationTokenPayload:
-    parts = token.split(".")
-    if len(parts) != 5 or parts[0] != COMPACT_TOKEN_VERSION:
-        raise InvalidVerificationTokenError("无效的核销码")
-
-    signing_input = ".".join(parts[:4])
-    expected_signature = _sign_compact_token(signing_input)
-    if not hmac.compare_digest(parts[4], expected_signature):
-        raise InvalidVerificationTokenError("无效的核销码")
-
     try:
-        booking_id = int(parts[1])
-        expires_at = datetime.fromtimestamp(int(parts[2]), tz=UTC)
-        nonce = parts[3]
-    except (TypeError, ValueError, OSError) as exc:
+        payload = decode_compact_verification_token(
+            token=token,
+            secret=_get_signing_secret(),
+            now=now,
+        )
+    except ExpiredVerificationToken as exc:
+        raise ExpiredVerificationTokenError("核销码已过期") from exc
+    except InvalidVerificationToken as exc:
         raise InvalidVerificationTokenError("无效的核销码") from exc
 
-    if not nonce:
-        raise InvalidVerificationTokenError("无效的核销码")
-
-    now = _ensure_utc(now)
-    if expires_at <= now:
-        raise ExpiredVerificationTokenError("核销码已过期")
-
     return VerificationTokenPayload(
-        booking_id=booking_id,
+        booking_id=payload.booking_id,
         user_id="",
-        iat=expires_at - timedelta(seconds=TOKEN_TTL_SECONDS),
-        nonce=nonce,
+        iat=payload.issued_at,
+        nonce=payload.nonce,
     )
 
 

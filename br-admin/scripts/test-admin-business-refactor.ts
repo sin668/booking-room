@@ -23,6 +23,13 @@ import {
   createMoneyColumn,
   createTextColumn,
 } from '../src/views/business/shared/tableBuilders';
+import {
+  createDateRangeSchema,
+  createKeywordSchema,
+  createRoomSelectSchema,
+  createStatusSchema,
+  normalizeDateRange,
+} from '../src/views/business/shared/formSchemaBuilders';
 
 function testApiContracts() {
   assert.equal(ADMIN_NATIVE_META.isReturnNativeResponse, true);
@@ -70,4 +77,18 @@ function testSharedViewBuilders() {
 }
 
 testSharedViewBuilders();
+
+function testFormSchemaBuilders() {
+  assert.equal(createKeywordSchema('keyword', '搜索名称').field, 'keyword');
+  assert.equal(createStatusSchema('status', ROOM_STATUS_OPTIONS).component, 'NSelect');
+  assert.equal(createRoomSelectSchema([]).field, 'room_id');
+  assert.equal(createDateRangeSchema('dateRange', '预约日期').componentProps.type, 'daterange');
+  assert.deepEqual(normalizeDateRange([1717027200000, 1717113600000]), {
+    date_start: '2024-05-30',
+    date_end: '2024-05-31',
+  });
+  assert.deepEqual(normalizeDateRange(null), {});
+}
+
+testFormSchemaBuilders();
 console.log('br-admin business refactor tests passed');

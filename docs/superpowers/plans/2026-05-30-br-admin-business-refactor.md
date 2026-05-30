@@ -399,7 +399,7 @@ git commit -m "refactor: add admin business view builders"
 - 新建：`br-admin/src/store/modules/adminBusiness.ts`
 - 修改：`br-admin/scripts/test-admin-business-refactor.ts`
 
-- [ ] **Step 1：先写失败的 schema/store 测试**
+- [x] **Step 1：先写失败的 schema/store 测试**
 
 追加测试：
 
@@ -427,13 +427,13 @@ function testFormSchemaBuilders() {
 testFormSchemaBuilders();
 ```
 
-- [ ] **Step 2：运行测试并确认失败**
+- [x] **Step 2：运行测试并确认失败**
 
 运行：`cd br-admin && pnpm test:business-refactor`
 
 预期：失败，提示 `formSchemaBuilders` 不存在。
 
-- [ ] **Step 3：实现 form schema builders**
+- [x] **Step 3：实现 form schema builders**
 
 新增 `formSchemaBuilders.ts`，导出：
 
@@ -445,7 +445,7 @@ createDateRangeSchema(field, label)
 normalizeDateRange(dateRange)
 ```
 
-- [ ] **Step 4：实现业务选项 store**
+- [x] **Step 4：实现业务选项 store**
 
 新增 `adminBusiness.ts`：
 
@@ -481,7 +481,7 @@ export function useAdminBusiness() {
 }
 ```
 
-- [ ] **Step 5：运行测试和构建**
+- [x] **Step 5：运行测试和构建**
 
 运行：
 
@@ -493,7 +493,7 @@ pnpm build
 
 预期：测试和构建通过。
 
-- [ ] **Step 6：提交**
+- [x] **Step 6：提交**
 
 ```bash
 git add br-admin/scripts/test-admin-business-refactor.ts br-admin/src/views/business/shared/formSchemaBuilders.ts br-admin/src/store/modules/adminBusiness.ts

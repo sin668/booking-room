@@ -62,7 +62,11 @@ function readProjectAppId(outputDir) {
   assert.equal(appid, TEST_ENV_APPID)
 }
 
-assert.ok(resolveOutputDirFromArgs(['--mode', 'dev']).endsWith('dist/dev/mp-weixin'))
-assert.ok(resolveOutputDirFromArgs(['--mode', 'build']).endsWith('dist/build/mp-weixin'))
+function normalizePathSeparators(filePath) {
+  return filePath.replace(/\\/g, '/')
+}
+
+assert.ok(normalizePathSeparators(resolveOutputDirFromArgs(['--mode', 'dev'])).endsWith('dist/dev/mp-weixin'))
+assert.ok(normalizePathSeparators(resolveOutputDirFromArgs(['--mode', 'build'])).endsWith('dist/build/mp-weixin'))
 
 console.log('微信小程序 AppID 注入脚本验证通过')

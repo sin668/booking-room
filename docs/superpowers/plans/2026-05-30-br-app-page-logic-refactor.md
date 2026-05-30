@@ -407,7 +407,7 @@ git commit -m "refactor: add app page services"
 - 修改：`br-app/src/pages/recharge/index.vue`
 - 修改：`br-app/src/pages/booking/confirm.vue`
 
-- [ ] **Step 1：替换页面内重复格式化方法**
+- [x] **Step 1：替换页面内重复格式化方法**
 
 按页面实际需要导入：
 
@@ -442,25 +442,25 @@ durationText(order) {
 }
 ```
 
-- [ ] **Step 2：运行 refactor 测试**
+- [x] **Step 2：运行 refactor 测试**
 
 运行：`cd br-app && npm run test:refactor`
 
 预期：通过。
 
-- [ ] **Step 3：运行现有脚本测试**
+- [x] **Step 3：运行现有脚本测试**
 
 运行：`cd br-app && npm run test:scripts`
 
 预期：profile links、WeChat AppID、refactor tests 全部通过。
 
-- [ ] **Step 4：运行 H5 构建**
+- [x] **Step 4：运行 H5 构建**
 
 运行：`cd br-app && npm run build:h5`
 
 预期：构建无 Vite/uni-app 错误。
 
-- [ ] **Step 5：提交**
+- [x] **Step 5：提交**
 
 ```bash
 git add br-app/src/pages/index/index.vue br-app/src/pages/profile/index.vue br-app/src/pages/orders/index.vue br-app/src/pages/wallet/transactions.vue br-app/src/pages/recharge/index.vue br-app/src/pages/booking/confirm.vue

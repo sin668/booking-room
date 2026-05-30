@@ -144,6 +144,8 @@
 
 <script>
 import { cancelBookingOrder, fetchBookingsPage } from '@/services/bookingPageService'
+import { BOOKING_TABS, SEAT_ZONE_LABELS } from '@/constants/booking'
+import { formatBookingStatus, formatHourCount, formatMoney } from '@/utils/formatters'
 
 const TABS = [
   { label: '全部', value: 'all' },
@@ -170,7 +172,7 @@ const PAGE_SIZE = 20
 export default {
   data() {
     return {
-      tabs: TABS,
+      tabs: BOOKING_TABS,
       currentTab: 'all',
       orders: [],
       page: 1,
@@ -237,25 +239,18 @@ export default {
     },
 
     statusLabel(status) {
-      return STATUS_MAP[status] || status
+      return formatBookingStatus(status)
     },
 
     seatInfoText(order) {
       if (!order.seat) return '暂无座位信息'
       const seat = order.seat
-      const zone = ZONE_MAP[seat.zone] || seat.zone || ''
+      const zone = SEAT_ZONE_LABELS[seat.zone] || seat.zone || ''
       return zone ? `${seat.seat_number}号座位 · ${zone}` : `${seat.seat_number}号座位`
     },
 
     calcHours(order) {
-      const parse = (t) => {
-        const parts = t.split(':').map(Number)
-        return parts[0] + parts[1] / 60
-      }
-      const start = parse(order.start_time)
-      const end = parse(order.end_time)
-      const h = end - start
-      return Number.isInteger(h) ? h : h.toFixed(1)
+      return formatHourCount(order.start_time, order.end_time)
     },
 
     viewSeat(order) {
@@ -312,9 +307,7 @@ export default {
     },
 
     formatMoney(value) {
-      const amount = Number(value || 0)
-      if (Number.isNaN(amount)) return '0.00'
-      return amount.toFixed(2)
+      return formatMoney(value)
     },
 
     rebook(order) {

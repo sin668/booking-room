@@ -63,11 +63,13 @@ function testFormatters() {
     formatMoney,
     formatAmount,
     formatShortTime,
+    formatDateTime,
     formatDateSlash,
     formatRoomMinPrice,
     formatBookingStatus,
     formatWalletStatus,
     formatHourDuration,
+    formatHourCount,
   } = loadModule('src/utils/formatters.js')
 
   assert.equal(formatMoney(12), '12.00')
@@ -76,6 +78,7 @@ function testFormatters() {
   assert.equal(formatAmount('12.00'), '12')
   assert.equal(formatShortTime('2026-05-30T09:05:00'), '09:05')
   assert.equal(formatShortTime('09:30:00'), '09:30')
+  assert.equal(formatDateTime('2026-05-30T09:05:00'), '2026-05-30 09:05')
   assert.equal(formatDateSlash('2026-05-30'), '2026/05/30')
   assert.equal(formatRoomMinPrice({ min_price: 8 }), '¥8起')
   assert.equal(formatRoomMinPrice({ min_price: 0 }), '')
@@ -83,6 +86,7 @@ function testFormatters() {
   assert.equal(formatBookingStatus('unknown'), 'unknown')
   assert.equal(formatWalletStatus('completed'), '已完成')
   assert.equal(formatHourDuration('09:00', '11:30'), '2.5小时')
+  assert.equal(formatHourCount('09:00', '11:30'), '2.5')
 }
 
 function testFollowedRooms() {

@@ -95,17 +95,19 @@
 <script>
 import { createPaymentStatusError, pollPaymentStatus, waitForPaymentPoll } from '@/services/paymentPolling'
 import {
+  PAYMENT_POLL_INTERVAL as RECHARGE_POLL_INTERVAL,
+  PAYMENT_POLL_MAX_ATTEMPTS as RECHARGE_POLL_MAX_ATTEMPTS,
+  RECHARGE_DEFAULT_AMOUNT as DEFAULT_AMOUNT,
+  RECHARGE_MAX_AMOUNT as MAX_AMOUNT,
+  RECHARGE_MIN_AMOUNT as MIN_AMOUNT,
+} from '@/constants/wallet'
+import {
   createRechargePaymentOrder,
   fetchRechargePaymentOrder,
   fetchWalletBalance,
   redeemRechargePromoCode,
 } from '@/services/walletPageService'
-
-const DEFAULT_AMOUNT = 50
-const MIN_AMOUNT = 1
-const MAX_AMOUNT = 9999
-const RECHARGE_POLL_INTERVAL = 2000
-const RECHARGE_POLL_MAX_ATTEMPTS = 10
+import { formatAmount, formatMoney } from '@/utils/formatters'
 
 export default {
   data() {
@@ -304,15 +306,11 @@ export default {
     },
 
     formatMoney(value) {
-      const amount = Number(value)
-      if (!Number.isFinite(amount)) return '0.00'
-      return amount.toFixed(2)
+      return formatMoney(value)
     },
 
     formatAmount(value) {
-      const amount = Number(value)
-      if (!Number.isFinite(amount)) return '0'
-      return Number.isInteger(amount) ? String(amount) : amount.toFixed(2).replace(/\.?0+$/, '')
+      return formatAmount(value)
     },
   },
 }

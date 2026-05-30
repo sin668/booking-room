@@ -261,11 +261,14 @@ import {
   fetchWalletBalance,
 } from '@/services/bookingPageService'
 import { createPaymentStatusError, pollPaymentStatus } from '@/services/paymentPolling'
+import { SEAT_ZONE_LABELS } from '@/constants/booking'
+import {
+  PAYMENT_POLL_INTERVAL,
+  PAYMENT_POLL_MAX_ATTEMPTS,
+} from '@/constants/wallet'
+import { formatMoney } from '@/utils/formatters'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-const PAYMENT_POLL_INTERVAL = 2000
-const PAYMENT_POLL_MAX_ATTEMPTS = 10
-
 const ZONE_LABELS = {
   quiet: '静音区',
   keyboard: '键盘区',
@@ -375,7 +378,7 @@ export default {
     },
 
     zoneLabel() {
-      return ZONE_LABELS[this.seatZone] || this.seatZone
+      return SEAT_ZONE_LABELS[this.seatZone] || this.seatZone
     },
 
     floorLabel() {
@@ -606,7 +609,7 @@ export default {
       this.bookingId = booking.id || ''
       this.bookingRoomName = booking.room?.name || this.roomName
       this.bookingSeatNumber = booking.seat?.seat_number || this.seatNumber
-      this.bookingZone = booking.seat?.zone ? (ZONE_LABELS[booking.seat.zone] || booking.seat.zone) : this.zoneLabel
+      this.bookingZone = booking.seat?.zone ? (SEAT_ZONE_LABELS[booking.seat.zone] || booking.seat.zone) : this.zoneLabel
       this.bookingDate = booking.date || this.date
       this.bookingStartTime = booking.start_time || this.start_time
       this.bookingEndTime = booking.end_time || this.end_time
@@ -660,8 +663,7 @@ export default {
     },
 
     money(value) {
-      const num = Number(value)
-      return Number.isFinite(num) ? num.toFixed(2) : '0.00'
+      return formatMoney(value)
     },
 
     couponMetaText(coupon) {

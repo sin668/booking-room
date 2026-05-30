@@ -27,6 +27,15 @@ export function formatShortTime(value) {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
+export function formatDateTime(value) {
+  if (!value) return '时间 -'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+
+  const pad = (number) => String(number).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 export function formatDateSlash(value) {
   if (!value) return ''
   return String(value).slice(0, 10).replace(/-/g, '/')
@@ -51,10 +60,14 @@ export function formatSeatZone(zone) {
 }
 
 export function formatHourDuration(startTime, endTime) {
+  return `${formatHourCount(startTime, endTime)}小时`
+}
+
+export function formatHourCount(startTime, endTime) {
   const parse = (time) => {
     const [hours = 0, minutes = 0] = String(time || '').split(':').map(Number)
     return hours + minutes / 60
   }
   const duration = Math.max(0, parse(endTime) - parse(startTime))
-  return `${formatAmount(duration)}小时`
+  return formatAmount(duration)
 }

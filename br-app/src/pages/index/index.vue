@@ -155,6 +155,7 @@ import { getActivities } from '@/api/activities'
 import { getNotificationUnreadSummary } from '@/api/notifications'
 import { useCityStore } from '@/store/modules/city'
 import { getFollowedRooms } from '@/services/followedRooms'
+import { formatRoomMinPrice } from '@/utils/formatters'
 
 const REAL_ROOM_COVERS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=720&h=520&fit=crop&q=85',
@@ -269,9 +270,7 @@ export default {
     },
 
     roomPriceText(room) {
-      const price = Number(room?.min_price)
-      if (!Number.isFinite(price) || price <= 0) return ''
-      return `¥${price}起`
+      return formatRoomMinPrice(room)
     },
 
     onBannerChange(e) {

@@ -153,6 +153,7 @@ import { getCoupons } from '@/api/coupons'
 import { getMonthlySummary } from '@/api/studyRecords'
 import { getBalance } from '@/api/wallet'
 import { getFollowedRooms, getFollowedRoomsSummary } from '@/services/followedRooms'
+import { formatAmount, formatMoney } from '@/utils/formatters'
 
 export default {
   data() {
@@ -242,14 +243,10 @@ export default {
       return `${now.getFullYear()}-${month}`
     },
     formatMoney(value) {
-      const number = Number(value)
-      if (!Number.isFinite(number)) return '0.00'
-      return number.toFixed(2)
+      return formatMoney(value)
     },
     formatHours(value) {
-      const number = Number(value)
-      if (!Number.isFinite(number)) return '0'
-      return Number.isInteger(number) ? String(number) : number.toFixed(1).replace(/\.0$/, '')
+      return formatAmount(value)
     },
   },
 }

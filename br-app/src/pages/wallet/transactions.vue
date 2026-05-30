@@ -116,6 +116,7 @@
 
 <script>
 import { fetchWalletBalance, fetchWalletTransactionsPage } from '@/services/walletPageService'
+import { formatDateTime, formatMoney, formatWalletStatus } from '@/utils/formatters'
 
 const PAGE_SIZE = 20
 
@@ -294,6 +295,7 @@ export default {
     },
 
     statusText(status) {
+      return formatWalletStatus(status)
       const statusMap = {
         completed: '完成',
         pending: '待处理',
@@ -352,10 +354,12 @@ export default {
     },
 
     formatMoney(value) {
+      return formatMoney(value)
       return this.toNumber(value).toFixed(2)
     },
 
     formatTime(value) {
+      return formatDateTime(value)
       if (!value) return '时间 -'
       const date = new Date(value)
       if (Number.isNaN(date.getTime())) return String(value)

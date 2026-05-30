@@ -115,7 +115,7 @@ class TestAdminGetBooking:
         assert resp.status_code == 200
         data = resp.json()
         assert data["id"] == 1
-        assert data["user_id"] == "user-1"
+        assert data["user_id"] == "11111111-1111-1111-1111-111111111111"
         assert data["seat"]["seat_number"] == "A1"
         assert data["room"]["name"] == "Room A"
 

@@ -1,76 +1,76 @@
-# br-server Clean Architecture Refactor Design
+# br-server Clean Architecture 重构设计
 
-## Goal
+## 目标
 
-Refactor `br-server` service-layer code toward Clean Architecture without changing external API behavior. The first implementation phase targets the highest-risk business services: booking, wallet, payment, and booking verification.
+在不改变外部 API 行为的前提下，将 `br-server` 服务层逐步重构到更清晰的 Clean Architecture 结构。第一阶段聚焦风险最高、业务规则最集中的模块：预约、钱包、支付、预约核销。
 
-## Current State
+## 当前状态
 
-`br-server` already has a useful coarse structure:
+`br-server` 已经具备基础分层：
 
-- `app/api/routes`: FastAPI HTTP adapters.
-- `app/schemas`: request and response DTOs.
-- `app/models`: SQLAlchemy persistence models.
-- `app/services`: business logic and integrations.
-- `app/core`: configuration, database, security, and infrastructure setup.
-- `tests`: strong service and API coverage for booking, wallet, authentication, coupons, payment, and verification.
+- `app/api/routes`：FastAPI HTTP 适配层。
+- `app/schemas`：请求与响应 DTO。
+- `app/models`：SQLAlchemy 持久化模型。
+- `app/services`：业务逻辑与外部集成。
+- `app/core`：配置、数据库、安全与基础设施。
+- `tests`：覆盖预约、钱包、认证、优惠券、支付、核销等核心流程。
 
-The main maintainability issue is that several service modules combine too many responsibilities:
+主要问题是部分服务模块承担了过多职责：
 
-- `wallet_service.py` mixes wallet domain rules, recharge order lifecycle, WeChat callback handling, transaction persistence, and promo code redemption.
-- `booking_service.py` mixes booking validation, seat availability, coupon mutation, wallet payment, conflict checks, and response assembly.
-- `booking_payment_service.py` and `booking_verification_service.py` are closer to domain services but still couple domain rules directly to SQLAlchemy queries and framework-facing data shapes.
-- Route files are mostly adapters, but some still understand too much business workflow detail.
+- `wallet_service.py` 同时包含钱包规则、充值订单生命周期、微信回调处理、流水持久化、兑换码兑换等逻辑。
+- `booking_service.py` 同时包含预约校验、座位可用性、优惠券变更、钱包支付、冲突检查、响应组装等逻辑。
+- `booking_payment_service.py` 和 `booking_verification_service.py` 已经接近领域服务，但仍把领域规则、SQLAlchemy 查询和面向接口的数据形状耦合在一起。
+- 路由文件大体是适配层，但部分路由仍了解过多业务编排细节。
 
-## Architecture Direction
+## 架构方向
 
-Keep the existing FastAPI and SQLAlchemy stack. Do not introduce a new framework or a heavy abstraction layer.
+保留现有 FastAPI 和 SQLAlchemy 技术栈，不引入重型框架或大规模抽象。
 
-Move toward four explicit layers inside `br-server/app`:
+目标是在 `br-server/app` 内形成四类明确边界：
 
-1. **API adapters**
-   - FastAPI routes parse requests, apply auth dependencies, call use cases, and map exceptions to HTTP responses.
-   - Routes must not perform business decisions.
+1. **API 适配层**
+   - FastAPI 路由只负责解析请求、执行认证依赖、调用用例、把异常映射为 HTTP 响应。
+   - 路由不承载业务决策。
 
-2. **Application use cases**
-   - Orchestrate a complete business workflow, such as creating a booking or handling a wallet recharge callback.
-   - Own transaction boundaries where the existing code already requires atomic behavior.
-   - Depend on domain services and repository interfaces.
+2. **应用用例层**
+   - 编排完整业务流程，例如创建预约、取消预约、处理钱包充值回调、确认核销。
+   - 在现有代码已经要求原子性的地方保留事务边界。
+   - 依赖领域服务和仓储接口。
 
-3. **Domain services**
-   - Hold pure or near-pure business rules: booking time validation, cancellation policy, wallet balance checks, coupon applicability, payment status transitions, verification token rules.
-   - Prefer plain functions or small classes with explicit inputs and outputs.
+3. **领域服务层**
+   - 承载纯规则或接近纯规则：预约时间校验、取消政策、钱包余额检查、优惠券适用性、支付状态流转、核销 token 规则。
+   - 优先使用普通函数或小类，输入输出显式。
 
-4. **Infrastructure adapters**
-   - SQLAlchemy repositories, external clients, storage providers, and WeChat/SMS integrations.
-   - Hide query and SDK details behind focused methods.
+4. **基础设施适配层**
+   - SQLAlchemy 仓储、外部客户端、存储服务、微信和短信集成。
+   - 用聚焦的方法隐藏查询细节和 SDK 细节。
 
-## Initial Refactor Scope
+## 第一阶段范围
 
-The first implementation plan should cover `br-server` only.
+第一阶段只覆盖 `br-server`。
 
-### Included
+### 包含
 
-- Extract shared money and transaction helpers from wallet and booking payment paths.
-- Extract booking conflict and time-window rules from `booking_service.py`.
-- Extract wallet ledger operations from `wallet_service.py`.
-- Extract verification token encode/decode and validation policy from `booking_verification_service.py` where useful.
-- Introduce repository interfaces only where they remove current duplication or make tests cleaner.
-- Keep existing public route behavior and response payloads stable.
-- Add or preserve tests before each behavior-affecting refactor.
+- 从钱包和预约支付路径中提取共享金额与流水辅助逻辑。
+- 从 `booking_service.py` 中提取预约时间窗口和冲突校验规则。
+- 从 `wallet_service.py` 中提取钱包流水写入与余额变更操作。
+- 在有明确收益时，从 `booking_verification_service.py` 中提取核销 token 编解码与校验策略。
+- 仅在能消除重复或让测试更清晰时引入仓储接口。
+- 保持现有路由行为和响应载荷稳定。
+- 对任何影响行为的重构先补测试或保留现有测试保护。
 
-### Excluded
+### 不包含
 
-- No database schema changes.
-- No API path, response, or auth contract changes.
-- No frontend changes in this phase.
-- No broad deletion of `br-admin` template code.
-- No global formatting churn.
-- No rewrite of all services into classes if simple functions already work.
+- 不改数据库结构。
+- 不改 API 路径、响应格式或认证协议。
+- 不改前端。
+- 不清理 `br-admin` 模板框架遗留代码。
+- 不做全局格式化。
+- 不为了“看起来分层”把所有函数强行改成类。
 
-## Proposed Module Shape
+## 目标模块形态
 
-Target structure for the first phase:
+第一阶段的目标结构：
 
 ```text
 br-server/app/
@@ -95,42 +95,42 @@ br-server/app/
     booking_verification_service.py
 ```
 
-The existing `services` modules can remain as compatibility facades during migration. This reduces route churn and allows small commits.
+迁移期间，现有 `services` 模块可以保留为兼容门面。这样可以减少路由改动，保证每个提交都足够小且容易回滚。
 
-## Refactor Sequence
+## 重构顺序
 
-1. **Baseline verification**
-   - Run focused tests for wallet, booking, payment, and verification.
-   - Record current failures or warnings before code changes.
+1. **基线验证**
+   - 先运行钱包、预约、支付、核销相关测试。
+   - 在改代码前记录当前失败或警告。
 
-2. **Extract pure rules**
-   - Move deterministic validation and formatting logic into `app/domain`.
-   - Add unit tests for these rules first.
-   - Update existing services to call extracted rules.
+2. **提取纯规则**
+   - 把确定性的校验和格式化逻辑移动到 `app/domain`。
+   - 先为这些规则写单元测试。
+   - 再更新现有服务调用新规则。
 
-3. **Extract repository adapters**
-   - Start with read/write clusters that are duplicated or deeply nested.
-   - Keep SQLAlchemy session ownership unchanged unless a test proves the boundary needs adjustment.
+3. **提取仓储适配**
+   - 从重复或深层嵌套的读写逻辑开始。
+   - 除非测试证明需要调整，否则保持 SQLAlchemy session 所有权不变。
 
-4. **Introduce application use cases**
-   - Move orchestration out of oversized service classes/functions.
-   - Keep existing public service function names as wrappers if routes or tests already depend on them.
+4. **引入应用用例**
+   - 把流程编排从过大的服务函数或服务类中移出。
+   - 如果路由或测试依赖现有公开函数名，则先保留包装函数。
 
-5. **Clean up compatibility layer**
-   - Remove duplicate private helpers only after tests prove the new path is used.
-   - Keep public exports stable until callers are migrated.
+5. **清理兼容层**
+   - 只有在测试证明新路径已经被使用后，再删除重复私有辅助函数。
+   - 在调用方迁移完成前，保持公开导出稳定。
 
-## Testing Strategy
+## 测试策略
 
-Use TDD for each extraction:
+每个提取动作都遵循 TDD：
 
-- Write a focused test for the extracted rule or use case.
-- Verify it fails before implementation.
-- Move minimal logic.
-- Run the focused test.
-- Run the existing affected service/API tests.
+- 为即将提取的规则或用例写聚焦测试。
+- 先确认测试失败。
+- 迁移最小实现。
+- 运行聚焦测试。
+- 运行受影响的既有服务和 API 测试。
 
-Recommended baseline commands:
+建议基线命令：
 
 ```powershell
 python -m pytest tests/test_booking_payment_service.py -q
@@ -140,24 +140,24 @@ python -m pytest tests/test_api_booking.py -q
 python -m pytest tests/test_api_wallet.py -q
 ```
 
-Full backend verification:
+后端全量验证：
 
 ```powershell
 python -m pytest
 ```
 
-## Risks
+## 风险
 
-- Booking and wallet flows mutate multiple tables. Refactors must preserve transaction ordering and rollback behavior.
-- Coupon usage and restoration are coupled to booking create/cancel paths. These need targeted regression tests.
-- WeChat payment callbacks require idempotency and signature handling. Avoid changing callback semantics in the first pass.
-- Existing tests are broad and valuable but large. Small focused tests should be added around extracted rules to keep feedback fast.
+- 预约和钱包流程会修改多张表。重构必须保持事务顺序和回滚行为。
+- 优惠券使用和恢复与预约创建、取消强耦合，需要定向回归测试。
+- 微信支付回调依赖幂等和签名处理，第一阶段不改变回调语义。
+- 现有测试覆盖较强但文件较大，需要给抽出的规则补充小而快的单元测试。
 
-## Success Criteria
+## 成功标准
 
-- Existing backend tests for booking, wallet, payment, and verification pass.
-- New domain modules have focused tests.
-- Route behavior is unchanged.
-- Largest business services are reduced by moving pure rules and persistence clusters into named modules.
-- No unrelated frontend or admin changes are included.
+- 预约、钱包、支付、核销相关既有后端测试通过。
+- 新增领域模块有聚焦测试。
+- 路由行为不变。
+- 最大的业务服务通过提取纯规则和持久化操作减少职责。
+- 不包含无关前端或管理端改动。
 

@@ -128,10 +128,51 @@ async function testPaymentPolling() {
   )
 }
 
+function testPageServices() {
+  const bookingService = loadModule('src/services/bookingPageService.js', {
+    '@/api/bookings': {
+      getBookings: async (params) => ({ params, items: [] }),
+      cancelBooking: async (id) => ({ id, refund_amount: '1.00' }),
+      createBooking: async (payload) => ({ id: 9, ...payload }),
+      getBookingPaymentStatus: async (id) => ({ id, payment_status: 'paid' }),
+    },
+    '@/api/coupons': { getAvailableCouponsForBooking: async (payload) => ({ payload, items: [] }) },
+    '@/api/rooms': { getRoom: async (id) => ({ id }) },
+    '@/api/seats': { getSeats: async (roomId, params) => [{ roomId, ...params }] },
+    '@/api/wallet': { getBalance: async () => ({ balance: '8.00' }) },
+  })
+  assert.equal(typeof bookingService.fetchBookingsPage, 'function')
+  assert.equal(typeof bookingService.cancelBookingOrder, 'function')
+  assert.equal(typeof bookingService.createBookingOrder, 'function')
+  assert.equal(typeof bookingService.fetchBookingPaymentStatus, 'function')
+  assert.equal(typeof bookingService.fetchBookingRoom, 'function')
+  assert.equal(typeof bookingService.fetchBookingSeats, 'function')
+  assert.equal(typeof bookingService.fetchBookingCoupons, 'function')
+  assert.equal(typeof bookingService.fetchWalletBalance, 'function')
+
+  const walletService = loadModule('src/services/walletPageService.js', {
+    '@/api/wallet': {
+      getBalance: async () => ({ balance: '8.00' }),
+      getWalletTransactions: async (params) => ({ params, items: [] }),
+      createRechargeOrder: async (payload) => ({ order_id: 1, ...payload }),
+      getRechargeOrder: async (id) => ({ id, status: 'completed' }),
+      confirmPayment: async (id) => ({ id }),
+      redeemPromoCode: async (code) => ({ code }),
+    },
+  })
+  assert.equal(typeof walletService.fetchWalletBalance, 'function')
+  assert.equal(typeof walletService.fetchWalletTransactionsPage, 'function')
+  assert.equal(typeof walletService.createRechargePaymentOrder, 'function')
+  assert.equal(typeof walletService.fetchRechargePaymentOrder, 'function')
+  assert.equal(typeof walletService.confirmRechargePayment, 'function')
+  assert.equal(typeof walletService.redeemRechargePromoCode, 'function')
+}
+
 async function main() {
   testFormatters()
   testFollowedRooms()
   await testPaymentPolling()
+  testPageServices()
   console.log('br-app refactored page logic tests passed')
 }
 

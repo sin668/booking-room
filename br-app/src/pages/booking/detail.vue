@@ -179,9 +179,9 @@
 </template>
 
 <script>
-import { getRoom } from '@/api/rooms'
 import { getSeatStats } from '@/api/seats'
 import { followRoom, isRoomFollowed, unfollowRoom } from '@/services/followedRooms'
+import { fetchBookingRoom } from '@/services/bookingPageService'
 
 const REAL_ROOM_PHOTOS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&h=560&fit=crop&q=85',
@@ -290,7 +290,7 @@ export default {
 
     async loadRoom() {
       try {
-        const data = await getRoom(this.roomId)
+        const data = await fetchBookingRoom(this.roomId)
         this.room = data || {}
         this.isFav = isRoomFollowed(this.roomId)
       } catch {

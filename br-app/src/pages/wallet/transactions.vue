@@ -115,7 +115,7 @@
 </template>
 
 <script>
-import { getBalance, getWalletTransactions } from '@/api/wallet'
+import { fetchWalletBalance, fetchWalletTransactionsPage } from '@/services/walletPageService'
 
 const PAGE_SIZE = 20
 
@@ -174,7 +174,7 @@ export default {
       this.balanceLoading = true
       this.balanceError = false
       try {
-        const data = await getBalance()
+        const data = await fetchWalletBalance()
         this.balance = data.balance || 0
         this.totalRecharged = data.total_recharged || data.totalRecharged || 0
       } catch {
@@ -207,7 +207,7 @@ export default {
         let hasMore = false
 
         do {
-          const data = await getWalletTransactions({
+          const data = await fetchWalletTransactionsPage({
             page: pageToLoad,
             page_size: PAGE_SIZE,
             type: requestType,

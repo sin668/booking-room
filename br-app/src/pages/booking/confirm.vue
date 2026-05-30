@@ -252,11 +252,14 @@
 </template>
 
 <script>
-import { getSeats } from '@/api/seats'
-import { createBooking, getBookingPaymentStatus } from '@/api/bookings'
-import { getRoom } from '@/api/rooms'
-import { getAvailableCouponsForBooking } from '@/api/coupons'
-import { getBalance } from '@/api/wallet'
+import {
+  createBookingOrder,
+  fetchBookingCoupons,
+  fetchBookingPaymentStatus,
+  fetchBookingRoom,
+  fetchBookingSeats,
+  fetchWalletBalance,
+} from '@/services/bookingPageService'
 import { createPaymentStatusError, pollPaymentStatus } from '@/services/paymentPolling'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
@@ -413,7 +416,7 @@ export default {
       this.pageLoading = true
       try {
         // Fetch seat details
-        const seats = await getSeats(this.room_id, {
+        const seats = await fetchBookingSeats(this.room_id, {
           date: this.date,
           start_time: this.start_time,
           end_time: this.end_time,
@@ -427,7 +430,7 @@ export default {
           this.roomFloor = seat.floor ?? ''
         }
 
-        const room = await getRoom(this.room_id)
+        const room = await fetchBookingRoom(this.room_id)
         this.roomName = room.name
         this.roomAddress = room.address || ''
         if ((this.roomFloor === '' || this.roomFloor == null) && room.floor != null) {
@@ -450,7 +453,7 @@ export default {
       this.couponLoading = true
       this.couponLoadError = ''
       try {
-        const res = await getAvailableCouponsForBooking({
+        const res = await fetchBookingCoupons({
           seat_id: this.seat_id,
           date: this.date,
           start_time: this.start_time,
@@ -482,7 +485,7 @@ export default {
       this.walletLoading = true
       this.walletLoadError = false
       try {
-        const res = await getBalance()
+        const res = await fetchWalletBalance()
         if (requestId !== this.walletRequestId) return
         this.walletBalance = res?.balance || 0
       } catch {
@@ -553,7 +556,7 @@ export default {
           payload.coupon_id = this.selectedCouponId
         }
 
-        const booking = await createBooking(payload)
+        const booking = await createBookingOrder(payload)
 
         if (this.paymentMethod === 'wechat') {
           const paymentParams = booking.payment_params || booking.paymentParams
@@ -628,7 +631,7 @@ export default {
 
     async pollBookingPaymentStatus(bookingId) {
       return pollPaymentStatus({
-        fetchStatus: () => getBookingPaymentStatus(bookingId),
+        fetchStatus: () => fetchBookingPaymentStatus(bookingId),
         isSuccess: (status) => status === 'paid',
         wait: () => this.wait(PAYMENT_POLL_INTERVAL),
         maxAttempts: PAYMENT_POLL_MAX_ATTEMPTS,

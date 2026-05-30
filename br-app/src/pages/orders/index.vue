@@ -143,7 +143,7 @@
 </template>
 
 <script>
-import { cancelBooking, getBookings } from '@/api/bookings'
+import { cancelBookingOrder, fetchBookingsPage } from '@/services/bookingPageService'
 
 const TABS = [
   { label: '全部', value: 'all' },
@@ -202,7 +202,7 @@ export default {
         if (this.currentTab !== 'all') {
           params.status = this.currentTab
         }
-        const data = await getBookings(params)
+        const data = await fetchBookingsPage(params)
         const items = data.items || []
         if (this.page === 1) {
           this.orders = items
@@ -291,7 +291,7 @@ export default {
       if (!order || this.cancellingOrderId === order.id) return
       this.cancellingOrderId = order.id
       try {
-        const result = await cancelBooking(order.id)
+        const result = await cancelBookingOrder(order.id)
         const refund = result && result.refund_amount ? result.refund_amount : '0.00'
         uni.showToast({
           title: `已取消，退款¥${refund}`,

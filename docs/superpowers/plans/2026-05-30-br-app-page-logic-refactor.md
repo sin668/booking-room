@@ -290,7 +290,7 @@ git commit -m "refactor: share payment polling logic"
 - 修改：`br-app/src/pages/wallet/transactions.vue`
 - 修改：`br-app/src/pages/recharge/index.vue`
 
-- [ ] **Step 1：先写失败的 page service smoke test**
+- [x] **Step 1：先写失败的 page service smoke test**
 
 在测试脚本中注入 fake API，验证以下函数存在并可被加载：
 
@@ -312,13 +312,13 @@ walletService.confirmRechargePayment
 walletService.redeemRechargePromoCode
 ```
 
-- [ ] **Step 2：运行测试并确认失败**
+- [x] **Step 2：运行测试并确认失败**
 
 运行：`cd br-app && npm run test:refactor`
 
 预期：失败，提示 `src/services/bookingPageService.js` 不存在。
 
-- [ ] **Step 3：实现预约 page service**
+- [x] **Step 3：实现预约 page service**
 
 新建 `br-app/src/services/bookingPageService.js`，封装并导出：
 
@@ -333,7 +333,7 @@ fetchBookingCoupons(payload)
 fetchWalletBalance()
 ```
 
-- [ ] **Step 4：实现钱包 page service**
+- [x] **Step 4：实现钱包 page service**
 
 新建 `br-app/src/services/walletPageService.js`，封装并导出：
 
@@ -346,7 +346,7 @@ confirmRechargePayment(orderId)
 redeemRechargePromoCode(code)
 ```
 
-- [ ] **Step 5：页面 API 导入改为 page service**
+- [x] **Step 5：页面 API 导入改为 page service**
 
 逐页替换：
 
@@ -378,7 +378,7 @@ fetchWalletBalance
 redeemRechargePromoCode
 ```
 
-- [ ] **Step 6：运行测试和构建**
+- [x] **Step 6：运行测试和构建**
 
 运行：
 
@@ -390,7 +390,7 @@ npm run build:h5
 
 预期：全部通过。
 
-- [ ] **Step 7：提交**
+- [x] **Step 7：提交**
 
 ```bash
 git add br-app/scripts/test-refactored-page-logic.js br-app/src/services/bookingPageService.js br-app/src/services/walletPageService.js br-app/src/pages/booking/confirm.vue br-app/src/pages/booking/detail.vue br-app/src/pages/orders/index.vue br-app/src/pages/wallet/transactions.vue br-app/src/pages/recharge/index.vue

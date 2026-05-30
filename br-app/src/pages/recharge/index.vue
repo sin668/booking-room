@@ -93,13 +93,13 @@
 </template>
 
 <script>
-import {
-  getBalance,
-  createRechargeOrder,
-  getRechargeOrder,
-  redeemPromoCode as redeemPromoCodeApi,
-} from '@/api/wallet'
 import { createPaymentStatusError, pollPaymentStatus, waitForPaymentPoll } from '@/services/paymentPolling'
+import {
+  createRechargePaymentOrder,
+  fetchRechargePaymentOrder,
+  fetchWalletBalance,
+  redeemRechargePromoCode,
+} from '@/services/walletPageService'
 
 const DEFAULT_AMOUNT = 50
 const MIN_AMOUNT = 1
@@ -160,7 +160,7 @@ export default {
     async loadBalance() {
       this.loading = true
       try {
-        const data = await getBalance()
+        const data = await fetchWalletBalance()
         this.balance = data.balance || 0
         this.totalRecharged = data.total_recharged || data.totalRecharged || 0
       } catch {
@@ -211,7 +211,7 @@ export default {
         return
       }
       try {
-        const data = await redeemPromoCodeApi(this.promoCode)
+        const data = await redeemRechargePromoCode(this.promoCode)
         this.promoInfo = data
         uni.showToast({ title: '兑换成功' })
       } catch {
@@ -242,7 +242,7 @@ export default {
         if (this.promoCode) {
           payload.promo_code = this.promoCode
         }
-        const order = await createRechargeOrder(payload)
+        const order = await createRechargePaymentOrder(payload)
         const orderId = order.order_id || order.orderId
         const paymentParams = order.payment_params || order.paymentParams
         if (!orderId || !paymentParams) {
@@ -287,7 +287,7 @@ export default {
 
     async pollRechargeOrder(orderId) {
       return pollPaymentStatus({
-        fetchStatus: () => getRechargeOrder(orderId),
+        fetchStatus: () => fetchRechargePaymentOrder(orderId),
         isSuccess: (status) => status === 'completed',
         wait: () => waitForPaymentPoll(RECHARGE_POLL_INTERVAL),
         maxAttempts: RECHARGE_POLL_MAX_ATTEMPTS,

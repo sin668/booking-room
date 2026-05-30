@@ -5,10 +5,10 @@
     </n-card>
     <n-card :bordered="false">
       <BasicTable
+        ref="actionRef"
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: RoomItem) => row.id"
-        ref="actionRef"
         :actionColumn="actionColumn"
         :scroll-x="1200"
         :striped="true"
@@ -31,67 +31,37 @@
 <script lang="ts" setup>
   import { h, reactive, ref } from 'vue';
   import { useRouter } from 'vue-router';
-  import { BasicTable, TableAction } from '@/components/Table';
-  import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
   import { PlusOutlined } from '@vicons/antd';
-  import { getRoomList, deleteRoom, toggleRoomStatus, type RoomItem } from '@/api/room';
-  import { columns } from './columns';
+  import { BasicTable, TableAction } from '@/components/Table';
+  import { BasicForm, useForm } from '@/components/Form/index';
+  import { deleteRoom, getRoomList, toggleRoomStatus, type RoomItem } from '@/api/room';
+  import { toBasicTableResult } from '@/api/contracts/admin';
+  import { buildRoomSearchSchemas, buildRoomTableColumns } from './builders';
   import RoomEditModal from './RoomEditModal.vue';
 
   const router = useRouter();
-
-  const schemas: FormSchema[] = [
-    {
-      field: 'keyword',
-      component: 'NInput',
-      label: '关键词',
-      componentProps: { placeholder: '搜索名称或地址' },
-    },
-    {
-      field: 'status',
-      component: 'NSelect',
-      label: '状态',
-      componentProps: {
-        placeholder: '全部',
-        options: [
-          { label: '全部', value: '' },
-          { label: '营业中', value: 'open' },
-          { label: '已关闭', value: 'closed' },
-        ],
-      },
-    },
-  ];
-
   const actionRef = ref();
   const showModal = ref(false);
   const editData = ref<RoomItem | null>(null);
+  const columns = buildRoomTableColumns();
 
   const [register, { getFieldsValue }] = useForm({
     gridProps: { cols: '1 s:1 m:2 l:3 xl:4 2xl:4' },
     labelWidth: 80,
-    schemas,
+    schemas: buildRoomSearchSchemas(),
   });
 
   const loadDataTable = async (res: any) => {
     const formValues = getFieldsValue();
     const queryParams: Record<string, any> = { ...formValues, ...res };
 
-    // Convert camelCase to snake_case for API
     queryParams.page_size = queryParams.pageSize;
     delete queryParams.pageSize;
 
-    // Remove empty status filter
-    if (queryParams.status === '' || queryParams.status === undefined) {
-      delete queryParams.status;
-    }
+    if (!queryParams.status) delete queryParams.status;
 
     const result = await getRoomList(queryParams);
-    return {
-      list: result.items,
-      itemCount: result.total,
-      pageCount: Math.ceil(result.total / queryParams.page_size) || 1,
-      page: result.page,
-    };
+    return toBasicTableResult(result);
   };
 
   const actionColumn = reactive({
@@ -127,9 +97,7 @@
           },
         ],
         select: (key: string) => {
-          if (key === 'toggleStatus') {
-            handleToggleStatus(record);
-          }
+          if (key === 'toggleStatus') handleToggleStatus(record);
         },
       });
     },

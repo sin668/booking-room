@@ -1,4 +1,5 @@
 import { Alova } from '@/utils/http/alova/index';
+import { ADMIN_NATIVE_META } from '@/api/contracts/admin';
 
 // --- Types ---
 export interface RoomItem {
@@ -52,26 +53,26 @@ export interface RoomListParams {
 }
 
 // --- Common meta for admin API calls ---
-const adminMeta = {
-  isReturnNativeResponse: true,
-};
-
 // --- API Functions ---
 export function getRoomList(params?: RoomListParams) {
-  return Alova.Get<RoomListResult>('/v1/admin/rooms', { params, meta: adminMeta });
+  return Alova.Get<RoomListResult>('/v1/admin/rooms', { params, meta: ADMIN_NATIVE_META });
 }
 export function createRoom(data: RoomFormParams) {
-  return Alova.Post<RoomItem>('/v1/admin/rooms', data, { meta: adminMeta });
+  return Alova.Post<RoomItem>('/v1/admin/rooms', data, { meta: ADMIN_NATIVE_META });
 }
 export function getRoomById(id: number) {
-  return Alova.Get<RoomItem>(`/v1/admin/rooms/${id}`, { meta: adminMeta });
+  return Alova.Get<RoomItem>(`/v1/admin/rooms/${id}`, { meta: ADMIN_NATIVE_META });
 }
 export function updateRoom(id: number, data: RoomUpdateParams) {
-  return Alova.Put<RoomItem>(`/v1/admin/rooms/${id}`, data, { meta: adminMeta });
+  return Alova.Put<RoomItem>(`/v1/admin/rooms/${id}`, data, { meta: ADMIN_NATIVE_META });
 }
 export function deleteRoom(id: number) {
-  return Alova.Delete(`/v1/admin/rooms/${id}`, { meta: adminMeta });
+  return Alova.Delete(`/v1/admin/rooms/${id}`, { meta: ADMIN_NATIVE_META });
 }
 export function toggleRoomStatus(id: number, status: 'open' | 'closed') {
-  return Alova.Patch<RoomItem>(`/v1/admin/rooms/${id}/status`, { status }, { meta: adminMeta });
+  return Alova.Patch<RoomItem>(
+    `/v1/admin/rooms/${id}/status`,
+    { status },
+    { meta: ADMIN_NATIVE_META }
+  );
 }

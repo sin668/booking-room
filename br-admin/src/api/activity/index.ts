@@ -1,5 +1,6 @@
 import { Alova } from '@/utils/http/alova/index';
 import { uploadImage, type UploadResult } from '@/api/upload';
+import { ADMIN_NATIVE_META } from '@/api/contracts/admin';
 
 // --- Types ---
 
@@ -49,47 +50,47 @@ export interface ActivityListParams {
 
 // --- Common meta for admin API calls ---
 
-const adminMeta = {
-  isReturnNativeResponse: true,
-};
-
 // --- API Functions ---
 
 export function getActivityList(params?: ActivityListParams) {
   return Alova.Get<ActivityListResult>('/v1/admin/activities', {
     params,
-    meta: adminMeta,
+    meta: ADMIN_NATIVE_META,
   });
 }
 
 export function createActivity(data: ActivityFormParams) {
   return Alova.Post<ActivityItem>('/v1/admin/activities', data, {
-    meta: adminMeta,
+    meta: ADMIN_NATIVE_META,
   });
 }
 
 export function getActivityById(id: number) {
   return Alova.Get<ActivityItem>(`/v1/admin/activities/${id}`, {
-    meta: adminMeta,
+    meta: ADMIN_NATIVE_META,
   });
 }
 
 export function updateActivity(id: number, data: ActivityUpdateParams) {
   return Alova.Put<ActivityItem>(`/v1/admin/activities/${id}`, data, {
-    meta: adminMeta,
+    meta: ADMIN_NATIVE_META,
   });
 }
 
 export function deleteActivity(id: number) {
   return Alova.Delete(`/v1/admin/activities/${id}`, {
-    meta: adminMeta,
+    meta: ADMIN_NATIVE_META,
   });
 }
 
 export function toggleActivityStatus(id: number, is_active: boolean) {
-  return Alova.Patch<ActivityItem>(`/v1/admin/activities/${id}/status`, { is_active }, {
-    meta: adminMeta,
-  });
+  return Alova.Patch<ActivityItem>(
+    `/v1/admin/activities/${id}/status`,
+    { is_active },
+    {
+      meta: ADMIN_NATIVE_META,
+    }
+  );
 }
 
 export function uploadFile(file: File) {

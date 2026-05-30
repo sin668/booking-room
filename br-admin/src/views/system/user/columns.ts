@@ -57,7 +57,13 @@ export const columns = [
     render(row) {
       const roles: AdminRoleSummary[] = row.roles || [];
       if (!roles.length) return '-';
-      return h('span', {}, roles.map((r: AdminRoleSummary) => h(NTag, { type: 'info', size: 'small', class: 'mr-1' }, { default: () => r.name })));
+      return h(
+        'span',
+        {},
+        roles.map((r: AdminRoleSummary) =>
+          h(NTag, { type: 'info', size: 'small', class: 'mr-1' }, { default: () => r.name })
+        )
+      );
     },
   },
   {

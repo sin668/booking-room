@@ -31,20 +31,12 @@
                 </n-gi>
                 <n-gi>
                   <n-form-item label="行数">
-                    <n-input-number
-                      v-model:value="zone.rows"
-                      :min="1"
-                      style="width: 100%"
-                    />
+                    <n-input-number v-model:value="zone.rows" :min="1" style="width: 100%" />
                   </n-form-item>
                 </n-gi>
                 <n-gi>
                   <n-form-item label="列数">
-                    <n-input-number
-                      v-model:value="zone.cols"
-                      :min="1"
-                      style="width: 100%"
-                    />
+                    <n-input-number v-model:value="zone.cols" :min="1" style="width: 100%" />
                   </n-form-item>
                 </n-gi>
               </n-grid>
@@ -80,11 +72,7 @@
                 </n-gi>
                 <n-gi>
                   <n-form-item label="楼层">
-                    <n-input-number
-                      v-model:value="zone.floor"
-                      :min="1"
-                      style="width: 100%"
-                    />
+                    <n-input-number v-model:value="zone.floor" :min="1" style="width: 100%" />
                   </n-form-item>
                 </n-gi>
               </n-grid>
@@ -102,9 +90,7 @@
         添加分区
       </n-button>
 
-      <n-alert type="info" :bordered="false">
-        共生成 {{ totalSeats }} 个座位
-      </n-alert>
+      <n-alert type="info" :bordered="false"> 共生成 {{ totalSeats }} 个座位 </n-alert>
     </n-space>
 
     <template #action>
@@ -126,10 +112,7 @@
 <script lang="ts" setup>
   import { computed, reactive, ref, watch } from 'vue';
   import { DeleteOutlined, PlusOutlined } from '@vicons/antd';
-  import {
-    bulkCreateSeats,
-    type SeatBulkZoneConfig,
-  } from '@/api/seat';
+  import { bulkCreateSeats, type SeatBulkZoneConfig } from '@/api/seat';
 
   interface ZoneConfig {
     zone: 'quiet' | 'keyboard' | 'vip';
@@ -199,7 +182,7 @@
         zones.length = 0;
         zones.push({ ...defaultZone });
       }
-    },
+    }
   );
 
   function addZone() {

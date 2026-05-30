@@ -1,4 +1,10 @@
 import { Alova } from '@/utils/http/alova/index';
+import {
+  ADMIN_NATIVE_META,
+  normalizePageParams,
+  toBasicTableResult,
+  type AdminPageResponse,
+} from '@/api/contracts/admin';
 
 export interface AdminLoginParams {
   username: string;
@@ -78,12 +84,7 @@ export interface UserListParams {
   page_size?: number;
 }
 
-export interface UserListResponse {
-  items: UserListItem[];
-  total: number;
-  page: number;
-  page_size: number;
-}
+export type UserListResponse = AdminPageResponse<UserListItem>;
 
 export interface UserCreateParams {
   user_type: string;
@@ -102,9 +103,7 @@ export interface UserUpdateParams {
   role_ids?: number[];
 }
 
-const nativeMeta = {
-  isReturnNativeResponse: true,
-};
+const nativeMeta = ADMIN_NATIVE_META;
 
 // ── Auth APIs (existing) ──────────────────────────────────────────────
 
@@ -153,22 +152,12 @@ export function logout(params) {
 
 /** @description: 用户列表，适配 BasicTable 分页结构 */
 export async function getUserList(params: UserListParams = {}) {
-  const page_size = params.page_size || params.pageSize;
   const result = await Alova.Get<UserListResponse>('/v1/admin/users', {
-    params: {
-      ...params,
-      page_size,
-      pageSize: undefined,
-    },
+    params: normalizePageParams(params),
     meta: nativeMeta,
   });
 
-  return {
-    list: result.items,
-    itemCount: result.total,
-    pageCount: Math.ceil(result.total / result.page_size) || 1,
-    page: result.page,
-  };
+  return toBasicTableResult(result);
 }
 
 /** @description: 用户详情 */
@@ -201,14 +190,22 @@ export function deleteUser(id: string | number) {
 
 /** @description: 重置用户密码 */
 export function resetUserPassword(id: string | number, new_password: string) {
-  return Alova.Put(`/v1/admin/users/${id}/reset-password`, { new_password }, {
-    meta: nativeMeta,
-  });
+  return Alova.Put(
+    `/v1/admin/users/${id}/reset-password`,
+    { new_password },
+    {
+      meta: nativeMeta,
+    }
+  );
 }
 
 /** @description: 切换用户状态 */
 export function toggleUserStatus(id: string | number, target_status: string) {
-  return Alova.Put(`/v1/admin/users/${id}/status`, { target_status }, {
-    meta: nativeMeta,
-  });
+  return Alova.Put(
+    `/v1/admin/users/${id}/status`,
+    { target_status },
+    {
+      meta: nativeMeta,
+    }
+  );
 }

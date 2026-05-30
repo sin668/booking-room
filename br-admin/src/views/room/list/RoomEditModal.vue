@@ -36,11 +36,7 @@
 
       <n-form-item label="封面图片" path="cover_image">
         <n-space vertical>
-          <n-upload
-            :max="1"
-            accept="image/*"
-            :custom-request="handleUpload"
-          >
+          <n-upload :max="1" accept="image/*" :custom-request="handleUpload">
             <n-button>上传图片</n-button>
           </n-upload>
           <n-image
@@ -73,11 +69,7 @@
       </n-form-item>
 
       <n-form-item label="最低价格" path="min_price">
-        <n-input-number
-          v-model:value="formValues.min_price"
-          :min="0"
-          style="width: 100%"
-        />
+        <n-input-number v-model:value="formValues.min_price" :min="0" style="width: 100%" />
       </n-form-item>
     </n-form>
 
@@ -93,12 +85,7 @@
 <script lang="ts" setup>
   import { computed, reactive, ref, watch } from 'vue';
   import type { FormRules, FormInst, UploadFileInfo } from 'naive-ui';
-  import {
-    createRoom,
-    updateRoom,
-    type RoomFormParams,
-    type RoomItem,
-  } from '@/api/room';
+  import { createRoom, updateRoom, type RoomFormParams, type RoomItem } from '@/api/room';
   import { uploadImage } from '@/api/upload';
 
   const props = defineProps<{
@@ -157,10 +144,18 @@
       } else {
         Object.assign(formValues, { ...defaultValues });
       }
-    },
+    }
   );
 
-  async function handleUpload({ file, onFinish, onError }: { file: UploadFileInfo; onFinish: () => void; onError: () => void }) {
+  async function handleUpload({
+    file,
+    onFinish,
+    onError,
+  }: {
+    file: UploadFileInfo;
+    onFinish: () => void;
+    onError: () => void;
+  }) {
     if (!file.file) {
       onError();
       return;

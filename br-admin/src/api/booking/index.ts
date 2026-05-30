@@ -1,4 +1,5 @@
 import { Alova } from '@/utils/http/alova/index';
+import { ADMIN_NATIVE_META } from '@/api/contracts/admin';
 
 // --- Types ---
 
@@ -46,27 +47,23 @@ export interface BookingListParams {
 
 // --- Common meta for admin API calls ---
 
-const adminMeta = {
-  isReturnNativeResponse: true,
-};
-
 // --- API Functions ---
 
 export function getBookingList(params?: BookingListParams) {
   return Alova.Get<BookingListResult>('/v1/admin/bookings', {
     params,
-    meta: adminMeta,
+    meta: ADMIN_NATIVE_META,
   });
 }
 
 export function getBookingDetail(id: number) {
   return Alova.Get<BookingItem>(`/v1/admin/bookings/${id}`, {
-    meta: adminMeta,
+    meta: ADMIN_NATIVE_META,
   });
 }
 
 export function cancelBooking(id: number) {
   return Alova.Post<BookingItem>(`/v1/admin/bookings/${id}/cancel`, undefined, {
-    meta: adminMeta,
+    meta: ADMIN_NATIVE_META,
   });
 }

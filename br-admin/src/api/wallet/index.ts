@@ -2,6 +2,12 @@ import { Alova } from '@/utils/http/alova/index';
 import { useGlobSetting } from '@/hooks/setting';
 import { ACCESS_TOKEN } from '@/store/mutation-types';
 import { storage } from '@/utils/Storage';
+import {
+  ADMIN_NATIVE_META,
+  normalizePageParams,
+  toBasicTableResult,
+  type AdminPageResponse,
+} from '@/api/contracts/admin';
 
 // ── 类型定义 ─────────────────────────────────────────────────────────────
 
@@ -47,11 +53,7 @@ export interface WalletListParams {
 }
 
 /** 钱包交易列表响应 */
-export interface WalletTransactionListResponse {
-  items: WalletTransactionItem[];
-  total: number;
-  page: number;
-  page_size: number;
+export interface WalletTransactionListResponse extends AdminPageResponse<WalletTransactionItem> {
   has_more?: boolean;
 }
 
@@ -65,17 +67,8 @@ export interface WalletListResult {
 
 // ── 配置 ─────────────────────────────────────────────────────────────────
 
-const nativeMeta = {
-  isReturnNativeResponse: true,
-};
-
 function normalizeParams(params: WalletListParams = {}) {
-  const page_size = params.page_size || params.pageSize;
-  return {
-    ...params,
-    page_size,
-    pageSize: undefined,
-  };
+  return normalizePageParams(params);
 }
 
 function buildQuery(params: WalletListParams = {}) {
@@ -128,15 +121,10 @@ function getExportFileName(response: Response) {
 export async function getWalletList(params: WalletListParams = {}): Promise<WalletListResult> {
   const result = await Alova.Get<WalletTransactionListResponse>('/v1/admin/wallet/transactions', {
     params: normalizeParams(params),
-    meta: nativeMeta,
+    meta: ADMIN_NATIVE_META,
   });
 
-  return {
-    list: result.items,
-    itemCount: result.total,
-    pageCount: Math.ceil(result.total / result.page_size) || 1,
-    page: result.page,
-  };
+  return toBasicTableResult(result);
 }
 
 /**
@@ -145,7 +133,7 @@ export async function getWalletList(params: WalletListParams = {}): Promise<Wall
 export async function getWalletStatistics(params?: WalletListParams): Promise<WalletStatistics> {
   return Alova.Get<WalletStatistics>('/v1/admin/wallet/statistics', {
     params: normalizeParams(params),
-    meta: nativeMeta,
+    meta: ADMIN_NATIVE_META,
   });
 }
 

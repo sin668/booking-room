@@ -36,11 +36,7 @@
 
       <n-form-item label="封面图" path="cover_image">
         <n-space vertical>
-          <n-upload
-            :max="1"
-            accept="image/*"
-            :custom-request="handleUpload"
-          >
+          <n-upload :max="1" accept="image/*" :custom-request="handleUpload">
             <n-button>上传图片</n-button>
           </n-upload>
           <n-image
@@ -55,18 +51,11 @@
       </n-form-item>
 
       <n-form-item label="参与人数" path="participant_count">
-        <n-input-number
-          v-model:value="formValues.participant_count"
-          :min="0"
-          style="width: 100%"
-        />
+        <n-input-number v-model:value="formValues.participant_count" :min="0" style="width: 100%" />
       </n-form-item>
 
       <n-form-item label="排序值" path="sort_order">
-        <n-input-number
-          v-model:value="formValues.sort_order"
-          style="width: 100%"
-        />
+        <n-input-number v-model:value="formValues.sort_order" style="width: 100%" />
       </n-form-item>
 
       <n-form-item label="是否上架" path="is_active">
@@ -145,10 +134,18 @@
       } else {
         Object.assign(formValues, { ...defaultValues });
       }
-    },
+    }
   );
 
-  async function handleUpload({ file, onFinish, onError }: { file: UploadFileInfo; onFinish: () => void; onError: () => void }) {
+  async function handleUpload({
+    file,
+    onFinish,
+    onError,
+  }: {
+    file: UploadFileInfo;
+    onFinish: () => void;
+    onError: () => void;
+  }) {
     if (!file.file) {
       onError();
       return;

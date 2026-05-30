@@ -59,9 +59,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, h, onMounted, reactive, ref } from 'vue';
-  import { NTag } from 'naive-ui';
-  import type { BasicColumn } from '@/components/Table';
+  import { computed, onMounted, reactive, ref } from 'vue';
   import { BasicTable } from '@/components/Table';
   import {
     exportWalletTransactions,
@@ -71,9 +69,17 @@
     type WalletStatistics,
     type WalletTransactionItem,
   } from '@/api/wallet';
+  import { formatAdminMoney } from '@/views/business/shared/formatters';
+  import { normalizeDateRange } from '@/views/business/shared/formSchemaBuilders';
+  import {
+    buildWalletFilterOptions,
+    buildWalletStatCards,
+    buildWalletTransactionColumns,
+  } from './transactions.builders';
 
   const actionRef = ref();
   const exporting = ref(false);
+  const { typeOptions, statusOptions } = buildWalletFilterOptions();
 
   const params = reactive({
     type: null as string | null,
@@ -90,170 +96,9 @@
     total_transactions: 0,
   });
 
-  const typeOptions = [
-    { label: '全部', value: null },
-    { label: '钱包充值', value: 'recharge' },
-    { label: '预约消费', value: 'consume' },
-    { label: '预约退款', value: 'booking_refund' },
-    { label: '钱包退款', value: 'refund' },
-  ];
-
-  const statusOptions = [
-    { label: '全部', value: null },
-    { label: '已完成', value: 'completed' },
-    { label: '失败', value: 'failed' },
-    { label: '已取消', value: 'cancelled' },
-  ];
-
-  type TagType = 'success' | 'warning' | 'error' | 'default';
-
-  const transactionTypeMap: Record<string, { label: string; type: TagType }> = {
-    recharge: { label: '钱包充值', type: 'success' },
-    consume: { label: '预约消费', type: 'warning' },
-    booking_refund: { label: '预约退款', type: 'success' },
-    refund: { label: '钱包退款', type: 'error' },
-    wallet_refund: { label: '钱包退款', type: 'error' },
-  };
-
-  const statusMap: Record<string, { label: string; type: TagType }> = {
-    pending: { label: '待处理', type: 'warning' },
-    completed: { label: '已完成', type: 'success' },
-    failed: { label: '失败', type: 'error' },
-    cancelled: { label: '已取消', type: 'default' },
-  };
-
-  const paymentMethodMap: Record<string, string> = {
-    wechat: '微信',
-    alipay: '支付宝',
-    balance: '钱包余额',
-  };
-
-  const statCards = computed(() => [
-    {
-      key: 'total_recharge',
-      label: '钱包充值',
-      value: statistics.total_recharge,
-      className: 'text-green',
-    },
-    {
-      key: 'total_consume',
-      label: '预约消费',
-      value: statistics.total_consume,
-      className: 'text-orange',
-    },
-    {
-      key: 'total_refund',
-      label: '预约退款',
-      value: statistics.total_refund,
-      className: 'text-red',
-    },
-    {
-      key: 'net_income',
-      label: '净收入',
-      value: statistics.net_income,
-      className: 'text-blue',
-    },
-  ]);
-
-  const columns: BasicColumn<WalletTransactionItem>[] = [
-    {
-      title: '交易时间',
-      key: 'created_at',
-      width: 170,
-      render(record) {
-        return formatDateTime(record.created_at);
-      },
-    },
-    {
-      title: '用户',
-      key: 'user',
-      width: 180,
-      render(record) {
-        return h('div', { class: 'user-cell' }, [
-          h('div', { class: 'user-name' }, record.user_nickname || '未设置昵称'),
-          h('div', { class: 'user-phone' }, record.user_phone || '-'),
-        ]);
-      },
-    },
-    {
-      title: '交易类型',
-      key: 'type',
-      width: 110,
-      render(record) {
-        const config = transactionTypeMap[record.type] || { label: record.type, type: 'default' };
-        return h(NTag, { type: config.type, size: 'small' }, { default: () => config.label });
-      },
-    },
-    {
-      title: '金额',
-      key: 'amount',
-      width: 130,
-      render(record) {
-        const isIncome = ['recharge', 'refund', 'booking_refund', 'wallet_refund'].includes(
-          record.type
-        );
-        return h(
-          'span',
-          { class: isIncome ? 'amount-positive' : 'amount-negative' },
-          `${isIncome ? '+' : '-'}${formatMoney(record.amount)}`
-        );
-      },
-    },
-    {
-      title: '余额',
-      key: 'balance_after',
-      width: 120,
-      render(record) {
-        return formatMoney(record.balance_after);
-      },
-    },
-    {
-      title: '状态',
-      key: 'status',
-      width: 110,
-      render(record) {
-        const config = statusMap[record.status] || { label: record.status, type: 'default' };
-        return h(NTag, { type: config.type, size: 'small' }, { default: () => config.label });
-      },
-    },
-    {
-      title: '支付方式',
-      key: 'payment_method',
-      width: 130,
-      render(record) {
-        return formatPaymentMethod(record.payment_method);
-      },
-    },
-  ];
-
-  function formatMoney(value: number | string | null | undefined) {
-    const amount = Number(value || 0);
-    return `¥${amount.toFixed(2)}`;
-  }
-
-  function formatDate(value: number) {
-    const date = new Date(value);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  function formatDateTime(value: string | null | undefined) {
-    if (!value) return '-';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(
-      2,
-      '0'
-    )}`;
-    return `${formatDate(date.getTime())} ${time}`;
-  }
-
-  function formatPaymentMethod(value: string | null | undefined) {
-    if (!value) return '-';
-    return paymentMethodMap[value] || value;
-  }
+  const statCards = computed(() => buildWalletStatCards(statistics));
+  const columns = buildWalletTransactionColumns();
+  const formatMoney = formatAdminMoney;
 
   function buildFilterParams(): WalletListParams {
     const query: WalletListParams = {
@@ -268,14 +113,7 @@
   }
 
   function buildStatisticsParams(): Pick<WalletListParams, 'date_start' | 'date_end'> {
-    const query: Pick<WalletListParams, 'date_start' | 'date_end'> = {};
-
-    if (params.dateRange?.[0] && params.dateRange?.[1]) {
-      query.date_start = formatDate(params.dateRange[0]);
-      query.date_end = formatDate(params.dateRange[1]);
-    }
-
-    return query;
+    return normalizeDateRange(params.dateRange);
   }
 
   async function loadStatistics() {

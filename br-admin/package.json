@@ -19,10 +19,12 @@
     "clean:cache": "rimraf node_modules/.cache/ && rimraf node_modules/.vite",
     "clean:lib": "rimraf node_modules",
     "deploy": "gh-pages -d dist",
+    "lint": "pnpm lint:eslint",
     "lint:eslint": "eslint \"{src,mock}/**/*.{vue,ts,tsx}\" --fix",
     "lint:prettier": "prettier --write --loglevel warn \"src/**/*.{js,json,tsx,css,less,scss,vue,html,md}\"",
     "lint:stylelint": "stylelint --fix \"**/*.{vue,less,postcss,css,scss}\" --cache --cache-location node_modules/.cache/stylelint/",
-    "lint:pretty": "pretty-quick --staged"
+    "lint:pretty": "pretty-quick --staged",
+    "test:business-refactor": "esno scripts/test-admin-business-refactor.ts"
   },
   "dependencies": {
     "@alova/mock": "^2.0.17",

@@ -1,4 +1,5 @@
 import { Alova } from '@/utils/http/alova/index';
+import { ADMIN_NATIVE_META } from '@/api/contracts/admin';
 
 // --- Types ---
 export interface SeatItem {
@@ -65,29 +66,25 @@ export interface SeatListParams {
 }
 
 // --- Common meta for admin API calls ---
-const adminMeta = {
-  isReturnNativeResponse: true,
-};
-
 // --- API Functions ---
 export function createSeat(roomId: number, data: SeatFormParams) {
-  return Alova.Post<SeatItem>(`/v1/admin/rooms/${roomId}/seats`, data, { meta: adminMeta });
+  return Alova.Post<SeatItem>(`/v1/admin/rooms/${roomId}/seats`, data, { meta: ADMIN_NATIVE_META });
 }
 export function bulkCreateSeats(roomId: number, data: SeatBulkParams) {
-  return Alova.Post<SeatBulkResult>(`/v1/admin/rooms/${roomId}/seats/bulk`, data, { meta: adminMeta });
+  return Alova.Post<SeatBulkResult>(`/v1/admin/rooms/${roomId}/seats/bulk`, data, { meta: ADMIN_NATIVE_META });
 }
 export function getSeatList(roomId: number, params?: SeatListParams) {
-  return Alova.Get<SeatItem[]>(`/v1/admin/rooms/${roomId}/seats`, { params, meta: adminMeta });
+  return Alova.Get<SeatItem[]>(`/v1/admin/rooms/${roomId}/seats`, { params, meta: ADMIN_NATIVE_META });
 }
 export function getSeatById(seatId: number) {
-  return Alova.Get<SeatItem>(`/v1/admin/seats/${seatId}`, { meta: adminMeta });
+  return Alova.Get<SeatItem>(`/v1/admin/seats/${seatId}`, { meta: ADMIN_NATIVE_META });
 }
 export function updateSeat(seatId: number, data: SeatUpdateParams) {
-  return Alova.Put<SeatItem>(`/v1/admin/seats/${seatId}`, data, { meta: adminMeta });
+  return Alova.Put<SeatItem>(`/v1/admin/seats/${seatId}`, data, { meta: ADMIN_NATIVE_META });
 }
 export function deleteSeat(seatId: number) {
-  return Alova.Delete(`/v1/admin/seats/${seatId}`, { meta: adminMeta });
+  return Alova.Delete(`/v1/admin/seats/${seatId}`, { meta: ADMIN_NATIVE_META });
 }
 export function toggleSeatStatus(seatId: number, status: 'available' | 'maintenance') {
-  return Alova.Patch<SeatItem>(`/v1/admin/seats/${seatId}/status`, { status }, { meta: adminMeta });
+  return Alova.Patch<SeatItem>(`/v1/admin/seats/${seatId}/status`, { status }, { meta: ADMIN_NATIVE_META });
 }

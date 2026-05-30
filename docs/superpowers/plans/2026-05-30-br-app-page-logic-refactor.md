@@ -471,8 +471,8 @@ git commit -m "refactor: use shared app formatters"
 
 - [x] 运行：`cd br-app && npm run test:scripts`
 - [x] 运行：`cd br-app && npm run build:h5`
-- [ ] 运行：`git status --short`
-- [ ] 确认只包含预期的 `br-app` 和计划文档相关变更。
+- [x] 运行：`git status --short`
+- [x] 确认只包含预期的 `br-app` 和计划文档相关变更。
 
 ## 自检
 

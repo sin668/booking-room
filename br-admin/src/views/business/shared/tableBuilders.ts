@@ -4,7 +4,11 @@ import type { BasicColumn } from '../../../components/Table';
 import { formatAdminDateTime, formatAdminMoney, getTagConfig } from './formatters';
 import type { BusinessTagConfig } from './options';
 
-export function createTextColumn<T>(title: string, key: keyof T | string, width?: number): BasicColumn<T> {
+export function createTextColumn<T>(
+  title: string,
+  key: keyof T | string,
+  width?: number
+): BasicColumn<T> {
   return {
     title,
     key: String(key),
@@ -13,7 +17,11 @@ export function createTextColumn<T>(title: string, key: keyof T | string, width?
   };
 }
 
-export function createMoneyColumn<T>(title: string, key: keyof T | string, width = 110): BasicColumn<T> {
+export function createMoneyColumn<T>(
+  title: string,
+  key: keyof T | string,
+  width = 110
+): BasicColumn<T> {
   return {
     title,
     key: String(key),
@@ -24,7 +32,11 @@ export function createMoneyColumn<T>(title: string, key: keyof T | string, width
   };
 }
 
-export function createDateTimeColumn<T>(title: string, key: keyof T | string, width = 170): BasicColumn<T> {
+export function createDateTimeColumn<T>(
+  title: string,
+  key: keyof T | string,
+  width = 170
+): BasicColumn<T> {
   return {
     title,
     key: String(key),

@@ -68,12 +68,7 @@
   import { h, reactive, ref } from 'vue';
   import { useMessage } from 'naive-ui';
   import { BasicTable, TableAction } from '@/components/Table';
-  import {
-    getUserList,
-    deleteUser,
-    resetUserPassword,
-    toggleUserStatus,
-  } from '@/api/system/user';
+  import { getUserList, deleteUser, resetUserPassword, toggleUserStatus } from '@/api/system/user';
   import { columns } from './columns';
   import { PlusOutlined } from '@vicons/antd';
   import CreateModal from './CreateModal.vue';
@@ -204,7 +199,11 @@
       title: '重置密码',
       content: () =>
         h('div', {}, [
-          h('p', { class: 'mb-2' }, `确定要重置用户「${record.nickname || record.phone}」的密码吗？`),
+          h(
+            'p',
+            { class: 'mb-2' },
+            `确定要重置用户「${record.nickname || record.phone}」的密码吗？`
+          ),
           h('n-input', {
             type: 'password',
             showPasswordOn: 'click',

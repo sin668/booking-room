@@ -5,10 +5,10 @@
     </n-card>
     <n-card :bordered="false">
       <BasicTable
+        ref="actionRef"
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: BookingItem) => row.id"
-        ref="actionRef"
         :actionColumn="actionColumn"
         :scroll-x="1300"
         :striped="true"
@@ -18,176 +18,55 @@
 </template>
 
 <script lang="ts" setup>
-  import { h, reactive, ref, onMounted } from 'vue';
-  import { NTag } from 'naive-ui';
+  import { h, onMounted, reactive, ref } from 'vue';
   import { BasicTable, TableAction } from '@/components/Table';
-  import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
-  import { getBookingList, cancelBooking, type BookingItem } from '@/api/booking';
-  import { getRoomList, type RoomItem } from '@/api/room';
-
-  const roomOptions = ref<{ label: string; value: number }[]>([]);
-
-  const schemas: FormSchema[] = [
-    {
-      field: 'status',
-      component: 'NSelect',
-      label: '状态',
-      componentProps: {
-        placeholder: '全部',
-        options: [
-          { label: '全部', value: '' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
-        ],
-      },
-    },
-    {
-      field: 'room_id',
-      component: 'NSelect',
-      label: '自习室',
-      componentProps: {
-        placeholder: '全部',
-        options: roomOptions,
-      },
-    },
-    {
-      field: 'dateRange',
-      component: 'NDatePicker',
-      label: '预约日期',
-      componentProps: {
-        type: 'daterange',
-        clearable: true,
-        placeholder: '选择日期范围',
-      },
-    },
-  ];
-
-  const columns = [
-    { title: 'ID', key: 'id', width: 60 },
-    {
-      title: '用户ID',
-      key: 'user_id',
-      width: 120,
-      ellipsis: { tooltip: true },
-      render(record: BookingItem) {
-        return record.user_id.slice(0, 8) + '...';
-      },
-    },
-    {
-      title: '自习室名称',
-      key: 'room_name',
-      width: 140,
-      render(record: BookingItem) {
-        return record.room?.name || '-';
-      },
-    },
-    {
-      title: '座位编号',
-      key: 'seat_number',
-      width: 100,
-      render(record: BookingItem) {
-        return record.seat?.seat_number || '-';
-      },
-    },
-    { title: '预约日期', key: 'date', width: 110 },
-    {
-      title: '时段',
-      key: 'time_range',
-      width: 160,
-      render(record: BookingItem) {
-        return `${record.start_time}~${record.end_time}`;
-      },
-    },
-    {
-      title: '金额',
-      key: 'total_price',
-      width: 90,
-      render(record: BookingItem) {
-        return `¥${record.total_price}`;
-      },
-    },
-    {
-      title: '状态',
-      key: 'status',
-      width: 90,
-      render(record: BookingItem) {
-        const statusMap: Record<string, { type: string; label: string }> = {
-          confirmed: { type: 'success', label: '已确认' },
-          completed: { type: 'info', label: '已完成' },
-          cancelled: { type: 'error', label: '已取消' },
-        };
-        const s = statusMap[record.status] || { type: 'default', label: record.status };
-        return h(NTag, { type: s.type }, { default: () => s.label });
-      },
-    },
-    { title: '创建时间', key: 'created_at', width: 170 },
-  ];
-
-  function formatTimestamp(ts: number | null): string | undefined {
-    if (!ts) return undefined;
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
-      d.getDate()
-    ).padStart(2, '0')}`;
-  }
+  import { BasicForm, useForm } from '@/components/Form/index';
+  import { cancelBooking, getBookingList, type BookingItem } from '@/api/booking';
+  import { useAdminBusiness } from '@/store/modules/adminBusiness';
+  import { toBasicTableResult } from '@/api/contracts/admin';
+  import { normalizeDateRange } from '@/views/business/shared/formSchemaBuilders';
+  import { buildBookingSearchSchemas, buildBookingTableColumns } from './builders';
 
   const actionRef = ref();
+  const adminBusinessStore = useAdminBusiness();
+  const columns = buildBookingTableColumns();
 
-  const [register, { getFieldsValue }] = useForm({
+  const [register, { getFieldsValue, setProps }] = useForm({
     gridProps: { cols: '1 s:1 m:2 l:3 xl:4 2xl:4' },
     labelWidth: 80,
-    schemas,
+    schemas: buildBookingSearchSchemas([]),
   });
 
-  async function fetchRoomOptions() {
+  onMounted(async () => {
     try {
-      const result = await getRoomList({ page_size: 999 });
-      roomOptions.value = [
-        { label: '全部', value: 0 },
-        ...result.items.map((room: RoomItem) => ({ label: room.name, value: room.id })),
-      ];
+      const roomOptions = await adminBusinessStore.loadRoomOptions();
+      await setProps({ schemas: buildBookingSearchSchemas(roomOptions) });
     } catch {
-      // ignore - room options will remain empty
+      await setProps({ schemas: buildBookingSearchSchemas([]) });
     }
-  }
-
-  onMounted(() => {
-    fetchRoomOptions();
   });
 
   const loadDataTable = async (res: any) => {
     const formValues = getFieldsValue();
     const queryParams: Record<string, any> = { ...formValues, ...res };
 
-    // Convert pageSize -> page_size
     queryParams.page_size = queryParams.pageSize;
     delete queryParams.pageSize;
 
-    // Convert dateRange -> date_start / date_end
-    if (queryParams.dateRange && queryParams.dateRange[0] && queryParams.dateRange[1]) {
-      queryParams.date_start = formatTimestamp(queryParams.dateRange[0]);
-      queryParams.date_end = formatTimestamp(queryParams.dateRange[1]);
-    }
+    Object.assign(queryParams, normalizeDateRange(queryParams.dateRange));
     delete queryParams.dateRange;
 
-    // Remove empty values
     if (!queryParams.status) delete queryParams.status;
     if (!queryParams.room_id) delete queryParams.room_id;
 
     const result = await getBookingList(queryParams);
-    return {
-      list: result.items,
-      itemCount: result.total,
-      pageCount: Math.ceil(result.total / queryParams.page_size) || 1,
-      page: result.page,
-    };
+    return toBasicTableResult(result);
   };
 
   function handleCancel(record: BookingItem) {
     window['$dialog'].warning({
       title: '确认取消',
-      content: '确定要取消该订单吗？取消后不可恢复',
+      content: '确定要取消该订单吗？取消后不可恢复。',
       positiveText: '确认取消',
       negativeText: '返回',
       onPositiveClick: async () => {
@@ -237,9 +116,7 @@
         ],
         dropDownActions,
         select: (key: string) => {
-          if (key === 'cancel') {
-            handleCancel(record);
-          }
+          if (key === 'cancel') handleCancel(record);
         },
       });
     },

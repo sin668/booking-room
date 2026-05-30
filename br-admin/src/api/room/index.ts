@@ -70,5 +70,9 @@ export function deleteRoom(id: number) {
   return Alova.Delete(`/v1/admin/rooms/${id}`, { meta: ADMIN_NATIVE_META });
 }
 export function toggleRoomStatus(id: number, status: 'open' | 'closed') {
-  return Alova.Patch<RoomItem>(`/v1/admin/rooms/${id}/status`, { status }, { meta: ADMIN_NATIVE_META });
+  return Alova.Patch<RoomItem>(
+    `/v1/admin/rooms/${id}/status`,
+    { status },
+    { meta: ADMIN_NATIVE_META }
+  );
 }

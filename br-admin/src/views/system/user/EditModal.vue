@@ -4,11 +4,7 @@
       <BasicForm @register="registerForm">
         <template #avatarSlot="{ model, field }">
           <n-space vertical>
-            <n-upload
-              :max="1"
-              accept="image/*"
-              :custom-request="handleAvatarUpload"
-            >
+            <n-upload :max="1" accept="image/*" :custom-request="handleAvatarUpload">
               <n-button>上传头像</n-button>
             </n-upload>
             <n-image

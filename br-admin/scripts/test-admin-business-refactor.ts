@@ -30,6 +30,17 @@ import {
   createStatusSchema,
   normalizeDateRange,
 } from '../src/views/business/shared/formSchemaBuilders';
+import { buildBookingSearchSchemas, buildBookingTableColumns } from '../src/views/booking/list/builders';
+import { buildRoomSearchSchemas, buildRoomTableColumns } from '../src/views/room/list/builders';
+import {
+  buildActivitySearchSchemas,
+  buildActivityTableColumns,
+} from '../src/views/activity/list/builders';
+import {
+  buildWalletFilterOptions,
+  buildWalletStatCards,
+  buildWalletTransactionColumns,
+} from '../src/views/wallet/transactions.builders';
 
 function testApiContracts() {
   assert.equal(ADMIN_NATIVE_META.isReturnNativeResponse, true);
@@ -91,4 +102,53 @@ function testFormSchemaBuilders() {
 }
 
 testFormSchemaBuilders();
+
+function testPageBuilders() {
+  assert.equal(buildBookingSearchSchemas([]).length, 3);
+  assert.equal(
+    buildBookingTableColumns().some((column) => column.key === 'status'),
+    true
+  );
+  assert.equal(buildRoomSearchSchemas().length, 2);
+  assert.equal(
+    buildRoomTableColumns().some((column) => column.key === 'min_price'),
+    true
+  );
+  assert.equal(buildActivitySearchSchemas().length, 2);
+  assert.equal(
+    buildActivityTableColumns().some((column) => column.key === 'is_active'),
+    true
+  );
+}
+
+testPageBuilders();
+
+function testWalletBuilders() {
+  const options = buildWalletFilterOptions();
+  assert.equal(
+    options.typeOptions.some((item) => item.value === 'recharge'),
+    true
+  );
+  assert.equal(
+    options.statusOptions.some((item) => item.value === 'completed'),
+    true
+  );
+  assert.equal(
+    buildWalletStatCards({
+      total_recharge: 1,
+      total_consume: 2,
+      total_refund: 3,
+      net_income: 4,
+      active_users: 0,
+      total_transactions: 0,
+    }).length,
+    4
+  );
+  assert.equal(
+    buildWalletTransactionColumns().some((column) => column.key === 'payment_method'),
+    true
+  );
+}
+
+testWalletBuilders();
 console.log('br-admin business refactor tests passed');

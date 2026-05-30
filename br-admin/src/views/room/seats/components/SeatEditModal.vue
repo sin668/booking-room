@@ -24,11 +24,7 @@
       </n-form-item>
 
       <n-form-item label="分区" path="zone">
-        <n-select
-          v-model:value="formValues.zone"
-          :options="zoneOptions"
-          placeholder="请选择分区"
-        />
+        <n-select v-model:value="formValues.zone" :options="zoneOptions" placeholder="请选择分区" />
       </n-form-item>
 
       <n-form-item label="位置" path="position">
@@ -41,11 +37,7 @@
       </n-form-item>
 
       <n-form-item label="楼层" path="floor">
-        <n-input-number
-          v-model:value="formValues.floor"
-          :min="1"
-          style="width: 100%"
-        />
+        <n-input-number v-model:value="formValues.floor" :min="1" style="width: 100%" />
       </n-form-item>
 
       <n-form-item label="每小时价格" path="price_per_hour">
@@ -58,19 +50,11 @@
       </n-form-item>
 
       <n-form-item label="行号" path="row">
-        <n-input-number
-          v-model:value="formValues.row"
-          :min="0"
-          style="width: 100%"
-        />
+        <n-input-number v-model:value="formValues.row" :min="0" style="width: 100%" />
       </n-form-item>
 
       <n-form-item label="列号" path="col">
-        <n-input-number
-          v-model:value="formValues.col"
-          :min="0"
-          style="width: 100%"
-        />
+        <n-input-number v-model:value="formValues.col" :min="0" style="width: 100%" />
       </n-form-item>
     </n-form>
 
@@ -86,12 +70,7 @@
 <script lang="ts" setup>
   import { computed, reactive, ref, watch } from 'vue';
   import type { FormRules, FormInst } from 'naive-ui';
-  import {
-    createSeat,
-    updateSeat,
-    type SeatFormParams,
-    type SeatItem,
-  } from '@/api/seat';
+  import { createSeat, updateSeat, type SeatFormParams, type SeatItem } from '@/api/seat';
 
   const props = defineProps<{
     show: boolean;
@@ -179,7 +158,7 @@
       } else {
         Object.assign(formValues, { ...defaultValues });
       }
-    },
+    }
   );
 
   function confirmForm() {

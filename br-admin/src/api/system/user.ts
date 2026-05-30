@@ -190,14 +190,22 @@ export function deleteUser(id: string | number) {
 
 /** @description: 重置用户密码 */
 export function resetUserPassword(id: string | number, new_password: string) {
-  return Alova.Put(`/v1/admin/users/${id}/reset-password`, { new_password }, {
-    meta: nativeMeta,
-  });
+  return Alova.Put(
+    `/v1/admin/users/${id}/reset-password`,
+    { new_password },
+    {
+      meta: nativeMeta,
+    }
+  );
 }
 
 /** @description: 切换用户状态 */
 export function toggleUserStatus(id: string | number, target_status: string) {
-  return Alova.Put(`/v1/admin/users/${id}/status`, { target_status }, {
-    meta: nativeMeta,
-  });
+  return Alova.Put(
+    `/v1/admin/users/${id}/status`,
+    { target_status },
+    {
+      meta: nativeMeta,
+    }
+  );
 }

@@ -5,10 +5,10 @@
     </n-card>
     <n-card :bordered="false">
       <BasicTable
+        ref="actionRef"
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: ActivityItem) => row.id"
-        ref="actionRef"
         :actionColumn="actionColumn"
         :scroll-x="1100"
         :striped="true"
@@ -30,72 +30,45 @@
 
 <script lang="ts" setup>
   import { h, reactive, ref } from 'vue';
-  import { BasicTable, TableAction } from '@/components/Table';
-  import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
   import { PlusOutlined } from '@vicons/antd';
+  import { BasicTable, TableAction } from '@/components/Table';
+  import { BasicForm, useForm } from '@/components/Form/index';
   import {
-    getActivityList,
     deleteActivity,
+    getActivityList,
     toggleActivityStatus,
     type ActivityItem,
   } from '@/api/activity';
-  import { columns } from './columns';
+  import { toBasicTableResult } from '@/api/contracts/admin';
+  import { buildActivitySearchSchemas, buildActivityTableColumns } from './builders';
   import ActivityEditModal from './ActivityEditModal.vue';
-
-  const schemas: FormSchema[] = [
-    {
-      field: 'keyword',
-      component: 'NInput',
-      label: '关键词',
-      componentProps: { placeholder: '搜索标题或描述' },
-    },
-    {
-      field: 'is_active',
-      component: 'NSelect',
-      label: '状态',
-      componentProps: {
-        placeholder: '全部',
-        options: [
-          { label: '全部', value: '' },
-          { label: '已上架', value: 'true' },
-          { label: '已下架', value: 'false' },
-        ],
-      },
-    },
-  ];
 
   const actionRef = ref();
   const showModal = ref(false);
   const editData = ref<ActivityItem | null>(null);
+  const columns = buildActivityTableColumns();
 
   const [register, { getFieldsValue }] = useForm({
     gridProps: { cols: '1 s:1 m:2 l:3 xl:4 2xl:4' },
     labelWidth: 80,
-    schemas,
+    schemas: buildActivitySearchSchemas(),
   });
 
   const loadDataTable = async (res: any) => {
     const formValues = getFieldsValue();
     const queryParams: Record<string, any> = { ...formValues, ...res };
 
-    // Convert camelCase to snake_case for API
     queryParams.page_size = queryParams.pageSize;
     delete queryParams.pageSize;
 
-    // Convert is_active from string to boolean or remove
-    if (queryParams.is_active === '' || queryParams.is_active === undefined) {
+    if (!queryParams.is_active) {
       delete queryParams.is_active;
     } else {
       queryParams.is_active = queryParams.is_active === 'true';
     }
 
     const result = await getActivityList(queryParams);
-    return {
-      list: result.items,
-      itemCount: result.total,
-      pageCount: Math.ceil(result.total / queryParams.page_size) || 1,
-      page: result.page,
-    };
+    return toBasicTableResult(result);
   };
 
   const actionColumn = reactive({
@@ -125,7 +98,7 @@
             auth: ['activity:status'],
           },
         ],
-        select: (key: string) => {
+        select: () => {
           handleToggleStatus(record);
         },
       });

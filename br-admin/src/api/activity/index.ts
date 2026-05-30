@@ -84,9 +84,13 @@ export function deleteActivity(id: number) {
 }
 
 export function toggleActivityStatus(id: number, is_active: boolean) {
-  return Alova.Patch<ActivityItem>(`/v1/admin/activities/${id}/status`, { is_active }, {
-    meta: ADMIN_NATIVE_META,
-  });
+  return Alova.Patch<ActivityItem>(
+    `/v1/admin/activities/${id}/status`,
+    { is_active },
+    {
+      meta: ADMIN_NATIVE_META,
+    }
+  );
 }
 
 export function uploadFile(file: File) {

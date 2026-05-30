@@ -8,7 +8,9 @@
     "dev:h5": "uni",
     "build:h5": "uni build",
     "test:profile-links": "node scripts/verify-profile-stat-links.js",
-    "test:wechat-appid": "node scripts/test-apply-wechat-appid.js"
+    "test:wechat-appid": "node scripts/test-apply-wechat-appid.js",
+    "test:refactor": "node scripts/test-refactored-page-logic.js",
+    "test:scripts": "npm run test:profile-links && npm run test:wechat-appid && npm run test:refactor"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4060620250520001",

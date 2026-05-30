@@ -4,14 +4,21 @@ from __future__ import annotations
 
 import inspect
 import uuid
-from datetime import datetime, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.domain.payment_rules import (
+    PAYMENT_QUERY_DELAYS,
+    is_failed_trade_state,
+    is_pending_trade_state,
+    money_to_cents,
+    next_payment_check_delay,
+)
 from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
@@ -56,20 +63,6 @@ class BookingPaymentSignatureError(BookingPaymentError):
 
 class BookingPaymentAlreadyProcessedError(BookingPaymentError):
     pass
-
-
-PAYMENT_QUERY_DELAYS = (
-    timedelta(minutes=1),
-    timedelta(minutes=3),
-    timedelta(minutes=5),
-)
-PENDING_TRADE_STATES = {"NOTPAY", "USERPAYING", "ACCEPT"}
-FAILED_TRADE_STATES = {
-    "CLOSED",
-    "REVOKED",
-    "PAYERROR",
-    "REFUND",
-}
 
 
 class BookingPaymentService:
@@ -272,8 +265,7 @@ class BookingPaymentService:
         return parsed.replace(tzinfo=None)
 
     def _decimal_to_cents(self, value: Decimal) -> int:
-        cents = (value * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
-        return int(cents)
+        return money_to_cents(value)
 
     async def _apply_query_result(
         self,
@@ -295,15 +287,16 @@ class BookingPaymentService:
             return
 
         booking.payment_check_count = int(booking.payment_check_count or 0) + 1
-        if trade_state in FAILED_TRADE_STATES or booking.payment_check_count >= len(PAYMENT_QUERY_DELAYS):
+        next_delay = next_payment_check_delay(booking.payment_check_count)
+        if is_failed_trade_state(trade_state) or next_delay is None:
             booking.status = "cancelled"
             booking.payment_status = "failed"
             booking.next_payment_check_at = None
             await coupon_service.restore_user_coupon_for_booking(self._db, booking)
             return
 
-        if trade_state in PENDING_TRADE_STATES or not trade_state:
-            booking.next_payment_check_at = now + PAYMENT_QUERY_DELAYS[booking.payment_check_count]
+        if is_pending_trade_state(trade_state) or not trade_state:
+            booking.next_payment_check_at = now + next_delay
             return
 
         booking.status = "cancelled"

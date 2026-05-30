@@ -1,28 +1,28 @@
-# br-app Page Logic Refactor Implementation Plan
+# br-app 页面逻辑重构实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **给 agentic workers 的要求：** 必须使用 `superpowers:subagent-driven-development`（推荐）或 `superpowers:executing-plans` 逐项执行本计划。执行进度使用 checkbox（`- [ ]`）跟踪。
 
-**Goal:** Refactor oversized `br-app` pages so page files keep presentation and event orchestration while shared API, formatting, follow-room, and payment-polling logic lives in focused modules.
+**目标：** 重构 `br-app` 中过大的页面文件，让页面只保留展示逻辑和事件编排，把共享的 API 调用、价格/时间/状态格式化、关注门店、支付轮询逻辑拆到独立模块。
 
-**Architecture:** Extract pure formatting/constants first, then wrap storage/API behavior behind page services and composables. Keep existing page templates and styles intact unless a binding must change, so each task has a small behavioral surface and can be validated independently.
+**架构：** 先抽取纯函数格式化器和常量，随后把存储与 API 编排封装到 page service 和可复用服务中。页面模板和样式尽量不动，除非绑定名必须调整，从而保证每个任务的行为影响面都较小并且容易验证。
 
-**Tech Stack:** Vue 3 options/composition APIs, uni-app, existing `src/api/*` modules, Node script tests, `npm run build:h5`.
+**技术栈：** Vue 3、uni-app、现有 `src/api/*` 模块、Node 脚本测试、`npm run build:h5`。
 
 ---
 
-## File Structure
+## 文件结构
 
-- Create `br-app/src/constants/booking.js`: booking status labels, seat-zone labels, and booking tab metadata shared by booking/order pages.
-- Create `br-app/src/constants/wallet.js`: wallet transaction labels, recharge bounds, and polling status constants.
-- Create `br-app/src/utils/formatters.js`: pure money, amount, date, time, duration, room-price, booking-status, and wallet-status formatters.
-- Create `br-app/src/services/followedRooms.js`: storage-backed follow-room service that normalizes room shape and centralizes summaries.
-- Modify `br-app/src/utils/followedRooms.js`: compatibility re-export so existing imports keep working during the refactor.
-- Create `br-app/src/services/paymentPolling.js`: shared async polling helpers for booking payment and wallet recharge status.
-- Create `br-app/src/services/bookingPageService.js`: page-facing booking API orchestration for rooms, bookings, wallet balance, coupons, and cancellation.
-- Create `br-app/src/services/walletPageService.js`: page-facing wallet/recharge API orchestration.
-- Create `br-app/scripts/test-refactored-page-logic.js`: Node script test harness for extracted pure/service modules.
-- Modify `br-app/package.json`: add `test:refactor` and `test:scripts`.
-- Modify these pages to import extracted logic without changing templates/styles unless bindings require it:
+- 新建 `br-app/src/constants/booking.js`：预约状态文案、座位分区文案、预约页签等常量。
+- 新建 `br-app/src/constants/wallet.js`：钱包交易状态文案、充值金额边界、支付轮询状态常量。
+- 新建 `br-app/src/utils/formatters.js`：金额、充值金额、日期、时间、时长、门店起价、预约状态、钱包状态等纯格式化函数。
+- 新建 `br-app/src/services/followedRooms.js`：封装关注门店的本地存储、门店数据归一化、关注摘要。
+- 修改 `br-app/src/utils/followedRooms.js`：作为兼容层重新导出 service，避免一次性改动所有老引用导致风险扩大。
+- 新建 `br-app/src/services/paymentPolling.js`：共享预约支付和钱包充值的异步轮询逻辑。
+- 新建 `br-app/src/services/bookingPageService.js`：预约相关页面使用的 API 编排层。
+- 新建 `br-app/src/services/walletPageService.js`：钱包和充值页面使用的 API 编排层。
+- 新建 `br-app/scripts/test-refactored-page-logic.js`：针对抽取出的纯函数和 service 的 Node 脚本测试。
+- 修改 `br-app/package.json`：新增 `test:refactor` 与 `test:scripts`。
+- 修改以下页面，只替换逻辑导入和调用，模板/样式非必要不动：
   - `br-app/src/pages/index/index.vue`
   - `br-app/src/pages/profile/index.vue`
   - `br-app/src/pages/booking/detail.vue`
@@ -31,340 +31,132 @@
   - `br-app/src/pages/wallet/transactions.vue`
   - `br-app/src/pages/recharge/index.vue`
 
-## Task 1: Shared Formatters and Constants
+## Task 1：共享格式化器与常量
 
-**Files:**
-- Create: `br-app/src/constants/booking.js`
-- Create: `br-app/src/constants/wallet.js`
-- Create: `br-app/src/utils/formatters.js`
-- Create: `br-app/scripts/test-refactored-page-logic.js`
-- Modify: `br-app/package.json`
+**文件：**
+- 新建：`br-app/src/constants/booking.js`
+- 新建：`br-app/src/constants/wallet.js`
+- 新建：`br-app/src/utils/formatters.js`
+- 新建：`br-app/scripts/test-refactored-page-logic.js`
+- 修改：`br-app/package.json`
 
-- [ ] **Step 1: Write the failing formatter tests**
+- [x] **Step 1：先写失败的格式化器测试**
 
-Add `br-app/scripts/test-refactored-page-logic.js` with a loader that evaluates ES-module source in Node and tests these exported functions:
+新增 `br-app/scripts/test-refactored-page-logic.js`。测试脚本使用 Node `vm` 加载 ES module 风格源码，并验证：
 
 ```js
-const assert = require('assert')
-const fs = require('fs')
-const path = require('path')
-const vm = require('vm')
-
-const appRoot = path.resolve(__dirname, '..')
-
-function loadModule(relativePath, injected = {}) {
-  const filename = path.join(appRoot, relativePath)
-  let source = fs.readFileSync(filename, 'utf8')
-  source = source.replace(/import\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"];?/g, (_match, names, request) => {
-    return `const { ${names.trim()} } = __imports[${JSON.stringify(request)}]`
-  })
-  source = source.replace(/export\s+const\s+([A-Za-z0-9_$]+)\s*=/g, 'exports.$1 =')
-  source = source.replace(/export\s+function\s+([A-Za-z0-9_$]+)\s*\(/g, 'exports.$1 = function $1(')
-  source = source.replace(/export\s+\{([^}]+)\}/g, (_match, names) => {
-    return names.split(',').map((name) => {
-      const trimmed = name.trim()
-      return `exports.${trimmed} = ${trimmed}`
-    }).join('\n')
-  })
-
-  const sandbox = {
-    exports: {},
-    console,
-    setTimeout,
-    clearTimeout,
-    __imports: injected,
-  }
-  vm.runInNewContext(source, sandbox, { filename })
-  return sandbox.exports
-}
-
-function testFormatters() {
-  const {
-    formatMoney,
-    formatAmount,
-    formatShortTime,
-    formatDateSlash,
-    formatRoomMinPrice,
-    formatBookingStatus,
-    formatWalletStatus,
-    formatHourDuration,
-  } = loadModule('src/utils/formatters.js')
-
-  assert.equal(formatMoney(12), '12.00')
-  assert.equal(formatMoney(''), '0.00')
-  assert.equal(formatAmount(12.5), '12.5')
-  assert.equal(formatAmount('12.00'), '12')
-  assert.equal(formatShortTime('2026-05-30T09:05:00'), '09:05')
-  assert.equal(formatShortTime('09:30:00'), '09:30')
-  assert.equal(formatDateSlash('2026-05-30'), '2026/05/30')
-  assert.equal(formatRoomMinPrice({ min_price: 8 }), '¥8起')
-  assert.equal(formatRoomMinPrice({ min_price: 0 }), '')
-  assert.equal(formatBookingStatus('confirmed'), '已预约')
-  assert.equal(formatBookingStatus('unknown'), 'unknown')
-  assert.equal(formatWalletStatus('completed'), '已完成')
-  assert.equal(formatHourDuration('09:00', '11:30'), '2.5小时')
-}
-
-testFormatters()
-console.log('br-app refactored page logic tests passed')
+assert.equal(formatMoney(12), '12.00')
+assert.equal(formatMoney(''), '0.00')
+assert.equal(formatAmount(12.5), '12.5')
+assert.equal(formatAmount('12.00'), '12')
+assert.equal(formatShortTime('2026-05-30T09:05:00'), '09:05')
+assert.equal(formatShortTime('09:30:00'), '09:30')
+assert.equal(formatDateSlash('2026-05-30'), '2026/05/30')
+assert.equal(formatRoomMinPrice({ min_price: 8 }), '¥8起')
+assert.equal(formatRoomMinPrice({ min_price: 0 }), '')
+assert.equal(formatBookingStatus('confirmed'), '已预约')
+assert.equal(formatBookingStatus('unknown'), 'unknown')
+assert.equal(formatWalletStatus('completed'), '已完成')
+assert.equal(formatHourDuration('09:00', '11:30'), '2.5小时')
 ```
 
-Add the script entries:
+`package.json` 增加：
 
 ```json
 "test:refactor": "node scripts/test-refactored-page-logic.js",
 "test:scripts": "npm run test:profile-links && npm run test:wechat-appid && npm run test:refactor"
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2：运行测试并确认失败**
 
-Run: `cd br-app && npm run test:refactor`
+运行：`cd br-app && npm run test:refactor`
 
-Expected: FAIL with `ENOENT` for `src/utils/formatters.js`.
+预期：失败，提示 `src/utils/formatters.js` 不存在。
 
-- [ ] **Step 3: Implement constants and formatters**
+- [x] **Step 3：实现常量和格式化器**
 
-Create `br-app/src/constants/booking.js`:
+`booking.js` 导出 `BOOKING_TABS`、`BOOKING_STATUS_LABELS`、`SEAT_ZONE_LABELS`。
 
-```js
-export const BOOKING_TABS = [
-  { label: '全部', value: 'all' },
-  { label: '待开始', value: 'confirmed' },
-  { label: '已完成', value: 'completed' },
-  { label: '已取消', value: 'cancelled' },
-]
+`wallet.js` 导出 `WALLET_TRANSACTION_STATUS_LABELS`、`RECHARGE_DEFAULT_AMOUNT`、`RECHARGE_MIN_AMOUNT`、`RECHARGE_MAX_AMOUNT`、`PAYMENT_POLL_INTERVAL`、`PAYMENT_POLL_MAX_ATTEMPTS`、`PAYMENT_TERMINAL_FAILURE_STATUSES`。
 
-export const BOOKING_STATUS_LABELS = {
-  pending: '待支付',
-  confirmed: '已预约',
-  completed: '已完成',
-  cancelled: '已取消',
-}
-
-export const SEAT_ZONE_LABELS = {
-  quiet: '静音区',
-  keyboard: '键盘区',
-  vip: 'VIP区',
-}
-```
-
-Create `br-app/src/constants/wallet.js`:
+`formatters.js` 导出：
 
 ```js
-export const WALLET_TRANSACTION_STATUS_LABELS = {
-  completed: '已完成',
-  pending: '处理中',
-  failed: '失败',
-}
-
-export const RECHARGE_DEFAULT_AMOUNT = 50
-export const RECHARGE_MIN_AMOUNT = 1
-export const RECHARGE_MAX_AMOUNT = 9999
-
-export const PAYMENT_POLL_INTERVAL = 2000
-export const PAYMENT_POLL_MAX_ATTEMPTS = 10
-export const PAYMENT_TERMINAL_FAILURE_STATUSES = ['failed', 'cancelled', 'closed']
+formatMoney(value)
+formatAmount(value)
+formatShortTime(value)
+formatDateSlash(value)
+formatRoomMinPrice(room)
+formatBookingStatus(status)
+formatWalletStatus(status)
+formatSeatZone(zone)
+formatHourDuration(startTime, endTime)
 ```
 
-Create `br-app/src/utils/formatters.js`:
+- [x] **Step 4：运行测试并确认通过**
 
-```js
-import { BOOKING_STATUS_LABELS, SEAT_ZONE_LABELS } from '@/constants/booking'
-import { WALLET_TRANSACTION_STATUS_LABELS } from '@/constants/wallet'
+运行：`cd br-app && npm run test:refactor`
 
-function toFiniteNumber(value, fallback = 0) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : fallback
-}
+预期：通过，输出 `br-app refactored page logic tests passed`。
 
-export function formatMoney(value) {
-  return toFiniteNumber(value).toFixed(2)
-}
+- [x] **Step 5：提交**
 
-export function formatAmount(value) {
-  const amount = toFiniteNumber(value)
-  return Number.isInteger(amount) ? String(amount) : amount.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')
-}
-
-export function formatShortTime(value) {
-  if (!value) return ''
-  if (typeof value === 'string' && /^\d{1,2}:\d{2}/.test(value)) return value.slice(0, 5)
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-}
-
-export function formatDateSlash(value) {
-  if (!value) return ''
-  return String(value).slice(0, 10).replace(/-/g, '/')
-}
-
-export function formatRoomMinPrice(room) {
-  const price = Number(room?.min_price ?? room?.minPrice)
-  if (!Number.isFinite(price) || price <= 0) return ''
-  return `¥${formatAmount(price)}起`
-}
-
-export function formatBookingStatus(status) {
-  return BOOKING_STATUS_LABELS[status] || status || ''
-}
-
-export function formatWalletStatus(status) {
-  return WALLET_TRANSACTION_STATUS_LABELS[status] || '处理中'
-}
-
-export function formatSeatZone(zone) {
-  return SEAT_ZONE_LABELS[zone] || zone || ''
-}
-
-export function formatHourDuration(startTime, endTime) {
-  const parse = (time) => {
-    const [hours = 0, minutes = 0] = String(time || '').split(':').map(Number)
-    return hours + minutes / 60
-  }
-  const duration = Math.max(0, parse(endTime) - parse(startTime))
-  return `${formatAmount(duration)}小时`
-}
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `cd br-app && npm run test:refactor`
-
-Expected: PASS with `br-app refactored page logic tests passed`.
-
-- [ ] **Step 5: Commit**
-
-Run:
+已提交：
 
 ```bash
-git add br-app/package.json br-app/scripts/test-refactored-page-logic.js br-app/src/constants/booking.js br-app/src/constants/wallet.js br-app/src/utils/formatters.js
 git commit -m "refactor: add app formatter constants"
 ```
 
-## Task 2: Followed Room Page Service
+## Task 2：关注门店服务
 
-**Files:**
-- Create: `br-app/src/services/followedRooms.js`
-- Modify: `br-app/src/utils/followedRooms.js`
-- Modify: `br-app/src/pages/index/index.vue`
-- Modify: `br-app/src/pages/profile/index.vue`
-- Modify: `br-app/src/pages/booking/detail.vue`
-- Modify: `br-app/scripts/test-refactored-page-logic.js`
+**文件：**
+- 新建：`br-app/src/services/followedRooms.js`
+- 修改：`br-app/src/utils/followedRooms.js`
+- 修改：`br-app/src/pages/index/index.vue`
+- 修改：`br-app/src/pages/profile/index.vue`
+- 修改：`br-app/src/pages/booking/detail.vue`
+- 修改：`br-app/scripts/test-refactored-page-logic.js`
 
-- [ ] **Step 1: Write failing followed-room service tests**
+- [ ] **Step 1：先写失败的关注门店服务测试**
 
-Extend `test-refactored-page-logic.js` with a `testFollowedRooms()` function that injects a fake `uni` storage API and checks normalization, summary, follow, and unfollow:
-
-```js
-function testFollowedRooms() {
-  const storage = {}
-  global.uni = {
-    getStorageSync(key) {
-      return storage[key]
-    },
-    setStorageSync(key, value) {
-      storage[key] = value
-    },
-  }
-
-  const service = loadModule('src/services/followedRooms.js')
-  service.followRoom({ id: '7', name: '南门店', minPrice: 8, cityName: '茂名' })
-  assert.equal(service.isRoomFollowed(7), true)
-  assert.equal(service.getFollowedRooms()[0].min_price, 8)
-  assert.equal(service.getFollowedRoomsSummary(service.getFollowedRooms()), '南门店')
-  service.followRoom({ room_id: 8, name: '东门店' })
-  assert.equal(service.getFollowedRoomsSummary(service.getFollowedRooms()), '东门店等2家')
-  service.unfollowRoom(7)
-  assert.deepEqual(service.getFollowedRooms().map((room) => room.id), [8])
-  delete global.uni
-}
-```
-
-Call `testFollowedRooms()` before the final console log.
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `cd br-app && npm run test:refactor`
-
-Expected: FAIL with `ENOENT` for `src/services/followedRooms.js`.
-
-- [ ] **Step 3: Implement followed-room service and re-export**
-
-Create `br-app/src/services/followedRooms.js` with:
+在 `test-refactored-page-logic.js` 中新增 `testFollowedRooms()`，用 fake `uni` storage 验证归一化、关注、取消关注、摘要：
 
 ```js
-export const FOLLOWED_ROOMS_STORAGE_KEY = 'followed_rooms'
-
-export function normalizeRoom(room = {}) {
-  const id = room.id ?? room.room_id
-  if (id === undefined || id === null || id === '') return null
-
-  return {
-    id: Number(id),
-    name: room.name || '未命名自习室',
-    address: room.address || '',
-    cover_image: room.cover_image || room.coverImage || '',
-    city_id: room.city_id ?? room.cityId ?? null,
-    city_name: room.city_name || room.cityName || '',
-    min_price: room.min_price ?? room.minPrice ?? '',
-    status: room.status || '',
-    followed_at: room.followed_at || Date.now(),
-  }
-}
-
-export function getFollowedRooms() {
-  const storedRooms = uni.getStorageSync(FOLLOWED_ROOMS_STORAGE_KEY)
-  const rooms = Array.isArray(storedRooms) ? storedRooms : []
-  return rooms.map(normalizeRoom).filter(Boolean)
-}
-
-export function isRoomFollowed(roomId) {
-  const normalizedId = Number(roomId)
-  return getFollowedRooms().some((room) => room.id === normalizedId)
-}
-
-export function followRoom(room) {
-  const normalizedRoom = normalizeRoom(room)
-  if (!normalizedRoom) return getFollowedRooms()
-
-  const rooms = getFollowedRooms().filter((item) => item.id !== normalizedRoom.id)
-  const nextRooms = [normalizedRoom, ...rooms]
-  uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, nextRooms)
-  return nextRooms
-}
-
-export function unfollowRoom(roomId) {
-  const normalizedId = Number(roomId)
-  const nextRooms = getFollowedRooms().filter((room) => room.id !== normalizedId)
-  uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, nextRooms)
-  return nextRooms
-}
-
-export function getFollowedRoomsSummary(rooms = getFollowedRooms()) {
-  if (rooms.length === 0) return '暂无关注'
-  if (rooms.length === 1) return rooms[0].name
-  return `${rooms[0].name}等${rooms.length}家`
-}
+service.followRoom({ id: '7', name: '南门店', minPrice: 8, cityName: '茂名' })
+assert.equal(service.isRoomFollowed(7), true)
+assert.equal(service.getFollowedRooms()[0].min_price, 8)
+assert.equal(service.getFollowedRoomsSummary(service.getFollowedRooms()), '南门店')
+service.followRoom({ room_id: 8, name: '东门店' })
+assert.equal(service.getFollowedRoomsSummary(service.getFollowedRooms()), '东门店等2家')
+service.unfollowRoom(7)
+assert.deepEqual(service.getFollowedRooms().map((room) => room.id), [8])
 ```
 
-Replace `br-app/src/utils/followedRooms.js` with:
+- [ ] **Step 2：运行测试并确认失败**
+
+运行：`cd br-app && npm run test:refactor`
+
+预期：失败，提示 `src/services/followedRooms.js` 不存在。
+
+- [ ] **Step 3：实现 service 与兼容 re-export**
+
+新建 `br-app/src/services/followedRooms.js`，导出：
 
 ```js
-export {
-  FOLLOWED_ROOMS_STORAGE_KEY,
-  followRoom,
-  getFollowedRooms,
-  getFollowedRoomsSummary,
-  isRoomFollowed,
-  normalizeRoom,
-  unfollowRoom,
-} from '@/services/followedRooms'
+FOLLOWED_ROOMS_STORAGE_KEY
+normalizeRoom(room)
+getFollowedRooms()
+isRoomFollowed(roomId)
+followRoom(room)
+unfollowRoom(roomId)
+getFollowedRoomsSummary(rooms)
 ```
 
-- [ ] **Step 4: Move page imports to service**
+修改 `br-app/src/utils/followedRooms.js` 为从 `@/services/followedRooms` 重新导出同名 API。
 
-Update the three page imports:
+- [ ] **Step 4：把页面导入切到 service**
+
+更新：
 
 ```js
 import { getFollowedRooms } from '@/services/followedRooms'
@@ -372,7 +164,7 @@ import { followRoom, isRoomFollowed, unfollowRoom } from '@/services/followedRoo
 import { getFollowedRooms, getFollowedRoomsSummary } from '@/services/followedRooms'
 ```
 
-In `profile/index.vue`, replace the computed summary body with:
+`profile/index.vue` 中关注摘要改为：
 
 ```js
 followedRoomsSummary() {
@@ -380,9 +172,9 @@ followedRoomsSummary() {
 }
 ```
 
-- [ ] **Step 5: Run tests and build**
+- [ ] **Step 5：运行测试和构建**
 
-Run:
+运行：
 
 ```bash
 cd br-app
@@ -390,172 +182,87 @@ npm run test:refactor
 npm run build:h5
 ```
 
-Expected: both commands pass.
+预期：全部通过。
 
-- [ ] **Step 6: Commit**
-
-Run:
+- [ ] **Step 6：提交**
 
 ```bash
 git add br-app/scripts/test-refactored-page-logic.js br-app/src/services/followedRooms.js br-app/src/utils/followedRooms.js br-app/src/pages/index/index.vue br-app/src/pages/profile/index.vue br-app/src/pages/booking/detail.vue
 git commit -m "refactor: extract followed room service"
 ```
 
-## Task 3: Shared Payment Polling
+## Task 3：共享支付轮询
 
-**Files:**
-- Create: `br-app/src/services/paymentPolling.js`
-- Modify: `br-app/src/pages/booking/confirm.vue`
-- Modify: `br-app/src/pages/recharge/index.vue`
-- Modify: `br-app/scripts/test-refactored-page-logic.js`
+**文件：**
+- 新建：`br-app/src/services/paymentPolling.js`
+- 修改：`br-app/src/pages/booking/confirm.vue`
+- 修改：`br-app/src/pages/recharge/index.vue`
+- 修改：`br-app/scripts/test-refactored-page-logic.js`
 
-- [ ] **Step 1: Write failing payment-polling tests**
+- [ ] **Step 1：先写失败的支付轮询测试**
 
-Add `testPaymentPolling()`:
-
-```js
-async function testPaymentPolling() {
-  const service = loadModule('src/services/paymentPolling.js', {
-    '@/constants/wallet': {
-      PAYMENT_POLL_INTERVAL: 2000,
-      PAYMENT_POLL_MAX_ATTEMPTS: 10,
-      PAYMENT_TERMINAL_FAILURE_STATUSES: ['failed', 'cancelled', 'closed'],
-    },
-  })
-
-  const paid = await service.pollPaymentStatus({
-    fetchStatus: async () => ({ payment_status: 'paid' }),
-    isSuccess: (status) => status === 'paid',
-    wait: async () => {},
-  })
-  assert.equal(paid.payment_status, 'paid')
-
-  await assert.rejects(
-    () => service.pollPaymentStatus({
-      fetchStatus: async () => ({ status: 'failed' }),
-      isSuccess: (status) => status === 'completed',
-      wait: async () => {},
-    }),
-    (error) => error.paymentStatus === 'failed',
-  )
-}
-```
-
-Call it from an async `main()` function:
+在测试脚本中新增 `testPaymentPolling()`，验证成功状态返回原结果，失败状态抛出带 `paymentStatus` 的错误：
 
 ```js
-async function main() {
-  testFormatters()
-  testFollowedRooms()
-  await testPaymentPolling()
-  console.log('br-app refactored page logic tests passed')
-}
-
-main().catch((error) => {
-  console.error(error)
-  process.exit(1)
+const paid = await service.pollPaymentStatus({
+  fetchStatus: async () => ({ payment_status: 'paid' }),
+  isSuccess: (status) => status === 'paid',
+  wait: async () => {},
 })
-```
+assert.equal(paid.payment_status, 'paid')
 
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `cd br-app && npm run test:refactor`
-
-Expected: FAIL with `ENOENT` for `src/services/paymentPolling.js`.
-
-- [ ] **Step 3: Implement payment polling**
-
-Create `br-app/src/services/paymentPolling.js`:
-
-```js
-import {
-  PAYMENT_POLL_INTERVAL,
-  PAYMENT_POLL_MAX_ATTEMPTS,
-  PAYMENT_TERMINAL_FAILURE_STATUSES,
-} from '@/constants/wallet'
-
-export function createPaymentStatusError(status) {
-  const error = new Error(`payment ${status}`)
-  error.paymentStatus = status
-  return error
-}
-
-export function getPaymentStatus(response) {
-  return response?.payment_status || response?.paymentStatus || response?.status
-}
-
-export function waitForPaymentPoll(ms = PAYMENT_POLL_INTERVAL) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
-
-export async function pollPaymentStatus({
-  fetchStatus,
-  isSuccess,
-  failureStatuses = PAYMENT_TERMINAL_FAILURE_STATUSES,
-  maxAttempts = PAYMENT_POLL_MAX_ATTEMPTS,
-  wait = waitForPaymentPoll,
-}) {
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const result = await fetchStatus()
-    const status = getPaymentStatus(result)
-    if (isSuccess(status, result)) return result
-    if (failureStatuses.includes(status)) throw createPaymentStatusError(status)
-    await wait()
-  }
-
-  throw createPaymentStatusError('timeout')
-}
-```
-
-- [ ] **Step 4: Replace booking confirm polling**
-
-In `booking/confirm.vue`, import:
-
-```js
-import { createPaymentStatusError, pollPaymentStatus, waitForPaymentPoll } from '@/services/paymentPolling'
-```
-
-Replace the local `pollBookingPaymentStatus`, `createPaymentStatusError`, and `wait` methods with:
-
-```js
-async pollBookingPaymentStatus(bookingId) {
-  return pollPaymentStatus({
-    fetchStatus: () => getBookingPaymentStatus(bookingId),
-    isSuccess: (status) => status === 'paid',
-    wait: () => waitForPaymentPoll(PAYMENT_POLL_INTERVAL),
-    maxAttempts: PAYMENT_POLL_MAX_ATTEMPTS,
-  })
-},
-createPaymentStatusError,
-```
-
-- [ ] **Step 5: Replace recharge polling**
-
-In `recharge/index.vue`, import:
-
-```js
-import { createPaymentStatusError, pollPaymentStatus, waitForPaymentPoll } from '@/services/paymentPolling'
-```
-
-Replace local polling helpers with:
-
-```js
-async pollRechargeOrder(orderId) {
-  return pollPaymentStatus({
-    fetchStatus: () => getRechargeOrder(orderId),
+await assert.rejects(
+  () => service.pollPaymentStatus({
+    fetchStatus: async () => ({ status: 'failed' }),
     isSuccess: (status) => status === 'completed',
-    wait: () => waitForPaymentPoll(RECHARGE_POLL_INTERVAL),
-    maxAttempts: RECHARGE_POLL_MAX_ATTEMPTS,
-  })
-},
-createPaymentStatusError,
+    wait: async () => {},
+  }),
+  (error) => error.paymentStatus === 'failed',
+)
 ```
 
-- [ ] **Step 6: Run tests and build**
+- [ ] **Step 2：运行测试并确认失败**
 
-Run:
+运行：`cd br-app && npm run test:refactor`
+
+预期：失败，提示 `src/services/paymentPolling.js` 不存在。
+
+- [ ] **Step 3：实现支付轮询 service**
+
+新建 `br-app/src/services/paymentPolling.js`，导出：
+
+```js
+createPaymentStatusError(status)
+getPaymentStatus(response)
+waitForPaymentPoll(ms)
+pollPaymentStatus({ fetchStatus, isSuccess, failureStatuses, maxAttempts, wait })
+```
+
+轮询规则：
+- `payment_status`、`paymentStatus`、`status` 都可作为状态来源。
+- `isSuccess(status, result)` 为真时返回原始结果。
+- `failed`、`cancelled`、`closed` 直接抛出 `paymentStatus` 错误。
+- 超过最大次数抛出 `paymentStatus === 'timeout'`。
+
+- [ ] **Step 4：替换预约确认页轮询**
+
+`booking/confirm.vue` 改为从 `@/services/paymentPolling` 导入：
+
+```js
+createPaymentStatusError
+pollPaymentStatus
+waitForPaymentPoll
+```
+
+本地 `pollBookingPaymentStatus` 委托给共享 `pollPaymentStatus`。
+
+- [ ] **Step 5：替换充值页轮询**
+
+`recharge/index.vue` 改为从 `@/services/paymentPolling` 导入同样的三个 API。本地 `pollRechargeOrder` 委托给共享 `pollPaymentStatus`。
+
+- [ ] **Step 6：运行测试和构建**
+
+运行：
 
 ```bash
 cd br-app
@@ -563,197 +270,117 @@ npm run test:refactor
 npm run build:h5
 ```
 
-Expected: both commands pass.
+预期：全部通过。
 
-- [ ] **Step 7: Commit**
-
-Run:
+- [ ] **Step 7：提交**
 
 ```bash
 git add br-app/scripts/test-refactored-page-logic.js br-app/src/services/paymentPolling.js br-app/src/pages/booking/confirm.vue br-app/src/pages/recharge/index.vue
 git commit -m "refactor: share payment polling logic"
 ```
 
-## Task 4: Page Services for Booking and Wallet API Calls
+## Task 4：预约和钱包 Page Service
 
-**Files:**
-- Create: `br-app/src/services/bookingPageService.js`
-- Create: `br-app/src/services/walletPageService.js`
-- Modify: `br-app/src/pages/booking/confirm.vue`
-- Modify: `br-app/src/pages/booking/detail.vue`
-- Modify: `br-app/src/pages/orders/index.vue`
-- Modify: `br-app/src/pages/wallet/transactions.vue`
-- Modify: `br-app/src/pages/recharge/index.vue`
+**文件：**
+- 新建：`br-app/src/services/bookingPageService.js`
+- 新建：`br-app/src/services/walletPageService.js`
+- 修改：`br-app/src/pages/booking/confirm.vue`
+- 修改：`br-app/src/pages/booking/detail.vue`
+- 修改：`br-app/src/pages/orders/index.vue`
+- 修改：`br-app/src/pages/wallet/transactions.vue`
+- 修改：`br-app/src/pages/recharge/index.vue`
 
-- [ ] **Step 1: Write failing service smoke tests**
+- [ ] **Step 1：先写失败的 page service smoke test**
 
-Extend the script to load `bookingPageService.js` and `walletPageService.js` with fake API functions and assert the page services call through:
-
-```js
-function testPageServices() {
-  const bookingService = loadModule('src/services/bookingPageService.js', {
-    '@/api/bookings': {
-      getBookings: async (params) => ({ params, items: [] }),
-      cancelBooking: async (id) => ({ id, refund_amount: '1.00' }),
-      createBooking: async (payload) => ({ id: 9, ...payload }),
-      getBookingPaymentStatus: async (id) => ({ id, payment_status: 'paid' }),
-    },
-    '@/api/coupons': { getAvailableCouponsForBooking: async (payload) => ({ payload, items: [] }) },
-    '@/api/rooms': { getRoom: async (id) => ({ id }) },
-    '@/api/seats': { getSeats: async (roomId, params) => [{ roomId, ...params }] },
-    '@/api/wallet': { getBalance: async () => ({ balance: '8.00' }) },
-  })
-  assert.equal(typeof bookingService.fetchBookingsPage, 'function')
-  assert.equal(typeof bookingService.cancelBookingOrder, 'function')
-
-  const walletService = loadModule('src/services/walletPageService.js', {
-    '@/api/wallet': {
-      getBalance: async () => ({ balance: '8.00' }),
-      getWalletTransactions: async (params) => ({ params, items: [] }),
-      createRechargeOrder: async (payload) => ({ order_id: 1, ...payload }),
-      getRechargeOrder: async (id) => ({ id, status: 'completed' }),
-      confirmPayment: async (id) => ({ id }),
-      redeemPromoCode: async (code) => ({ code }),
-    },
-  })
-  assert.equal(typeof walletService.fetchWalletTransactionsPage, 'function')
-  assert.equal(typeof walletService.createRechargePaymentOrder, 'function')
-}
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `cd br-app && npm run test:refactor`
-
-Expected: FAIL with `ENOENT` for `src/services/bookingPageService.js`.
-
-- [ ] **Step 3: Implement booking page service**
-
-Create `br-app/src/services/bookingPageService.js`:
+在测试脚本中注入 fake API，验证以下函数存在并可被加载：
 
 ```js
-import {
-  cancelBooking,
-  createBooking,
-  getBookingPaymentStatus,
-  getBookings,
-} from '@/api/bookings'
-import { getAvailableCouponsForBooking } from '@/api/coupons'
-import { getRoom } from '@/api/rooms'
-import { getSeats } from '@/api/seats'
-import { getBalance } from '@/api/wallet'
+bookingService.fetchBookingsPage
+bookingService.cancelBookingOrder
+bookingService.createBookingOrder
+bookingService.fetchBookingPaymentStatus
+bookingService.fetchBookingRoom
+bookingService.fetchBookingSeats
+bookingService.fetchBookingCoupons
+bookingService.fetchWalletBalance
 
-export function fetchBookingsPage(params) {
-  return getBookings(params)
-}
-
-export function cancelBookingOrder(id) {
-  return cancelBooking(id)
-}
-
-export function createBookingOrder(payload) {
-  return createBooking(payload)
-}
-
-export function fetchBookingPaymentStatus(bookingId) {
-  return getBookingPaymentStatus(bookingId)
-}
-
-export function fetchBookingRoom(roomId) {
-  return getRoom(roomId)
-}
-
-export function fetchBookingSeats(roomId, params) {
-  return getSeats(roomId, params)
-}
-
-export function fetchBookingCoupons(payload) {
-  return getAvailableCouponsForBooking(payload)
-}
-
-export function fetchWalletBalance() {
-  return getBalance()
-}
+walletService.fetchWalletBalance
+walletService.fetchWalletTransactionsPage
+walletService.createRechargePaymentOrder
+walletService.fetchRechargePaymentOrder
+walletService.confirmRechargePayment
+walletService.redeemRechargePromoCode
 ```
 
-- [ ] **Step 4: Implement wallet page service**
+- [ ] **Step 2：运行测试并确认失败**
 
-Create `br-app/src/services/walletPageService.js`:
+运行：`cd br-app && npm run test:refactor`
+
+预期：失败，提示 `src/services/bookingPageService.js` 不存在。
+
+- [ ] **Step 3：实现预约 page service**
+
+新建 `br-app/src/services/bookingPageService.js`，封装并导出：
 
 ```js
-import {
-  confirmPayment,
-  createRechargeOrder,
-  getBalance,
-  getRechargeOrder,
-  getWalletTransactions,
-  redeemPromoCode,
-} from '@/api/wallet'
-
-export function fetchWalletBalance() {
-  return getBalance()
-}
-
-export function fetchWalletTransactionsPage(params) {
-  return getWalletTransactions(params)
-}
-
-export function createRechargePaymentOrder(payload) {
-  return createRechargeOrder(payload)
-}
-
-export function fetchRechargePaymentOrder(orderId) {
-  return getRechargeOrder(orderId)
-}
-
-export function confirmRechargePayment(orderId) {
-  return confirmPayment(orderId)
-}
-
-export function redeemRechargePromoCode(code) {
-  return redeemPromoCode(code)
-}
+fetchBookingsPage(params)
+cancelBookingOrder(id)
+createBookingOrder(payload)
+fetchBookingPaymentStatus(bookingId)
+fetchBookingRoom(roomId)
+fetchBookingSeats(roomId, params)
+fetchBookingCoupons(payload)
+fetchWalletBalance()
 ```
 
-- [ ] **Step 5: Move page API imports to services**
+- [ ] **Step 4：实现钱包 page service**
 
-Use these replacements:
+新建 `br-app/src/services/walletPageService.js`，封装并导出：
+
+```js
+fetchWalletBalance()
+fetchWalletTransactionsPage(params)
+createRechargePaymentOrder(payload)
+fetchRechargePaymentOrder(orderId)
+confirmRechargePayment(orderId)
+redeemRechargePromoCode(code)
+```
+
+- [ ] **Step 5：页面 API 导入改为 page service**
+
+逐页替换：
 
 ```js
 // booking/confirm.vue
-import {
-  createBookingOrder,
-  fetchBookingCoupons,
-  fetchBookingPaymentStatus,
-  fetchBookingRoom,
-  fetchBookingSeats,
-  fetchWalletBalance,
-} from '@/services/bookingPageService'
+createBookingOrder
+fetchBookingCoupons
+fetchBookingPaymentStatus
+fetchBookingRoom
+fetchBookingSeats
+fetchWalletBalance
 
 // booking/detail.vue
-import { fetchBookingRoom } from '@/services/bookingPageService'
+fetchBookingRoom
 
 // orders/index.vue
-import { cancelBookingOrder, fetchBookingsPage } from '@/services/bookingPageService'
+cancelBookingOrder
+fetchBookingsPage
 
 // wallet/transactions.vue
-import { fetchWalletBalance, fetchWalletTransactionsPage } from '@/services/walletPageService'
+fetchWalletBalance
+fetchWalletTransactionsPage
 
 // recharge/index.vue
-import {
-  confirmRechargePayment,
-  createRechargePaymentOrder,
-  fetchRechargePaymentOrder,
-  fetchWalletBalance,
-  redeemRechargePromoCode,
-} from '@/services/walletPageService'
+confirmRechargePayment
+createRechargePaymentOrder
+fetchRechargePaymentOrder
+fetchWalletBalance
+redeemRechargePromoCode
 ```
 
-Replace call sites one-for-one, for example `getBookings(params)` becomes `fetchBookingsPage(params)` and `createRechargeOrder(payload)` becomes `createRechargePaymentOrder(payload)`.
+- [ ] **Step 6：运行测试和构建**
 
-- [ ] **Step 6: Run tests and build**
-
-Run:
+运行：
 
 ```bash
 cd br-app
@@ -761,36 +388,42 @@ npm run test:refactor
 npm run build:h5
 ```
 
-Expected: both commands pass.
+预期：全部通过。
 
-- [ ] **Step 7: Commit**
-
-Run:
+- [ ] **Step 7：提交**
 
 ```bash
 git add br-app/scripts/test-refactored-page-logic.js br-app/src/services/bookingPageService.js br-app/src/services/walletPageService.js br-app/src/pages/booking/confirm.vue br-app/src/pages/booking/detail.vue br-app/src/pages/orders/index.vue br-app/src/pages/wallet/transactions.vue br-app/src/pages/recharge/index.vue
 git commit -m "refactor: add app page services"
 ```
 
-## Task 5: Wire Shared Formatters into Oversized Pages
+## Task 5：把共享格式化器接入过大页面
 
-**Files:**
-- Modify: `br-app/src/pages/index/index.vue`
-- Modify: `br-app/src/pages/profile/index.vue`
-- Modify: `br-app/src/pages/orders/index.vue`
-- Modify: `br-app/src/pages/wallet/transactions.vue`
-- Modify: `br-app/src/pages/recharge/index.vue`
-- Modify: `br-app/src/pages/booking/confirm.vue`
+**文件：**
+- 修改：`br-app/src/pages/index/index.vue`
+- 修改：`br-app/src/pages/profile/index.vue`
+- 修改：`br-app/src/pages/orders/index.vue`
+- 修改：`br-app/src/pages/wallet/transactions.vue`
+- 修改：`br-app/src/pages/recharge/index.vue`
+- 修改：`br-app/src/pages/booking/confirm.vue`
 
-- [ ] **Step 1: Replace local formatter implementations**
+- [ ] **Step 1：替换页面内重复格式化方法**
 
-Import only the helpers each page uses:
+按页面实际需要导入：
 
 ```js
-import { formatAmount, formatBookingStatus, formatHourDuration, formatMoney, formatRoomMinPrice, formatShortTime, formatWalletStatus } from '@/utils/formatters'
+import {
+  formatAmount,
+  formatBookingStatus,
+  formatHourDuration,
+  formatMoney,
+  formatRoomMinPrice,
+  formatShortTime,
+  formatWalletStatus,
+} from '@/utils/formatters'
 ```
 
-Then replace duplicated page methods:
+替换页面内重复方法：
 
 ```js
 formatMoney,
@@ -801,7 +434,7 @@ statusText: formatWalletStatus,
 roomPriceText: formatRoomMinPrice,
 ```
 
-In `orders/index.vue`, replace duration body with:
+`orders/index.vue` 的时长展示改为：
 
 ```js
 durationText(order) {
@@ -809,42 +442,40 @@ durationText(order) {
 }
 ```
 
-- [ ] **Step 2: Run focused refactor tests**
+- [ ] **Step 2：运行 refactor 测试**
 
-Run: `cd br-app && npm run test:refactor`
+运行：`cd br-app && npm run test:refactor`
 
-Expected: PASS.
+预期：通过。
 
-- [ ] **Step 3: Run existing script tests**
+- [ ] **Step 3：运行现有脚本测试**
 
-Run: `cd br-app && npm run test:scripts`
+运行：`cd br-app && npm run test:scripts`
 
-Expected: profile links, WeChat AppID, and refactor tests all pass.
+预期：profile links、WeChat AppID、refactor tests 全部通过。
 
-- [ ] **Step 4: Run H5 build**
+- [ ] **Step 4：运行 H5 构建**
 
-Run: `cd br-app && npm run build:h5`
+运行：`cd br-app && npm run build:h5`
 
-Expected: build completes without Vite/uni-app errors.
+预期：构建无 Vite/uni-app 错误。
 
-- [ ] **Step 5: Commit**
-
-Run:
+- [ ] **Step 5：提交**
 
 ```bash
 git add br-app/src/pages/index/index.vue br-app/src/pages/profile/index.vue br-app/src/pages/orders/index.vue br-app/src/pages/wallet/transactions.vue br-app/src/pages/recharge/index.vue br-app/src/pages/booking/confirm.vue
 git commit -m "refactor: use shared app formatters"
 ```
 
-## Final Validation
+## 最终验证
 
-- [ ] Run: `cd br-app && npm run test:scripts`
-- [ ] Run: `cd br-app && npm run build:h5`
-- [ ] Run: `git status --short`
-- [ ] Confirm only intended `br-app` and plan files changed.
+- [ ] 运行：`cd br-app && npm run test:scripts`
+- [ ] 运行：`cd br-app && npm run build:h5`
+- [ ] 运行：`git status --short`
+- [ ] 确认只包含预期的 `br-app` 和计划文档相关变更。
 
-## Self-Review
+## 自检
 
-- Spec coverage: constants, formatters, follow/unfollow study room logic, payment polling, and page-service API orchestration are each covered by dedicated tasks.
-- Placeholder scan: no task uses TBD/TODO/fill-in language; each code-creation task includes concrete code.
-- Type consistency: formatter, service, and polling function names are introduced before their page imports and reused consistently.
+- 需求覆盖：常量、格式化器、关注/取消关注门店、支付轮询、页面 API 编排均有独立任务覆盖。
+- 占位符扫描：文档中没有 TBD、TODO、fill in later 等占位说明。
+- 类型一致性：计划中定义的 formatter、service、polling 函数名与后续页面导入名保持一致。

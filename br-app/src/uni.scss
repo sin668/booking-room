@@ -2,22 +2,43 @@
 $primary: #4F6EF7;
 $primary-light: #E8EDFF;
 $primary-dark: #3A56D4;
+$primary-soft: #F2F5FF;
 $purple: #6C5CE7;
+$orange: #FF8C00;
+$orange-light: #FFF3E0;
 $bg-color: #F5F6FA;
+$bg-warm: #F8FAFF;
+$surface: #ffffff;
+$surface-soft: #FAFBFF;
 $text-primary: #2D3436;
 $text-secondary: #636E72;
 $text-muted: #B2BEC3;
 $border-color: #e5e7eb;
+$border-soft: rgba(79, 110, 247, 0.08);
 $white: #ffffff;
 $success: #07C160;
+$success-light: rgba(7, 193, 96, 0.1);
 $danger: #FF6B6B;
+$danger-light: rgba(255, 107, 107, 0.12);
 
 // Sizes
 $radius-sm: 8rpx;
 $radius-md: 16rpx;
 $radius-lg: 24rpx;
 $radius-xl: 32rpx;
+$radius-2xl: 40rpx;
 
 // Shadows
 $shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
 $shadow-md: 0 4rpx 16rpx rgba(79, 110, 247, 0.12);
+$shadow-card: 0 10rpx 30rpx rgba(35, 41, 68, 0.07);
+$shadow-float: 0 16rpx 42rpx rgba(79, 110, 247, 0.16);
+$shadow-bottom: 0 -8rpx 24rpx rgba(45, 52, 54, 0.06);
+
+// Gradients
+$gradient-primary: linear-gradient(135deg, #4F6EF7 0%, #6C5CE7 100%);
+$gradient-soft: linear-gradient(180deg, #FFFFFF 0%, #F8FAFF 100%);
+$gradient-card: linear-gradient(135deg, rgba(79, 110, 247, 0.08) 0%, rgba(108, 92, 231, 0.06) 100%);
+
+// Motion
+$ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);

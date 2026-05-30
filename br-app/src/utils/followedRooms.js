@@ -9,6 +9,10 @@ function normalizeRoom(room = {}) {
     name: room.name || '未命名自习室',
     address: room.address || '',
     cover_image: room.cover_image || '',
+    city_id: room.city_id ?? room.cityId ?? null,
+    city_name: room.city_name || room.cityName || '',
+    min_price: room.min_price ?? room.minPrice ?? '',
+    status: room.status || '',
     followed_at: room.followed_at || Date.now(),
   }
 }

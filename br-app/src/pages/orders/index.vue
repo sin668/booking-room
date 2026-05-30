@@ -331,7 +331,7 @@ export default {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: $bg-color;
+  background: linear-gradient(180deg, #fff 0, $bg-warm 180rpx, $bg-color 420rpx);
   display: flex;
   flex-direction: column;
 }
@@ -340,12 +340,14 @@ export default {
 .tabs {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.96);
   padding: 0 16rpx;
   height: 88rpx;
   position: sticky;
   top: 0;
   z-index: 10;
+  border-bottom: 1rpx solid rgba(79, 110, 247, 0.06);
+  backdrop-filter: blur(18rpx);
 }
 
 .tab-item {
@@ -375,7 +377,7 @@ export default {
   width: 48rpx;
   height: 6rpx;
   border-radius: 3rpx;
-  background: $primary;
+  background: $gradient-primary;
 }
 
 /* Scroll view */
@@ -390,10 +392,12 @@ export default {
 }
 
 .skeleton-card {
-  background: #fff;
+  background: $surface;
   border-radius: 32rpx;
   padding: 32rpx;
   margin-bottom: 24rpx;
+  box-shadow: $shadow-sm;
+  border: 1rpx solid $border-soft;
 }
 
 .skeleton-row {
@@ -478,7 +482,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: $surface;
+  box-shadow: $shadow-sm;
 }
 
 .empty-btn:active {
@@ -498,13 +503,13 @@ export default {
 /* Order card */
 .order-card {
   position: relative;
-  background: #fff;
-  border-radius: 28rpx;
+  background: $surface;
+  border-radius: 32rpx;
   padding: 30rpx;
   margin: 0 32rpx 24rpx;
-  box-shadow: $shadow-sm;
+  box-shadow: $shadow-card;
   overflow: hidden;
-  border: 1rpx solid rgba(45, 52, 54, 0.04);
+  border: 1rpx solid $border-soft;
 }
 
 .order-card.status-cancelled {
@@ -584,6 +589,7 @@ export default {
 .status-badge {
   padding: 6rpx 20rpx;
   border-radius: 24rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.6);
 }
 
 .status-badge-text {
@@ -746,7 +752,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: $surface;
+  box-shadow: 0 4rpx 10rpx rgba(79, 110, 247, 0.06);
 }
 
 .action-btn:active {

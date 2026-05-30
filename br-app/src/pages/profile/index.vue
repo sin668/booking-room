@@ -260,7 +260,7 @@ export default {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: $bg-color;
+  background: linear-gradient(180deg, $bg-warm 0, $bg-color 460rpx);
 }
 
 .profile {
@@ -309,7 +309,7 @@ export default {
   align-items: center;
   gap: 24rpx;
   padding: 68rpx 32rpx 76rpx;
-  background: linear-gradient(180deg, $primary 0%, $purple 100%);
+  background: $gradient-primary;
   overflow: hidden;
 }
 
@@ -335,7 +335,8 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 5rpx;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1rpx solid rgba(255, 255, 255, 0.24);
 }
 
 .settings-dot {
@@ -349,7 +350,7 @@ export default {
   width: 128rpx;
   height: 128rpx;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.2);
   border: 3rpx solid rgba(255, 255, 255, 0.35);
   display: flex;
   align-items: center;
@@ -411,10 +412,11 @@ export default {
   margin: -34rpx 28rpx 0;
   position: relative;
   z-index: 2;
-  background: $white;
-  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 32rpx;
   padding: 28rpx 0;
-  box-shadow: 0 8rpx 26rpx rgba(79, 110, 247, 0.11);
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
   display: flex;
   align-items: center;
 }
@@ -457,10 +459,11 @@ export default {
   margin-top: 24rpx;
   margin-left: 28rpx;
   margin-right: 28rpx;
-  background: $white;
-  border-radius: 28rpx;
+  background: $surface;
+  border-radius: 32rpx;
   overflow: hidden;
-  box-shadow: $shadow-sm;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 
 .menu-section-label {
@@ -484,6 +487,11 @@ export default {
   align-items: center;
   padding: 24rpx 28rpx;
   gap: 20rpx;
+  transition: background 0.18s $ease-out;
+}
+
+.menu-item:active {
+  background: $surface-soft;
 }
 
 .menu-icon {
@@ -581,8 +589,8 @@ export default {
   margin: 0 28rpx 14rpx 112rpx;
   border-radius: 22rpx;
   overflow: hidden;
-  background: #f7f8ff;
-  border: 1rpx solid rgba(79, 110, 247, 0.1);
+  background: $surface-soft;
+  border: 1rpx solid $border-soft;
 }
 
 .followed-empty {
@@ -782,12 +790,13 @@ export default {
   margin: 24rpx 28rpx 0;
   padding: 28rpx;
   border-radius: 28rpx;
-  background: linear-gradient(135deg, #30236b 0%, $purple 100%);
+  background: linear-gradient(135deg, #2d356f 0%, $primary 48%, $purple 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20rpx;
   overflow: hidden;
+  box-shadow: $shadow-float;
 }
 
 .member-title {
@@ -808,7 +817,8 @@ export default {
   height: 56rpx;
   padding: 0 24rpx;
   border-radius: 999rpx;
-  background: $white;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8rpx 18rpx rgba(35, 41, 68, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -828,7 +838,8 @@ export default {
   text-align: center;
   border-radius: 22rpx;
   font-size: 28rpx;
-  background: $white;
+  background: $surface;
+  box-shadow: $shadow-sm;
   color: $danger;
   border: 1rpx solid rgba(255, 107, 107, 0.18);
 

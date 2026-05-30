@@ -709,7 +709,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  background: $bg-color;
+  background: linear-gradient(180deg, $bg-warm 0, $bg-color 420rpx);
   min-height: 100vh;
   position: relative;
 }
@@ -734,11 +734,12 @@ export default {
 
 /* Cards */
 .card {
-  background: #fff;
-  border-radius: 32rpx;
+  background: $surface;
+  border-radius: 34rpx;
   padding: 32rpx;
   margin: 24rpx 28rpx;
-  box-shadow: $shadow-sm;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
   animation: fadeInUp 0.3s ease both;
 }
 
@@ -783,7 +784,7 @@ export default {
 
 .payment-option:active,
 .coupon-row-card:active {
-  background: #FAFBFC;
+  background: $surface-soft;
 }
 
 .payment-option-left,
@@ -1133,9 +1134,9 @@ export default {
 .sheet-coupon-option {
   min-height: 96rpx;
   padding: 20rpx;
-  border: 2rpx solid $border-color;
+  border: 2rpx solid $border-soft;
   border-radius: 20rpx;
-  background: #FAFBFC;
+  background: $surface-soft;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1145,7 +1146,7 @@ export default {
 
 .sheet-coupon-option.active {
   border-color: $primary;
-  background: rgba(79, 110, 247, 0.06);
+  background: $primary-soft;
 }
 
 .sheet-coupon-item {
@@ -1276,10 +1277,11 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.98);
   padding: 20rpx 28rpx;
   padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+  box-shadow: $shadow-bottom;
+  backdrop-filter: blur(18rpx);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -1315,7 +1317,8 @@ export default {
   justify-content: center;
   gap: 12rpx;
   border-radius: 44rpx;
-  background: $primary;
+  background: $gradient-primary;
+  box-shadow: $shadow-float;
   transition: all 0.2s;
 }
 
@@ -1363,7 +1366,7 @@ export default {
 
 .modal-sheet {
   width: 100%;
-  background: #fff;
+  background: $surface;
   border-radius: 48rpx 48rpx 0 0;
   padding: 32rpx 48rpx;
   padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
@@ -1421,7 +1424,8 @@ export default {
 /* Summary card */
 .summary-card {
   width: 100%;
-  background: #F8F9FA;
+  background: $surface-soft;
+  border: 1rpx solid $border-soft;
   border-radius: 32rpx;
   padding: 28rpx 32rpx;
   margin-bottom: 40rpx;
@@ -1470,7 +1474,7 @@ export default {
 .coupon-sheet {
   width: 100%;
   max-height: 76vh;
-  background: #fff;
+  background: $surface;
   border-radius: 48rpx 48rpx 0 0;
   padding: 24rpx 32rpx;
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
@@ -1535,7 +1539,8 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 48rpx;
-  background: $primary;
+  background: $gradient-primary;
+  box-shadow: $shadow-float;
 }
 
 .btn-done:active {

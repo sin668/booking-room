@@ -335,6 +335,10 @@ export default {
         name: this.roomName,
         address: this.displayAddress,
         cover_image: this.heroImage,
+        city_id: this.room.city_id,
+        city_name: this.room.city_name,
+        min_price: this.room.min_price,
+        status: this.room.status,
       })
       this.isFav = true
       uni.showToast({ title: '已加入关注门店', icon: 'none' })
@@ -349,7 +353,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  background: $bg-color;
+  background: linear-gradient(180deg, #eef1fb 0, $bg-color 520rpx);
   min-height: 100vh;
 }
 
@@ -373,13 +377,13 @@ export default {
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
-  background: rgba(249, 250, 255, 0.28);
-  border: 1rpx solid rgba(249, 250, 255, 0.4);
+  background: rgba(255, 255, 255, 0.28);
+  border: 1rpx solid rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(35, 41, 68, 0.12);
+  box-shadow: 0 8rpx 24rpx rgba(35, 41, 68, 0.16);
 }
 
 .nav-btn:active {
@@ -532,10 +536,11 @@ export default {
 
 .info-card {
   margin: -42rpx 28rpx 0;
-  background: $white;
-  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 32rpx;
   padding: 30rpx;
-  box-shadow: 0 8rpx 28rpx rgba(79, 110, 247, 0.1);
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
   position: relative;
   z-index: 10;
 }
@@ -587,7 +592,8 @@ export default {
   margin: 24rpx 0 26rpx;
   padding: 18rpx 0;
   border-radius: 22rpx;
-  background: #f7f8ff;
+  background: $gradient-card;
+  border: 1rpx solid rgba(79, 110, 247, 0.05);
 }
 
 .summary-item {
@@ -703,7 +709,8 @@ export default {
 }
 
 .tag-blue {
-  background: $primary-light;
+  background: $primary-soft;
+  border: 1rpx solid rgba(79, 110, 247, 0.08);
 }
 
 .tag-blue .tag-text {
@@ -711,7 +718,8 @@ export default {
 }
 
 .tag-green {
-  background: rgba(7, 193, 96, 0.1);
+  background: $success-light;
+  border: 1rpx solid rgba(7, 193, 96, 0.08);
 }
 
 .tag-green .tag-text {
@@ -719,7 +727,8 @@ export default {
 }
 
 .tag-orange {
-  background: rgba(255, 149, 0, 0.12);
+  background: $orange-light;
+  border: 1rpx solid rgba(255, 140, 0, 0.08);
 }
 
 .tag-orange .tag-text {
@@ -780,11 +789,12 @@ export default {
 .photo-card {
   width: 250rpx;
   height: 176rpx;
-  border-radius: 22rpx;
+  border-radius: 24rpx;
   overflow: hidden;
   flex-shrink: 0;
   background: #eef1fb;
-  box-shadow: $shadow-sm;
+  box-shadow: $shadow-card;
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
 }
 
 .photo-image {
@@ -815,10 +825,11 @@ export default {
 }
 
 .seat-section {
-  background: $white;
-  border-radius: 28rpx;
+  background: $surface;
+  border-radius: 32rpx;
   padding: 28rpx;
-  box-shadow: $shadow-sm;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 
 .stats-grid {
@@ -828,9 +839,10 @@ export default {
 }
 
 .stat-card {
-  border-radius: 22rpx;
+  border-radius: 24rpx;
   padding: 22rpx 18rpx;
-  background: #f7f8ff;
+  background: $surface-soft;
+  border: 1rpx solid rgba(79, 110, 247, 0.05);
   display: flex;
   align-items: center;
   gap: 16rpx;
@@ -991,9 +1003,10 @@ export default {
   gap: 18rpx;
   padding: 18rpx 28rpx;
   padding-bottom: calc(18rpx + env(safe-area-inset-bottom));
-  background: rgba(249, 250, 255, 0.98);
+  background: rgba(255, 255, 255, 0.98);
   border-top: 1rpx solid rgba(45, 52, 54, 0.06);
-  box-shadow: 0 -8rpx 24rpx rgba(45, 52, 54, 0.06);
+  box-shadow: $shadow-bottom;
+  backdrop-filter: blur(18rpx);
   z-index: 100;
 }
 
@@ -1031,13 +1044,13 @@ export default {
 .book-btn {
   flex: 1;
   height: 92rpx;
-  background: $primary;
+  background: $gradient-primary;
   border-radius: 44rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10rpx 24rpx rgba(79, 110, 247, 0.24);
+  box-shadow: $shadow-float;
 }
 
 .book-btn:active {

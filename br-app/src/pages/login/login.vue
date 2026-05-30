@@ -614,7 +614,7 @@ function openAgreement(type) {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: $bg-color;
+  background: linear-gradient(180deg, #fff 0, $bg-warm 360rpx, $bg-color 100%);
   position: relative;
   overflow: hidden;
 }
@@ -657,7 +657,7 @@ function openAgreement(type) {
   width: 136rpx;
   height: 136rpx;
   border-radius: 36rpx;
-  background: linear-gradient(135deg, $primary, $purple);
+  background: $gradient-primary;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -686,11 +686,13 @@ function openAgreement(type) {
 .tab-bar {
   position: relative;
   display: flex;
-  background: $white;
-  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 24rpx;
   padding: 6rpx;
   margin-bottom: 44rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+  backdrop-filter: blur(18rpx);
 }
 .tab-indicator {
   position: absolute;
@@ -698,7 +700,7 @@ function openAgreement(type) {
   left: 6rpx;
   width: calc(50% - 12rpx);
   height: calc(100% - 12rpx);
-  background: linear-gradient(135deg, $primary, $purple);
+  background: $gradient-primary;
   border-radius: 16rpx;
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4rpx 12rpx rgba(79, 110, 247, 0.25);
@@ -750,13 +752,13 @@ function openAgreement(type) {
 .input-wrap {
   display: flex;
   align-items: center;
-  background: $white;
-  border-radius: 20rpx;
-  border: 2rpx solid transparent;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 24rpx;
+  border: 2rpx solid $border-soft;
   padding: 0 28rpx;
   height: 100rpx;
   transition: border-color 0.25s, box-shadow 0.25s;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+  box-shadow: $shadow-sm;
 }
 .input-wrap:focus-within {
   border-color: $primary;
@@ -892,14 +894,14 @@ function openAgreement(type) {
 .btn-primary {
   width: 100%;
   height: 100rpx;
-  background: linear-gradient(135deg, $primary, $purple);
+  background: $gradient-primary;
   color: $white;
-  border-radius: 20rpx;
+  border-radius: 48rpx;
   font-size: 30rpx;
   font-weight: 600;
   border: none;
   margin-top: 20rpx;
-  box-shadow: 0 8rpx 24rpx rgba(79, 110, 247, 0.3);
+  box-shadow: $shadow-float;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -961,11 +963,12 @@ function openAgreement(type) {
 .social-icon {
   width: 96rpx;
   height: 96rpx;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 .social-icon-text {
   font-size: 34rpx;

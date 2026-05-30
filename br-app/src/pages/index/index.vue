@@ -90,31 +90,15 @@
         </view>
       </view>
 
-      <view class="section">
+      <view v-if="followedRooms.length > 0" class="section">
         <view class="section-header">
-          <text class="section-title">附近自习室</text>
+          <text class="section-title">关注自习室</text>
           <text class="section-more" @tap="onTapMoreRooms">查看更多</text>
         </view>
 
-        <view v-if="roomsLoading && rooms.length === 0" class="room-list">
-          <view v-for="i in 2" :key="i" class="room-card room-card-skeleton">
-            <view class="room-cover skeleton-block" />
-            <view class="room-info">
-              <view class="skeleton-line long" />
-              <view class="skeleton-line short" />
-              <view class="skeleton-line medium" />
-            </view>
-          </view>
-        </view>
-
-        <view v-else-if="rooms.length === 0" class="empty-rooms">
-          <text class="empty-rooms-title">当前城市暂无自习室</text>
-          <text class="empty-rooms-text">切换城市或稍后再试</text>
-        </view>
-
-        <view v-else class="room-list">
+        <view class="room-list">
           <view
-            v-for="room in rooms"
+            v-for="room in followedRooms"
             :key="room.id"
             class="room-card"
             @tap="onTapRoom(room)"
@@ -128,7 +112,9 @@
               </view>
               <view class="room-meta">
                 <text class="room-tag">在线选座</text>
-                <text class="room-price">¥{{ room.min_price || 0 }}起</text>
+                <text :class="['room-price', { muted: !roomPriceText(room) }]">
+                  {{ roomPriceText(room) || '查看详情' }}
+                </text>
               </view>
             </view>
           </view>
@@ -143,7 +129,7 @@
         </view>
         <view class="activity-grid">
           <view
-            v-for="activity in activities"
+            v-for="activity in displayedActivities"
             :key="activity.id"
             class="activity-card"
           >
@@ -167,8 +153,8 @@
 import { getBanners } from '@/api/banners'
 import { getActivities } from '@/api/activities'
 import { getNotificationUnreadSummary } from '@/api/notifications'
-import { getRooms } from '@/api/rooms'
 import { useCityStore } from '@/store/modules/city'
+import { getFollowedRooms } from '@/utils/followedRooms'
 
 const REAL_ROOM_COVERS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=720&h=520&fit=crop&q=85',
@@ -185,8 +171,7 @@ export default {
       banners: [],
       currentBanner: 0,
       activities: [],
-      rooms: [],
-      roomsLoading: false,
+      followedRooms: [],
       lastCityId: null,
       quickEntries: [
         { label: '钱包充值', iconClass: 'icon-wallet', bgColor: 'rgba(79,110,247,0.1)', color: '#4F6EF7', path: '/pages/recharge/index' },
@@ -215,15 +200,22 @@ export default {
     currentCityId() {
       return this.cityStore.currentCity?.id || null
     },
+
+    displayedActivities() {
+      return this.activities.slice(0, 4)
+    },
   },
   methods: {
     async loadData() {
       const cityChanged = this.lastCityId !== this.currentCityId
+      if (cityChanged) {
+        this.lastCityId = this.currentCityId
+      }
+      this.loadFollowedRooms()
       await Promise.allSettled([
         this.loadNotificationUnreadSummary(),
         this.loadBanners(),
         this.loadActivities(),
-        this.loadRooms(cityChanged || this.rooms.length === 0),
       ])
     },
 
@@ -254,33 +246,32 @@ export default {
       }
     },
 
-    async loadRooms(force = false) {
-      if (this.roomsLoading) return
-      if (!force && this.rooms.length > 0) return
-
-      this.roomsLoading = true
-      try {
-        if (!this.cityStore.initialized) {
-          await this.cityStore.initCity()
-        }
-        const params = { page: 1, page_size: 6 }
-        if (this.currentCityId) {
-          params.city_id = this.currentCityId
-        }
-        const data = await getRooms(params)
-        this.rooms = data.items || []
-        this.lastCityId = this.currentCityId
-      } catch {
-        this.rooms = []
-      } finally {
-        this.roomsLoading = false
-      }
+    loadFollowedRooms() {
+      const cityId = this.currentCityId == null ? null : Number(this.currentCityId)
+      const cityName = this.currentCityName || ''
+      this.followedRooms = getFollowedRooms()
+        .filter((room) => {
+          if (cityId !== null && room.city_id !== null && room.city_id !== undefined && room.city_id !== '') {
+            return Number(room.city_id) === cityId
+          }
+          if (cityName && room.city_name) {
+            return room.city_name === cityName
+          }
+          return !room.city_id && !room.city_name
+        })
+        .slice(0, 3)
     },
 
     roomCover(room) {
       if (room.cover_image) return room.cover_image
       const key = Number(room.id || 0)
       return REAL_ROOM_COVERS[key % REAL_ROOM_COVERS.length]
+    },
+
+    roomPriceText(room) {
+      const price = Number(room?.min_price)
+      if (!Number.isFinite(price) || price <= 0) return ''
+      return `¥${price}起`
     },
 
     onBannerChange(e) {
@@ -343,7 +334,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  background: $bg-color;
+  background: linear-gradient(180deg, #fff 0, $bg-warm 180rpx, $bg-color 420rpx);
   min-height: 100vh;
 }
 
@@ -353,8 +344,9 @@ export default {
   align-items: center;
   height: 88rpx;
   padding: 0 28rpx;
-  background: #fff;
-  box-shadow: 0 1rpx 0 0 rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 1rpx 0 0 rgba(79, 110, 247, 0.06);
+  backdrop-filter: blur(18rpx);
 }
 
 .nav-location {
@@ -388,8 +380,9 @@ export default {
   height: 64rpx;
   margin: 0 20rpx;
   padding: 0 24rpx;
-  background: $bg-color;
+  background: $primary-soft;
   border-radius: 32rpx;
+  border: 1rpx solid $border-soft;
 }
 
 .nav-search-icon {
@@ -412,6 +405,8 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  background: $surface-soft;
+  border: 1rpx solid $border-soft;
 }
 
 .nav-bell:active {
@@ -442,10 +437,11 @@ export default {
 /* Banner */
 .banner-section {
   margin: 20rpx 28rpx 0;
-  border-radius: 28rpx;
+  border-radius: 32rpx;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.06);
+  box-shadow: $shadow-card;
+  border: 1rpx solid rgba(255, 255, 255, 0.66);
 }
 
 .banner-swiper {
@@ -530,7 +526,12 @@ export default {
 .quick-entry {
   display: flex;
   justify-content: space-around;
-  padding: 36rpx 16rpx 28rpx;
+  margin: 24rpx 28rpx 0;
+  padding: 28rpx 8rpx 24rpx;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 28rpx;
+  border: 1rpx solid $border-soft;
+  box-shadow: $shadow-sm;
 }
 
 .quick-entry-item {
@@ -547,11 +548,11 @@ export default {
 .quick-entry-icon {
   width: 96rpx;
   height: 96rpx;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8rpx 18rpx rgba(35, 41, 68, 0.06);
   transition: box-shadow 0.2s;
 }
 
@@ -574,11 +575,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 8rpx 28rpx 0;
+  margin: 24rpx 28rpx 0;
   padding: 32rpx;
-  border-radius: 24rpx;
-  background: linear-gradient(135deg, $primary, $purple);
-  box-shadow: 0 8rpx 24rpx rgba(79, 110, 247, 0.25);
+  border-radius: 30rpx;
+  background: $gradient-primary;
+  box-shadow: $shadow-float;
   transition: transform 0.2s;
 }
 
@@ -679,9 +680,10 @@ export default {
   display: flex;
   min-height: 188rpx;
   overflow: hidden;
-  border-radius: 22rpx;
-  background: #fff;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  border-radius: 26rpx;
+  background: $surface;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
   transition: transform 0.2s;
 }
 
@@ -761,6 +763,12 @@ export default {
   color: $danger;
 }
 
+.room-price.muted {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: $primary;
+}
+
 .empty-rooms {
   display: flex;
   flex-direction: column;
@@ -826,16 +834,20 @@ export default {
 .activity-grid {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   padding: 0 28rpx;
-  gap: 20rpx;
+  row-gap: 20rpx;
 }
 
 .activity-card {
-  width: calc(50% - 10rpx);
-  background: #fff;
-  border-radius: 20rpx;
+  width: 337rpx;
+  box-sizing: border-box;
+  margin-bottom: 20rpx;
+  background: $surface;
+  border-radius: 24rpx;
   overflow: hidden;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
   transition: transform 0.2s;
 }
 

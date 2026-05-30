@@ -106,7 +106,7 @@
                     :class="['seat', seatClass(seat)]"
                     @tap="onTapSeat(seat)"
                   >
-                    <text v-if="isBookedSeat(seat)" class="seat-person">🧑</text>
+                    <view v-if="isBookedSeat(seat)" class="seat-person" />
                     <text class="seat-number">{{ seat.seat_number }}</text>
                     <view v-if="!seat.is_available" class="seat-line" />
                   </view>
@@ -449,7 +449,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  background: $bg-color;
+  background: linear-gradient(180deg, #fff 0, $bg-warm 260rpx, $bg-color 520rpx);
   min-height: 100vh;
   position: relative;
 }
@@ -462,7 +462,9 @@ export default {
 /* Zone tabs */
 .zone-section {
   padding: 20rpx 28rpx;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1rpx solid rgba(79, 110, 247, 0.06);
+  backdrop-filter: blur(18rpx);
 }
 
 .zone-scroll {
@@ -481,13 +483,16 @@ export default {
   height: 64rpx;
   padding: 0 32rpx;
   border-radius: 32rpx;
-  background: $bg-color;
+  background: $surface;
+  border: 1rpx solid $border-soft;
+  box-shadow: $shadow-sm;
   flex-shrink: 0;
   transition: all 0.2s;
 }
 
 .zone-tab.active {
-  background: $primary;
+  background: $gradient-primary;
+  box-shadow: $shadow-float;
 }
 
 .zone-tab-text {
@@ -502,7 +507,7 @@ export default {
 /* Date & time picker */
 .picker-section {
   padding: 16rpx 28rpx;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.96);
   margin-top: 2rpx;
 }
 
@@ -523,16 +528,18 @@ export default {
   justify-content: center;
   width: 104rpx;
   height: 120rpx;
-  border-radius: 20rpx;
-  background: #fff;
+  border-radius: 22rpx;
+  background: $surface;
   box-shadow: $shadow-sm;
+  border: 1rpx solid $border-soft;
   flex-shrink: 0;
   transition: all 0.2s;
 }
 
 .date-item.active {
-  background: $primary;
-  box-shadow: 0 4rpx 16rpx rgba(79, 110, 247, 0.3);
+  background: $gradient-primary;
+  box-shadow: $shadow-float;
+  border-color: transparent;
 }
 
 .date-weekday {
@@ -581,14 +588,15 @@ export default {
   height: 72rpx;
   padding: 0 8rpx;
   border-radius: 18rpx;
-  border: 2rpx solid $border-color;
-  background: #fff;
+  border: 2rpx solid $border-soft;
+  background: $surface;
   transition: all 0.2s;
 }
 
 .time-slot.selected {
-  background: $primary;
+  background: $gradient-primary;
   border-color: $primary;
+  box-shadow: 0 8rpx 18rpx rgba(79, 110, 247, 0.18);
 }
 
 .time-slot.disabled {
@@ -634,10 +642,11 @@ export default {
 }
 
 .seat-card {
-  background: #fff;
-  border-radius: 32rpx;
+  background: $surface;
+  border-radius: 34rpx;
   padding: 32rpx;
-  box-shadow: $shadow-sm;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 
 .card-header {
@@ -667,7 +676,8 @@ export default {
 
 /* Window indicator */
 .window-strip {
-  background: #EBF2FF;
+  background: $primary-soft;
+  border: 1rpx solid rgba(79, 110, 247, 0.08);
   border-radius: 12rpx;
   padding: 8rpx 0;
   text-align: center;
@@ -718,7 +728,7 @@ export default {
 }
 
 .section-label.quiet {
-  background: $primary-light;
+  background: $primary-soft;
 }
 
 .section-label.keyboard {
@@ -801,7 +811,7 @@ export default {
   position: relative;
   width: 64rpx;
   height: 64rpx;
-  border-radius: 12rpx;
+  border-radius: 14rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -809,7 +819,7 @@ export default {
 }
 
 .seat.available {
-  background: #E8F5E9;
+  background: $success-light;
   border: 2rpx solid #66BB6A;
 }
 
@@ -818,18 +828,18 @@ export default {
 }
 
 .seat.selected {
-  background: $primary;
+  background: $gradient-primary;
   border: 2rpx solid $primary-dark;
   box-shadow: 0 4rpx 12rpx rgba(79, 110, 247, 0.3);
 }
 
 .seat.occupied {
-  background: #F0F0F0;
+  background: #F2F3F5;
   border: 2rpx solid #E0E0E0;
 }
 
 .seat.vip {
-  background: #FFF3E0;
+  background: $orange-light;
   border: 2rpx solid #FFB74D;
 }
 
@@ -871,9 +881,23 @@ export default {
 
 .seat-person {
   position: absolute;
-  top: -12rpx;
-  font-size: 20rpx;
-  line-height: 1;
+  top: -7rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: $primary;
+  box-shadow: 0 0 0 3rpx $primary-light;
+}
+
+.seat-person::after {
+  content: '';
+  position: absolute;
+  left: -4rpx;
+  right: -4rpx;
+  top: 14rpx;
+  height: 9rpx;
+  border-radius: 9rpx 9rpx 3rpx 3rpx;
+  background: $primary;
 }
 
 /* Legend */
@@ -934,10 +958,11 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.98);
   padding: 20rpx 28rpx;
   padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+  box-shadow: $shadow-bottom;
+  backdrop-filter: blur(18rpx);
   z-index: 100;
 }
 
@@ -1012,7 +1037,8 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 44rpx;
-  background: $primary;
+  background: $gradient-primary;
+  box-shadow: $shadow-float;
   transition: all 0.2s;
 }
 

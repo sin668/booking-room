@@ -276,7 +276,7 @@ export default {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: $bg-color;
+  background: linear-gradient(180deg, #fff 0, $bg-warm 180rpx, $bg-color 420rpx);
   display: flex;
   flex-direction: column;
 }
@@ -285,9 +285,10 @@ export default {
   height: 88rpx;
   display: flex;
   align-items: center;
-  background: $white;
+  background: rgba(255, 255, 255, 0.96);
   border-top: 1rpx solid rgba(45, 52, 54, 0.04);
   box-shadow: 0 2rpx 10rpx rgba(45, 52, 54, 0.03);
+  backdrop-filter: blur(18rpx);
   z-index: 2;
 }
 
@@ -323,7 +324,7 @@ export default {
   height: 30rpx;
   padding: 0 8rpx;
   border-radius: 999rpx;
-  background: $primary;
+  background: $gradient-primary;
   color: $white;
   font-size: 20rpx;
   line-height: 30rpx;
@@ -336,7 +337,7 @@ export default {
   width: 56rpx;
   height: 4rpx;
   border-radius: 4rpx 4rpx 0 0;
-  background: $primary;
+  background: $gradient-primary;
 }
 
 .coupon-scroll {
@@ -353,10 +354,11 @@ export default {
   display: flex;
   min-height: 178rpx;
   margin-bottom: 24rpx;
-  background: $white;
-  border-radius: 24rpx;
+  background: $surface;
+  border-radius: 28rpx;
   overflow: hidden;
-  box-shadow: 0 8rpx 26rpx rgba(45, 52, 54, 0.07);
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 
 .coupon-card::before,
@@ -382,7 +384,7 @@ export default {
 
 .coupon-card.status-used,
 .coupon-card.status-expired {
-  box-shadow: 0 4rpx 18rpx rgba(45, 52, 54, 0.04);
+  box-shadow: $shadow-sm;
   opacity: 0.78;
 }
 
@@ -467,11 +469,11 @@ export default {
   height: 64rpx;
   padding: 0 30rpx;
   border-radius: 999rpx;
-  background: $primary;
+  background: $gradient-primary;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 18rpx rgba(79, 110, 247, 0.22);
+  box-shadow: $shadow-float;
 }
 
 .use-btn:active {
@@ -614,7 +616,8 @@ export default {
   padding: 0 44rpx;
   border-radius: 999rpx;
   border: 2rpx solid $primary;
-  background: $white;
+  background: $surface;
+  box-shadow: $shadow-sm;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -640,8 +643,9 @@ export default {
   margin-bottom: 24rpx;
   border-radius: 24rpx;
   overflow: hidden;
-  background: $white;
-  box-shadow: $shadow-sm;
+  background: $surface;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 
 .skeleton-bar {

@@ -266,7 +266,7 @@ onReachBottom(() => {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: $bg-color;
+  background: linear-gradient(180deg, $bg-warm 0, $bg-color 460rpx);
   padding-bottom: 40rpx;
 }
 
@@ -305,8 +305,9 @@ onReachBottom(() => {
 .summary-card {
   margin: 24rpx 32rpx;
   padding: 32rpx 24rpx;
-  border-radius: 28rpx;
-  background: linear-gradient(135deg, $primary, $purple);
+  border-radius: 32rpx;
+  background: $gradient-primary;
+  box-shadow: $shadow-float;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20rpx;
@@ -318,8 +319,9 @@ onReachBottom(() => {
   align-items: center;
   gap: 8rpx;
   padding: 20rpx 0;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 16rpx;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 20rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.16);
 }
 
 .stat-value {
@@ -336,9 +338,10 @@ onReachBottom(() => {
 .calendar-card {
   margin: 24rpx 32rpx;
   padding: 32rpx;
-  border-radius: 28rpx;
-  background: $white;
-  box-shadow: $shadow-sm;
+  border-radius: 32rpx;
+  background: $surface;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 
 .calendar-header {
@@ -355,7 +358,8 @@ onReachBottom(() => {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: $bg-color;
+  background: $primary-soft;
+  border: 1rpx solid $border-soft;
 
   &:active {
     background: $border-color;
@@ -409,7 +413,8 @@ onReachBottom(() => {
 }
 
 .day-inner.day-today {
-  background: $primary;
+  background: $gradient-primary;
+  box-shadow: 0 6rpx 14rpx rgba(79, 110, 247, 0.22);
 }
 
 .day-inner.day-future {
@@ -512,10 +517,11 @@ onReachBottom(() => {
 }
 
 .record-card {
-  background: $white;
-  border-radius: 24rpx;
+  background: $surface;
+  border-radius: 28rpx;
   padding: 28rpx;
-  box-shadow: $shadow-sm;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 
 .record-top {

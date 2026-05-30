@@ -339,14 +339,14 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  background: $bg-color;
+  background: linear-gradient(180deg, #fff 0, $bg-warm 260rpx, $bg-color 520rpx);
   min-height: 100vh;
 }
 
 .hero-section {
   padding: 28rpx 28rpx 22rpx;
-  background: #fdfdff;
-  box-shadow: 0 1rpx 0 rgba(0, 0, 0, 0.04);
+  background: linear-gradient(180deg, #fff 0%, $surface-soft 100%);
+  box-shadow: 0 1rpx 0 rgba(79, 110, 247, 0.06);
 }
 
 .hero-topline {
@@ -376,7 +376,8 @@ export default {
   height: 56rpx;
   padding: 0 18rpx;
   border-radius: 28rpx;
-  background: $primary-light;
+  background: $primary-soft;
+  border: 1rpx solid $border-soft;
   transition: transform 0.18s ease-out;
 }
 
@@ -403,8 +404,9 @@ export default {
   margin-top: 26rpx;
   padding: 0 24rpx;
   border-radius: 36rpx;
-  background: $bg-color;
-  border: 1rpx solid rgba(79, 110, 247, 0.06);
+  background: $white;
+  border: 1rpx solid $border-soft;
+  box-shadow: $shadow-sm;
   transition: transform 0.18s ease-out, background-color 0.18s ease-out;
 }
 
@@ -441,8 +443,9 @@ export default {
   height: 56rpx;
   padding: 0 22rpx;
   border-radius: 28rpx;
-  background: $bg-color;
-  border: 1rpx solid transparent;
+  background: $white;
+  border: 1rpx solid $border-soft;
+  box-shadow: $shadow-sm;
   transition: transform 0.18s ease-out, background-color 0.18s ease-out, border-color 0.18s ease-out;
 }
 
@@ -451,9 +454,9 @@ export default {
 }
 
 .filter-pill.active {
-  background: $primary;
+  background: $gradient-primary;
   border-color: $primary;
-  box-shadow: 0 8rpx 18rpx rgba(79, 110, 247, 0.16);
+  box-shadow: $shadow-float;
 }
 
 .filter-pill-text {
@@ -497,7 +500,8 @@ export default {
   height: 52rpx;
   padding: 0 18rpx;
   border-radius: 26rpx;
-  background: #fdfdff;
+  background: $surface;
+  border: 1rpx solid $border-soft;
   box-shadow: $shadow-sm;
   transition: transform 0.18s ease-out;
 }
@@ -527,11 +531,11 @@ export default {
 .room-card {
   display: flex;
   min-height: 244rpx;
-  background: #fdfdff;
-  border-radius: 24rpx;
+  background: $surface;
+  border-radius: 28rpx;
   overflow: hidden;
-  box-shadow: 0 8rpx 24rpx rgba(45, 52, 54, 0.06);
-  border: 1rpx solid rgba(79, 110, 247, 0.05);
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
   transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
 }
 
@@ -560,7 +564,8 @@ export default {
   left: 14rpx;
   padding: 7rpx 13rpx;
   border-radius: 18rpx;
-  background: rgba(249, 250, 255, 0.94);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4rpx 12rpx rgba(35, 41, 68, 0.08);
 }
 
 .cover-status.open .cover-status-text {
@@ -652,7 +657,8 @@ export default {
   min-width: 0;
   padding: 10rpx 8rpx;
   border-radius: 14rpx;
-  background: #f6f8fe;
+  background: $primary-soft;
+  border: 1rpx solid rgba(79, 110, 247, 0.04);
 }
 
 .detail-value {
@@ -691,7 +697,8 @@ export default {
 .room-tag {
   padding: 6rpx 12rpx;
   border-radius: 18rpx;
-  background: $bg-color;
+  background: $surface-soft;
+  border: 1rpx solid rgba(99, 110, 114, 0.06);
   color: $text-secondary;
   font-size: 20rpx;
   line-height: 1;
@@ -777,8 +784,9 @@ export default {
   margin: 30rpx 28rpx 0;
   padding: 132rpx 0;
   border-radius: 24rpx;
-  background: #fdfdff;
-  box-shadow: $shadow-sm;
+  background: $surface;
+  border: 1rpx solid $border-soft;
+  box-shadow: $shadow-card;
 }
 
 .empty-icon {

@@ -30,11 +30,12 @@ export default {
 @import '@/static/icons/iconfont.css';
 
 page {
-  background-color: $bg-color;
+  background: linear-gradient(180deg, $bg-warm 0%, $bg-color 220rpx);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
   color: $text-primary;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 </style>

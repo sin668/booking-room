@@ -12,6 +12,11 @@ from sqlalchemy import String, cast, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
+from app.domain.wallet_rules import (
+    transaction_completed_at,
+    transaction_direction,
+    transaction_title,
+)
 from app.models.coupon import Coupon
 from app.models.user import User
 from app.models.wallet import WalletTransaction
@@ -85,26 +90,12 @@ class WechatOpenIdRequiredError(WalletServiceError):
 
 def _transaction_title(transaction_type: str, status: str) -> str:
     """获取交易标题."""
-    if transaction_type == "recharge":
-        return {
-            "completed": "充值到账",
-            "pending": "充值待支付",
-            "failed": "充值失败",
-        }.get(status, "钱包充值")
-    if transaction_type == "consume":
-        return "钱包消费"
-    if transaction_type == "refund":
-        return "钱包退款"
-    if transaction_type == "booking_refund":
-        return "取消退款"
-    return "钱包流水"
+    return transaction_title(transaction_type, status)
 
 
 def _transaction_direction(transaction_type: str) -> str:
     """获取交易方向."""
-    if transaction_type == "consume":
-        return "expense"
-    return "income"
+    return transaction_direction(transaction_type)
 
 
 def _admin_wallet_base_conditions() -> list:
@@ -114,12 +105,7 @@ def _admin_wallet_base_conditions() -> list:
 
 def _transaction_completed_at(transaction: WalletTransaction) -> datetime | None:
     """获取交易完成时间."""
-    paid_at = getattr(transaction, "paid_at", None)
-    if paid_at is not None:
-        return paid_at
-    if transaction.status == "completed":
-        return getattr(transaction, "notify_processed_at", None) or transaction.created_at
-    return None
+    return transaction_completed_at(transaction)
 
 
 class WalletService:

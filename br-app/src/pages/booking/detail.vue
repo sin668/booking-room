@@ -181,7 +181,7 @@
 <script>
 import { getRoom } from '@/api/rooms'
 import { getSeatStats } from '@/api/seats'
-import { followRoom, isRoomFollowed, unfollowRoom } from '@/utils/followedRooms'
+import { followRoom, isRoomFollowed, unfollowRoom } from '@/services/followedRooms'
 
 const REAL_ROOM_PHOTOS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&h=560&fit=crop&q=85',

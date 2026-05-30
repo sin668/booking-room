@@ -152,7 +152,7 @@ import { useUserStore } from '@/store/modules/user'
 import { getCoupons } from '@/api/coupons'
 import { getMonthlySummary } from '@/api/studyRecords'
 import { getBalance } from '@/api/wallet'
-import { getFollowedRooms } from '@/utils/followedRooms'
+import { getFollowedRooms, getFollowedRoomsSummary } from '@/services/followedRooms'
 
 export default {
   data() {
@@ -177,9 +177,7 @@ export default {
       return `${this.formatHours(this.totalStudyHours)}h`
     },
     followedRoomsSummary() {
-      if (this.followedRooms.length === 0) return '暂无关注'
-      if (this.followedRooms.length === 1) return this.followedRooms[0].name
-      return `${this.followedRooms[0].name}等${this.followedRooms.length}家`
+      return getFollowedRoomsSummary(this.followedRooms)
     },
   },
   onShow() {

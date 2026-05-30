@@ -117,7 +117,7 @@ git commit -m "refactor: add app formatter constants"
 - 修改：`br-app/src/pages/booking/detail.vue`
 - 修改：`br-app/scripts/test-refactored-page-logic.js`
 
-- [ ] **Step 1：先写失败的关注门店服务测试**
+- [x] **Step 1：先写失败的关注门店服务测试**
 
 在 `test-refactored-page-logic.js` 中新增 `testFollowedRooms()`，用 fake `uni` storage 验证归一化、关注、取消关注、摘要：
 
@@ -132,13 +132,13 @@ service.unfollowRoom(7)
 assert.deepEqual(service.getFollowedRooms().map((room) => room.id), [8])
 ```
 
-- [ ] **Step 2：运行测试并确认失败**
+- [x] **Step 2：运行测试并确认失败**
 
 运行：`cd br-app && npm run test:refactor`
 
 预期：失败，提示 `src/services/followedRooms.js` 不存在。
 
-- [ ] **Step 3：实现 service 与兼容 re-export**
+- [x] **Step 3：实现 service 与兼容 re-export**
 
 新建 `br-app/src/services/followedRooms.js`，导出：
 
@@ -154,7 +154,7 @@ getFollowedRoomsSummary(rooms)
 
 修改 `br-app/src/utils/followedRooms.js` 为从 `@/services/followedRooms` 重新导出同名 API。
 
-- [ ] **Step 4：把页面导入切到 service**
+- [x] **Step 4：把页面导入切到 service**
 
 更新：
 
@@ -172,7 +172,7 @@ followedRoomsSummary() {
 }
 ```
 
-- [ ] **Step 5：运行测试和构建**
+- [x] **Step 5：运行测试和构建**
 
 运行：
 
@@ -184,7 +184,7 @@ npm run build:h5
 
 预期：全部通过。
 
-- [ ] **Step 6：提交**
+- [x] **Step 6：提交**
 
 ```bash
 git add br-app/scripts/test-refactored-page-logic.js br-app/src/services/followedRooms.js br-app/src/utils/followedRooms.js br-app/src/pages/index/index.vue br-app/src/pages/profile/index.vue br-app/src/pages/booking/detail.vue

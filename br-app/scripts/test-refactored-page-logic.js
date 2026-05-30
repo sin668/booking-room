@@ -47,6 +47,7 @@ function loadModule(relativePath, injected = {}, cache = {}) {
     console,
     setTimeout,
     clearTimeout,
+    uni: global.uni,
     __resolveImport: resolveImport,
   }
   vm.runInNewContext(source, sandbox, { filename })
@@ -80,5 +81,29 @@ function testFormatters() {
   assert.equal(formatHourDuration('09:00', '11:30'), '2.5小时')
 }
 
+function testFollowedRooms() {
+  const storage = {}
+  global.uni = {
+    getStorageSync(key) {
+      return storage[key]
+    },
+    setStorageSync(key, value) {
+      storage[key] = value
+    },
+  }
+
+  const service = loadModule('src/services/followedRooms.js')
+  service.followRoom({ id: '7', name: '南门店', minPrice: 8, cityName: '茂名' })
+  assert.equal(service.isRoomFollowed(7), true)
+  assert.equal(service.getFollowedRooms()[0].min_price, 8)
+  assert.equal(service.getFollowedRoomsSummary(service.getFollowedRooms()), '南门店')
+  service.followRoom({ room_id: 8, name: '东门店' })
+  assert.equal(service.getFollowedRoomsSummary(service.getFollowedRooms()), '东门店等2家')
+  service.unfollowRoom(7)
+  assert.deepEqual(service.getFollowedRooms().map((room) => room.id), [8])
+  delete global.uni
+}
+
 testFormatters()
+testFollowedRooms()
 console.log('br-app refactored page logic tests passed')

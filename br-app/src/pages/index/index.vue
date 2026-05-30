@@ -154,7 +154,7 @@ import { getBanners } from '@/api/banners'
 import { getActivities } from '@/api/activities'
 import { getNotificationUnreadSummary } from '@/api/notifications'
 import { useCityStore } from '@/store/modules/city'
-import { getFollowedRooms } from '@/utils/followedRooms'
+import { getFollowedRooms } from '@/services/followedRooms'
 
 const REAL_ROOM_COVERS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=720&h=520&fit=crop&q=85',

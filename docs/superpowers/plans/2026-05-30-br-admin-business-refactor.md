@@ -247,7 +247,7 @@ git commit -m "refactor: extract admin api contracts"
 - 新建：`br-admin/src/views/business/shared/tableBuilders.ts`
 - 修改：`br-admin/scripts/test-admin-business-refactor.ts`
 
-- [ ] **Step 1：先写失败的 builder 测试**
+- [x] **Step 1：先写失败的 builder 测试**
 
 在测试脚本中追加：
 
@@ -287,13 +287,13 @@ function testSharedViewBuilders() {
 testSharedViewBuilders();
 ```
 
-- [ ] **Step 2：运行测试并确认失败**
+- [x] **Step 2：运行测试并确认失败**
 
 运行：`cd br-admin && pnpm test:business-refactor`
 
 预期：失败，提示 `src/views/business/shared/options` 不存在。
 
-- [ ] **Step 3：实现共享 options**
+- [x] **Step 3：实现共享 options**
 
 新增 `options.ts`，导出：
 
@@ -367,13 +367,13 @@ export const WALLET_STATUS_TAGS: Record<string, BusinessTagConfig> = {
 };
 ```
 
-- [ ] **Step 4：实现 formatters 和 tableBuilders**
+- [x] **Step 4：实现 formatters 和 tableBuilders**
 
 `formatters.ts` 导出 `formatAdminMoney`、`formatAdminDate`、`formatAdminDateTime`、`formatPaymentMethod`、`getTagConfig`。
 
 `tableBuilders.ts` 导出 `createTextColumn`、`createMoneyColumn`、`createDateTimeColumn`、`createTagColumn`。
 
-- [ ] **Step 5：运行测试和构建**
+- [x] **Step 5：运行测试和构建**
 
 运行：
 
@@ -385,7 +385,7 @@ pnpm build
 
 预期：测试和构建通过。
 
-- [ ] **Step 6：提交**
+- [x] **Step 6：提交**
 
 ```bash
 git add br-admin/scripts/test-admin-business-refactor.ts br-admin/src/views/business/shared/options.ts br-admin/src/views/business/shared/formatters.ts br-admin/src/views/business/shared/tableBuilders.ts

@@ -257,6 +257,7 @@ import { createBooking, getBookingPaymentStatus } from '@/api/bookings'
 import { getRoom } from '@/api/rooms'
 import { getAvailableCouponsForBooking } from '@/api/coupons'
 import { getBalance } from '@/api/wallet'
+import { createPaymentStatusError, pollPaymentStatus } from '@/services/paymentPolling'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 const PAYMENT_POLL_INTERVAL = 2000
@@ -626,20 +627,12 @@ export default {
     },
 
     async pollBookingPaymentStatus(bookingId) {
-      for (let attempt = 0; attempt < PAYMENT_POLL_MAX_ATTEMPTS; attempt += 1) {
-        const statusRes = await getBookingPaymentStatus(bookingId)
-        const status = statusRes?.payment_status || statusRes?.paymentStatus
-        if (status === 'paid') {
-          return statusRes
-        }
-        if (status === 'failed' || status === 'cancelled' || status === 'closed') {
-          throw this.createPaymentStatusError(status)
-        }
-        if (attempt < PAYMENT_POLL_MAX_ATTEMPTS - 1) {
-          await this.wait(PAYMENT_POLL_INTERVAL)
-        }
-      }
-      return null
+      return pollPaymentStatus({
+        fetchStatus: () => getBookingPaymentStatus(bookingId),
+        isSuccess: (status) => status === 'paid',
+        wait: () => this.wait(PAYMENT_POLL_INTERVAL),
+        maxAttempts: PAYMENT_POLL_MAX_ATTEMPTS,
+      })
     },
 
     wait(ms) {
@@ -660,9 +653,7 @@ export default {
     },
 
     createPaymentStatusError(status) {
-      const error = new Error(`payment ${status}`)
-      error.paymentStatus = status
-      return error
+      return createPaymentStatusError(status)
     },
 
     money(value) {

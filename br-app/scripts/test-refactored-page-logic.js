@@ -22,6 +22,10 @@ function loadModule(relativePath, injected = {}, cache = {}) {
     exportedNames.push(name)
     return `function ${name}(`
   })
+  source = source.replace(/export\s+async\s+function\s+([A-Za-z0-9_$]+)\s*\(/g, (_match, name) => {
+    exportedNames.push(name)
+    return `async function ${name}(`
+  })
   source = source.replace(/export\s+\{([^}]+)\}/g, (_match, names) => {
     names.split(',').forEach((name) => {
       const trimmed = name.trim()
@@ -104,6 +108,34 @@ function testFollowedRooms() {
   delete global.uni
 }
 
-testFormatters()
-testFollowedRooms()
-console.log('br-app refactored page logic tests passed')
+async function testPaymentPolling() {
+  const service = loadModule('src/services/paymentPolling.js')
+
+  const paid = await service.pollPaymentStatus({
+    fetchStatus: async () => ({ payment_status: 'paid' }),
+    isSuccess: (status) => status === 'paid',
+    wait: async () => {},
+  })
+  assert.equal(paid.payment_status, 'paid')
+
+  await assert.rejects(
+    () => service.pollPaymentStatus({
+      fetchStatus: async () => ({ status: 'failed' }),
+      isSuccess: (status) => status === 'completed',
+      wait: async () => {},
+    }),
+    (error) => error.paymentStatus === 'failed',
+  )
+}
+
+async function main() {
+  testFormatters()
+  testFollowedRooms()
+  await testPaymentPolling()
+  console.log('br-app refactored page logic tests passed')
+}
+
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})

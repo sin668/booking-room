@@ -99,6 +99,7 @@ import {
   getRechargeOrder,
   redeemPromoCode as redeemPromoCodeApi,
 } from '@/api/wallet'
+import { createPaymentStatusError, pollPaymentStatus, waitForPaymentPoll } from '@/services/paymentPolling'
 
 const DEFAULT_AMOUNT = 50
 const MIN_AMOUNT = 1
@@ -285,32 +286,16 @@ export default {
     },
 
     async pollRechargeOrder(orderId) {
-      for (let attempt = 0; attempt < RECHARGE_POLL_MAX_ATTEMPTS; attempt += 1) {
-        const order = await getRechargeOrder(orderId)
-        const status = order.status || order.payment_status || order.paymentStatus
-        if (status === 'completed') {
-          return order
-        }
-        if (status === 'failed' || status === 'cancelled' || status === 'closed') {
-          throw this.createPaymentStatusError(status)
-        }
-        if (attempt < RECHARGE_POLL_MAX_ATTEMPTS - 1) {
-          await this.wait(RECHARGE_POLL_INTERVAL)
-        }
-      }
-      return null
+      return pollPaymentStatus({
+        fetchStatus: () => getRechargeOrder(orderId),
+        isSuccess: (status) => status === 'completed',
+        wait: () => waitForPaymentPoll(RECHARGE_POLL_INTERVAL),
+        maxAttempts: RECHARGE_POLL_MAX_ATTEMPTS,
+      })
     },
 
     createPaymentStatusError(status) {
-      const error = new Error(`payment ${status}`)
-      error.paymentStatus = status
-      return error
-    },
-
-    wait(ms) {
-      return new Promise((resolve) => {
-        setTimeout(resolve, ms)
-      })
+      return createPaymentStatusError(status)
     },
 
     isPaymentCancel(error) {

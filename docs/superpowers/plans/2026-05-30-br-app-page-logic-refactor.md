@@ -199,7 +199,7 @@ git commit -m "refactor: extract followed room service"
 - 修改：`br-app/src/pages/recharge/index.vue`
 - 修改：`br-app/scripts/test-refactored-page-logic.js`
 
-- [ ] **Step 1：先写失败的支付轮询测试**
+- [x] **Step 1：先写失败的支付轮询测试**
 
 在测试脚本中新增 `testPaymentPolling()`，验证成功状态返回原结果，失败状态抛出带 `paymentStatus` 的错误：
 
@@ -221,13 +221,13 @@ await assert.rejects(
 )
 ```
 
-- [ ] **Step 2：运行测试并确认失败**
+- [x] **Step 2：运行测试并确认失败**
 
 运行：`cd br-app && npm run test:refactor`
 
 预期：失败，提示 `src/services/paymentPolling.js` 不存在。
 
-- [ ] **Step 3：实现支付轮询 service**
+- [x] **Step 3：实现支付轮询 service**
 
 新建 `br-app/src/services/paymentPolling.js`，导出：
 
@@ -244,7 +244,7 @@ pollPaymentStatus({ fetchStatus, isSuccess, failureStatuses, maxAttempts, wait }
 - `failed`、`cancelled`、`closed` 直接抛出 `paymentStatus` 错误。
 - 超过最大次数抛出 `paymentStatus === 'timeout'`。
 
-- [ ] **Step 4：替换预约确认页轮询**
+- [x] **Step 4：替换预约确认页轮询**
 
 `booking/confirm.vue` 改为从 `@/services/paymentPolling` 导入：
 
@@ -256,11 +256,11 @@ waitForPaymentPoll
 
 本地 `pollBookingPaymentStatus` 委托给共享 `pollPaymentStatus`。
 
-- [ ] **Step 5：替换充值页轮询**
+- [x] **Step 5：替换充值页轮询**
 
 `recharge/index.vue` 改为从 `@/services/paymentPolling` 导入同样的三个 API。本地 `pollRechargeOrder` 委托给共享 `pollPaymentStatus`。
 
-- [ ] **Step 6：运行测试和构建**
+- [x] **Step 6：运行测试和构建**
 
 运行：
 
@@ -272,7 +272,7 @@ npm run build:h5
 
 预期：全部通过。
 
-- [ ] **Step 7：提交**
+- [x] **Step 7：提交**
 
 ```bash
 git add br-app/scripts/test-refactored-page-logic.js br-app/src/services/paymentPolling.js br-app/src/pages/booking/confirm.vue br-app/src/pages/recharge/index.vue

@@ -5,6 +5,12 @@ from decimal import Decimal
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.booking_rules import (
+    BookingCompletionInput,
+    calculate_booking_hours,
+    can_cancel_paid_booking,
+    should_mark_booking_completed,
+)
 from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
@@ -23,7 +29,6 @@ from app.schemas.booking import (
 from app.core.config import settings
 from app.services import coupon_service
 from app.services.booking_cancellation_policy import (
-    booking_start_datetime,
     booking_now,
     calculate_cancellation_policy,
 )
@@ -73,22 +78,21 @@ class WalletBalanceInsufficientError(BookingError):
 
 
 def _calculate_hours(start_time: time, end_time: time) -> float:
-    start_seconds = start_time.hour * 3600 + start_time.minute * 60 + start_time.second
-    end_seconds = end_time.hour * 3600 + end_time.minute * 60 + end_time.second
-    return (end_seconds - start_seconds) / 3600.0
-
-
-def _is_booking_started(booking: Booking, now: datetime | None = None) -> bool:
-    current_time = now or booking_now(settings.BOOKING_TIMEZONE)
-    return booking_start_datetime(booking.date, booking.start_time) <= current_time
+    return calculate_booking_hours(start_time, end_time)
 
 
 def _sync_booking_completion(booking: Booking, now: datetime | None = None) -> bool:
-    if (
-        booking.status == "confirmed"
-        and booking.payment_status == "paid"
-        and _is_booking_started(booking, now)
-    ):
+    current_time = now or booking_now(settings.BOOKING_TIMEZONE)
+    should_complete = should_mark_booking_completed(
+        BookingCompletionInput(
+            status=booking.status,
+            payment_status=booking.payment_status,
+            booking_date=booking.date,
+            start_time=booking.start_time,
+            now=current_time,
+        )
+    )
+    if should_complete:
         booking.status = "completed"
         return True
     return False
@@ -114,9 +118,14 @@ async def _sync_user_booking_completions(
 
 
 def _can_cancel_booking(booking: Booking, now: datetime | None = None) -> bool:
-    if booking.status != "confirmed" or booking.payment_status != "paid":
-        return False
-    return not _is_booking_started(booking, now)
+    current_time = now or booking_now(settings.BOOKING_TIMEZONE)
+    return can_cancel_paid_booking(
+        status=booking.status,
+        payment_status=booking.payment_status,
+        booking_date=booking.date,
+        start_time=booking.start_time,
+        now=current_time,
+    )
 
 
 def _build_cancellation_preview(

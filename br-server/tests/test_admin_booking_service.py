@@ -236,8 +236,17 @@ async def test_create_booking_service_invalid_coupon_does_not_create_booking_or_
 async def test_cancel_booking_service_restores_used_coupon(db_session: AsyncSession):
     _make_room(db_session, 1)
     seat = _make_seat(db_session, 1, 1)
+    _make_user(db_session, USER_ID, Decimal("0.00"))
     user_coupon = await _make_user_coupon(db_session)
-    booking = _make_booking(db_session, 1, seat.id, 1, str(USER_ID), status="confirmed")
+    booking = _make_booking(
+        db_session,
+        1,
+        seat.id,
+        1,
+        str(USER_ID),
+        booking_date=date.today() + timedelta(days=1),
+        status="confirmed",
+    )
     booking.original_price = Decimal("20.00")
     booking.discount_amount = Decimal("3.00")
     booking.total_price = Decimal("17.00")

@@ -16,6 +16,7 @@ from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.models.user import User
 from app.models.wallet import WalletTransaction
+from app.repositories.booking_repository import BookingRepository
 from app.schemas.booking import (
     BookingAdminListResponse,
     BookingAdminResponse,
@@ -208,16 +209,14 @@ async def create_booking(
     if data.end_time <= data.start_time:
         raise InvalidTimeRangeError("结束时间必须晚于开始时间")
 
-    conflict = await db.execute(
-        select(Booking).where(
-            Booking.seat_id == data.seat_id,
-            Booking.date == data.date,
-            Booking.start_time < data.end_time,
-            Booking.end_time > data.start_time,
-            Booking.status != "cancelled",
-        )
+    booking_repository = BookingRepository(db)
+    has_conflict = await booking_repository.has_time_conflict(
+        seat_id=data.seat_id,
+        booking_date=data.date,
+        start_time=data.start_time,
+        end_time=data.end_time,
     )
-    if conflict.scalars().first() is not None:
+    if has_conflict:
         raise BookingConflictError("该座位该时段已被预约")
 
     room_result = await db.execute(select(StudyRoom).where(StudyRoom.id == seat.room_id))

@@ -739,12 +739,14 @@ class TestListBookings:
     async def test_list_bookings_filter_by_status(self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat):
         seat = seed_room_seat["seat_a"]
         room = seed_room_seat["room"]
+        confirmed_date = date.today() + timedelta(days=1)
+        cancelled_date = date.today() + timedelta(days=2)
         db_session.add(
             Booking(
                 seat_id=seat.id,
                 user_id=str(USER_ID),
                 room_id=room.id,
-                date=date(2026, 5, 1),
+                date=confirmed_date,
                 start_time=time(9, 0),
                 end_time=time(12, 0),
                 status="confirmed",
@@ -756,7 +758,7 @@ class TestListBookings:
                 seat_id=seat.id,
                 user_id=str(USER_ID),
                 room_id=room.id,
-                date=date(2026, 5, 2),
+                date=cancelled_date,
                 start_time=time(14, 0),
                 end_time=time(17, 0),
                 status="cancelled",

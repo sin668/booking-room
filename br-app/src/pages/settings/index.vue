@@ -86,24 +86,28 @@
         <view class="section-title-wrap">
           <text class="section-title">账号与安全</text>
         </view>
-        <view class="icon-row press-effect" @tap="showUnsupported('修改密码暂未开放')">
+        <view class="icon-row press-effect" @tap="openPasswordSheet">
           <view class="row-icon orange"><text class="row-icon-text">锁</text></view>
           <text class="row-label">修改密码</text>
           <text class="chevron">›</text>
         </view>
-        <view class="icon-row press-effect" @tap="showUnsupported('微信绑定暂未开放')">
+        <view class="icon-row press-effect" @tap="openWechatBinding">
           <view class="row-icon green"><text class="row-icon-text">微</text></view>
           <text class="row-label">微信绑定</text>
-          <view class="status-pill success"><text class="status-pill-text success-text">已绑定</text></view>
+          <view class="status-pill" :class="securitySummary.wechat_bound ? 'success' : 'warning'">
+            <text class="status-pill-text" :class="securitySummary.wechat_bound ? 'success-text' : 'warning-text'">{{ wechatStatusText }}</text>
+          </view>
           <text class="chevron">›</text>
         </view>
-        <view class="icon-row press-effect" @tap="showUnsupported('实名认证暂未开放')">
+        <view class="icon-row press-effect" @tap="openIdentitySheet">
           <view class="row-icon blue"><text class="row-icon-text">证</text></view>
           <text class="row-label">实名认证</text>
-          <view class="status-pill primary"><text class="status-pill-text primary-text">已认证</text></view>
+          <view class="status-pill" :class="securitySummary.identity_status === 'verified' ? 'primary' : 'warning'">
+            <text class="status-pill-text" :class="securitySummary.identity_status === 'verified' ? 'primary-text' : 'warning-text'">{{ identityStatusText }}</text>
+          </view>
           <text class="chevron">›</text>
         </view>
-        <view class="icon-row press-effect" @tap="showUnsupported('账号注销请联系门店客服')">
+        <view class="icon-row press-effect" @tap="openDeactivationSheet">
           <view class="row-icon red"><text class="row-icon-text">销</text></view>
           <text class="row-label danger-text">注销账号</text>
           <text class="chevron">›</text>
@@ -294,13 +298,87 @@
         </view>
       </view>
     </view>
+
+    <view v-if="showPasswordSheet" class="sheet-mask" @tap="closePasswordSheet">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">修改密码</text>
+        <text class="sheet-desc">密码更新后，其他设备需要重新登录</text>
+        <view class="security-form">
+          <input v-model="passwordForm.oldPassword" class="security-input" password placeholder="旧密码" placeholder-class="input-placeholder" />
+          <input v-model="passwordForm.newPassword" class="security-input" password placeholder="新密码" placeholder-class="input-placeholder" />
+          <input v-model="passwordForm.confirmPassword" class="security-input" password placeholder="确认新密码" placeholder-class="input-placeholder" />
+        </view>
+        <text v-if="passwordError" class="input-error">{{ passwordError }}</text>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="closePasswordSheet">取消</button>
+          <button class="sheet-confirm" :loading="passwordSubmitting" :disabled="passwordSubmitting" @tap="submitPasswordChange">保存</button>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="showIdentitySheet" class="sheet-mask" @tap="closeIdentitySheet">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">实名认证</text>
+        <text v-if="securitySummary.identity_status === 'verified'" class="sheet-desc">已认证：{{ securitySummary.identity_masked || '--' }}</text>
+        <text v-else class="sheet-desc">认证成功后将用于账号安全校验</text>
+        <view v-if="securitySummary.identity_status !== 'verified'" class="security-form">
+          <input v-model="identityForm.realName" class="security-input" placeholder="真实姓名" placeholder-class="input-placeholder" />
+          <input v-model="identityForm.idCardNumber" class="security-input" maxlength="18" placeholder="身份证号" placeholder-class="input-placeholder" />
+        </view>
+        <text v-if="identityError" class="input-error">{{ identityError }}</text>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="closeIdentitySheet">关闭</button>
+          <button
+            v-if="securitySummary.identity_status !== 'verified'"
+            class="sheet-confirm"
+            :loading="identitySubmitting"
+            :disabled="identitySubmitting"
+            @tap="submitIdentity"
+          >
+            提交认证
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="showDeactivationSheet" class="sheet-mask" @tap="closeDeactivationSheet">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">注销账号</text>
+        <text class="sheet-desc">注销后账号将不可登录，历史业务记录会保留用于审计</text>
+        <view v-if="deactivationRiskTexts.length" class="risk-list">
+          <view v-for="item in deactivationRiskTexts" :key="item" class="risk-item">
+            <text class="risk-dot">!</text>
+            <text class="risk-text">{{ item }}</text>
+          </view>
+        </view>
+        <view v-else class="deactivation-ready">
+          <text class="deactivation-ready-text">当前未发现余额、预约、卡券或待处理支付风险</text>
+        </view>
+        <text v-if="deactivationError" class="input-error">{{ deactivationError }}</text>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="closeDeactivationSheet">取消</button>
+          <button class="sheet-confirm danger" :loading="deactivationSubmitting" :disabled="deactivationSubmitting" @tap="confirmDeactivation">确认注销</button>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
 <script>
+import { changePassword, deactivateAccount, getAccountSecuritySummary, submitIdentityVerification } from '@/api/accountSecurity'
 import { getNotificationPreferences, updateNotificationPreferences } from '@/api/notifications'
 import { uploadImage } from '@/api/upload'
 import { useUserStore } from '@/store/modules/user'
+import {
+  formatDeactivationRiskReasons,
+  formatIdentityVerificationStatus,
+  formatWechatBindingStatus,
+  mapAccountSecurityError,
+  validateIdentityCard,
+} from '@/utils/accountSecurity'
 import { NOTIFICATION_TYPE_CONFIGS, getNotificationPreferenceField } from '@/utils/notificationTypes'
 
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{6,32}$/
@@ -339,6 +417,35 @@ export default {
         phone: '',
         smsCode: '',
       },
+      securitySummary: {
+        phone_bound: false,
+        phone_masked: null,
+        wechat_bound: false,
+        identity_status: 'unverified',
+        identity_masked: null,
+        account_status: 'active',
+        deactivation_blocked: false,
+        deactivation_risks: [],
+      },
+      securityLoading: false,
+      showPasswordSheet: false,
+      passwordSubmitting: false,
+      passwordError: '',
+      passwordForm: {
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      },
+      showIdentitySheet: false,
+      identitySubmitting: false,
+      identityError: '',
+      identityForm: {
+        realName: '',
+        idCardNumber: '',
+      },
+      showDeactivationSheet: false,
+      deactivationSubmitting: false,
+      deactivationError: '',
     }
   },
   computed: {
@@ -359,6 +466,17 @@ export default {
     hasBoundPhone() {
       return !!this.userStore.phone
     },
+    wechatStatusText() {
+      if (this.securityLoading) return '--'
+      return formatWechatBindingStatus(this.securitySummary)
+    },
+    identityStatusText() {
+      if (this.securityLoading) return '--'
+      return formatIdentityVerificationStatus(this.securitySummary.identity_status)
+    },
+    deactivationRiskTexts() {
+      return formatDeactivationRiskReasons(this.securitySummary.deactivation_risks)
+    },
   },
   beforeUnmount() {
     this.clearBindCountdown()
@@ -367,6 +485,7 @@ export default {
     if (this.userStore.isLoggedIn) {
       this.userStore.fetchUserInfo().catch(() => {})
       this.loadNotificationPreferences()
+      this.loadAccountSecuritySummary()
     }
   },
   methods: {
@@ -454,6 +573,23 @@ export default {
         this.notificationPreferencesLoading = false
       }
     },
+    async loadAccountSecuritySummary() {
+      if (this.securityLoading) return
+      this.securityLoading = true
+      try {
+        this.securitySummary = await getAccountSecuritySummary()
+      } catch {
+        this.securitySummary = {
+          ...this.securitySummary,
+          wechat_bound: !!this.userStore.phone,
+          identity_status: 'unverified',
+          deactivation_risks: [],
+          deactivation_blocked: false,
+        }
+      } finally {
+        this.securityLoading = false
+      }
+    },
     applyNotificationPreferences(preferences = {}) {
       this.notificationTypes.forEach((item) => {
         const field = getNotificationPreferenceField(item.key)
@@ -496,6 +632,13 @@ export default {
       this.showSmsBinding = false
       this.resetBindForm()
       this.showPhoneBindSheet = true
+    },
+    openWechatBinding() {
+      if (this.securitySummary.wechat_bound) {
+        this.showToast('微信已绑定')
+        return
+      }
+      this.openPhoneBinding()
     },
     closePhoneBinding() {
       if (this.bindingWechatPhone || this.bindingBySms) return
@@ -574,6 +717,7 @@ export default {
       this.bindError = ''
       this.resetBindForm()
       this.showToast('手机号绑定成功')
+      this.loadAccountSecuritySummary()
     },
     resetBindForm() {
       this.bindPhoneForm.phone = ''
@@ -693,6 +837,126 @@ export default {
         uni.reLaunch({ url: '/pages/login/login' })
       } finally {
         this.logoutLoading = false
+      }
+    },
+    openPasswordSheet() {
+      this.passwordError = ''
+      this.passwordForm.oldPassword = ''
+      this.passwordForm.newPassword = ''
+      this.passwordForm.confirmPassword = ''
+      this.showPasswordSheet = true
+    },
+    closePasswordSheet() {
+      if (this.passwordSubmitting) return
+      this.showPasswordSheet = false
+      this.passwordError = ''
+    },
+    async submitPasswordChange() {
+      if (this.passwordSubmitting) return
+      if (!this.passwordForm.oldPassword || !this.passwordForm.newPassword) {
+        this.passwordError = '请输入旧密码和新密码'
+        return
+      }
+      if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+        this.passwordError = '两次输入的新密码不一致'
+        return
+      }
+      this.passwordSubmitting = true
+      this.passwordError = ''
+      try {
+        await changePassword({
+          old_password: this.passwordForm.oldPassword,
+          new_password: this.passwordForm.newPassword,
+          confirm_password: this.passwordForm.confirmPassword,
+        })
+        this.showPasswordSheet = false
+        this.showToast('密码已更新')
+        this.loadAccountSecuritySummary()
+      } catch (error) {
+        this.passwordError = mapAccountSecurityError(error, 'password')
+      } finally {
+        this.passwordSubmitting = false
+      }
+    },
+    openIdentitySheet() {
+      this.identityError = ''
+      this.identityForm.realName = ''
+      this.identityForm.idCardNumber = ''
+      this.showIdentitySheet = true
+    },
+    closeIdentitySheet() {
+      if (this.identitySubmitting) return
+      this.showIdentitySheet = false
+      this.identityError = ''
+    },
+    async submitIdentity() {
+      if (this.identitySubmitting) return
+      const realName = this.identityForm.realName.trim()
+      const idCardNumber = this.identityForm.idCardNumber.trim().toUpperCase()
+      if (!realName) {
+        this.identityError = '请输入真实姓名'
+        return
+      }
+      if (!validateIdentityCard(idCardNumber)) {
+        this.identityError = '身份证号格式不正确'
+        return
+      }
+      this.identitySubmitting = true
+      this.identityError = ''
+      try {
+        await submitIdentityVerification({
+          real_name: realName,
+          id_card_number: idCardNumber,
+        })
+        await this.loadAccountSecuritySummary()
+        this.showToast('实名认证已完成')
+      } catch (error) {
+        this.identityError = mapAccountSecurityError(error, 'identity')
+      } finally {
+        this.identitySubmitting = false
+      }
+    },
+    openDeactivationSheet() {
+      this.deactivationError = ''
+      this.showDeactivationSheet = true
+      this.loadAccountSecuritySummary()
+    },
+    closeDeactivationSheet() {
+      if (this.deactivationSubmitting) return
+      this.showDeactivationSheet = false
+      this.deactivationError = ''
+    },
+    confirmDeactivation() {
+      if (this.deactivationSubmitting) return
+      if (this.deactivationRiskTexts.length) {
+        this.deactivationError = '请先处理阻断事项后再注销'
+        return
+      }
+      uni.showModal({
+        title: '确认注销账号？',
+        content: '注销后当前账号不可再次登录，是否继续？',
+        confirmText: '确认注销',
+        confirmColor: '#f87171',
+        success: async (res) => {
+          if (!res.confirm) return
+          await this.submitDeactivation()
+        },
+      })
+    },
+    async submitDeactivation() {
+      this.deactivationSubmitting = true
+      this.deactivationError = ''
+      try {
+        await deactivateAccount()
+        this.userStore.clearLocalSession()
+        uni.reLaunch({ url: '/pages/login/login' })
+      } catch (error) {
+        this.deactivationError = mapAccountSecurityError(error, 'deactivation')
+        if (Array.isArray(error?.detail?.risks)) {
+          this.securitySummary.deactivation_risks = error.detail.risks
+        }
+      } finally {
+        this.deactivationSubmitting = false
       }
     },
   },
@@ -1169,6 +1433,73 @@ export default {
 
 .sms-bind-form {
   margin-top: 28rpx;
+}
+
+.security-form {
+  margin-top: 28rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.security-input {
+  height: 92rpx;
+  padding: 0 24rpx;
+  border-radius: 20rpx;
+  background: #f7f8fb;
+  color: $text-primary;
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.risk-list {
+  margin-top: 28rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.risk-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  background: #fef2f2;
+}
+
+.risk-dot {
+  width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  border-radius: 16rpx;
+  text-align: center;
+  background: #f87171;
+  color: $white;
+  font-size: 22rpx;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.risk-text {
+  flex: 1;
+  min-width: 0;
+  color: $danger;
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.deactivation-ready {
+  margin-top: 28rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 18rpx;
+  background: #f0fdf4;
+}
+
+.deactivation-ready-text {
+  color: #16a34a;
+  font-size: 24rpx;
+  line-height: 34rpx;
 }
 
 .bind-input-row {

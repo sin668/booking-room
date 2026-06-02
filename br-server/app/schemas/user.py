@@ -100,3 +100,49 @@ class UserProfileUpdate(BaseModel):
     avatar: str | None = Field(None, max_length=512)
 
     model_config = ConfigDict(extra="forbid")
+
+
+class DeactivationRiskReason(BaseModel):
+    code: str
+    message: str
+    count: int = 0
+    amount: str | None = None
+
+
+class AccountSecuritySummary(BaseModel):
+    phone_bound: bool
+    phone_masked: str | None = None
+    wechat_bound: bool
+    identity_status: str
+    identity_masked: str | None = None
+    account_status: str
+    deactivation_blocked: bool
+    deactivation_risks: list[DeactivationRiskReason] = []
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str = Field(min_length=1, max_length=72)
+    new_password: str = Field(min_length=6, max_length=20)
+    confirm_password: str = Field(min_length=6, max_length=20)
+
+
+class ChangePasswordResponse(BaseModel):
+    message: str
+
+
+class IdentityVerificationRequest(BaseModel):
+    real_name: str = Field(min_length=2, max_length=50)
+    id_card_number: str = Field(min_length=18, max_length=18)
+
+
+class IdentityVerificationResponse(BaseModel):
+    status: str
+    real_name: str
+    id_card_masked: str
+
+
+class AccountDeactivationResponse(BaseModel):
+    status: str
+    message: str
+    blocked: bool = False
+    risks: list[DeactivationRiskReason] = []

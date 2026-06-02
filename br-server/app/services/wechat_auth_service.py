@@ -224,7 +224,7 @@ class WechatAuthService:
         return user
 
     def _ensure_login_allowed(self, user: User) -> None:
-        if user.status in {"banned", "disabled"}:
+        if user.status in {"banned", "disabled", "deleted"}:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="账号不可用",
@@ -249,9 +249,7 @@ class WechatAuthService:
         return False
 
     async def _revoke_all_refresh_tokens(self, user_id: UUID) -> None:
-        keys = await self._redis.keys(f"refresh:{user_id}:*")
-        for key in keys:
-            await self._redis.delete(key)
+        await self._auth._jwt.revoke_all_refresh_tokens(user_id)
 
     async def _get_wechat_access_token(self) -> str:
         if self._access_token_provider is not None:

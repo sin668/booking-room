@@ -166,11 +166,11 @@ class AuthService:
                 detail="账号或密码错误",
             )
 
-        # --- Check banned status ---
-        if user.status == "banned":
+        # --- Check blocked status ---
+        if user.status in {"banned", "disabled", "deleted"}:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="账号已被封禁",
+                detail="账号不可用",
             )
 
         # --- Verify password ---
@@ -206,6 +206,12 @@ class AuthService:
         if jti is None:
             return None
 
+        result = await self._db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if user is None or user.status == "deleted":
+            await self._jwt.revoke_all_refresh_tokens(user_id)
+            return None
+
         result = await self._jwt.rotate_refresh_token(user_id, jti)
         if result is None:
             # Reuse detected -- caller should force re-login
@@ -231,9 +237,6 @@ class AuthService:
         if user_id_str:
             try:
                 user_id = UUID(user_id_str)
-                pattern = f"refresh:{user_id}:*"
-                keys = await self._redis.keys(pattern)
-                for key in keys:
-                    await self._redis.delete(key)
+                await self._jwt.revoke_all_refresh_tokens(user_id)
             except (ValueError, Exception):
                 pass

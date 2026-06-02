@@ -123,6 +123,11 @@ export const useUserStore = defineStore('user', {
       } catch {
         // 即使 API 调用失败也要清理本地状态
       }
+      this.clearLocalSession()
+    },
+
+    /** 清理本地登录态，不依赖后端会话状态 */
+    clearLocalSession() {
       this.token = ''
       this.refreshToken = ''
       this.userInfo = null

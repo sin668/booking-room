@@ -761,6 +761,143 @@ HTTP 429 用户名修改冷却中：
 
 ---
 
+### GET /api/v1/users/me/security
+
+获取当前用户账号安全摘要，用于设置页展示手机号、微信绑定、实名认证和注销风险状态。
+
+**认证：** Bearer Token
+
+**响应 200：**
+```json
+{
+  "phone_bound": true,
+  "phone_masked": "138****8000",
+  "wechat_bound": true,
+  "identity_status": "verified",
+  "identity_masked": "110105********002X",
+  "account_status": "active",
+  "deactivation_blocked": false,
+  "deactivation_risks": []
+}
+```
+
+账号安全摘要只返回脱敏手机号、脱敏身份证号和状态，不返回完整身份证号、完整 OpenID、密码哈希或 refresh token。
+
+**错误码：**
+- 401: 未认证
+- 404: 用户不存在
+
+---
+
+### POST /api/v1/users/me/password
+
+修改当前用户密码。成功后撤销该用户所有 refresh token，当前 access token 可继续使用到自然过期。
+
+**认证：** Bearer Token
+
+**请求体：**
+```json
+{
+  "old_password": "oldpass123",
+  "new_password": "newpass123",
+  "confirm_password": "newpass123"
+}
+```
+
+**响应 200：**
+```json
+{
+  "message": "密码已更新"
+}
+```
+
+**错误码：**
+- 400: 旧密码不正确
+- 401: 未认证
+- 403: 账号已注销
+- 422: 新密码格式不合法或确认密码不一致
+
+---
+
+### POST /api/v1/users/me/identity-verification
+
+提交实名认证资料。本期无外部核验和后台审核，合法资料提交后直接返回 `verified`。服务端仅保存身份证哈希和脱敏号，不保存完整身份证号。
+
+**认证：** Bearer Token
+
+**请求体：**
+```json
+{
+  "real_name": "张三",
+  "id_card_number": "11010519491231002X"
+}
+```
+
+**响应 200：**
+```json
+{
+  "status": "verified",
+  "real_name": "张三",
+  "id_card_masked": "110105********002X"
+}
+```
+
+**错误码：**
+- 401: 未认证
+- 403: 账号已注销
+- 409: 已完成实名认证，不能覆盖为不同实名资料
+- 422: 姓名或身份证号格式不正确
+
+---
+
+### POST /api/v1/users/me/deactivation
+
+注销当前用户账号。接口保留 `deactivation` 路径命名，但本期行为是直接逻辑删除：服务统一检查余额、未完成预约、待处理支付/退款和未用卡券风险；无风险时设置 `users.status='deleted'`，撤销 refresh token，不新增注销申请表，不物理删除用户。
+
+**认证：** Bearer Token
+
+**响应 200：**
+```json
+{
+  "status": "deleted",
+  "message": "账号已注销",
+  "blocked": false,
+  "risks": []
+}
+```
+
+**响应 409：**
+```json
+{
+  "detail": {
+    "message": "账号存在未处理事项，暂不能注销",
+    "risks": [
+      {
+        "code": "wallet_balance",
+        "message": "钱包余额需清零后才能注销",
+        "count": 0,
+        "amount": "8.00"
+      }
+    ]
+  }
+}
+```
+
+**风险 code：**
+- `wallet_balance`: 钱包余额未清零
+- `unfinished_booking`: 存在未完成预约
+- `pending_booking_payment`: 存在待处理预约支付
+- `pending_wallet_transaction`: 存在待处理支付或退款
+- `available_coupon`: 存在未使用卡券
+
+**错误码：**
+- 401: 未认证
+- 403: 账号已注销
+- 404: 用户不存在
+- 409: 存在注销阻断风险
+
+---
+
 ## 三、首页
 
 ### GET /api/v1/banners

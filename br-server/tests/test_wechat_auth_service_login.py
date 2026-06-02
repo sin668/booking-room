@@ -183,7 +183,7 @@ async def test_wechat_service_unavailable_maps_to_503(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("blocked_status", ["banned", "disabled"])
+@pytest.mark.parametrize("blocked_status", ["banned", "disabled", "deleted"])
 async def test_wechat_login_for_blocked_user_returns_403(
     db_session,
     redis: AsyncMock,

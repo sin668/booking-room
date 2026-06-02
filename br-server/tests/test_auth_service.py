@@ -285,28 +285,28 @@ class TestLogin:
             await auth_service.login(user_login_data)
         assert exc_info.value.status_code == 401
 
-    @patch("app.services.auth_service.bcrypt")
-    async def test_login_account_banned(
+    @pytest.mark.parametrize("blocked_status", ["banned", "disabled", "deleted"])
+    async def test_login_account_blocked(
         self,
-        mock_pwd: MagicMock,
         auth_service: AuthService,
         mock_db: AsyncMock,
         user_login_data: UserLogin,
+        blocked_status: str,
     ) -> None:
-        """Banned account raises 403."""
-        banned_user = User(
+        """Blocked accounts raise 403."""
+        blocked_user = User(
             id=uuid.uuid4(),
             phone="13800138000",
             nickname="被封禁",
             password_hash="hash",
-            status="banned",
+            status=blocked_status,
         )
-        mock_db.execute.return_value = _mock_scalar_result(banned_user)
+        mock_db.execute.return_value = _mock_scalar_result(blocked_user)
 
         with pytest.raises(HTTPException) as exc_info:
             await auth_service.login(user_login_data)
         assert exc_info.value.status_code == 403
-        assert "封禁" in exc_info.value.detail
+        assert "账号不可用" in exc_info.value.detail
 
 
 # ---------------------------------------------------------------------------
@@ -318,6 +318,7 @@ class TestRefreshToken:
     async def test_refresh_token_success(
         self,
         auth_service: AuthService,
+        mock_db: AsyncMock,
         mock_redis: AsyncMock,
     ) -> None:
         """refresh_token returns TokenResponse when the RT is valid."""
@@ -334,6 +335,16 @@ class TestRefreshToken:
             algorithms=[auth_service._config.JWT_ALGORITHM],
         )
         jti = payload["jti"]
+
+        mock_db.execute.return_value = _mock_scalar_result(
+            User(
+                id=user_id,
+                phone="13800138000",
+                nickname="测试用户",
+                password_hash="hash",
+                status="active",
+            )
+        )
 
         # Redis: old RT exists
         mock_redis.exists.return_value = 1
@@ -372,6 +383,7 @@ class TestRefreshToken:
     async def test_refresh_token_reuse_detection(
         self,
         auth_service: AuthService,
+        mock_db: AsyncMock,
         mock_redis: AsyncMock,
     ) -> None:
         """refresh_token returns None when reuse is detected (RT already revoked)."""
@@ -387,6 +399,16 @@ class TestRefreshToken:
         )
         jti = payload["jti"]
 
+        mock_db.execute.return_value = _mock_scalar_result(
+            User(
+                id=user_id,
+                phone="13800138000",
+                nickname="测试用户",
+                password_hash="hash",
+                status="active",
+            )
+        )
+
         # Redis: old RT does NOT exist (already revoked -> reuse)
         mock_redis.exists.return_value = 0
         mock_redis.keys.return_value = [f"refresh:{user_id}:other-jti"]
@@ -395,6 +417,31 @@ class TestRefreshToken:
 
         assert result is None
         mock_redis.delete.assert_called_with(f"refresh:{user_id}:other-jti")
+
+    async def test_refresh_token_deleted_user_returns_none(
+        self,
+        auth_service: AuthService,
+        mock_db: AsyncMock,
+        mock_redis: AsyncMock,
+    ) -> None:
+        """refresh_token returns None and revokes tokens for a deleted user."""
+        user_id = uuid.uuid4()
+        refresh_token = auth_service._jwt.create_refresh_token(user_id)
+        mock_db.execute.return_value = _mock_scalar_result(
+            User(
+                id=user_id,
+                phone="13800138000",
+                nickname="已注销",
+                password_hash="hash",
+                status="deleted",
+            )
+        )
+        mock_redis.keys.return_value = [f"refresh:{user_id}:old"]
+
+        result = await auth_service.refresh_token(refresh_token)
+
+        assert result is None
+        mock_redis.delete.assert_called_with(f"refresh:{user_id}:old")
 
 
 # ---------------------------------------------------------------------------

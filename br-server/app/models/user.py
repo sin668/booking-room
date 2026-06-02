@@ -13,6 +13,7 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.admin_role import AdminRole, admin_user_roles
+    from app.models.user_identity_verification import UserIdentityVerification
 
 _DEFAULT_USERNAME_NAMES = ("Luna", "Mia", "Noah", "Ava", "Leo", "Ivy", "Eli", "Zoe")
 
@@ -25,6 +26,10 @@ class User(Base):
     __tablename__ = "users"
     __table_args__ = (
         CheckConstraint("user_type IN ('app', 'admin')", name="ck_users_user_type"),
+        CheckConstraint(
+            "status IN ('active', 'banned', 'disabled', 'deleted')",
+            name="ck_users_status",
+        ),
         Index("ix_users_phone", "phone", unique=True, postgresql_where="phone IS NOT NULL"),
         Index("ix_users_username", "username", unique=True, postgresql_where="username IS NOT NULL"),
     )
@@ -110,5 +115,10 @@ class User(Base):
         "AdminRole",
         secondary="admin_user_roles",
         back_populates="users",
+        lazy="selectin",
+    )
+    identity_verifications: Mapped[list[UserIdentityVerification]] = relationship(
+        "UserIdentityVerification",
+        back_populates="user",
         lazy="selectin",
     )

@@ -107,6 +107,12 @@ class JWTService:
         key = f"refresh:{user_id}:{jti}"
         await self._redis.delete(key)
 
+    async def revoke_all_refresh_tokens(self, user_id: UUID) -> None:
+        """Delete every stored refresh token for a user."""
+        keys = await self._redis.keys(f"refresh:{user_id}:*")
+        for key in keys:
+            await self._redis.delete(key)
+
     async def is_refresh_token_valid(self, user_id: UUID, jti: str) -> bool:
         """Check whether a refresh token is still valid (present in Redis)."""
         key = f"refresh:{user_id}:{jti}"
@@ -123,10 +129,7 @@ class JWTService:
         old_valid = await self.is_refresh_token_valid(user_id, old_jti)
         if not old_valid:
             # Reuse detected -- revoke all refresh tokens for this user
-            pattern = f"refresh:{user_id}:*"
-            keys = await self._redis.keys(pattern)
-            for key in keys:
-                await self._redis.delete(key)
+            await self.revoke_all_refresh_tokens(user_id)
             return None
 
         # Revoke the old token

@@ -11,6 +11,7 @@ from app.models.room_follow import RoomFollow
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.models.user import User
+from app.models.user_identity_verification import UserIdentityVerification
 from app.models.wallet import WalletTransaction
 
 __all__ = [
@@ -29,6 +30,7 @@ __all__ = [
     "StudyRoom",
     "SystemSetting",
     "User",
+    "UserIdentityVerification",
     "UserCoupon",
     "WalletTransaction",
     "admin_role_menus",

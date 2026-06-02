@@ -89,7 +89,7 @@ function testFormatters() {
   assert.equal(formatHourCount('09:00', '11:30'), '2.5')
 }
 
-function testFollowedRooms() {
+async function testFollowedRooms() {
   const storage = {}
   global.uni = {
     getStorageSync(key) {
@@ -100,15 +100,23 @@ function testFollowedRooms() {
     },
   }
 
-  const service = loadModule('src/services/followedRooms.js')
-  service.followRoom({ id: '7', name: '南门店', minPrice: 8, cityName: '茂名' })
+  const service = loadModule('src/services/followedRooms.js', {
+    '@/api/roomFollows': {
+      persistFollowRoom: async (roomId) => ({ id: roomId, name: `持久化${roomId}`, min_price: 8 }),
+      fetchPersistedFollowedRooms: async () => ({ items: [{ id: 9, name: '已入库自习室' }] }),
+      persistUnfollowRoom: async () => ({}),
+    },
+  })
+  await service.followRoom({ id: '7', name: '南门自习室', minPrice: 8, cityName: '茂名' })
   assert.equal(service.isRoomFollowed(7), true)
   assert.equal(service.getFollowedRooms()[0].min_price, 8)
-  assert.equal(service.getFollowedRoomsSummary(service.getFollowedRooms()), '南门店')
-  service.followRoom({ room_id: 8, name: '东门店' })
-  assert.equal(service.getFollowedRoomsSummary(service.getFollowedRooms()), '东门店等2家')
-  service.unfollowRoom(7)
+  assert.equal(service.getFollowedRoomsSummary(service.getFollowedRooms()), '持久化7')
+  await service.followRoom({ room_id: 8, name: '东门自习室' })
+  assert.equal(service.getFollowedRoomsSummary(service.getFollowedRooms()), '持久化8等2家')
+  await service.unfollowRoom(7)
   assert.deepEqual(service.getFollowedRooms().map((room) => room.id), [8])
+  const syncedRooms = await service.syncFollowedRooms()
+  assert.deepEqual(syncedRooms.map((room) => room.id), [9])
   delete global.uni
 }
 
@@ -174,7 +182,7 @@ function testPageServices() {
 
 async function main() {
   testFormatters()
-  testFollowedRooms()
+  await testFollowedRooms()
   await testPaymentPolling()
   testPageServices()
   console.log('br-app refactored page logic tests passed')

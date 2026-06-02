@@ -54,13 +54,13 @@
           <view class="menu-icon teal">
             <view class="store-icon" />
           </view>
-          <text class="menu-item-text">关注门店</text>
+          <text class="menu-item-text">关注自习室</text>
           <text class="menu-item-meta">{{ followedRoomsSummary }}</text>
           <text class="dropdown-arrow">{{ showFollowedRoomsDropdown ? '⌃' : '⌄' }}</text>
         </view>
         <view v-if="showFollowedRoomsDropdown" class="followed-dropdown">
           <view v-if="followedRooms.length === 0" class="followed-empty">
-            <text class="followed-empty-text">暂无关注门店</text>
+            <text class="followed-empty-text">暂无关注自习室</text>
           </view>
           <block v-else>
             <view
@@ -152,7 +152,7 @@ import { useUserStore } from '@/store/modules/user'
 import { getCoupons } from '@/api/coupons'
 import { getMonthlySummary } from '@/api/studyRecords'
 import { getBalance } from '@/api/wallet'
-import { getFollowedRooms, getFollowedRoomsSummary } from '@/services/followedRooms'
+import { getFollowedRooms, getFollowedRoomsSummary, syncFollowedRooms } from '@/services/followedRooms'
 import { formatAmount, formatMoney } from '@/utils/formatters'
 
 export default {
@@ -197,8 +197,12 @@ export default {
     navigateTo(url) {
       uni.navigateTo({ url })
     },
-    loadFollowedRooms() {
-      this.followedRooms = getFollowedRooms()
+    async loadFollowedRooms() {
+      try {
+        this.followedRooms = await syncFollowedRooms()
+      } catch {
+        this.followedRooms = getFollowedRooms()
+      }
     },
     toggleFollowedRooms() {
       this.loadFollowedRooms()

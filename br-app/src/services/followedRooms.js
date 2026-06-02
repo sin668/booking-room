@@ -1,5 +1,11 @@
 export const FOLLOWED_ROOMS_STORAGE_KEY = 'followed_rooms'
 
+import {
+  fetchPersistedFollowedRooms,
+  persistFollowRoom,
+  persistUnfollowRoom,
+} from '@/api/roomFollows'
+
 export function normalizeRoom(room = {}) {
   const id = room.id ?? room.room_id
   if (id === undefined || id === null || id === '') return null
@@ -23,25 +29,52 @@ export function getFollowedRooms() {
   return rooms.map(normalizeRoom).filter(Boolean)
 }
 
+function setFollowedRooms(rooms) {
+  const nextRooms = (Array.isArray(rooms) ? rooms : []).map(normalizeRoom).filter(Boolean)
+  uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, nextRooms)
+  return nextRooms
+}
+
+export async function syncFollowedRooms() {
+  const data = await fetchPersistedFollowedRooms()
+  return setFollowedRooms(data?.items || [])
+}
+
 export function isRoomFollowed(roomId) {
   const normalizedId = Number(roomId)
   return getFollowedRooms().some((room) => room.id === normalizedId)
 }
 
-export function followRoom(room) {
+export async function followRoom(room) {
   const normalizedRoom = normalizeRoom(room)
   if (!normalizedRoom) return getFollowedRooms()
 
-  const rooms = getFollowedRooms().filter((item) => item.id !== normalizedRoom.id)
+  const previousRooms = getFollowedRooms()
+  const rooms = previousRooms.filter((item) => item.id !== normalizedRoom.id)
   const nextRooms = [normalizedRoom, ...rooms]
   uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, nextRooms)
-  return nextRooms
+
+  try {
+    const persistedRoom = await persistFollowRoom(normalizedRoom.id)
+    return setFollowedRooms([persistedRoom, ...rooms])
+  } catch (error) {
+    uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, previousRooms)
+    throw error
+  }
 }
 
-export function unfollowRoom(roomId) {
+export async function unfollowRoom(roomId) {
   const normalizedId = Number(roomId)
-  const nextRooms = getFollowedRooms().filter((room) => room.id !== normalizedId)
+  const previousRooms = getFollowedRooms()
+  const nextRooms = previousRooms.filter((room) => room.id !== normalizedId)
   uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, nextRooms)
+
+  try {
+    await persistUnfollowRoom(normalizedId)
+  } catch (error) {
+    uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, previousRooms)
+    throw error
+  }
   return nextRooms
 }
 

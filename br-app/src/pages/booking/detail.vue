@@ -319,29 +319,37 @@ export default {
       // placeholder
     },
 
-    onToggleFav() {
+    async onToggleFav() {
       if (!this.roomId) return
 
       if (this.isFav) {
-        unfollowRoom(this.roomId)
-        this.isFav = false
-        uni.showToast({ title: '已取消关注', icon: 'none' })
+        try {
+          await unfollowRoom(this.roomId)
+          this.isFav = false
+          uni.showToast({ title: '已取消关注', icon: 'none' })
+        } catch {
+          uni.showToast({ title: '取消关注失败，请重试', icon: 'none' })
+        }
         return
       }
 
-      followRoom({
-        ...this.room,
-        id: this.room.id || this.roomId,
-        name: this.roomName,
-        address: this.displayAddress,
-        cover_image: this.heroImage,
-        city_id: this.room.city_id,
-        city_name: this.room.city_name,
-        min_price: this.room.min_price,
-        status: this.room.status,
-      })
-      this.isFav = true
-      uni.showToast({ title: '已加入关注门店', icon: 'none' })
+      try {
+        await followRoom({
+          ...this.room,
+          id: this.room.id || this.roomId,
+          name: this.roomName,
+          address: this.displayAddress,
+          cover_image: this.heroImage,
+          city_id: this.room.city_id,
+          city_name: this.room.city_name,
+          min_price: this.room.min_price,
+          status: this.room.status,
+        })
+        this.isFav = true
+        uni.showToast({ title: '已加入关注自习室', icon: 'none' })
+      } catch {
+        uni.showToast({ title: '关注失败，请重试', icon: 'none' })
+      }
     },
 
     onBook() {

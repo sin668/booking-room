@@ -154,7 +154,7 @@ import { getBanners } from '@/api/banners'
 import { getActivities } from '@/api/activities'
 import { getNotificationUnreadSummary } from '@/api/notifications'
 import { useCityStore } from '@/store/modules/city'
-import { getFollowedRooms } from '@/services/followedRooms'
+import { getFollowedRooms, syncFollowedRooms } from '@/services/followedRooms'
 import { formatRoomMinPrice } from '@/utils/formatters'
 
 const REAL_ROOM_COVERS = [
@@ -247,10 +247,16 @@ export default {
       }
     },
 
-    loadFollowedRooms() {
+    async loadFollowedRooms() {
       const cityId = this.currentCityId == null ? null : Number(this.currentCityId)
       const cityName = this.currentCityName || ''
-      this.followedRooms = getFollowedRooms()
+      let rooms = []
+      try {
+        rooms = await syncFollowedRooms()
+      } catch {
+        rooms = getFollowedRooms()
+      }
+      this.followedRooms = rooms
         .filter((room) => {
           if (cityId !== null && room.city_id !== null && room.city_id !== undefined && room.city_id !== '') {
             return Number(room.city_id) === cityId

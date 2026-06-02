@@ -109,7 +109,7 @@ function request(options) {
         data: options.data,
         header,
         success: (res) => {
-          if (res.statusCode === 200 || res.statusCode === 201) {
+          if (res.statusCode === 200 || res.statusCode === 201 || res.statusCode === 204) {
             resolve(res.data)
           } else if (res.statusCode === 401) {
             refreshAccessToken()
@@ -139,6 +139,10 @@ export function post(url, data) {
 
 export function patch(url, data) {
   return request({ url, method: 'PATCH', data })
+}
+
+export function del(url, data) {
+  return request({ url, method: 'DELETE', data })
 }
 
 export {

@@ -8,10 +8,14 @@ export interface ActivityItem {
   id: number;
   title: string;
   description: string | null;
+  content_html?: string | null;
   cover_image: string | null;
   participant_count: number;
   sort_order: number;
   is_active: boolean;
+  activity_coupon_count?: number;
+  activity_coupon_claimed_count?: number;
+  activity_coupons?: ActivityCouponItem[];
   created_at: string;
   updated_at: string;
 }
@@ -26,19 +30,23 @@ export interface ActivityListResult {
 export interface ActivityFormParams {
   title: string;
   description?: string | null;
+  content_html?: string | null;
   cover_image?: string | null;
   participant_count?: number;
   sort_order?: number;
   is_active?: boolean;
+  activity_coupons?: ActivityCouponFormItem[];
 }
 
 export interface ActivityUpdateParams {
   title?: string;
   description?: string | null;
+  content_html?: string | null;
   cover_image?: string | null;
   participant_count?: number;
   sort_order?: number;
   is_active?: boolean;
+  activity_coupons?: ActivityCouponFormItem[];
 }
 
 export interface ActivityListParams {
@@ -46,6 +54,56 @@ export interface ActivityListParams {
   page_size?: number;
   keyword?: string;
   is_active?: boolean;
+}
+
+export interface ActivityCouponBase {
+  coupon_id: number | null;
+  total_quantity: number;
+  claimed_quantity?: number;
+  per_user_limit: number;
+  claim_starts_at?: string | null;
+  claim_ends_at?: string | null;
+  is_active: boolean;
+  sort_order: number;
+  display_title?: string | null;
+  display_description?: string | null;
+}
+
+export interface ActivityCouponTemplate {
+  id: number;
+  name: string;
+  description?: string | null;
+  type: string;
+  discount_amount?: string | number | null;
+  discount_percent?: number | null;
+  min_order_amount?: string | number | null;
+  scope?: string;
+  seat_zone?: string | null;
+  valid_from?: string | null;
+  expires_at?: string | null;
+  is_active?: boolean;
+}
+
+export interface ActivityCouponItem extends ActivityCouponBase {
+  id: number;
+  coupon?: ActivityCouponTemplate | null;
+  remaining_quantity?: number;
+  coupon_title?: string | null;
+  coupon_type?: string | null;
+  discount_rule?: string | null;
+  valid_from?: string | null;
+  expires_at?: string | null;
+}
+
+export interface ActivityCouponFormItem extends ActivityCouponBase {
+  id?: number;
+  coupon?: ActivityCouponTemplate | null;
+  coupon_title?: string | null;
+  coupon_type?: string | null;
+  discount_rule?: string | null;
+  valid_from?: string | null;
+  expires_at?: string | null;
+  _destroy?: boolean;
 }
 
 // --- Common meta for admin API calls ---

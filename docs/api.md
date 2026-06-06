@@ -946,6 +946,7 @@ HTTP 429 用户名修改冷却中：
     "id": 1,
     "title": "沉浸式学习挑战赛",
     "description": "累计学习24小时赢好礼",
+    "content_html": "<p>完成学习挑战后可领取专属卡券。</p>",
     "cover_image": "https://example.com/activity.jpg",
     "participant_count": 326
   }
@@ -959,8 +960,123 @@ HTTP 429 用户名修改冷却中：
 | id | integer | 活动 ID |
 | title | string | 活动标题 |
 | description | string \| null | 活动描述 |
+| content_html | string | 活动详情富文本正文，已由后端清洗 |
 | cover_image | string \| null | 封面图 URL |
 | participant_count | integer | 参与人数 |
+
+---
+
+### GET /api/v1/activities/{activity_id}
+
+获取活动详情。无需认证；登录用户访问时会返回当前用户对每个活动卡券的领取状态。
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| activity_id | integer | 活动 ID |
+
+**响应 200：**
+```json
+{
+  "id": 1,
+  "title": "沉浸式学习挑战赛",
+  "description": "累计学习24小时赢好礼",
+  "content_html": "<p>完成学习挑战后可领取专属卡券。</p>",
+  "cover_image": "https://example.com/activity.jpg",
+  "participant_count": 326,
+  "is_active": true,
+  "activity_coupons": [
+    {
+      "id": 10,
+      "coupon_id": 3,
+      "display_title": "挑战奖励券",
+      "display_description": "完成活动即可领取",
+      "coupon": {
+        "id": 3,
+        "name": "满20减3",
+        "description": "全场通用",
+        "type": "threshold_amount_off",
+        "discount_amount": "3.00",
+        "discount_percent": null,
+        "min_order_amount": "20.00",
+        "scope": "all",
+        "seat_zone": null,
+        "valid_from": "2026-05-01T00:00:00",
+        "expires_at": "2026-05-31T23:59:59",
+        "is_active": true
+      },
+      "total_quantity": 100,
+      "claimed_quantity": 12,
+      "remaining_quantity": 88,
+      "per_user_limit": 1,
+      "remaining_user_claims": 1,
+      "claim_starts_at": "2026-05-01T00:00:00",
+      "claim_ends_at": "2026-05-31T23:59:59",
+      "claim_status": "available",
+      "is_claimable": true
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| activity_coupons[].claim_status | string | available / claimed / limit_reached / not_started / ended / sold_out / disabled |
+| activity_coupons[].is_claimable | boolean | 当前用户或游客视角下是否可领取 |
+| activity_coupons[].remaining_user_claims | integer \| null | 登录用户剩余可领取数量；游客为 null |
+
+**错误码：**
+- 404: 活动不存在或未上架
+
+---
+
+### POST /api/v1/activities/{activity_id}/coupons/{activity_coupon_id}/claim
+
+领取活动关联卡券。需要登录。
+
+**认证：** Bearer Token
+
+**路径参数：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| activity_id | integer | 活动 ID |
+| activity_coupon_id | integer | 活动卡券配置 ID |
+
+**响应 201：**
+```json
+{
+  "user_coupon": {
+    "id": 12,
+    "coupon_id": 3,
+    "status": "available",
+    "source_type": "activity",
+    "source_activity_id": 1,
+    "source_activity_coupon_id": 10
+  },
+  "activity_coupon": {
+    "id": 10,
+    "coupon_id": 3,
+    "display_title": "挑战奖励券",
+    "display_description": "完成活动即可领取",
+    "total_quantity": 100,
+    "claimed_quantity": 13,
+    "remaining_quantity": 87,
+    "per_user_limit": 1,
+    "remaining_user_claims": 0,
+    "claim_starts_at": "2026-05-01T00:00:00",
+    "claim_ends_at": "2026-05-31T23:59:59",
+    "claim_status": "claimed",
+    "is_claimable": false
+  }
+}
+```
+
+**错误码：**
+- 401: 未认证
+- 404: 活动或活动卡券不存在
+- 409: 已抢光、超出限领数量、未到领取时间、已结束或活动卡券已停用
 
 ---
 
@@ -1078,10 +1194,13 @@ HTTP 429 用户名修改冷却中：
       "id": 1,
       "title": "沉浸式学习挑战赛",
       "description": "累计学习24小时赢好礼",
+      "content_html": "<p>完成学习挑战后可领取专属卡券。</p>",
       "cover_image": "https://example.com/activity.jpg",
       "participant_count": 326,
       "sort_order": 1,
       "is_active": true,
+      "activity_coupon_count": 1,
+      "activity_coupon_claimed_count": 12,
       "created_at": "2026-04-20T10:00:00",
       "updated_at": "2026-04-22T15:30:00"
     }
@@ -1105,10 +1224,24 @@ HTTP 429 用户名修改冷却中：
 {
   "title": "沉浸式学习挑战赛",
   "description": "累计学习24小时赢好礼",
+  "content_html": "<p>完成学习挑战后可领取专属卡券。</p>",
   "cover_image": "https://example.com/activity.jpg",
   "participant_count": 0,
   "sort_order": 1,
-  "is_active": true
+  "is_active": true,
+  "activity_coupons": [
+    {
+      "coupon_id": 3,
+      "total_quantity": 100,
+      "per_user_limit": 1,
+      "claim_starts_at": "2026-05-01T00:00:00",
+      "claim_ends_at": "2026-05-31T23:59:59",
+      "is_active": true,
+      "sort_order": 1,
+      "display_title": "挑战奖励券",
+      "display_description": "完成活动即可领取"
+    }
+  ]
 }
 ```
 
@@ -1116,10 +1249,21 @@ HTTP 429 用户名修改冷却中：
 |------|------|------|------|
 | title | string | 是 | 活动标题，最大100字 |
 | description | string | 否 | 活动描述，最大500字 |
+| content_html | string | 否 | 活动详情富文本正文；后端会清洗不安全标签和属性 |
 | cover_image | string | 否 | 封面图 URL，最大512字符 |
 | participant_count | integer | 否 | 参与人数，默认 0，最小 0 |
 | sort_order | integer | 否 | 排序值，默认 0 |
 | is_active | boolean | 否 | 是否上架，默认 true |
+| activity_coupons | array | 否 | 活动关联卡券配置；发布活动时可同时发布 |
+| activity_coupons[].coupon_id | integer | 是 | 卡券模板 ID |
+| activity_coupons[].total_quantity | integer | 是 | 活动总可领取库存，0 表示无库存 |
+| activity_coupons[].per_user_limit | integer | 否 | 每人限领数量，默认 1 |
+| activity_coupons[].claim_starts_at | datetime \| null | 否 | 领取开始时间，按 Asia/Shanghai 业务时间处理 |
+| activity_coupons[].claim_ends_at | datetime \| null | 否 | 领取结束时间，按 Asia/Shanghai 业务时间处理 |
+| activity_coupons[].is_active | boolean | 否 | 是否启用该活动卡券 |
+| activity_coupons[].sort_order | integer | 否 | 卡券展示排序 |
+| activity_coupons[].display_title | string \| null | 否 | 活动页展示标题 |
+| activity_coupons[].display_description | string \| null | 否 | 活动页展示说明 |
 
 **响应 201：**
 ```json
@@ -1127,10 +1271,14 @@ HTTP 429 用户名修改冷却中：
   "id": 1,
   "title": "沉浸式学习挑战赛",
   "description": "累计学习24小时赢好礼",
+  "content_html": "<p>完成学习挑战后可领取专属卡券。</p>",
   "cover_image": "https://example.com/activity.jpg",
   "participant_count": 0,
   "sort_order": 1,
   "is_active": true,
+  "activity_coupons": [],
+  "activity_coupon_count": 0,
+  "activity_coupon_claimed_count": 0,
   "created_at": "2026-04-20T10:00:00",
   "updated_at": "2026-04-20T10:00:00"
 }
@@ -1160,10 +1308,44 @@ HTTP 429 用户名修改冷却中：
   "id": 1,
   "title": "沉浸式学习挑战赛",
   "description": "累计学习24小时赢好礼",
+  "content_html": "<p>完成学习挑战后可领取专属卡券。</p>",
   "cover_image": "https://example.com/activity.jpg",
   "participant_count": 326,
   "sort_order": 1,
   "is_active": true,
+  "activity_coupons": [
+    {
+      "id": 10,
+      "activity_id": 1,
+      "coupon_id": 3,
+      "total_quantity": 100,
+      "claimed_quantity": 12,
+      "remaining_quantity": 88,
+      "per_user_limit": 1,
+      "claim_starts_at": "2026-05-01T00:00:00",
+      "claim_ends_at": "2026-05-31T23:59:59",
+      "is_active": true,
+      "sort_order": 1,
+      "display_title": "挑战奖励券",
+      "display_description": "完成活动即可领取",
+      "coupon": {
+        "id": 3,
+        "name": "满20减3",
+        "description": "全场通用",
+        "type": "threshold_amount_off",
+        "discount_amount": "3.00",
+        "discount_percent": null,
+        "min_order_amount": "20.00",
+        "scope": "all",
+        "seat_zone": null,
+        "valid_from": "2026-05-01T00:00:00",
+        "expires_at": "2026-05-31T23:59:59",
+        "is_active": true
+      }
+    }
+  ],
+  "activity_coupon_count": 1,
+  "activity_coupon_claimed_count": 12,
   "created_at": "2026-04-20T10:00:00",
   "updated_at": "2026-04-22T15:30:00"
 }
@@ -1192,10 +1374,12 @@ HTTP 429 用户名修改冷却中：
 {
   "title": "更新后的标题",
   "description": "更新后的描述",
+  "content_html": "<p>更新后的富文本正文</p>",
   "cover_image": "https://example.com/new-cover.jpg",
   "participant_count": 400,
   "sort_order": 2,
-  "is_active": false
+  "is_active": false,
+  "activity_coupons": []
 }
 ```
 
@@ -1203,10 +1387,12 @@ HTTP 429 用户名修改冷却中：
 |------|------|------|
 | title | string | 活动标题，最大100字 |
 | description | string \| null | 活动描述，最大500字 |
+| content_html | string \| null | 活动详情富文本正文；传入时会整体替换 |
 | cover_image | string \| null | 封面图 URL，最大512字符 |
 | participant_count | integer | 参与人数，最小 0 |
 | sort_order | integer | 排序值 |
 | is_active | boolean | 是否上架 |
+| activity_coupons | array \| null | 活动关联卡券配置；传入时按列表整体同步，缺失的旧配置会删除或停用 |
 
 **响应 200：** 返回更新后的活动对象（同 GET 单个活动）。
 
@@ -1452,7 +1638,10 @@ HTTP 429 用户名修改冷却中：
     "expires_at": "2026-05-31T23:59:59Z",
     "used_at": null,
     "used_booking_id": null,
-    "seat_zone": null
+    "seat_zone": null,
+    "source_type": "activity",
+    "source_activity_id": 1,
+    "source_activity_coupon_id": 10
   }
 ]
 ```
@@ -1474,6 +1663,9 @@ HTTP 429 用户名修改冷却中：
 | used_at | datetime \| null | 使用时间 |
 | used_booking_id | integer \| null | 使用该券的预约 ID |
 | seat_zone | string \| null | 指定座位类型范围 |
+| source_type | string \| null | 卡券来源：activity 表示活动领取，空值表示其他来源 |
+| source_activity_id | integer \| null | 来源活动 ID |
+| source_activity_coupon_id | integer \| null | 来源活动卡券配置 ID |
 
 **错误码：**
 - 401: 未认证
@@ -1517,6 +1709,9 @@ HTTP 429 用户名修改冷却中：
       "used_at": null,
       "used_booking_id": null,
       "seat_zone": null,
+      "source_type": "activity",
+      "source_activity_id": 1,
+      "source_activity_coupon_id": 10,
       "payable_amount": "42.00"
     }
   ]

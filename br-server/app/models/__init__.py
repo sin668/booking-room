@@ -1,4 +1,4 @@
-from app.models.activity import Activity
+from app.models.activity import Activity, ActivityCoupon
 from app.models.admin_menu import AdminMenu
 from app.models.admin_role import AdminRole, admin_role_menus, admin_user_roles
 from app.models.admin_setting import SystemSetting
@@ -16,6 +16,7 @@ from app.models.wallet import WalletTransaction
 
 __all__ = [
     "Activity",
+    "ActivityCoupon",
     "AdminMenu",
     "AdminRole",
     "Banner",

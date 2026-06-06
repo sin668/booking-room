@@ -132,6 +132,7 @@
             v-for="activity in displayedActivities"
             :key="activity.id"
             class="activity-card"
+            @tap="onTapActivity(activity)"
           >
             <image class="activity-cover" :src="activity.cover_image" mode="aspectFill" />
             <view class="activity-info">
@@ -312,6 +313,11 @@ export default {
 
     onTapMoreActivities() {
       // Future: navigate to activity list page
+    },
+
+    onTapActivity(activity) {
+      if (!activity?.id) return
+      uni.navigateTo({ url: `/pages/activity/detail?id=${activity.id}` })
     },
 
     onTapMoreRooms() {

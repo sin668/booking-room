@@ -41,6 +41,9 @@ class UserCoupon(Base):
     status: Mapped[str] = mapped_column(String(20), default="available", nullable=False)
     used_booking_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    source_type: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    source_activity_id: Mapped[int | None] = mapped_column(ForeignKey("activities.id"), nullable=True)
+    source_activity_coupon_id: Mapped[int | None] = mapped_column(ForeignKey("activity_coupons.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False

@@ -25,6 +25,9 @@ class CouponBaseResponse(BaseModel):
     used_at: datetime | None
     used_booking_id: int | None
     seat_zone: str | None
+    source_type: str | None = None
+    source_activity_id: int | None = None
+    source_activity_coupon_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

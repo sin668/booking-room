@@ -10,7 +10,8 @@
     "test:profile-links": "node scripts/verify-profile-stat-links.js",
     "test:wechat-appid": "node scripts/test-apply-wechat-appid.js",
     "test:refactor": "node scripts/test-refactored-page-logic.js",
-    "test:scripts": "npm run test:profile-links && npm run test:wechat-appid && npm run test:refactor"
+    "test:activity-coupon": "node scripts/verify-activity-coupon-campaign.js",
+    "test:scripts": "npm run test:profile-links && npm run test:wechat-appid && npm run test:refactor && npm run test:activity-coupon"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4060620250520001",

@@ -34,7 +34,9 @@ import { buildBookingSearchSchemas, buildBookingTableColumns } from '../src/view
 import { buildRoomSearchSchemas, buildRoomTableColumns } from '../src/views/room/list/builders';
 import {
   buildActivitySearchSchemas,
+  buildActivityCouponFormItem,
   buildActivityTableColumns,
+  validateActivityCoupons,
 } from '../src/views/activity/list/builders';
 import {
   buildWalletFilterOptions,
@@ -118,6 +120,38 @@ function testPageBuilders() {
   assert.equal(
     buildActivityTableColumns().some((column) => column.key === 'is_active'),
     true
+  );
+  assert.equal(
+    buildActivityTableColumns().some((column) => column.key === 'activity_coupon_count'),
+    true
+  );
+  assert.equal(
+    buildActivityTableColumns().some((column) => column.key === 'activity_coupon_claimed_count'),
+    true
+  );
+  assert.equal(buildActivityCouponFormItem(1).sort_order, 1);
+  assert.deepEqual(validateActivityCoupons([]), []);
+  assert.deepEqual(
+    validateActivityCoupons([
+      {
+        coupon_id: null,
+        total_quantity: -1,
+        claimed_quantity: 0,
+        per_user_limit: 0,
+        claim_starts_at: '2026-06-06 10:00:00',
+        claim_ends_at: '2026-06-06 09:00:00',
+        is_active: true,
+        sort_order: 1,
+        display_title: '',
+        display_description: '',
+      },
+    ]),
+    [
+      '第 1 个卡券配置请选择卡券模板',
+      '第 1 个卡券配置总库存不能小于 0',
+      '第 1 个卡券配置每人限领必须大于 0',
+      '第 1 个卡券配置领取结束时间不能早于开始时间',
+    ]
   );
 }
 

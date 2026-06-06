@@ -1,0 +1,226 @@
+<template>
+  <n-space vertical :size="12" class="activity-coupon-config">
+    <n-space justify="space-between" align="center">
+      <n-text strong>关联卡券配置</n-text>
+      <n-button size="small" type="primary" @click="addCoupon">新增卡券配置</n-button>
+    </n-space>
+
+    <n-empty v-if="visibleCoupons.length === 0" description="暂无关联卡券配置" />
+
+    <n-card
+      v-for="item in visibleCoupons"
+      :key="item.localKey"
+      size="small"
+      :bordered="true"
+      class="activity-coupon-config__item"
+    >
+      <template #header>
+        <n-space align="center">
+          <n-text>卡券配置 {{ item.index + 1 }}</n-text>
+          <n-tag v-if="item.coupon.id" size="small" type="info">已保存</n-tag>
+        </n-space>
+      </template>
+      <template #header-extra>
+        <n-space>
+          <n-button
+            size="tiny"
+            :disabled="item.visibleIndex === 0"
+            @click="moveCoupon(item.index, -1)"
+          >
+            上移
+          </n-button>
+          <n-button
+            size="tiny"
+            :disabled="item.visibleIndex === visibleCoupons.length - 1"
+            @click="moveCoupon(item.index, 1)"
+          >
+            下移
+          </n-button>
+          <n-button size="tiny" type="error" ghost @click="removeCoupon(item.index)">删除</n-button>
+        </n-space>
+      </template>
+
+      <n-grid :cols="2" :x-gap="16" :y-gap="12" responsive="screen">
+        <n-form-item-gi label="卡券模板ID">
+          <n-input-number
+            v-model:value="item.coupon.coupon_id"
+            :min="1"
+            :precision="0"
+            placeholder="请输入卡券 ID"
+            style="width: 100%"
+          />
+        </n-form-item-gi>
+        <n-form-item-gi label="卡券类型">
+          <n-input :value="formatCouponType(item.coupon)" readonly placeholder="保存后由卡券模板返回" />
+        </n-form-item-gi>
+        <n-form-item-gi label="卡券名称">
+          <n-input :value="item.coupon.coupon_title || '保存后由卡券模板返回'" readonly />
+        </n-form-item-gi>
+        <n-form-item-gi label="优惠规则">
+          <n-input :value="item.coupon.discount_rule || '保存后由卡券模板返回'" readonly />
+        </n-form-item-gi>
+        <n-form-item-gi label="卡券有效期">
+          <n-input :value="formatCouponValidity(item.coupon)" readonly />
+        </n-form-item-gi>
+        <n-form-item-gi label="总库存">
+          <n-input-number
+            v-model:value="item.coupon.total_quantity"
+            :min="0"
+            :precision="0"
+            style="width: 100%"
+          />
+        </n-form-item-gi>
+        <n-form-item-gi label="每人限领">
+          <n-input-number
+            v-model:value="item.coupon.per_user_limit"
+            :min="1"
+            :precision="0"
+            style="width: 100%"
+          />
+        </n-form-item-gi>
+        <n-form-item-gi label="领取开始">
+          <n-date-picker
+            v-model:formatted-value="item.coupon.claim_starts_at"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            type="datetime"
+            clearable
+            style="width: 100%"
+          />
+        </n-form-item-gi>
+        <n-form-item-gi label="领取结束">
+          <n-date-picker
+            v-model:formatted-value="item.coupon.claim_ends_at"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            type="datetime"
+            clearable
+            style="width: 100%"
+          />
+        </n-form-item-gi>
+        <n-form-item-gi label="展示标题">
+          <n-input v-model:value="item.coupon.display_title" placeholder="用户端展示标题" />
+        </n-form-item-gi>
+        <n-form-item-gi label="排序">
+          <n-input-number
+            v-model:value="item.coupon.sort_order"
+            :precision="0"
+            style="width: 100%"
+          />
+        </n-form-item-gi>
+        <n-form-item-gi label="展示说明" :span="2">
+          <n-input
+            v-model:value="item.coupon.display_description"
+            type="textarea"
+            placeholder="用户端展示说明"
+            :rows="2"
+          />
+        </n-form-item-gi>
+        <n-form-item-gi label="启用状态">
+          <n-switch v-model:value="item.coupon.is_active">
+            <template #checked>启用</template>
+            <template #unchecked>停用</template>
+          </n-switch>
+        </n-form-item-gi>
+        <n-form-item-gi label="已领取">
+          <n-input-number
+            :value="item.coupon.claimed_quantity ?? 0"
+            :min="0"
+            :precision="0"
+            readonly
+            style="width: 100%"
+          />
+        </n-form-item-gi>
+      </n-grid>
+    </n-card>
+  </n-space>
+</template>
+
+<script lang="ts" setup>
+  import { computed } from 'vue';
+  import type { ActivityCouponFormItem } from '@/api/activity';
+  import { buildActivityCouponFormItem } from './builders';
+
+  const props = defineProps<{
+    coupons: ActivityCouponFormItem[];
+  }>();
+
+  const emit = defineEmits<{
+    (e: 'update:coupons', value: ActivityCouponFormItem[]): void;
+  }>();
+
+  const visibleCoupons = computed(() =>
+    props.coupons
+      .map((coupon, index) => ({
+        coupon,
+        index,
+        localKey: coupon.id ? `saved-${coupon.id}` : `new-${index}`,
+      }))
+      .filter((item) => !item.coupon._destroy)
+      .map((item, visibleIndex) => ({
+        ...item,
+        visibleIndex,
+      }))
+  );
+
+  function updateCoupons(coupons: ActivityCouponFormItem[]) {
+    coupons.forEach((coupon, index) => {
+      coupon.sort_order = index + 1;
+    });
+    emit('update:coupons', coupons);
+  }
+
+  function addCoupon() {
+    updateCoupons([...props.coupons, buildActivityCouponFormItem(props.coupons.length + 1)]);
+  }
+
+  function removeCoupon(index: number) {
+    const nextCoupons = [...props.coupons];
+    const target = nextCoupons[index];
+    if (!target) return;
+
+    if (target.id) {
+      nextCoupons[index] = { ...target, _destroy: true, is_active: false };
+    } else {
+      nextCoupons.splice(index, 1);
+    }
+    updateCoupons(nextCoupons);
+  }
+
+  function moveCoupon(index: number, offset: number) {
+    const visibleIndex = visibleCoupons.value.findIndex((item) => item.index === index);
+    if (visibleIndex < 0) return;
+
+    const nextVisible = visibleCoupons.value[visibleIndex + offset];
+    if (!nextVisible) return;
+
+    const nextCoupons = [...props.coupons];
+    const [target] = nextCoupons.splice(index, 1);
+    nextCoupons.splice(nextVisible.index, 0, target);
+    updateCoupons(nextCoupons);
+  }
+
+  function formatCouponValidity(coupon: ActivityCouponFormItem) {
+    if (coupon.valid_from && coupon.expires_at) {
+      return `${coupon.valid_from} 至 ${coupon.expires_at}`;
+    }
+    return '按卡券模板配置';
+  }
+
+  function formatCouponType(coupon: ActivityCouponFormItem) {
+    const labels: Record<string, string> = {
+      threshold_amount_off: '满减券',
+      amount_off: '立减券',
+      percentage_off: '折扣券',
+    };
+    return coupon.coupon_type ? labels[coupon.coupon_type] || coupon.coupon_type : '保存后由卡券模板返回';
+  }
+</script>
+
+<style scoped lang="less">
+  .activity-coupon-config {
+    width: 100%;
+  }
+
+  .activity-coupon-config__item {
+    border-radius: 6px;
+  }
+</style>

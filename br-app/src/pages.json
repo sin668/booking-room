@@ -7,6 +7,13 @@
       }
     },
     {
+      "path": "pages/activity/detail",
+      "style": {
+        "navigationBarTitleText": "活动详情",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
       "path": "pages/booking/index",
       "style": {
         "navigationBarTitleText": "预约"

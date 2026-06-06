@@ -132,6 +132,9 @@ def _to_response(user_coupon: UserCoupon, coupon: Coupon, now: datetime | None =
         used_at=user_coupon.used_at,
         used_booking_id=user_coupon.used_booking_id,
         seat_zone=coupon.seat_zone,
+        source_type=user_coupon.source_type,
+        source_activity_id=user_coupon.source_activity_id,
+        source_activity_coupon_id=user_coupon.source_activity_coupon_id,
     )
 
 
@@ -219,6 +222,9 @@ async def list_available_coupons_for_booking(
                 used_at=user_coupon.used_at,
                 used_booking_id=user_coupon.used_booking_id,
                 seat_zone=coupon.seat_zone,
+                source_type=user_coupon.source_type,
+                source_activity_id=user_coupon.source_activity_id,
+                source_activity_coupon_id=user_coupon.source_activity_coupon_id,
                 payable_amount=_money(original_price - discount_amount),
             )
         )

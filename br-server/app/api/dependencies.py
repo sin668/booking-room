@@ -33,6 +33,19 @@ async def get_current_user_id(
     return user_id
 
 
+async def get_optional_current_user_id(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+) -> uuid.UUID | None:
+    """有登录凭证时解析用户 ID，无凭证时返回 None。"""
+    if credentials is None:
+        return None
+
+    jwt_svc = JWTService(config=settings, redis=redis)
+    return await jwt_svc.get_current_user_id(credentials.credentials)
+
+
 @dataclass(frozen=True)
 class AdminContext:
     admin_id: uuid.UUID

@@ -134,14 +134,43 @@
   }
 
   function handleToggleStatus(record: ActivityItem) {
-    toggleActivityStatus(record.id, !record.is_active)
+    const nextStatus = !record.is_active;
+    if (nextStatus && hasEnabledActivityCoupons(record)) {
+      window['$dialog'].warning({
+        title: '确认上架活动',
+        content: '该活动包含启用的关联卡券，上架后将同步展示关联卡券。确定继续上架吗？',
+        positiveText: '确认上架',
+        negativeText: '取消',
+        onPositiveClick: () => toggleStatus(record, nextStatus),
+      });
+      return;
+    }
+    toggleStatus(record, nextStatus);
+  }
+
+  function hasEnabledActivityCoupons(record: ActivityItem) {
+    return (
+      record.activity_coupons?.some((coupon) => coupon.is_active) ||
+      (record.activity_coupon_count ?? 0) > 0
+    );
+  }
+
+  function toggleStatus(record: ActivityItem, nextStatus: boolean) {
+    toggleActivityStatus(record.id, nextStatus)
       .then(() => {
         window['$message'].success(record.is_active ? '已下架' : '已上架');
         reloadTable();
       })
-      .catch(() => {
-        window['$message'].error('操作失败');
+      .catch((error) => {
+        window['$message'].error(getReadableError(error, '操作失败，请检查活动卡券配置'));
       });
+  }
+
+  function getReadableError(error: unknown, fallback: string) {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
   }
 
   function handleSuccess() {

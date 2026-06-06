@@ -84,6 +84,7 @@
               <text class="coupon-desc">{{ coupon.description || typeText(coupon.type) }}</text>
               <text class="coupon-expiry">{{ expiryText(coupon) }}</text>
             </view>
+            <text v-if="sourceText(coupon)" class="coupon-source">{{ sourceText(coupon) }}</text>
           </view>
         </view>
       </view>
@@ -247,6 +248,10 @@ export default {
       }
       if (!coupon.expires_at) return '有效期以门店规则为准'
       return `有效期至 ${this.formatDate(coupon.expires_at)}`
+    },
+
+    sourceText(coupon) {
+      return coupon?.source_type === 'activity' ? '活动领取' : ''
     },
 
     formatDate(value) {
@@ -512,7 +517,8 @@ export default {
 }
 
 .coupon-desc,
-.coupon-expiry {
+.coupon-expiry,
+.coupon-source {
   font-size: 22rpx;
   line-height: 32rpx;
   color: $text-muted;
@@ -528,6 +534,15 @@ export default {
 
 .coupon-expiry {
   flex-shrink: 0;
+}
+
+.coupon-source {
+  display: inline-flex;
+  margin-top: 12rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(79, 110, 247, 0.08);
+  color: $primary;
 }
 
 .state-wrap {

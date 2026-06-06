@@ -33,13 +33,15 @@ async def list_activities(
     dependencies=[Depends(require_admin_permission("activity:create"))],
 )
 async def create_activity(data: ActivityCreate, db: AsyncSession = Depends(get_db)) -> ActivityAdminResponse:
-    activity = await activity_service.create_activity(db, data.model_dump())
-    return activity
+    try:
+        return await activity_service.create_activity(db, data.model_dump())
+    except activity_service.ActivityCouponError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
 
 @router.get("/{activity_id}", response_model=ActivityAdminResponse, dependencies=[Depends(require_admin_permission("activity:view"))])
 async def get_activity(activity_id: int, db: AsyncSession = Depends(get_db)) -> ActivityAdminResponse:
-    activity = await activity_service.get_activity_by_id(db, activity_id)
+    activity = await activity_service.get_admin_activity_response(db, activity_id)
     if not activity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动不存在")
     return activity
@@ -50,7 +52,10 @@ async def update_activity(activity_id: int, data: ActivityUpdate, db: AsyncSessi
     activity = await activity_service.get_activity_by_id(db, activity_id)
     if not activity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动不存在")
-    return await activity_service.update_activity(db, activity, data.model_dump(exclude_unset=True))
+    try:
+        return await activity_service.update_activity(db, activity, data.model_dump(exclude_unset=True))
+    except activity_service.ActivityCouponError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
 
 @router.delete("/{activity_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin_permission("activity:delete"))])
@@ -66,4 +71,7 @@ async def toggle_status(activity_id: int, data: ActivityStatusUpdate, db: AsyncS
     activity = await activity_service.get_activity_by_id(db, activity_id)
     if not activity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动不存在")
-    return await activity_service.toggle_activity_status(db, activity, data.is_active)
+    try:
+        return await activity_service.toggle_activity_status(db, activity, data.is_active)
+    except activity_service.ActivityCouponError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))

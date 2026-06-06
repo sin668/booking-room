@@ -239,6 +239,7 @@
                 <text class="coupon-discount">-¥{{ money(coupon.discount_amount) }}</text>
               </view>
               <text class="sheet-coupon-desc">{{ coupon.description || couponMetaText(coupon) }}</text>
+              <text v-if="sourceText(coupon)" class="sheet-coupon-source">{{ sourceText(coupon) }}</text>
               <text class="coupon-payable">使用后实付 ¥{{ money(coupon.payable_amount) }}</text>
             </view>
             <view class="coupon-radio">
@@ -671,6 +672,10 @@ export default {
         return `满 ¥${this.money(coupon.min_order_amount)} 可用`
       }
       return '当前预约可用'
+    },
+
+    sourceText(coupon) {
+      return coupon?.source_type === 'activity' ? '活动领取' : ''
     },
 
     errorText(err) {
@@ -1183,6 +1188,7 @@ export default {
 }
 
 .sheet-coupon-desc,
+.sheet-coupon-source,
 .coupon-payable {
   max-width: 100%;
   font-size: 23rpx;
@@ -1193,6 +1199,14 @@ export default {
 }
 
 .coupon-payable {
+  color: $primary;
+}
+
+.sheet-coupon-source {
+  align-self: flex-start;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(79, 110, 247, 0.08);
   color: $primary;
 }
 

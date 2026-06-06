@@ -1,5 +1,6 @@
-## ADDED Requirements
-
+## Purpose
+定义卡券领域 API 和数据模型，包括卡券模板、用户卡券、活动来源记录、可用卡券查询、预约用券过滤和使用状态流转，确保活动领取卡券可复用现有卡券体系。
+## Requirements
 ### Requirement: 卡券数据库模型
 系统 SHALL 提供卡券模板表 `coupons` 和用户卡券表 `user_coupons`。`coupons` SHALL 保存卡券规则，包括名称、说明、类型、金额/折扣、使用门槛、适用范围、生效时间、过期时间和启用状态。`user_coupons` SHALL 保存用户持有卡券，包括用户、卡券模板、状态、使用订单和使用时间。
 
@@ -101,3 +102,27 @@
 - **WHEN** 取消成功
 - **THEN** 对应用户卡券状态恢复为 `available`
 - **AND** `used_booking_id` 和 `used_at` 被清空
+
+### Requirement: 用户卡券来源记录
+系统 SHALL 支持记录用户卡券来源。通过活动领取生成的用户卡券 SHALL 记录来源类型、来源活动 ID 和来源活动卡券配置 ID。
+
+#### Scenario: 活动领券生成来源记录
+- **GIVEN** 用户通过活动详情领取卡券成功
+- **WHEN** 系统创建用户卡券记录
+- **THEN** 用户卡券包含 `source_type=activity`
+- **AND** 用户卡券包含来源活动 ID 和来源活动卡券配置 ID
+
+### Requirement: 活动来源卡券参与现有卡券查询
+系统 SHALL 在用户卡券列表和预约可用卡券接口中返回活动来源卡券，并按既有卡券状态、有效期、门槛和适用范围规则进行过滤。
+
+#### Scenario: 查询活动来源可用卡券
+- **GIVEN** 用户拥有一张活动来源的未使用且未过期卡券
+- **WHEN** 用户请求 `GET /api/v1/coupons?status=available`
+- **THEN** 系统返回该卡券
+- **AND** 响应包含来源活动信息或来源类型
+
+#### Scenario: 预约查询过滤不可用活动卡券
+- **GIVEN** 用户拥有一张活动来源卡券
+- **AND** 该卡券不满足当前预约订单门槛
+- **WHEN** 用户查询预约可用卡券
+- **THEN** 系统不返回该卡券

@@ -9,7 +9,7 @@
 - [x] 1.7 为 `UserCoupon` 增加 `source_type`、`source_activity_id`、`source_activity_coupon_id` 字段，用于记录活动领券来源
 - [x] 1.8 编写 alembic 迁移：为 `activities` 增加 `content_html`，创建 `activity_coupons` 表，扩展 `user_coupons` 来源字段
 - [x] 1.9 编写 alembic downgrade，确保可回退新增字段和表结构
-- [ ] 1.10 使用 `conda activate booking-room` 后运行迁移升级与回退验证，确认迁移脚本可执行
+- [x] 1.10 使用 `conda activate booking-room` 后运行迁移升级与回退验证，确认迁移脚本可执行
 
 ## 2. 后端 Schema、富文本清洗与公共校验
 

@@ -112,6 +112,7 @@ const EMPTY_TEXT = {
 const SCOPE_TEXT = {
   all: '全场通用',
   first_booking: '限首次预约',
+  vip_only: 'VIP专享',
   seat_zone: '指定座位可用',
 }
 

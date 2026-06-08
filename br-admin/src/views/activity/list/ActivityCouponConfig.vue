@@ -41,17 +41,26 @@
       </template>
 
       <n-grid :cols="2" :x-gap="16" :y-gap="12" responsive="screen">
-        <n-form-item-gi label="卡券模板ID">
-          <n-input-number
+        <n-form-item-gi label="卡券模板">
+          <n-select
             v-model:value="item.coupon.coupon_id"
-            :min="1"
-            :precision="0"
-            placeholder="请输入卡券 ID"
+            filterable
+            remote
+            clearable
+            :options="couponOptions"
+            :loading="couponSearchLoading"
+            placeholder="搜索卡券名称"
+            @search="handleCouponSearch"
+            @update:value="handleCouponSelect(item.index, $event)"
             style="width: 100%"
           />
         </n-form-item-gi>
         <n-form-item-gi label="卡券类型">
-          <n-input :value="formatCouponType(item.coupon)" readonly placeholder="保存后由卡券模板返回" />
+          <n-input
+            :value="formatCouponType(item.coupon)"
+            readonly
+            placeholder="保存后由卡券模板返回"
+          />
         </n-form-item-gi>
         <n-form-item-gi label="卡券名称">
           <n-input :value="item.coupon.coupon_title || '保存后由卡券模板返回'" readonly />
@@ -135,9 +144,15 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue';
+  import { computed, ref } from 'vue';
   import type { ActivityCouponFormItem } from '@/api/activity';
+  import { getCouponById, getCouponList, type AdminCouponItem } from '@/api/coupon';
   import { buildActivityCouponFormItem } from './builders';
+  import {
+    formatCouponRule,
+    formatCouponScope,
+    couponTypeLabels,
+  } from '@/views/coupon/list/columns';
 
   const props = defineProps<{
     coupons: ActivityCouponFormItem[];
@@ -161,6 +176,10 @@
       }))
   );
 
+  const couponOptions = ref<{ label: string; value: number }[]>([]);
+  const couponSearchLoading = ref(false);
+  let couponSearchTimer: ReturnType<typeof setTimeout> | null = null;
+
   function updateCoupons(coupons: ActivityCouponFormItem[]) {
     coupons.forEach((coupon, index) => {
       coupon.sort_order = index + 1;
@@ -170,6 +189,88 @@
 
   function addCoupon() {
     updateCoupons([...props.coupons, buildActivityCouponFormItem(props.coupons.length + 1)]);
+  }
+
+  function handleCouponSearch(query: string) {
+    if (couponSearchTimer) {
+      clearTimeout(couponSearchTimer);
+    }
+    couponSearchTimer = setTimeout(async () => {
+      couponSearchLoading.value = true;
+      try {
+        const result = await getCouponList({
+          keyword: query,
+          page_size: 20,
+          is_active: true,
+        });
+        couponOptions.value = result.items.map((coupon) => ({
+          label: `${coupon.name} · ${
+            couponTypeLabels[coupon.type] || coupon.type
+          } · ${formatCouponRule(coupon)}`,
+          value: coupon.id,
+        }));
+      } finally {
+        couponSearchLoading.value = false;
+      }
+    }, 300);
+  }
+
+  async function handleCouponSelect(index: number, couponId: number | null) {
+    const nextCoupons = [...props.coupons];
+    const target = nextCoupons[index];
+    if (!target) return;
+
+    if (!couponId) {
+      nextCoupons[index] = {
+        ...target,
+        coupon_id: null,
+        coupon_title: '',
+        coupon_type: '',
+        discount_rule: '',
+        valid_from: null,
+        expires_at: null,
+      };
+      updateCoupons(nextCoupons);
+      return;
+    }
+
+    const duplicate = props.coupons.some(
+      (coupon, couponIndex) =>
+        couponIndex !== index && !coupon._destroy && Number(coupon.coupon_id) === Number(couponId)
+    );
+    if (duplicate) {
+      window['$message'].warning('该卡券已关联此活动');
+      nextCoupons[index] = { ...target, coupon_id: null };
+      updateCoupons(nextCoupons);
+      return;
+    }
+
+    try {
+      const coupon = await getCouponById(couponId);
+      nextCoupons[index] = {
+        ...target,
+        coupon_id: coupon.id,
+        coupon: coupon as AdminCouponItem,
+        coupon_title: coupon.name,
+        coupon_type: coupon.type,
+        discount_rule: formatCouponRule(coupon),
+        valid_from: coupon.valid_from,
+        expires_at: coupon.expires_at,
+      };
+      const optionExists = couponOptions.value.some((option) => option.value === coupon.id);
+      if (!optionExists) {
+        couponOptions.value = [
+          ...couponOptions.value,
+          {
+            label: `${coupon.name} · ${formatCouponScope(coupon)}`,
+            value: coupon.id,
+          },
+        ];
+      }
+      updateCoupons(nextCoupons);
+    } catch {
+      window['$message'].error('卡券信息加载失败');
+    }
   }
 
   function removeCoupon(index: number) {
@@ -211,7 +312,9 @@
       amount_off: '立减券',
       percentage_off: '折扣券',
     };
-    return coupon.coupon_type ? labels[coupon.coupon_type] || coupon.coupon_type : '保存后由卡券模板返回';
+    return coupon.coupon_type
+      ? labels[coupon.coupon_type] || coupon.coupon_type
+      : '保存后由卡券模板返回';
   }
 </script>
 

@@ -13,7 +13,7 @@
         <view class="user-info">
           <view class="name-row">
             <text class="nickname">{{ userStore.nickname || '学习达人' }}</text>
-            <view class="vip-badge">
+            <view v-if="userStore.isVip" class="vip-badge">
               <text class="vip-badge-text">VIP会员</text>
             </view>
           </view>
@@ -127,13 +127,15 @@
         </view>
       </view>
 
-      <view class="member-card">
+      <view class="member-card" @tap="handleMemberCardTap">
         <view>
-          <text class="member-title">升级超级会员</text>
-          <text class="member-desc">享8折优惠 + 专属座位 + 优先预约</text>
+          <text class="member-title">{{ userStore.isVip ? '超级会员' : '升级超级会员' }}</text>
+          <text class="member-desc">
+            {{ userStore.isVip ? '8折优惠与专属权益已生效' : '享8折优惠 + 专属座位 + 优先预约' }}
+          </text>
         </view>
-        <view class="member-action">
-          <text class="member-action-text">立即开通</text>
+        <view :class="['member-action', { disabled: userStore.isVip }]">
+          <text class="member-action-text">{{ userStore.isVip ? '已是会员' : '立即开通' }}</text>
         </view>
       </view>
 
@@ -197,6 +199,10 @@ export default {
     navigateTo(url) {
       uni.navigateTo({ url })
     },
+    handleMemberCardTap() {
+      if (this.userStore.isVip) return
+      this.navigateTo('/pages/membership/index')
+    },
     async loadFollowedRooms() {
       try {
         this.followedRooms = await syncFollowedRooms()
@@ -220,6 +226,7 @@ export default {
         getBalance(),
         getCoupons('available'),
         getMonthlySummary({ month }),
+        this.userStore.fetchUserInfo(),
       ])
 
       if (requestId !== this.profileRequestId) return
@@ -822,6 +829,10 @@ export default {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.member-action.disabled {
+  opacity: 0.72;
 }
 
 .member-action-text {

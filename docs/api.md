@@ -1653,7 +1653,7 @@ HTTP 429 用户名修改冷却中：
 | name | string | 卡券名称 |
 | description | string | 展示说明 |
 | type | string | amount_off / threshold_amount_off / percentage_off |
-| scope | string | all / first_booking / seat_zone |
+| scope | string | all / first_booking / vip_only / seat_zone |
 | status | string | available / used / expired |
 | discount_amount | decimal \| null | 固定抵扣金额 |
 | discount_percent | integer \| null | 折扣比例，80 表示 8 折 |
@@ -1718,7 +1718,7 @@ HTTP 429 用户名修改冷却中：
 }
 ```
 
-不可用卡券会被过滤，包括：不属于当前用户、已使用、未生效、已过期、模板停用、未达到满减门槛、不满足首次预约限制、座位类型不匹配。
+不可用卡券会被过滤，包括：不属于当前用户、已使用、未生效、已过期、模板停用、未达到满减门槛、不满足首次预约限制、非 VIP 用户使用 `vip_only` 卡券、座位类型不匹配。
 
 **错误码：**
 - 401: 未认证
@@ -1810,15 +1810,20 @@ user must return 404.
   "status": "pending",
   "payment_provider": "wechat",
   "payment_status": "pending",
-  "balance_after": null
+  "balance_after": null,
+  "membership_upgraded": false,
+  "vip_coupon_id": null
 }
 ```
 
 After a verified callback is processed, `status` becomes `completed`,
 `payment_status` becomes `paid`, and `balance_after` contains the post-credit
-wallet balance. Time fields such as `paid_at` and `notify_processed_at`, when
-exposed, should be serialized consistently. Avoid mixing timezone-aware and
-timezone-naive `DateTime` values in database persistence.
+wallet balance. If the recharge amount is at least 100 and the user was not
+already a member, `membership_upgraded` becomes `true` and `vip_coupon_id`
+contains the issued VIP welcome user-coupon ID. Time fields such as `paid_at`
+and `notify_processed_at`, when exposed, should be serialized consistently.
+Avoid mixing timezone-aware and timezone-naive `DateTime` values in database
+persistence.
 
 **Errors:**
 - 401: unauthenticated
@@ -1950,7 +1955,9 @@ must not be used by production recharge crediting.
   "amount": "100.00",
   "bonus_amount": "30.00",
   "status": "pending",
-  "balance_after": null
+  "balance_after": null,
+  "membership_upgraded": false,
+  "vip_coupon_id": null
 }
 ```
 
@@ -1980,9 +1987,13 @@ must not be used by production recharge crediting.
   "amount": "100.00",
   "bonus_amount": "30.00",
   "status": "completed",
-  "balance_after": "386.00"
+  "balance_after": "386.00",
+  "membership_upgraded": true,
+  "vip_coupon_id": 18
 }
 ```
+
+当单笔充值金额 `>= 100` 且用户 `membership_level` 为 `none` 时，确认入账会在同一数据库事务内升级用户为 VIP，并发放 `scope=vip_only` 的欢迎券。`membership_upgraded` 表示该笔订单是否触发升级，`vip_coupon_id` 为发放后的用户卡券 ID。
 
 **错误码：**
 - 401: 未认证
@@ -2123,7 +2134,131 @@ must not be used by production recharge crediting.
 
 ---
 
-## 九、管理端 - 钱包管理
+## 九、管理端 - 卡券管理
+
+管理端卡券接口支持 Bearer Token 或 `X-Admin-Token` 管理员认证，并需要对应 RBAC 权限。
+
+### GET /api/v1/admin/coupons
+
+分页查询卡券模板。
+
+**权限：** `coupon:view`
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | integer | 1 | 页码 |
+| page_size | integer | 10 | 每页数量，最大 100 |
+| keyword | string | - | 搜索名称或描述 |
+| type | string | - | threshold_amount_off / amount_off / percentage_off |
+| scope | string | - | all / first_booking / vip_only / seat_zone |
+| is_active | boolean | - | 是否启用 |
+
+**响应 200：**
+```json
+{
+  "total": 1,
+  "page": 1,
+  "page_size": 10,
+  "items": [
+    {
+      "id": 3,
+      "name": "VIP专享8折券",
+      "description": "VIP 用户可用",
+      "type": "percentage_off",
+      "discount_amount": null,
+      "discount_percent": 80,
+      "min_order_amount": "0.00",
+      "scope": "vip_only",
+      "seat_zone": null,
+      "valid_from": "2026-06-08T00:00:00",
+      "expires_at": "2026-07-08T00:00:00",
+      "is_active": true,
+      "created_at": "2026-06-08T10:00:00",
+      "updated_at": "2026-06-08T10:00:00"
+    }
+  ]
+}
+```
+
+### POST /api/v1/admin/coupons
+
+创建卡券模板。
+
+**权限：** `coupon:create`
+
+**请求体：**
+```json
+{
+  "name": "满100减20",
+  "description": "全场通用",
+  "type": "threshold_amount_off",
+  "discount_amount": "20.00",
+  "discount_percent": null,
+  "min_order_amount": "100.00",
+  "scope": "all",
+  "seat_zone": null,
+  "valid_from": "2026-06-08T00:00:00",
+  "expires_at": "2026-07-08T00:00:00",
+  "is_active": true
+}
+```
+
+优惠规则：
+
+| type | 规则 |
+|------|------|
+| threshold_amount_off | `discount_amount` 必填，`min_order_amount > 0` |
+| amount_off | `discount_amount` 必填 |
+| percentage_off | `discount_percent` 必填，取值 1-99，80 表示 8 折 |
+
+`scope=seat_zone` 时 `seat_zone` 表示指定座位区域；其他 scope 会忽略 `seat_zone`。时间字段按 Asia/Shanghai 业务时间写入数据库。
+
+**响应 201：** 返回创建后的卡券对象。
+
+### GET /api/v1/admin/coupons/{coupon_id}
+
+获取卡券模板详情。
+
+**权限：** `coupon:view`
+
+### PUT /api/v1/admin/coupons/{coupon_id}
+
+更新卡券模板。已关联活动的卡券禁止修改 `type`。
+
+**权限：** `coupon:update`
+
+### PATCH /api/v1/admin/coupons/{coupon_id}/status
+
+启用或停用卡券模板。
+
+**权限：** `coupon:update`
+
+**请求体：**
+```json
+{ "is_active": false }
+```
+
+已过期卡券禁止重新启用。
+
+### DELETE /api/v1/admin/coupons/{coupon_id}
+
+删除未关联、未发放的卡券模板。
+
+**权限：** `coupon:delete`
+
+已关联活动或已发放给用户的卡券禁止删除。
+
+**错误码：**
+- 401: 未认证
+- 403: 缺少对应 `coupon:*` 权限
+- 404: 卡券不存在
+- 422: 参数校验失败或业务规则不允许
+
+---
+
+## 十、管理端 - 钱包管理
 
 管理端钱包接口支持 Bearer Token 或 `X-Admin-Token` 管理员认证，并需要对应 RBAC 权限。
 

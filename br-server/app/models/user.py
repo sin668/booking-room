@@ -32,6 +32,7 @@ class User(Base):
         ),
         Index("ix_users_phone", "phone", unique=True, postgresql_where="phone IS NOT NULL"),
         Index("ix_users_username", "username", unique=True, postgresql_where="username IS NOT NULL"),
+        CheckConstraint("membership_level IN ('none', 'vip', 'svip')", name="ck_users_membership_level"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
@@ -97,6 +98,11 @@ class User(Base):
     balance: Mapped[Decimal] = mapped_column(
         Numeric(10, 2),
         default=0,
+        nullable=False,
+    )
+    membership_level: Mapped[str] = mapped_column(
+        String(20),
+        default="none",
         nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(

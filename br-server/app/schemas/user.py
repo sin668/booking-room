@@ -71,6 +71,7 @@ class UserResponse(BaseModel):
     mobile: str | None = None
     avatar: str | None = None
     balance: int = 0
+    membership_level: str = "none"
     is_super_admin: bool = False
     roles: list[AdminRoleSummary] = []
     wechat_openid: str | None = None
@@ -89,6 +90,7 @@ class UserProfileResponse(BaseModel):
     avatar: str | None = None
     status: str
     user_type: str
+    membership_level: str = "none"
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

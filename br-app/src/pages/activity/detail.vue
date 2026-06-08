@@ -33,7 +33,7 @@
           <rich-text class="rich-content" :nodes="activity.content_html" />
         </view>
 
-        <view class="coupon-section">
+        <view v-if="activityCoupons.length > 0" class="coupon-section">
           <text class="section-title">活动卡券</text>
 
           <view v-if="activityCoupons.length === 0" class="empty-coupons">

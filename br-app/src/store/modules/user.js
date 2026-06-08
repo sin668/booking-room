@@ -25,6 +25,8 @@ export const useUserStore = defineStore('user', {
     username: (state) => state.userInfo?.username || '',
     avatar: (state) => state.userInfo?.avatar || '',
     usernameUpdatedAt: (state) => state.userInfo?.username_updated_at || null,
+    membershipLevel: (state) => state.userInfo?.membership_level || 'none',
+    isVip: (state) => ['vip', 'svip'].includes(state.userInfo?.membership_level || 'none'),
   },
 
   actions: {

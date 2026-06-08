@@ -55,7 +55,10 @@ export function buildActivityTableColumns(): BasicColumn<ActivityItem>[] {
       render(record) {
         return (
           record.activity_coupon_claimed_count ??
-          record.activity_coupons?.reduce((total, item) => total + (item.claimed_quantity ?? 0), 0) ??
+          record.activity_coupons?.reduce(
+            (total, item) => total + (item.claimed_quantity ?? 0),
+            0
+          ) ??
           0
         );
       },

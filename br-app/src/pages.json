@@ -81,6 +81,12 @@
       }
     },
     {
+      "path": "pages/membership/index",
+      "style": {
+        "navigationBarTitleText": "超级会员"
+      }
+    },
+    {
       "path": "pages/wallet/transactions",
       "style": {
         "navigationBarTitleText": "钱包流水"

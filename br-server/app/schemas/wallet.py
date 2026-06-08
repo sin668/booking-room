@@ -32,6 +32,8 @@ class RechargeResponse(BaseModel):
     payment_provider: str | None = None
     payment_status: str | None = None
     payment_params: PaymentParams | None = None
+    membership_upgraded: bool = False
+    vip_coupon_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -44,6 +46,8 @@ class RechargeOrderResponse(BaseModel):
     payment_provider: str | None = None
     payment_status: str
     balance_after: Decimal | None = None
+    membership_upgraded: bool = False
+    vip_coupon_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

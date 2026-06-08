@@ -30,6 +30,8 @@ def settings() -> Settings:
     return Settings(
         JWT_SECRET_KEY="test-secret-key-for-wallet-tests",
         JWT_ALGORITHM="HS256",
+        WECHAT_PAY_APPID="",
+        WECHAT_PAY_MCHID="",
     )
 
 
@@ -491,6 +493,8 @@ async def test_get_recharge_order_for_owner_succeeds(
         status="completed",
         payment_status="paid",
         balance_after=Decimal("366.00"),
+        membership_upgraded=True,
+        vip_coupon_id=18,
     )
     mock_db.execute = AsyncMock(return_value=_mock_scalar_result(transaction))
 
@@ -500,6 +504,8 @@ async def test_get_recharge_order_for_owner_succeeds(
     assert result.status == "completed"
     assert result.payment_status == "paid"
     assert result.balance_after == Decimal("366.00")
+    assert result.membership_upgraded is True
+    assert result.vip_coupon_id == 18
 
 
 async def test_get_recharge_order_for_another_user_fails(
@@ -535,7 +541,7 @@ async def test_successful_wechat_callback_credits_balance_once(
         notify_payload=None,
         notify_processed_at=None,
     )
-    user = SimpleNamespace(id=user_id, balance=Decimal("200.00"))
+    user = SimpleNamespace(id=user_id, balance=Decimal("200.00"), membership_level="none", nickname="测试用户")
     notify = {
         "appid": "",
         "mchid": "",

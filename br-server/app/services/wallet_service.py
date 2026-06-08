@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import inspect
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
-from typing import Any
+from typing import Any, NamedTuple
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, cast, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +18,7 @@ from app.domain.wallet_rules import (
     transaction_direction,
     transaction_title,
 )
-from app.models.coupon import Coupon
+from app.models.coupon import Coupon, UserCoupon
 from app.models.user import User
 from app.models.wallet import WalletTransaction
 from app.repositories.wallet_repository import WalletRepository
@@ -107,6 +108,19 @@ def _admin_wallet_base_conditions() -> list:
 def _transaction_completed_at(transaction: WalletTransaction) -> datetime | None:
     """获取交易完成时间."""
     return transaction_completed_at(transaction)
+
+
+class VipUpgradeResult(NamedTuple):
+    upgraded: bool
+    user: Any
+    vip_coupon: UserCoupon | None
+
+
+CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")
+
+
+def _now_for_coupon_db() -> datetime:
+    return datetime.now(CHINA_TIMEZONE).replace(tzinfo=None)
 
 
 class WalletService:
@@ -331,6 +345,9 @@ class WalletService:
 
         paid_at = self._parse_wechat_success_time(notify.get("success_time"))
         now = datetime.now()
+        vip_result = await self._process_vip_upgrade(self._db, user, Decimal(str(transaction.amount)))
+        transaction.membership_upgraded = vip_result.upgraded
+        transaction.vip_coupon_id = vip_result.vip_coupon.id if vip_result.vip_coupon else None
         transaction.status = "completed"
         transaction.balance_after = user.balance
         self._set_payment_attr(transaction, "payment_status", "paid")
@@ -340,6 +357,35 @@ class WalletService:
         self._set_payment_attr(transaction, "notify_processed_at", now)
 
         return {"code": "SUCCESS", "message": "success"}
+
+    @staticmethod
+    async def _process_vip_upgrade(db: AsyncSession, user: Any, amount: Decimal) -> VipUpgradeResult:
+        """检测并执行 VIP 升级和赠券。返回 VipUpgradeResult。"""
+        if amount >= Decimal("100") and getattr(user, "membership_level", "none") == "none":
+            user.membership_level = "vip"
+            now = _now_for_coupon_db()
+            coupon = Coupon(
+                name=f"VIP专属8折券-{getattr(user, 'nickname', '会员')}",
+                type="percentage_off",
+                discount_percent=80,
+                min_order_amount=Decimal("0"),
+                scope="vip_only",
+                valid_from=now,
+                expires_at=now + timedelta(days=30),
+                is_active=True,
+            )
+            db.add(coupon)
+            await db.flush()
+            user_coupon = UserCoupon(
+                user_id=str(user.id),
+                coupon_id=coupon.id,
+                status="available",
+                source_type="vip_welcome",
+            )
+            db.add(user_coupon)
+            await db.flush()
+            return VipUpgradeResult(upgraded=True, user=user, vip_coupon=user_coupon)
+        return VipUpgradeResult(upgraded=False, user=user, vip_coupon=None)
 
     async def confirm_payment(
         self, order_id: uuid.UUID, user_id: uuid.UUID
@@ -374,6 +420,9 @@ class WalletService:
         user = user_result.scalar_one()
 
         now = datetime.now()
+        vip_result = await self._process_vip_upgrade(self._db, user, transaction.amount)
+        transaction.membership_upgraded = vip_result.upgraded
+        transaction.vip_coupon_id = vip_result.vip_coupon.id if vip_result.vip_coupon else None
         transaction.status = "completed"
         transaction.balance_after = user.balance
         self._set_payment_attr(transaction, "paid_at", now)
@@ -384,6 +433,8 @@ class WalletService:
             bonus_amount=transaction.bonus_amount,
             status=transaction.status,
             balance_after=transaction.balance_after,
+            membership_upgraded=vip_result.upgraded,
+            vip_coupon_id=vip_result.vip_coupon.id if vip_result.vip_coupon else None,
         )
 
     async def redeem_promo_code(self, code: str) -> PromoCodeResponse:
@@ -451,6 +502,8 @@ class WalletService:
                 if getattr(transaction, "balance_after", None) is not None
                 else None
             ),
+            "membership_upgraded": bool(getattr(transaction, "membership_upgraded", False)),
+            "vip_coupon_id": getattr(transaction, "vip_coupon_id", None),
         }
         payload.update(overrides)
         if "payment_params" in payload:

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, JSON, Numeric, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, JSON, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -61,6 +61,16 @@ class WalletTransaction(Base):
         ForeignKey("bookings.id"),
         nullable=True,
         index=True,
+    )
+    membership_upgraded: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+    vip_coupon_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("user_coupons.id"),
+        nullable=True,
     )
     payment_method: Mapped[str | None] = mapped_column(
         String(20),

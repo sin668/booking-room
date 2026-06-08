@@ -12,6 +12,7 @@ from app.api.dependencies import get_current_user_id
 from app.models.coupon import Coupon, UserCoupon
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
+from app.models.user import User
 
 
 USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
@@ -98,7 +99,27 @@ async def seed_coupon_data(db_session: AsyncSession):
         expires_at=NOW + timedelta(days=1),
         is_active=True,
     )
-    db_session.add_all([coupon_active, coupon_expired, coupon_used, coupon_zone])
+    coupon_vip_only = Coupon(
+        name="会员专属券",
+        description="VIP会员专享",
+        type="percentage_off",
+        discount_amount=None,
+        discount_percent=80,
+        min_order_amount=Decimal("0.00"),
+        scope="vip_only",
+        seat_zone=None,
+        valid_from=NOW - timedelta(days=1),
+        expires_at=NOW + timedelta(days=1),
+        is_active=True,
+    )
+    user = User(
+        id=USER_ID,
+        phone="13800138000",
+        nickname="VIP用户",
+        password_hash="hashed",
+        membership_level="vip",
+    )
+    db_session.add_all([user, coupon_active, coupon_expired, coupon_used, coupon_zone, coupon_vip_only])
     await db_session.flush()
 
     db_session.add_all(
@@ -107,6 +128,7 @@ async def seed_coupon_data(db_session: AsyncSession):
             UserCoupon(user_id=str(USER_ID), coupon_id=coupon_expired.id, status="available"),
             UserCoupon(user_id=str(USER_ID), coupon_id=coupon_used.id, status="used", used_booking_id=10, used_at=NOW),
             UserCoupon(user_id=str(USER_ID), coupon_id=coupon_zone.id, status="available"),
+            UserCoupon(user_id=str(USER_ID), coupon_id=coupon_vip_only.id, status="available"),
         ]
     )
     await db_session.flush()
@@ -127,6 +149,7 @@ class TestCouponListAPI:
         data = resp.json()
         assert all(item["status"] == "available" for item in data)
         assert "已使用券" not in [item["name"] for item in data]
+        assert "会员专属券" in [item["name"] for item in data]
 
     @pytest.mark.asyncio
     async def test_status_expired_includes_dynamic_expired(self, auth_client: AsyncClient, seed_coupon_data):
@@ -168,4 +191,3 @@ class TestAvailableCouponsAPI:
             },
         )
         assert resp.status_code == 404
-

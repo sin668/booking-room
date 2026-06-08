@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 CouponType = Literal["amount_off", "threshold_amount_off", "percentage_off"]
-CouponScope = Literal["all", "first_booking", "seat_zone"]
+CouponScope = Literal["all", "first_booking", "vip_only", "seat_zone"]
 CouponStatus = Literal["available", "used", "expired"]
 
 
@@ -45,4 +45,3 @@ class AvailableCouponsForBookingListResponse(BaseModel):
     items: list[AvailableCouponForBookingResponse]
 
     model_config = ConfigDict(from_attributes=True)
-

@@ -154,11 +154,20 @@ export default {
     },
   },
 
-  onLoad() {
+  onLoad(options = {}) {
+    this.applyVipSourceOptions(options)
     this.loadBalance()
   },
 
   methods: {
+    applyVipSourceOptions(options) {
+      if (options.source !== 'vip') return
+      const amount = Number(options.amount || 100)
+      if (this.isValidAmount(amount, String(amount))) {
+        this.selectedAmount = amount
+      }
+    },
+
     async loadBalance() {
       this.loading = true
       try {
@@ -261,7 +270,11 @@ export default {
           return
         }
 
-        uni.showToast({ title: '充值成功' })
+        if (confirmedOrder.membership_upgraded) {
+          await this.showVipUpgradeSuccess(confirmedOrder)
+        } else {
+          uni.showToast({ title: '充值成功' })
+        }
         this.promoInfo = null
         await this.loadBalance()
       } catch (error) {
@@ -293,6 +306,24 @@ export default {
         isSuccess: (status) => status === 'completed',
         wait: () => waitForPaymentPoll(RECHARGE_POLL_INTERVAL),
         maxAttempts: RECHARGE_POLL_MAX_ATTEMPTS,
+      })
+    },
+
+    showVipUpgradeSuccess(order) {
+      return new Promise((resolve) => {
+        const content = order.vip_coupon_id
+          ? '恭喜成为超级会员，VIP专属券已发放至卡券包'
+          : '恭喜成为超级会员'
+        uni.showModal({
+          title: '开通成功',
+          content,
+          showCancel: false,
+          confirmText: '查看我的',
+          success: () => {
+            resolve()
+            uni.switchTab({ url: '/pages/profile/index' })
+          },
+        })
       })
     },
 

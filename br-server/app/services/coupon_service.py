@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime, time
 from decimal import Decimal, ROUND_HALF_UP
-from typing import NamedTuple
+from typing import Any, NamedTuple
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, exists, select
@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.booking import Booking
 from app.models.coupon import Coupon, UserCoupon
 from app.models.seat import Seat
+from app.models.user import User
 from app.schemas.coupon import (
     AvailableCouponForBookingResponse,
     AvailableCouponsForBookingListResponse,
@@ -114,6 +115,14 @@ async def _load_user_coupons(db: AsyncSession, user_id: str) -> list[tuple[UserC
     return list(result.all())
 
 
+async def _load_user(db: AsyncSession, user_id: str | uuid.UUID) -> User | None:
+    try:
+        normalized_user_id = uuid.UUID(str(user_id))
+    except (TypeError, ValueError):
+        return None
+    return await db.get(User, normalized_user_id)
+
+
 def _to_response(user_coupon: UserCoupon, coupon: Coupon, now: datetime | None = None) -> CouponResponse:
     status = _get_coupon_status(user_coupon, coupon, now=now)
     return CouponResponse(
@@ -144,9 +153,12 @@ async def list_user_coupons(
     status: str | None = None,
 ) -> list[CouponResponse]:
     rows = await _load_user_coupons(db, str(user_id))
+    user = await _load_user(db, user_id)
     now = _now()
     items: list[CouponResponse] = []
     for user_coupon, coupon in rows:
+        if not _check_scope(user, coupon):
+            continue
         item = _to_response(user_coupon, coupon, now=now)
         if status is None or item.status == status:
             items.append(item)
@@ -163,14 +175,25 @@ async def _has_booking_history(db: AsyncSession, user_id: str) -> bool:
     return bool(await db.scalar(statement))
 
 
-def _scope_allows(coupon: Coupon, seat: Seat, has_history: bool) -> bool:
+def _check_scope(user: Any, coupon: Coupon, has_prior_bookings: bool = False) -> bool:
+    """统一校验卡券适用范围。座位区域由预约查询携带 seat 后单独判断。"""
     if coupon.scope == "all":
         return True
     if coupon.scope == "first_booking":
-        return not has_history
+        return not has_prior_bookings
+    if coupon.scope == "vip_only":
+        return getattr(user, "membership_level", "none") in ("vip", "svip")
+    if coupon.scope == "seat_zone":
+        return True
+    raise CouponUnavailableError("不支持的适用范围")
+
+
+def _scope_allows(user: Any, coupon: Coupon, seat: Seat, has_history: bool) -> bool:
+    if not _check_scope(user, coupon, has_prior_bookings=has_history):
+        return False
     if coupon.scope == "seat_zone":
         return coupon.seat_zone == seat.zone
-    raise CouponUnavailableError("不支持的适用范围")
+    return True
 
 
 async def list_available_coupons_for_booking(
@@ -188,6 +211,7 @@ async def list_available_coupons_for_booking(
 
     original_price = _calculate_original_price(Decimal(str(seat.price_per_hour)), start_time, end_time)
     has_history = await _has_booking_history(db, str(user_id))
+    user = await _load_user(db, user_id)
     rows = await _load_user_coupons(db, str(user_id))
     now = _now()
 
@@ -198,7 +222,7 @@ async def list_available_coupons_for_booking(
         status = _get_coupon_status(user_coupon, coupon, now=now)
         if status != "available":
             continue
-        if not _scope_allows(coupon, seat, has_history):
+        if not _scope_allows(user, coupon, seat, has_history):
             continue
         discount_amount = _calc_discount(coupon, original_price)
         if discount_amount <= Decimal("0.00"):
@@ -263,7 +287,8 @@ async def validate_coupon_for_booking(
         raise CouponUnavailableError("卡券不可用")
 
     has_history = await _has_booking_history(db, str(user_id))
-    if not _scope_allows(coupon, seat, has_history):
+    user = await _load_user(db, user_id)
+    if not _scope_allows(user, coupon, seat, has_history):
         raise CouponUnavailableError("卡券不可用")
 
     discount_amount = _calc_discount(coupon, original_price)

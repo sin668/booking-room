@@ -32,7 +32,7 @@
 - **AND** 实付金额为 40.00
 
 ### Requirement: 卡券适用范围规则
-系统 SHALL 支持三类适用范围：全场通用、首次预约、指定座位类型。首次预约卡券 MUST 仅对没有成功预约历史的用户可用；指定座位类型卡券 MUST 仅对对应 `seat.zone` 的订单可用。
+系统 SHALL 支持四类适用范围：全场通用、首次预约、VIP专享、指定座位类型。全场通用卡券可用于任意座位预约；首次预约卡券 MUST 仅对没有成功预约历史的用户可用；VIP专享卡券 MUST 仅对 `membership_level` 为 `vip` 或 `svip` 的用户可用；指定座位类型卡券 MUST 仅对对应 `seat.zone` 的订单可用。
 
 #### Scenario: 全场通用卡券可用于任意座位
 - **GIVEN** 用户拥有全场通用卡券
@@ -44,10 +44,26 @@
 - **WHEN** 用户没有 `confirmed` 或 `completed` 预约历史
 - **THEN** 该卡券满足适用范围校验
 
+#### Scenario: VIP专享卡券仅对VIP用户可用
+- **GIVEN** 用户拥有 VIP 专享卡券（scope=vip_only）
+- **WHEN** 用户 `membership_level` 为 `vip` 或 `svip`
+- **THEN** 该卡券满足适用范围校验
+
+#### Scenario: 非VIP用户无法使用VIP专享卡券
+- **GIVEN** 用户拥有 VIP 专享卡券（scope=vip_only）
+- **WHEN** 用户 `membership_level` 为 `none`
+- **THEN** 该卡券不满足适用范围校验
+- **AND** 预约可用卡券接口不返回该卡券
+
 #### Scenario: 指定座位类型卡券仅匹配对应区域
 - **GIVEN** 用户拥有仅限 `vip` 座位的卡券
 - **WHEN** 用户预约 `seat.zone` 为 `vip` 的座位
 - **THEN** 该卡券满足适用范围校验
+
+#### Scenario: VIP专享卡券不出现在非VIP用户卡券列表
+- **GIVEN** 用户 `membership_level` 为 `none` 且拥有 VIP 专享卡券
+- **WHEN** 用户请求 `GET /api/v1/coupons?status=available`
+- **THEN** 系统不返回该 VIP 专享卡券
 
 ### Requirement: 用户卡券列表 API
 系统 SHALL 提供 `GET /api/v1/coupons` 接口，返回当前登录用户的卡券列表。接口 SHALL 支持 `status=available|used|expired` 查询参数。`expired` 状态 SHALL 基于卡券模板 `expires_at` 动态判断。
@@ -126,3 +142,4 @@
 - **AND** 该卡券不满足当前预约订单门槛
 - **WHEN** 用户查询预约可用卡券
 - **THEN** 系统不返回该卡券
+

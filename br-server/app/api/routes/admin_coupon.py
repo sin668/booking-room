@@ -32,6 +32,7 @@ async def list_coupons(
     type: str | None = None,
     scope: str | None = None,
     is_active: bool | None = None,
+    valid_now: bool | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> AdminCouponListResponse:
     return await admin_coupon_service.list_coupons(
@@ -42,6 +43,7 @@ async def list_coupons(
         type=type,
         scope=scope,
         is_active=is_active,
+        valid_now=valid_now,
     )
 
 

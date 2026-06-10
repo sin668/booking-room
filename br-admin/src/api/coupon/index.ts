@@ -49,6 +49,7 @@ export interface AdminCouponListParams {
   type?: string;
   scope?: string;
   is_active?: boolean;
+  valid_now?: boolean;
 }
 
 export function getCouponList(params?: AdminCouponListParams) {

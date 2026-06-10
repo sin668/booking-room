@@ -203,8 +203,8 @@
         total_quantity: coupon.total_quantity ?? 0,
         claimed_quantity: coupon.claimed_quantity ?? 0,
         per_user_limit: coupon.per_user_limit ?? 1,
-        claim_starts_at: coupon.claim_starts_at ?? null,
-        claim_ends_at: coupon.claim_ends_at ?? null,
+        claim_starts_at: normalizeDateTimeForPicker(coupon.claim_starts_at),
+        claim_ends_at: normalizeDateTimeForPicker(coupon.claim_ends_at),
         is_active: coupon.is_active ?? true,
         sort_order: coupon.sort_order ?? index + 1,
         display_title: coupon.display_title ?? '',
@@ -229,6 +229,18 @@
     } finally {
       detailLoading.value = false;
     }
+  }
+
+  function normalizeDateTimeForPicker(value: string | null | undefined) {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value.slice(0, 19).replace('T', ' ');
+    }
+    const pad = (num: number) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
+      date.getHours()
+    )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
 
   async function handleUpload({

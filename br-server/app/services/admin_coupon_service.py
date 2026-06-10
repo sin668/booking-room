@@ -100,6 +100,7 @@ async def list_coupons(
     type: str | None = None,
     scope: str | None = None,
     is_active: bool | None = None,
+    valid_now: bool | None = None,
 ) -> AdminCouponListResponse:
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
@@ -113,6 +114,12 @@ async def list_coupons(
         conditions.append(Coupon.scope == scope)
     if is_active is not None:
         conditions.append(Coupon.is_active == is_active)
+    if valid_now is True:
+        now = _now_for_db()
+        conditions.append(Coupon.expires_at >= now)
+    elif valid_now is False:
+        now = _now_for_db()
+        conditions.append(Coupon.expires_at < now)
 
     stmt = select(Coupon).where(*conditions)
     total = int(await db.scalar(select(func.count()).select_from(stmt.subquery())) or 0)

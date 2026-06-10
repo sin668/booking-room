@@ -143,3 +143,90 @@ class TestAdminCouponApi:
         data = resp.json()
         assert data["total"] == 1
         assert data["items"][0]["id"] == seed_coupon.id
+
+    @pytest.mark.asyncio
+    async def test_list_filters_active_not_expired_and_orders_by_created_desc(
+        self, client: AsyncClient, admin_headers, db_session: AsyncSession
+    ):
+        now = datetime.now()
+        older_valid = Coupon(
+            name="有效旧券",
+            description="有效启用",
+            type="amount_off",
+            discount_amount=Decimal("10.00"),
+            discount_percent=None,
+            min_order_amount=Decimal("0.00"),
+            scope="all",
+            seat_zone=None,
+            valid_from=now - timedelta(days=2),
+            expires_at=now + timedelta(days=2),
+            is_active=True,
+            created_at=now - timedelta(hours=2),
+        )
+        future_valid = Coupon(
+            name="未来开始券",
+            description="未过期",
+            type="amount_off",
+            discount_amount=Decimal("12.00"),
+            discount_percent=None,
+            min_order_amount=Decimal("0.00"),
+            scope="all",
+            seat_zone=None,
+            valid_from=now + timedelta(days=1),
+            expires_at=now + timedelta(days=3),
+            is_active=True,
+            created_at=now - timedelta(minutes=90),
+        )
+        newer_valid = Coupon(
+            name="有效新券",
+            description="有效启用",
+            type="amount_off",
+            discount_amount=Decimal("15.00"),
+            discount_percent=None,
+            min_order_amount=Decimal("0.00"),
+            scope="all",
+            seat_zone=None,
+            valid_from=now - timedelta(days=1),
+            expires_at=now + timedelta(days=1),
+            is_active=True,
+            created_at=now - timedelta(hours=1),
+        )
+        expired = Coupon(
+            name="过期券",
+            description="已过期",
+            type="amount_off",
+            discount_amount=Decimal("20.00"),
+            discount_percent=None,
+            min_order_amount=Decimal("0.00"),
+            scope="all",
+            seat_zone=None,
+            valid_from=now - timedelta(days=4),
+            expires_at=now - timedelta(days=1),
+            is_active=True,
+            created_at=now,
+        )
+        inactive = Coupon(
+            name="停用券",
+            description="未启用",
+            type="amount_off",
+            discount_amount=Decimal("25.00"),
+            discount_percent=None,
+            min_order_amount=Decimal("0.00"),
+            scope="all",
+            seat_zone=None,
+            valid_from=now - timedelta(days=1),
+            expires_at=now + timedelta(days=1),
+            is_active=False,
+            created_at=now,
+        )
+        db_session.add_all([older_valid, future_valid, newer_valid, expired, inactive])
+        await db_session.flush()
+
+        resp = await client.get(
+            "/api/v1/admin/coupons?is_active=true&valid_now=true",
+            headers=admin_headers,
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert [item["name"] for item in data["items"]] == ["有效新券", "未来开始券", "有效旧券"]

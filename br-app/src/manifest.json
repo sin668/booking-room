@@ -1,6 +1,6 @@
 {
-  "name": "去K书",
-  "appid": "",
+  "name": "去静界",
+  "appid": "wx5762cdacb8722521",
   "description": "专注学习，遇见更好的自己",
   "versionName": "1.0.0",
   "versionCode": "100",
@@ -21,14 +21,14 @@
   },
   "h5": {
     "devServer": {
-      "port": 8080,
+      "port": 8001,
       "proxy": {
         "/api": {
-          "target": "http://localhost:8000",
+          "target": "https://bkapi.yichengpai.cn",
           "changeOrigin": true
         }
       }
     },
-    "title": "去K书"
+    "title": "去静界"
   }
 }

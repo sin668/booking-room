@@ -48,7 +48,7 @@ async def create_seat(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
 
 
-@room_seats_router.post("/bulk/", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin_permission("seat:bulk_create"))])
+@room_seats_router.post("/bulk", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin_permission("seat:bulk_create"))])
 async def bulk_create_seats(
     room_id: int,
     data: SeatBulkCreate,
@@ -114,7 +114,7 @@ async def delete_seat(seat_id: int, db: AsyncSession = Depends(get_db)) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
 
 
-@flat_seats_router.patch("/{seat_id}/status/", response_model=SeatAdminResponse, dependencies=[Depends(require_admin_permission("seat:status"))])
+@flat_seats_router.patch("/{seat_id}/status", response_model=SeatAdminResponse, dependencies=[Depends(require_admin_permission("seat:status"))])
 async def toggle_seat_status(
     seat_id: int,
     data: SeatStatusUpdate,

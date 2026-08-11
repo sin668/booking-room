@@ -129,7 +129,25 @@ app = FastAPI(
     description="Backend service for Booking Room application",
     version="0.1.0",
     lifespan=lifespan,
+    redirect_slashes=False,
 )
+
+
+# ASGI middleware: strip trailing slash from request path to avoid 307/404.
+# e.g. /api/v1/activities/ -> /api/v1/activities  (root "/" is preserved)
+class StripTrailingSlashMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            path = scope["path"]
+            if path != "/" and path.endswith("/"):
+                scope["path"] = path.rstrip("/")
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(StripTrailingSlashMiddleware)
 
 # CORS middleware (allow all origins for development)
 app.add_middleware(

@@ -524,6 +524,70 @@ WeChat Pay API error [PARAM_ERROR] 商户订单号错误，请核实后再试
 
 ---
 
+## BUG-22: API 请求返回 307 Temporary Redirect 或 404 Not Found
+
+### 报错信息
+```
+"GET /api/v1/bookings/?page=1&page_size=20 HTTP/1.1" 307 Temporary Redirect
+→ 重定向至 /api/v1/bookings?page=1&page_size=20
+
+"GET /api/v1/activities/ HTTP/1.1" 404 Not Found
+
+"GET /api/v1/cities HTTP/1.1" 404 Not Found
+
+"GET /api/v1/rooms/1/seats/stats HTTP/1.1" 404 Not Found
+```
+
+### 根本原因
+问题涉及两个层面：
+
+**1. 307 重定向**：FastAPI 默认 `redirect_slashes=True`。当客户端请求带尾部斜杠（如 `/api/v1/bookings/`），但路由定义不带斜杠（`""`）时，FastAPI 自动返回 307 重定向到无斜杠版本，导致前端请求多一次网络往返，且某些 HTTP 客户端不自动跟随重定向。
+
+**2. 404 Not Found**：部分路由文件使用了带尾部斜杠的路径定义（如 `@router.get("/{room_id}/seats/stats/")`），注册的实际路径是 `/api/v1/rooms/{room_id}/seats/stats/`。当客户端请求无斜杠版本 `/api/v1/rooms/1/seats/stats` 时，FastAPI 路由匹配失败返回 404。
+
+涉及 8 处带尾部斜杠的路由定义：
+- `cities.py`: `@router.get("/")`
+- `seat.py`: `@router.get("/{room_id}/seats/stats/")`, `@router.get("/{room_id}/seats/")`
+- `activity.py`: `@router.get("/{activity_id}/")`
+- `booking.py`: `@router.post("/{booking_id}/cancel/")`（含一个冗余重复路由）
+- `admin_study_room.py`: `@router.patch("/{room_id}/status/")`
+- `admin_seat.py`: `@room_seats_router.post("/bulk/")`, `@flat_seats_router.patch("/{seat_id}/status/")`
+
+### 解决方案
+**两步修复**：
+
+1. 在 `main.py` 中添加 `redirect_slashes=False` 禁用 307 自动重定向，并注册 `StripTrailingSlashMiddleware` ASGI 中间件，在路由匹配前自动去除请求路径的尾部斜杠（根路径 `/` 除外），使带或不带斜杠的请求都能命中路由：
+
+```python
+class StripTrailingSlashMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            path = scope["path"]
+            if path != "/" and path.endswith("/"):
+                scope["path"] = path.rstrip("/")
+        await self.app(scope, receive, send)
+```
+
+2. 统一所有路由定义，去除路径中的尾部斜杠，保持项目风格一致：
+
+| 文件 | 修改前 | 修改后 |
+|------|--------|--------|
+| `cities.py` | `@router.get("/")` | `@router.get("")` |
+| `seat.py` | `"/{room_id}/seats/stats/"` | `"/{room_id}/seats/stats"` |
+| `seat.py` | `"/{room_id}/seats/"` | `"/{room_id}/seats"` |
+| `activity.py` | `"/{activity_id}/"` | `"/{activity_id}"` |
+| `booking.py` | `"/{booking_id}/cancel/"` | `"/{booking_id}/cancel"`（删除冗余重复路由） |
+| `admin_study_room.py` | `"/{room_id}/status/"` | `"/{room_id}/status"` |
+| `admin_seat.py` | `"/bulk/"` | `"/bulk"` |
+| `admin_seat.py` | `"/{seat_id}/status/"` | `"/{seat_id}/status"` |
+
+**文件**: `br-server/app/main.py`, `br-server/app/api/routes/cities.py`, `br-server/app/api/routes/seat.py`, `br-server/app/api/routes/activity.py`, `br-server/app/api/routes/booking.py`, `br-server/app/api/routes/admin_study_room.py`, `br-server/app/api/routes/admin_seat.py`
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -557,3 +621,10 @@ WeChat Pay API error [PARAM_ERROR] 商户订单号错误，请核实后再试
 | `br-server/app/services/admin_menu_service.py` | #19 |
 | `br-server/app/services/booking_payment_service.py` | #21 |
 | `br-server/tests/test_booking_payment_service.py` | #21 |
+| `br-server/app/main.py` | #22 |
+| `br-server/app/api/routes/cities.py` | #22 |
+| `br-server/app/api/routes/seat.py` | #22 |
+| `br-server/app/api/routes/activity.py` | #22 |
+| `br-server/app/api/routes/booking.py` | #22 |
+| `br-server/app/api/routes/admin_study_room.py` | #22 |
+| `br-server/app/api/routes/admin_seat.py` | #22 |

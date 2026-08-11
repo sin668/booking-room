@@ -10,7 +10,7 @@ from app.services import seat_service
 router = APIRouter(prefix="/api/v1/rooms", tags=["seats"])
 
 
-@router.get("/{room_id}/seats/stats/", response_model=SeatStatsResponse)
+@router.get("/{room_id}/seats/stats", response_model=SeatStatsResponse)
 async def get_seat_stats(
     room_id: int,
     target_date: date | None = Query(None, alias="date"),
@@ -24,7 +24,7 @@ async def get_seat_stats(
         raise HTTPException(status_code=404, detail=f"Room {room_id} not found")
 
 
-@router.get("/{room_id}/seats/", response_model=list[SeatResponse] | list[SeatWithAvailabilityResponse])
+@router.get("/{room_id}/seats", response_model=list[SeatResponse] | list[SeatWithAvailabilityResponse])
 async def list_seats(
     room_id: int,
     target_date: date | None = Query(None, alias="date"),

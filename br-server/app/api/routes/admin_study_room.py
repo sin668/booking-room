@@ -65,7 +65,7 @@ async def delete_room(room_id: int, db: AsyncSession = Depends(get_db)) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
 
 
-@router.patch("/{room_id}/status/", response_model=RoomAdminResponse, dependencies=[Depends(require_admin_permission("room:status"))])
+@router.patch("/{room_id}/status", response_model=RoomAdminResponse, dependencies=[Depends(require_admin_permission("room:status"))])
 async def toggle_room_status(room_id: int, data: RoomStatusUpdate, db: AsyncSession = Depends(get_db)) -> RoomAdminResponse:
     try:
         return await study_room_service.toggle_room_status(db, room_id, data.status)

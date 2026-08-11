@@ -16,7 +16,7 @@ async def list_activities(db: AsyncSession = Depends(get_db)) -> list[ActivityRe
     return await activity_service.list_active_activities(db)
 
 
-@router.get("/{activity_id}/", response_model=ActivityDetailResponse)
+@router.get("/{activity_id}", response_model=ActivityDetailResponse)
 async def get_activity_detail(
     activity_id: int,
     db: AsyncSession = Depends(get_db),

@@ -149,10 +149,19 @@ class StripTrailingSlashMiddleware:
 
 app.add_middleware(StripTrailingSlashMiddleware)
 
-# CORS middleware (allow all origins for development)
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://8.129.17.71:8001",
+        "http://8.129.17.71:8000",
+        "http://8.129.17.71",
+        "http://localhost:8001",
+        "http://localhost:8000",
+        "http://localhost:5173",
+        "http://localhost:3100",
+    ],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|8\.129\.17\.71)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

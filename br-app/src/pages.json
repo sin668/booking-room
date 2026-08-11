@@ -121,13 +121,13 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "去K书",
+    "navigationBarTitleText": "去静界",
     "navigationBarBackgroundColor": "#F5F6FA",
     "backgroundColor": "#F5F6FA"
   },
   "tabBar": {
     "color": "#B2BEC3",
-    "fontSize": 14,
+    "fontSize": 20,
     "selectedColor": "#4F6EF7",
     "borderStyle": "white",
     "backgroundColor": "#ffffff",

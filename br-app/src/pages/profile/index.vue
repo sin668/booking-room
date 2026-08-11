@@ -142,8 +142,9 @@
       <button class="logout-btn" @tap="handleLogout">退出登录</button>
     </view>
     <view v-else class="not-logged-in">
-      <text class="title">去K书</text>
-      <text class="desc">专注学习，遇见更好的自己</text>
+      <image class="logo" src="/static/logo.png" mode="aspectFit" />
+      <text class="title">去静界</text>
+      <text class="desc">觅知几，好好学习，遇见更好的自己~</text>
       <button class="login-btn" @tap="goLogin">去登录</button>
     </view>
   </view>
@@ -280,6 +281,12 @@ export default {
   justify-content: center;
   height: 100vh;
   gap: 24rpx;
+
+  .logo {
+    width: 160rpx;
+    height: 160rpx;
+    margin-bottom: 16rpx;
+  }
 }
 
 .title {

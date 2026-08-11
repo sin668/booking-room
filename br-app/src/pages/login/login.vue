@@ -8,10 +8,10 @@
       <!-- Logo & 品牌 -->
       <view class="brand">
         <view class="logo">
-          <view class="icon icon-book logo-icon" />
+          <image class="logo-img" src="/static/logo.png" mode="aspectFit" />
         </view>
-        <text class="brand-title">去K书</text>
-        <text class="brand-desc">专注学习，遇见更好的自己</text>
+        <text class="brand-title">去静界</text>
+        <text class="brand-desc">觅知几，好好学习，遇见更好的自己~</text>
       </view>
 
       <!-- 登录/注册 Tab -->
@@ -657,16 +657,15 @@ function openAgreement(type) {
   width: 136rpx;
   height: 136rpx;
   border-radius: 36rpx;
-  background: $gradient-primary;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 28rpx;
-  box-shadow: 0 12rpx 32rpx rgba(79, 110, 247, 0.3);
+  overflow: hidden;
 }
-.logo-icon {
-  font-size: 52rpx;
-  color: #fff;
+.logo-img {
+  width: 136rpx;
+  height: 136rpx;
 }
 .brand-title {
   display: block;

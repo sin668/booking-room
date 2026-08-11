@@ -38,4 +38,9 @@ page {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/* 底部导航文字加粗 */
+.uni-tabbar__label {
+  font-weight: 600 !important;
+}
 </style>

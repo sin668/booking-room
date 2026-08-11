@@ -18,7 +18,7 @@ function makeTempProject(appid = 'touristappid') {
   fs.mkdirSync(outputDir, { recursive: true })
   fs.writeFileSync(
     path.join(outputDir, 'project.config.json'),
-    JSON.stringify({ appid, projectname: '去K书' }, null, 2),
+    JSON.stringify({ appid, projectname: '去静界' }, null, 2),
   )
   return { root, outputDir }
 }

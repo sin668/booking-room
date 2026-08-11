@@ -195,7 +195,7 @@
       </view>
 
       <button class="logout-btn" @tap="showLogoutSheet = true">退出登录</button>
-      <text class="copyright">去K书 v2.1.0 · © 2024 All Rights Reserved</text>
+      <text class="copyright">去静界 v2.1.0 · © 2024 All Rights Reserved</text>
     </scroll-view>
 
     <view v-if="showUsernameSheet" class="sheet-mask" @tap="closeUsernameEditor">

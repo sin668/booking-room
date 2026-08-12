@@ -1,12 +1,12 @@
 from contextlib import asynccontextmanager
 import asyncio
 import logging
+import re
 from pathlib import Path
 from contextlib import suppress
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes.activity import router as activity_router
@@ -133,39 +133,82 @@ app = FastAPI(
 )
 
 
-# ASGI middleware: strip trailing slash from request path to avoid 307/404.
-# e.g. /api/v1/activities/ -> /api/v1/activities  (root "/" is preserved)
-class StripTrailingSlashMiddleware:
+# Combined ASGI middleware: CORS + trailing-slash normalisation.
+# Handles preflight OPTIONS directly and injects CORS headers on all responses.
+_CORS_ALLOWED_RE = re.compile(
+    r"^https?://(localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+)(:\d+)?$"
+)
+
+
+class AppMiddleware:
     def __init__(self, app):
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] in ("http", "websocket"):
-            path = scope["path"]
-            if path != "/" and path.endswith("/"):
-                scope["path"] = path.rstrip("/")
-        await self.app(scope, receive, send)
+        if scope["type"] not in ("http", "websocket"):
+            await self.app(scope, receive, send)
+            return
+
+        # --- Strip trailing slash from path ---
+        path = scope["path"]
+        if path != "/" and path.endswith("/"):
+            scope["path"] = path.rstrip("/")
+
+        if scope["type"] == "websocket":
+            await self.app(scope, receive, send)
+            return
+
+        # --- CORS: read Origin header ---
+        origin = None
+        for name, value in scope.get("headers", []):
+            if name == b"origin":
+                origin = value.decode("latin-1")
+                break
+
+        if not origin or not _CORS_ALLOWED_RE.match(origin):
+            # Not a CORS request — pass through
+            await self.app(scope, receive, send)
+            return
+
+        cors_headers = [
+            (b"access-control-allow-origin", origin.encode()),
+            (b"access-control-allow-credentials", b"true"),
+            (b"access-control-allow-methods", b"*"),
+            (b"access-control-allow-headers", b"*"),
+        ]
+
+        # Preflight: respond immediately
+        if scope["method"] == "OPTIONS":
+            headers = cors_headers + [
+                (b"access-control-max-age", b"86400"),
+                (b"content-type", b"text/plain"),
+                (b"content-length", b"0"),
+            ]
+            await send({
+                "type": "http.response.start",
+                "status": 200,
+                "headers": headers,
+            })
+            await send({"type": "http.response.body", "body": b""})
+            return
+
+        # Normal request: wrap send() to inject CORS headers
+        async def send_with_cors(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                # Strip any CORS headers set by inner layers
+                headers = [
+                    (k, v) for k, v in headers
+                    if not k.startswith(b"access-control-")
+                ]
+                headers.extend(cors_headers)
+                message = {**message, "headers": headers}
+            await send(message)
+
+        await self.app(scope, receive, send_with_cors)
 
 
-app.add_middleware(StripTrailingSlashMiddleware)
-
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://8.129.17.71:8001",
-        "http://8.129.17.71:8000",
-        "http://8.129.17.71",
-        "http://localhost:8001",
-        "http://localhost:8000",
-        "http://localhost:5173",
-        "http://localhost:3100",
-    ],
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|8\.129\.17\.71)(:\d+)?",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(AppMiddleware)
 
 # Static files for uploads
 UPLOAD_DIR = Path("uploads")

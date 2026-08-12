@@ -136,7 +136,7 @@ app = FastAPI(
 # Combined ASGI middleware: CORS + trailing-slash normalisation.
 # Handles preflight OPTIONS directly and injects CORS headers on all responses.
 _CORS_ALLOWED_RE = re.compile(
-    r"^https?://(localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+)(:\d+)?$"
+    r"^https?://(localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+|.*\.?yichengpai\.cn)(:\d+)?$"
 )
 
 

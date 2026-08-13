@@ -95,6 +95,10 @@ class PaymentStatusResponse(BaseModel):
     transaction_id: str | None = None
 
 
+class PayPendingBooking(BaseModel):
+    payment_method: PaymentMethodEnum = PaymentMethodEnum.balance
+
+
 class BookingListResponse(BaseModel):
     items: list[BookingResponse]
     total: int

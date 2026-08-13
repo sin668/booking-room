@@ -172,7 +172,7 @@
           </view>
         </view>
 
-        <text class="success-title">预约成功</text>
+        <text class="success-title">{{ isExistingBooking ? '支付成功' : '预约成功' }}</text>
         <text class="success-order-id">订单编号：#{{ bookingId }}</text>
 
         <!-- Booking summary -->
@@ -260,6 +260,7 @@ import {
   fetchBookingRoom,
   fetchBookingSeats,
   fetchWalletBalance,
+  payPendingBooking,
 } from '@/services/bookingPageService'
 import { createPaymentStatusError, pollPaymentStatus } from '@/services/paymentPolling'
 import { SEAT_ZONE_LABELS } from '@/constants/booking'
@@ -280,6 +281,7 @@ export default {
   data() {
     return {
       // Route params
+      booking_id: null,
       room_id: null,
       seat_id: null,
       date: '',
@@ -327,6 +329,10 @@ export default {
   },
 
   computed: {
+    isExistingBooking() {
+      return this.booking_id != null
+    },
+
     hours() {
       const [sh, sm] = this.start_time.split(':').map(Number)
       const [eh, em] = this.end_time.split(':').map(Number)
@@ -373,6 +379,7 @@ export default {
     },
 
     couponSummaryText() {
+      if (this.isExistingBooking) return '不可更改'
       if (this.selectedCoupon) return `已选择：${this.selectedCoupon.name}`
       if (this.availableCoupons.length) return `可用 ${this.availableCoupons.length} 张`
       return '暂无可用'
@@ -403,6 +410,9 @@ export default {
   },
 
   onLoad(options) {
+    if (options.booking_id) {
+      this.booking_id = Number(options.booking_id)
+    }
     this.room_id = Number(options.room_id)
     this.seat_id = Number(options.seat_id)
     this.date = options.date || ''
@@ -441,10 +451,14 @@ export default {
           this.roomFloor = room.floor
         }
 
-        await Promise.all([
-          this.loadAvailableCoupons(),
-          this.loadWalletBalance(),
-        ])
+        if (this.isExistingBooking) {
+          await this.loadWalletBalance()
+        } else {
+          await Promise.all([
+            this.loadAvailableCoupons(),
+            this.loadWalletBalance(),
+          ])
+        }
       } catch {
         uni.showToast({ title: '加载失败', icon: 'none' })
       } finally {
@@ -519,6 +533,7 @@ export default {
     },
 
     openCouponSheet() {
+      if (this.isExistingBooking) return
       if (this.couponLoadError) {
         this.loadAvailableCoupons()
         return
@@ -549,18 +564,22 @@ export default {
 
       this.submitting = true
       try {
-        const payload = {
-          seat_id: this.seat_id,
-          date: this.date,
-          start_time: this.start_time,
-          end_time: this.end_time,
-          payment_method: this.paymentMethod,
+        let booking
+        if (this.isExistingBooking) {
+          booking = await payPendingBooking(this.booking_id, this.paymentMethod)
+        } else {
+          const payload = {
+            seat_id: this.seat_id,
+            date: this.date,
+            start_time: this.start_time,
+            end_time: this.end_time,
+            payment_method: this.paymentMethod,
+          }
+          if (this.selectedCouponId) {
+            payload.coupon_id = this.selectedCouponId
+          }
+          booking = await createBookingOrder(payload)
         }
-        if (this.selectedCouponId) {
-          payload.coupon_id = this.selectedCouponId
-        }
-
-        const booking = await createBookingOrder(payload)
 
         if (this.paymentMethod === 'wechat') {
           const paymentParams = booking.payment_params || booking.paymentParams
@@ -595,7 +614,7 @@ export default {
         } else if (err?.paymentStatus) {
           uni.showToast({ title: '支付失败，请重试', icon: 'none' })
         } else {
-          uni.showToast({ title: '预约失败，请重试', icon: 'none' })
+          uni.showToast({ title: this.isExistingBooking ? '支付失败，请重试' : '预约失败，请重试', icon: 'none' })
         }
       } finally {
         this.submitting = false

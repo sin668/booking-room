@@ -398,6 +398,17 @@ async def cancel_booking(
     if booking.status == "cancelled":
         raise BookingAlreadyCancelledError("该预约已取消")
 
+    # Pending (unpaid) bookings can be cancelled without refund logic
+    if booking.payment_status == "pending" and booking.status == "pending":
+        now = booking_now(settings.BOOKING_TIMEZONE)
+        booking.status = "cancelled"
+        booking.cancelled_at = now
+        await coupon_service.restore_user_coupon_for_booking(db, booking)
+        await db.flush()
+        seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
+        room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
+        return _build_booking_response(booking, seat, room)
+
     if booking.status != "confirmed":
         raise BookingCancellationNotAllowedError("该预约不可取消")
 
@@ -466,6 +477,83 @@ async def cancel_booking(
         room,
         refund_transaction_id=wallet_transaction.id,
     )
+
+
+async def pay_pending_booking(
+    db: AsyncSession,
+    booking_id: int,
+    user_id: uuid.UUID,
+    payment_method: PaymentMethodEnum,
+    wechat_payment_params: dict[str, str] | None = None,
+) -> BookingResponse:
+    """Process payment for an existing pending booking.
+
+    For balance: deduct from wallet, mark as paid.
+    For wechat: wechat_payment_params should be pre-created by the route handler.
+    """
+    result = await db.execute(
+        select(Booking).where(Booking.id == booking_id).with_for_update()
+    )
+    booking = result.scalar_one_or_none()
+
+    if booking is None or booking.user_id != str(user_id):
+        raise BookingNotFoundError("预约不存在")
+
+    if booking.status != "pending" or booking.payment_status != "pending":
+        raise BookingError("该预约不在待支付状态")
+
+    total_price = Decimal(str(booking.total_price)).quantize(Decimal("0.01"))
+
+    if payment_method == PaymentMethodEnum.balance:
+        user_result = await db.execute(
+            select(User).where(User.id == user_id).with_for_update()
+        )
+        user = user_result.scalar_one_or_none()
+        if user is None:
+            raise BookingError("User not found")
+        if Decimal(str(user.balance)) < total_price:
+            raise WalletBalanceInsufficientError("Wallet balance is insufficient")
+
+        user.balance = Decimal(str(user.balance)) - total_price
+        booking.status = "confirmed"
+        booking.payment_status = "paid"
+        booking.payment_method = "balance"
+        booking.payment_provider = None
+        booking.paid_at = datetime.now()
+        booking.next_payment_check_at = None
+
+        wallet_transaction = WalletTransaction(
+            user_id=str(user_id),
+            type="consume",
+            amount=total_price,
+            bonus_amount=Decimal("0.00"),
+            balance_after=Decimal(str(user.balance)),
+            order_id=str(uuid.uuid4()),
+            status="completed",
+            payment_method="balance",
+            booking_id=booking.id,
+        )
+        setattr(wallet_transaction, "payment_provider", "balance")
+        setattr(wallet_transaction, "payment_status", "paid")
+        db.add(wallet_transaction)
+        await db.flush()
+    else:
+        booking.payment_method = "wechat"
+        booking.payment_provider = "wechat"
+        if wechat_payment_params:
+            booking.next_payment_check_at = datetime.now() + timedelta(minutes=1)
+        await db.flush()
+
+    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
+    room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
+
+    response = _build_booking_response(booking, seat, room)
+    if wechat_payment_params:
+        response_dict = response.model_dump()
+        response_dict["payment_params"] = wechat_payment_params
+        from app.schemas.booking import CreateBookingResponse
+        return CreateBookingResponse.model_validate(response_dict)
+    return response
 
 
 def _build_admin_booking_response(booking: Booking, seat: Seat, room: StudyRoom) -> BookingAdminResponse:

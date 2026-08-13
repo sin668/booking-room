@@ -97,14 +97,30 @@
           <!-- Action row -->
           <view class="card-action-row">
             <view
-              v-if="order.status === 'confirmed'"
+              v-if="order.payment_status === 'pending'"
+              class="action-btn pay-action-btn"
+              @tap="goPay(order)"
+            >
+              <text class="action-btn-text pay-action-text">去支付</text>
+            </view>
+            <view
+              v-if="order.payment_status === 'pending'"
+              :class="['action-btn', 'cancel-action-btn', { disabled: cancellingOrderId === order.id }]"
+              @tap.stop="confirmCancelBooking(order)"
+            >
+              <text class="action-btn-text cancel-action-text">
+                {{ cancellingOrderId === order.id ? '取消中' : '取消' }}
+              </text>
+            </view>
+            <view
+              v-if="order.status === 'confirmed' && order.payment_status !== 'pending'"
               class="action-btn"
               @tap="viewSeat(order)"
             >
               <text class="action-btn-text">查看座位</text>
             </view>
             <view
-              v-if="order.can_cancel === true"
+              v-if="order.can_cancel === true && order.payment_status !== 'pending'"
               :class="['action-btn', 'cancel-action-btn', { disabled: cancellingOrderId === order.id }]"
               @tap.stop="confirmCancelBooking(order)"
             >
@@ -251,6 +267,12 @@ export default {
 
     calcHours(order) {
       return formatHourCount(order.start_time, order.end_time)
+    },
+
+    goPay(order) {
+      uni.navigateTo({
+        url: `/pages/booking/confirm?booking_id=${order.id}&room_id=${order.room_id}&seat_id=${order.seat_id}&date=${order.date}&start_time=${order.start_time}&end_time=${order.end_time}`,
+      })
     },
 
     viewSeat(order) {
@@ -760,6 +782,19 @@ export default {
 .action-btn-text {
   font-size: 24rpx;
   color: $primary;
+}
+
+.pay-action-btn {
+  border: none;
+  background: $gradient-primary;
+}
+
+.pay-action-btn:active {
+  opacity: 0.85;
+}
+
+.pay-action-text {
+  color: #fff;
 }
 
 .cancel-action-btn {

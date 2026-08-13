@@ -35,3 +35,10 @@ export function getBooking(id) {
 export function cancelBooking(id) {
   return post(`/api/v1/bookings/${id}/cancel/`)
 }
+
+/**
+ * 支付待支付订单
+ */
+export function payBooking(bookingId, paymentMethod) {
+  return post(`/api/v1/bookings/${bookingId}/pay`, { payment_method: paymentMethod })
+}

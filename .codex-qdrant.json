@@ -1,0 +1,12 @@
+{
+  "project_key": "br_tradein_agent",
+  "repo_key": "caragents",
+  "memory_scope": "codex_dev",
+  "collection_name": "caragents_codex_memory",
+  "qdrant_url": "http://8.129.17.71:6333",
+  "mcp_server_command": "uvx",
+  "mcp_server_args": ["--python", "3.10", "mcp-server-qdrant"],
+  "embedding_provider": "fastembed",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "startup_timeout_sec": 120
+}

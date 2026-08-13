@@ -1,0 +1,6 @@
+{
+  "id": "classic-archive:orders-payment-buttons",
+  "stepId": "hotfix.archive.execute",
+  "type": "checkpoint",
+  "ref": "orders-payment-buttons"
+}

@@ -17,6 +17,7 @@ from app.schemas.booking import (
     BookingListResponse,
     BookingResponse,
     CreateBookingResponse,
+    PayPendingBooking,
     PaymentMethodEnum,
     PaymentStatusResponse,
 )
@@ -164,6 +165,48 @@ async def get_payment_status(
         return await _payment_service(db).query_payment_status(booking_id, user_id)
     except BookingPaymentNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="预约不存在")
+
+
+@router.post("/{booking_id}/pay", response_model=CreateBookingResponse)
+async def pay_pending_booking_route(
+    booking_id: int,
+    data: PayPendingBooking,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+) -> CreateBookingResponse:
+    try:
+        if data.payment_method == PaymentMethodEnum.wechat:
+            booking = await db.get(Booking, booking_id)
+            if booking is None:
+                raise booking_service.BookingNotFoundError("预约不存在")
+            user = await db.get(User, user_id)
+            if user is None:
+                raise booking_service.BookingError("User not found")
+            payment_params = await _payment_service(db).create_booking_payment(booking, user)
+            response = await booking_service.pay_pending_booking(
+                db, booking_id, user_id, data.payment_method,
+                wechat_payment_params=payment_params,
+            )
+        else:
+            response = await booking_service.pay_pending_booking(
+                db, booking_id, user_id, data.payment_method,
+            )
+        return CreateBookingResponse.model_validate(response.model_dump())
+    except booking_service.BookingNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="预约不存在")
+    except booking_service.WalletBalanceInsufficientError:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="Wallet balance is insufficient",
+        )
+    except WechatOpenIdRequiredError as e:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except PaymentProviderUnavailableError as e:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+    except booking_service.BookingError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/{booking_id}/cancel", response_model=BookingResponse)

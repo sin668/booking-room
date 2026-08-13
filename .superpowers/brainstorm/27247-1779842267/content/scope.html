@@ -1,0 +1,121 @@
+<h2>UI 对齐范围确认</h2>
+<p class="subtitle">当前有 16 个高保真原型页面，需要确认对齐范围</p>
+
+<div class="section">
+  <h3>已有 Vue 页面 + 原型（可对齐）</h3>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="home" onclick="toggleSelect(this)">
+      <div class="letter">1</div>
+      <div class="content">
+        <h3>首页 home.html</h3>
+        <p>index/index.vue — 推荐自习室、Banner、快捷入口</p>
+      </div>
+    </div>
+    <div class="option" data-choice="booking" onclick="toggleSelect(this)">
+      <div class="letter">2</div>
+      <div class="content">
+        <h3>预约页 booking.html</h3>
+        <p>booking/index.vue — 城市、日期、时段、座位选择</p>
+      </div>
+    </div>
+    <div class="option" data-choice="seat" onclick="toggleSelect(this)">
+      <div class="letter">3</div>
+      <div class="content">
+        <h3>座位选择 seat-select.html</h3>
+        <p>booking/seat-select.vue — 座位平面图、区域切换</p>
+      </div>
+    </div>
+    <div class="option" data-choice="store" onclick="toggleSelect(this)">
+      <div class="letter">4</div>
+      <div class="content">
+        <h3>门店详情 store-detail.html</h3>
+        <p>booking/detail.vue — 封面、评分、座位统计</p>
+      </div>
+    </div>
+    <div class="option" data-choice="confirm" onclick="toggleSelect(this)">
+      <div class="letter">5</div>
+      <div class="content">
+        <h3>订单确认 order-confirm.html</h3>
+        <p>booking/confirm.vue — 支付方式、费用明细</p>
+      </div>
+    </div>
+    <div class="option" data-choice="orders" onclick="toggleSelect(this)">
+      <div class="letter">6</div>
+      <div class="content">
+        <h3>订单列表 orders.html</h3>
+        <p>orders/index.vue — 状态筛选、订单卡片</p>
+      </div>
+    </div>
+    <div class="option" data-choice="recharge" onclick="toggleSelect(this)">
+      <div class="letter">7</div>
+      <div class="content">
+        <h3>钱包充值 recharge.html</h3>
+        <p>recharge/index.vue — 金额选择、微信/支付宝</p>
+      </div>
+    </div>
+    <div class="option" data-choice="coupon" onclick="toggleSelect(this)">
+      <div class="letter">8</div>
+      <div class="content">
+        <h3>卡券 coupon.html</h3>
+        <p>coupon/index.vue — 可用/已用/已过期卡券</p>
+      </div>
+    </div>
+    <div class="option" data-choice="profile" onclick="toggleSelect(this)">
+      <div class="letter">9</div>
+      <div class="content">
+        <h3>个人中心 profile.html</h3>
+        <p>profile/index.vue — 头像、余额、菜单列表</p>
+      </div>
+    </div>
+    <div class="option" data-choice="settings" onclick="toggleSelect(this)">
+      <div class="letter">10</div>
+      <div class="content">
+        <h3>设置 settings.html</h3>
+        <p>settings/index.vue — 用户名、手机号等设置项</p>
+      </div>
+    </div>
+    <div class="option" data-choice="record" onclick="toggleSelect(this)">
+      <div class="letter">11</div>
+      <div class="content">
+        <h3>学习记录 study-record.html</h3>
+        <p>study-record/index.vue — 学习统计和历史</p>
+      </div>
+    </div>
+    <div class="option" data-choice="qrcode" onclick="toggleSelect(this)">
+      <div class="letter">12</div>
+      <div class="content">
+        <h3>二维码 qrcode.html</h3>
+        <p>qrcode/index.vue — 个人二维码展示</p>
+      </div>
+    </div>
+    <div class="option" data-choice="login" onclick="toggleSelect(this)">
+      <div class="letter">13</div>
+      <div class="content">
+        <h3>登录 login.html</h3>
+        <p>login/login.vue — 微信登录、手机号绑定</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>仅原型（无对应页面）</h3>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="feedback" onclick="toggleSelect(this)">
+      <div class="letter">14</div>
+      <div class="content">
+        <h3>意见反馈 feedback.html</h3>
+        <p>当前无对应 Vue 页面 — 需新建</p>
+      </div>
+    </div>
+    <div class="option" data-choice="ranking" onclick="toggleSelect(this)">
+      <div class="letter">15</div>
+      <div class="content">
+        <h3>学习排行 ranking.html</h3>
+        <p>当前无对应 Vue 页面 — 需新建</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:24px">请在浏览器中选择本次需要对齐的页面（可多选），然后在终端告诉我你的选择。</p>

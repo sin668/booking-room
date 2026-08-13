@@ -3,6 +3,7 @@ import {
   createBooking,
   getBookingPaymentStatus,
   getBookings,
+  payBooking,
 } from '@/api/bookings'
 import { getAvailableCouponsForBooking } from '@/api/coupons'
 import { getRoom } from '@/api/rooms'
@@ -39,4 +40,8 @@ export function fetchBookingCoupons(payload) {
 
 export function fetchWalletBalance() {
   return getBalance()
+}
+
+export function payPendingBooking(bookingId, paymentMethod) {
+  return payBooking(bookingId, paymentMethod)
 }

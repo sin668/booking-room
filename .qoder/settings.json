@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.qoder/skills/comet/scripts/comet-hook-router.mjs\" --platform \"qoder\" --project-root \"/Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room\"",
+            "description": "Route each write to the selected Comet Native or Classic phase guard"
+          }
+        ]
+      }
+    ]
+  }
+}

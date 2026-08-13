@@ -97,14 +97,14 @@
           <!-- Action row -->
           <view class="card-action-row">
             <view
-              v-if="order.payment_status === 'pending'"
+              v-if="order.payment_status === 'pending' && order.status !== 'cancelled'"
               class="action-btn pay-action-btn"
               @tap="goPay(order)"
             >
               <text class="action-btn-text pay-action-text">去支付</text>
             </view>
             <view
-              v-if="order.payment_status === 'pending'"
+              v-if="order.payment_status === 'pending' && order.status !== 'cancelled'"
               :class="['action-btn', 'cancel-action-btn', { disabled: cancellingOrderId === order.id }]"
               @tap.stop="confirmCancelBooking(order)"
             >

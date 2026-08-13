@@ -1,0 +1,6 @@
+{
+  "id": "classic-archive:hide-cancelled-order-actions",
+  "stepId": "tweak.archive.execute",
+  "type": "checkpoint",
+  "ref": "hide-cancelled-order-actions"
+}

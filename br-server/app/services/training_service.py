@@ -94,6 +94,8 @@ async def list_training_rooms(
                     teacher=TeacherResponse.model_validate(teacher) if teacher else None,
                     price=course.price,
                     enrollment_count=course.enrollment_count,
+                    schedule=course.schedule,
+                    tags=course.tags or [],
                 )
             )
 

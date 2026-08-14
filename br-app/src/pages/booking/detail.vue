@@ -262,19 +262,33 @@
             <view class="course-body">
               <view class="course-top">
                 <text class="course-name">{{ course.name }}</text>
-                <view v-if="course.is_hot" class="course-tag tag-hot">
-                  <text class="tag-text">热销</text>
+                <view v-if="courseDetailBadge(course)" :class="['course-tag', `ctag-${courseDetailBadge(course).type}`]">
+                  <text class="tag-text">{{ courseDetailBadge(course).text }}</text>
                 </view>
               </view>
               <view v-if="course.teacher" class="course-teacher">
+                <image
+                  v-if="course.teacher.avatar"
+                  class="course-teacher-avatar"
+                  :src="course.teacher.avatar"
+                  mode="aspectFill"
+                />
+                <view v-else class="course-teacher-avatar-ph">
+                  <view class="icon icon-user course-teacher-avatar-icon" />
+                </view>
                 <text class="teacher-name-sm">{{ course.teacher.name }}</text>
               </view>
               <view class="course-schedule">
+                <view class="icon icon-clock course-clock-icon" />
                 <text class="schedule-text">{{ course.schedule || '排课待定' }}</text>
+                <text class="schedule-dot">·</text>
+                <text class="schedule-status">可预约</text>
               </view>
               <view class="course-bottom">
-                <text class="course-price">¥{{ course.price }}</text>
-                <text class="price-unit">/课时</text>
+                <view class="course-price-wrap">
+                  <text class="course-price">¥{{ course.price }}</text>
+                  <text class="price-unit">/课时</text>
+                </view>
                 <view class="book-pill">
                   <text class="book-pill-text">预约</text>
                 </view>
@@ -559,6 +573,15 @@ export default {
     onCourseDetail(course) {
       if (!course || !course.id) return
       uni.navigateTo({ url: '/pages/training/course-detail?course_id=' + course.id })
+    },
+
+    courseDetailBadge(course) {
+      if (course.is_hot) return { type: 'hot', text: '热销' }
+      const tags = course.tags || []
+      if (tags.includes('新课')) return { type: 'new', text: '新课' }
+      if (tags.includes('名师')) return { type: 'master', text: '名师' }
+      if (tags.includes('推荐')) return { type: 'rec', text: '推荐' }
+      return null
     },
   },
 }
@@ -1554,8 +1577,70 @@ export default {
   font-size: 20rpx;
 }
 
+.ctag-hot {
+  background: rgba(255, 71, 87, 0.1);
+}
+
+.ctag-hot .tag-text {
+  color: #FF4757;
+  font-size: 20rpx;
+}
+
+.ctag-new {
+  background: rgba(7, 193, 96, 0.1);
+}
+
+.ctag-new .tag-text {
+  color: $success;
+  font-size: 20rpx;
+}
+
+.ctag-master {
+  background: rgba(255, 140, 0, 0.1);
+}
+
+.ctag-master .tag-text {
+  color: #e67900;
+  font-size: 20rpx;
+}
+
+.ctag-rec {
+  background: $primary-soft;
+}
+
+.ctag-rec .tag-text {
+  color: $primary;
+  font-size: 20rpx;
+}
+
 .course-teacher {
   margin-top: 8rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.course-teacher-avatar {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.course-teacher-avatar-ph {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background: $surface-soft;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.course-teacher-avatar-icon {
+  font-size: 18rpx;
+  color: $text-muted;
 }
 
 .teacher-name-sm {
@@ -1565,6 +1650,14 @@ export default {
 
 .course-schedule {
   margin-top: 6rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.course-clock-icon {
+  font-size: 18rpx;
+  color: $text-muted;
 }
 
 .schedule-text {
@@ -1572,11 +1665,26 @@ export default {
   color: $text-muted;
 }
 
+.schedule-dot {
+  font-size: 18rpx;
+  color: #DDE2E6;
+}
+
+.schedule-status {
+  font-size: 22rpx;
+  color: $success;
+}
+
 .course-bottom {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   margin-top: 8rpx;
+}
+
+.course-price-wrap {
+  display: flex;
+  align-items: baseline;
 }
 
 .course-price {

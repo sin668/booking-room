@@ -107,7 +107,7 @@
               <view class="room-info">
                 <view class="room-info-top">
                   <view class="room-title-row">
-                    <text class="room-name">{{ room.name }}</text>
+                    <text class="room-name" @tap.stop="goRoomDetail(room.id)">{{ room.name }}</text>
                     <text :class="['room-status', room.status === 'open' ? 'status-open' : 'status-closed']">
                       {{ room.status === 'open' ? '营业中' : '休息中' }}
                     </text>
@@ -156,16 +156,41 @@
                   mode="aspectFill"
                 />
                 <view class="hot-course-info">
-                  <text class="hot-course-name">{{ course.name }}</text>
-                  <view class="hot-course-meta">
-                    <text class="hot-course-teacher">{{ course.teacher ? course.teacher.name : '未知讲师' }}</text>
-                    <text class="meta-separator">·</text>
-                    <text class="hot-course-count">{{ course.enrollment_count }}人</text>
+                  <view class="hot-course-top">
+                    <text class="hot-course-name">{{ course.name }}</text>
+                    <text
+                      v-if="hotCourseBadge(course)"
+                      :class="['hot-course-tag', `htag-${hotCourseBadge(course).type}`]"
+                    >{{ hotCourseBadge(course).text }}</text>
                   </view>
-                </view>
-                <view class="hot-course-price-wrap">
-                  <text class="hot-course-price-symbol">¥</text>
-                  <text class="hot-course-price">{{ course.price }}</text>
+                  <view class="hot-course-teacher-row">
+                    <image
+                      v-if="course.teacher && course.teacher.avatar"
+                      class="hot-teacher-avatar"
+                      :src="course.teacher.avatar"
+                      mode="aspectFill"
+                    />
+                    <view v-else class="hot-teacher-avatar-ph">
+                      <view class="icon icon-user hot-teacher-avatar-icon" />
+                    </view>
+                    <text class="hot-course-teacher">{{ course.teacher ? course.teacher.name : '未知讲师' }}</text>
+                  </view>
+                  <view class="hot-course-schedule-row">
+                    <view class="icon icon-clock hot-schedule-icon" />
+                    <text class="hot-course-schedule">{{ course.schedule || '排课待定' }}</text>
+                    <text class="hot-schedule-dot">·</text>
+                    <text class="hot-course-status">可预约</text>
+                  </view>
+                  <view class="hot-course-bottom">
+                    <view class="hot-course-price-wrap">
+                      <text class="hot-course-price-symbol">¥</text>
+                      <text class="hot-course-price">{{ course.price }}</text>
+                      <text class="hot-course-price-unit">/课时</text>
+                    </view>
+                    <view class="hot-book-pill">
+                      <text class="hot-book-pill-text">预约</text>
+                    </view>
+                  </view>
                 </view>
               </view>
             </view>
@@ -328,6 +353,28 @@ function roomTags(room, index = 0) {
 
 function isAccentTag(tag) {
   return ACCENT_TAGS.includes(tag)
+}
+
+function goRoomDetail(roomId) {
+  uni.navigateTo({ url: `/pages/booking/detail?room_id=${roomId}` })
+}
+
+function hotCourseBadge(course) {
+  if (course.is_hot) return { type: 'hot', text: '热销' }
+  const tags = course.tags || []
+  if (tags.includes('新课')) return { type: 'new', text: '新课' }
+  if (tags.includes('名师')) return { type: 'master', text: '名师' }
+  if (tags.includes('推荐')) return { type: 'rec', text: '推荐' }
+  return null
+}
+
+function courseBadge(course) {
+  if (course.is_hot) return { type: 'hot', text: '热销' }
+  const tags = course.tags || []
+  if (tags.includes('新课')) return { type: 'new', text: '新课' }
+  if (tags.includes('名师')) return { type: 'master', text: '名师' }
+  if (tags.includes('推荐')) return { type: 'rec', text: '推荐' }
+  return null
 }
 
 async function fetchTrainingRooms(reset = false) {
@@ -874,14 +921,13 @@ onReachBottom(() => {
 }
 
 .room-courses-expanded {
-  max-height: 1200rpx;
+  max-height: 2400rpx;
 }
 
 .hot-course-item {
   display: flex;
-  align-items: center;
   gap: 16rpx;
-  padding: 14rpx 22rpx;
+  padding: 18rpx 22rpx;
   border-top: 1rpx solid $border-soft;
 }
 
@@ -890,9 +936,9 @@ onReachBottom(() => {
 }
 
 .hot-course-cover {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 14rpx;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 18rpx;
   flex-shrink: 0;
 }
 
@@ -901,60 +947,159 @@ onReachBottom(() => {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 4rpx;
+}
+
+.hot-course-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8rpx;
 }
 
 .hot-course-name {
   font-size: 26rpx;
-  font-weight: 500;
+  font-weight: 600;
   color: $text-primary;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.3;
+  flex: 1;
+  min-width: 0;
 }
 
-.hot-course-meta {
+.hot-course-tag {
+  font-size: 18rpx;
+  font-weight: 500;
+  padding: 3rpx 10rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.htag-hot {
+  background: rgba(255, 71, 87, 0.1);
+  color: #FF4757;
+}
+
+.htag-new {
+  background: rgba(7, 193, 96, 0.1);
+  color: $success;
+}
+
+.htag-master {
+  background: rgba(255, 140, 0, 0.1);
+  color: #e67900;
+}
+
+.htag-rec {
+  background: $primary-soft;
+  color: $primary;
+}
+
+.hot-course-teacher-row {
   display: flex;
   align-items: center;
-  gap: 6rpx;
+  gap: 8rpx;
+}
+
+.hot-teacher-avatar {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hot-teacher-avatar-ph {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background: $surface-soft;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hot-teacher-avatar-icon {
+  font-size: 18rpx;
+  color: $text-muted;
 }
 
 .hot-course-teacher {
-  font-size: 21rpx;
+  font-size: 22rpx;
+  color: $text-secondary;
+}
+
+.hot-course-schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.hot-schedule-icon {
+  font-size: 18rpx;
   color: $text-muted;
 }
 
-.meta-separator {
+.hot-course-schedule {
   font-size: 20rpx;
+  color: $text-muted;
+}
+
+.hot-schedule-dot {
+  font-size: 18rpx;
   color: #DDE2E6;
 }
 
-.hot-course-count {
-  font-size: 21rpx;
-  color: $text-muted;
+.hot-course-status {
+  font-size: 20rpx;
+  color: $success;
+}
+
+.hot-course-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
 }
 
 .hot-course-price-wrap {
   display: flex;
   align-items: baseline;
   gap: 2rpx;
-  flex-shrink: 0;
 }
 
 .hot-course-price-symbol {
   font-size: 20rpx;
   font-weight: 700;
-  color: $danger;
+  color: $primary;
   line-height: 1;
 }
 
 .hot-course-price {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 700;
-  color: $danger;
-  letter-spacing: -0.5rpx;
+  color: $primary;
   line-height: 1;
+}
+
+.hot-course-price-unit {
+  font-size: 18rpx;
+  color: $text-muted;
+}
+
+.hot-book-pill {
+  padding: 5rpx 18rpx;
+  border-radius: 999rpx;
+  background: $primary-soft;
+}
+
+.hot-book-pill-text {
+  font-size: 20rpx;
+  font-weight: 500;
+  color: $primary;
 }
 
 /* ── Course list ── */
@@ -1013,6 +1158,21 @@ onReachBottom(() => {
 .badge-hot {
   background: rgba(255, 255, 255, 0.94);
   color: #FF4757;
+}
+
+.badge-new {
+  background: rgba(255, 255, 255, 0.94);
+  color: $success;
+}
+
+.badge-master {
+  background: rgba(255, 255, 255, 0.94);
+  color: #e67900;
+}
+
+.badge-rec {
+  background: rgba(255, 255, 255, 0.94);
+  color: $primary;
 }
 
 .course-info {
@@ -1084,6 +1244,22 @@ onReachBottom(() => {
 .teacher-name {
   font-size: 23rpx;
   color: $text-secondary;
+}
+
+.course-schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.schedule-icon {
+  font-size: 18rpx;
+  color: $text-muted;
+}
+
+.course-schedule {
+  font-size: 21rpx;
+  color: $text-muted;
 }
 
 .course-dot {

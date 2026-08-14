@@ -22,6 +22,15 @@ class HotCourseItem(BaseModel):
     teacher: TeacherBrief | None = None
     price: Decimal
     enrollment_count: int
+    schedule: str | None = None
+    tags: list[str] = []
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def parse_tags(cls, v):
+        if v is None or v == "":
+            return []
+        return [tag.strip() for tag in v.split(",") if tag.strip()]
 
 
 class TrainingRoomResponse(BaseModel):
@@ -37,6 +46,7 @@ class TrainingRoomResponse(BaseModel):
     status: str
     room_type: str
     min_price: Decimal
+    rating: Decimal
     hot_courses: list[HotCourseItem] = []
 
     model_config = ConfigDict(from_attributes=True)

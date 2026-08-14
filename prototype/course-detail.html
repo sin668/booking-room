@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>考研政治冲刺班 - 课程详情</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F6EF7',
+                        'primary-light': '#E8EDFF',
+                        'primary-dark': '#3A56D4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #F5F6FA;
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeInUp 0.45s ease-out forwards; }
+        .delay-1 { animation-delay: 0.08s; opacity: 0; }
+        .delay-2 { animation-delay: 0.16s; opacity: 0; }
+        .delay-3 { animation-delay: 0.24s; opacity: 0; }
+        .delay-4 { animation-delay: 0.32s; opacity: 0; }
+        .delay-5 { animation-delay: 0.40s; opacity: 0; }
+    </style>
+</head>
+<body>
+    <!-- iOS Status Bar -->
+    <div class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 pt-2 pb-1" style="max-width: 430px; margin: 0 auto;">
+        <span class="text-white text-sm font-semibold">9:41</span>
+        <div class="w-[120px] h-[34px] bg-black rounded-full mx-auto"></div>
+        <div class="flex items-center gap-1.5 text-white text-xs">
+            <i class="fas fa-signal text-[11px]"></i>
+            <i class="fas fa-wifi text-[11px]"></i>
+            <i class="fas fa-battery-full text-[11px]"></i>
+        </div>
+    </div>
+
+    <!-- Back Navigation -->
+    <div class="fixed top-12 left-4 z-40">
+        <a href="training.html" class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg active:bg-white/40 transition block">
+            <i class="fas fa-chevron-left text-white text-sm"></i>
+        </a>
+    </div>
+    <div class="fixed top-12 right-4 z-40 flex gap-2">
+        <button id="favBtn" class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg active:bg-white/40 transition" onclick="toggleFav()">
+            <i class="far fa-heart text-white text-sm" id="favIcon"></i>
+        </button>
+        <button class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg active:bg-white/40 transition">
+            <i class="fas fa-share-nodes text-white text-sm"></i>
+        </button>
+    </div>
+
+    <!-- Hero Image -->
+    <div class="relative h-48">
+        <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b5cb9?w=800&h=400&fit=crop"
+             alt="考研政治冲刺班"
+             class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+    </div>
+
+    <!-- Course Info Card -->
+    <div class="mx-4 -mt-6 relative z-10 bg-white rounded-2xl p-4 shadow-sm animate-in delay-1">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded-full font-medium">热销</span>
+                    <span class="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-full">考研辅导</span>
+                </div>
+                <h1 class="text-lg font-bold text-[#2D3436] leading-tight">考研政治冲刺班</h1>
+            </div>
+        </div>
+
+        <!-- Rating & Stats -->
+        <div class="flex items-center gap-4 mt-2.5">
+            <div class="flex items-center gap-1">
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                <span class="text-sm font-semibold text-[#2D3436]">4.9</span>
+                <span class="text-[10px] text-[#B2BEC3]">(86)</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <i class="fas fa-user-group text-[#B2BEC3] text-[10px]"></i>
+                <span class="text-xs text-[#636E72]">328人已学</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <i class="fas fa-book-open text-[#B2BEC3] text-[10px]"></i>
+                <span class="text-xs text-[#636E72]">12课时</span>
+            </div>
+        </div>
+
+        <!-- Price -->
+        <div class="flex items-end justify-between mt-3 pt-3 border-t border-gray-50">
+            <div>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-bold text-primary">¥80</span>
+                    <span class="text-xs text-[#B2BEC3]">/课时</span>
+                </div>
+                <p class="text-[10px] text-[#B2BEC3] mt-0.5">全套12课时 ¥860（省¥100）</p>
+            </div>
+            <div class="flex items-center gap-1">
+                <i class="fas fa-fire text-orange-400 text-xs"></i>
+                <span class="text-xs text-orange-400">本周热销Top3</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Info -->
+    <a href="teacher-profile.html" class="block mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm animate-in delay-2 active:bg-gray-50 transition">
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <img src="https://images.unsplash.com/photo-1568602471122-3b6f0c1c3f9a?w=120&h=120&fit=crop&crop=face"
+                     alt="李明华" class="w-12 h-12 rounded-full object-cover">
+                <div class="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <i class="fas fa-check text-white text-[7px]"></i>
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-[#2D3436]">李明华</span>
+                    <span class="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-full">认证讲师</span>
+                </div>
+                <p class="text-xs text-[#B2BEC3] mt-0.5">考研政治 · 8年教龄 · 硕士</p>
+                <div class="flex items-center gap-1 mt-1">
+                    <i class="fas fa-star text-yellow-400 text-[9px]"></i>
+                    <span class="text-xs font-medium text-[#2D3436]">4.9</span>
+                    <span class="text-[10px] text-[#B2BEC3]">· 328位学员</span>
+                </div>
+            </div>
+            <i class="fas fa-chevron-right text-[#B2BEC3] text-xs"></i>
+        </div>
+    </a>
+
+    <!-- Course Introduction -->
+    <div class="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm animate-in delay-2">
+        <div class="flex items-center gap-2 mb-3">
+            <div class="w-6 h-1 bg-primary rounded-full"></div>
+            <h2 class="text-base font-bold text-[#2D3436]">课程介绍</h2>
+        </div>
+        <p class="text-sm text-[#636E72] leading-relaxed">
+            本课程专为考研政治冲刺阶段设计，涵盖马原、毛中特、史纲、思修、时政五大模块。通过高频考点梳理、真题精讲、模拟测试，帮助学员在最后阶段实现分数突破。
+        </p>
+        <div class="grid grid-cols-2 gap-2 mt-3">
+            <div class="flex items-center gap-2 bg-primary/5 rounded-lg px-3 py-2">
+                <i class="fas fa-bullseye text-primary text-xs"></i>
+                <span class="text-xs text-[#636E72]">高频考点精准梳理</span>
+            </div>
+            <div class="flex items-center gap-2 bg-primary/5 rounded-lg px-3 py-2">
+                <i class="fas fa-pen-to-square text-primary text-xs"></i>
+                <span class="text-xs text-[#636E72]">三步答题法</span>
+            </div>
+            <div class="flex items-center gap-2 bg-primary/5 rounded-lg px-3 py-2">
+                <i class="fas fa-file-lines text-primary text-xs"></i>
+                <span class="text-xs text-[#636E72]">配套资料免费送</span>
+            </div>
+            <div class="flex items-center gap-2 bg-primary/5 rounded-lg px-3 py-2">
+                <i class="fas fa-comments text-primary text-xs"></i>
+                <span class="text-xs text-[#636E72]">课后答疑</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Curriculum / Syllabus -->
+    <div class="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm animate-in delay-3">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-1 bg-primary rounded-full"></div>
+                <h2 class="text-base font-bold text-[#2D3436]">课程目录</h2>
+            </div>
+            <span class="text-xs text-[#B2BEC3]">共12课时</span>
+        </div>
+
+        <!-- Lesson List -->
+        <div class="space-y-0">
+            <!-- Lesson 1 -->
+            <div class="flex items-center gap-3 py-3 border-b border-gray-50">
+                <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-play text-green-500 text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-[#2D3436] truncate">第1讲 · 马克思主义基本原理概论</p>
+                    <p class="text-[10px] text-[#B2BEC3] mt-0.5">2小时 · 已预约</p>
+                </div>
+                <span class="text-xs text-green-500 font-medium">可预约</span>
+            </div>
+            <!-- Lesson 2 -->
+            <div class="flex items-center gap-3 py-3 border-b border-gray-50">
+                <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-play text-green-500 text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-[#2D3436] truncate">第2讲 · 唯物论与辩证法核心考点</p>
+                    <p class="text-[10px] text-[#B2BEC3] mt-0.5">2小时</p>
+                </div>
+                <span class="text-xs text-green-500 font-medium">可预约</span>
+            </div>
+            <!-- Lesson 3 -->
+            <div class="flex items-center gap-3 py-3 border-b border-gray-50">
+                <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-play text-green-500 text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-[#2D3436] truncate">第3讲 · 认识论与历史唯物主义</p>
+                    <p class="text-[10px] text-[#B2BEC3] mt-0.5">2小时</p>
+                </div>
+                <span class="text-xs text-green-500 font-medium">可预约</span>
+            </div>
+            <!-- Lesson 4 -->
+            <div class="flex items-center gap-3 py-3 border-b border-gray-50">
+                <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-play text-green-500 text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-[#2D3436] truncate">第4讲 · 毛泽东思想及其历史地位</p>
+                    <p class="text-[10px] text-[#B2BEC3] mt-0.5">2小时</p>
+                </div>
+                <span class="text-xs text-green-500 font-medium">可预约</span>
+            </div>
+            <!-- Lesson 5 -->
+            <div class="flex items-center gap-3 py-3 border-b border-gray-50">
+                <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-lock text-gray-300 text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-[#2D3436] truncate">第5讲 · 新时代中国特色社会主义</p>
+                    <p class="text-[10px] text-[#B2BEC3] mt-0.5">2小时</p>
+                </div>
+                <span class="text-xs text-[#B2BEC3]">需预约</span>
+            </div>
+            <!-- Lesson 6+ (collapsed) -->
+            <div class="flex items-center gap-3 py-3 border-b border-gray-50">
+                <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-lock text-gray-300 text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-[#2D3436] truncate">第6讲 · 改革开放与现代化建设</p>
+                    <p class="text-[10px] text-[#B2BEC3] mt-0.5">2小时</p>
+                </div>
+                <span class="text-xs text-[#B2BEC3]">需预约</span>
+            </div>
+            <!-- View More -->
+            <button class="w-full py-3 text-sm text-primary active:opacity-60 transition">
+            查看全部12课时 <i class="fas fa-chevron-down text-[10px] ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Student Reviews -->
+    <div class="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm animate-in delay-4">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-1 bg-primary rounded-full"></div>
+                <h2 class="text-base font-bold text-[#2D3436]">学员评价</h2>
+            </div>
+            <div class="flex items-center gap-1">
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                <span class="text-sm font-semibold text-[#2D3436]">4.9</span>
+                <span class="text-[10px] text-[#B2BEC3]">(86条)</span>
+            </div>
+        </div>
+
+        <!-- Review 1 -->
+        <div class="pb-3 mb-3 border-b border-gray-50">
+            <div class="flex items-center gap-2 mb-1.5">
+                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&h=60&fit=crop&crop=face" alt="学员" class="w-7 h-7 rounded-full object-cover">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-[#2D3436]">学习达人</p>
+                    <div class="flex items-center gap-0.5">
+                        <i class="fas fa-star text-yellow-400 text-[9px]"></i><i class="fas fa-star text-yellow-400 text-[9px]"></i><i class="fas fa-star text-yellow-400 text-[9px]"></i><i class="fas fa-star text-yellow-400 text-[9px]"></i><i class="fas fa-star text-yellow-400 text-[9px]"></i>
+                    </div>
+                </div>
+                <span class="text-[10px] text-[#B2BEC3]">3天前</span>
+            </div>
+            <p class="text-xs text-[#636E72] leading-relaxed">李老师的课太值了！三步答题法真的有用，主观题分数提升很大。配套资料也很全面。</p>
+        </div>
+
+        <!-- Review 2 -->
+        <div>
+            <div class="flex items-center gap-2 mb-1.5">
+                <img src="https://images.unsplash.com/photo-1599566159882-aa1b6c5f0c3a?w=60&h=60&fit=crop&crop=face" alt="学员" class="w-7 h-7 rounded-full object-cover">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-[#2D3436]">考研上岸君</p>
+                    <div class="flex items-center gap-0.5">
+                        <i class="fas fa-star text-yellow-400 text-[9px]"></i><i class="fas fa-star text-yellow-400 text-[9px]"></i><i class="fas fa-star text-yellow-400 text-[9px]"></i><i class="fas fa-star text-yellow-400 text-[9px]"></i><i class="fas fa-star text-yellow-400 text-[9px]"></i>
+                    </div>
+                </div>
+                <span class="text-[10px] text-[#B2BEC3]">1周前</span>
+            </div>
+            <p class="text-xs text-[#636E72] leading-relaxed">押题命中率超高！跟着学了一个月，政治从50提到78，强烈推荐！</p>
+        </div>
+
+        <button class="w-full mt-3 py-2.5 border border-gray-200 rounded-xl text-sm text-[#636E72] active:bg-gray-50 transition">
+            查看全部评价
+        </button>
+    </div>
+
+    <!-- Related Courses -->
+    <div class="mt-4 animate-in delay-5">
+        <div class="flex items-center justify-between px-4 mb-2">
+            <h2 class="text-base font-bold text-[#2D3436]">相关课程</h2>
+        </div>
+        <div class="flex gap-3 overflow-x-auto hide-scrollbar px-4 pb-1">
+            <a href="course-detail.html" class="flex-shrink-0 w-40 bg-white rounded-xl overflow-hidden shadow-sm active:bg-gray-50 transition">
+                <img src="https://images.unsplash.com/photo-1454165184704-b8c9c3c2c94a?w=300&h=200&fit=crop" alt="课程" class="w-full h-24 object-cover">
+                <div class="p-2.5">
+                    <p class="text-sm font-medium text-[#2D3436] leading-tight">考研政治基础强化</p>
+                    <p class="text-sm font-bold text-primary mt-1">¥60<span class="text-[10px] font-normal text-[#B2BEC3]">/课时</span></p>
+                </div>
+            </a>
+            <a href="course-detail.html" class="flex-shrink-0 w-40 bg-white rounded-xl overflow-hidden shadow-sm active:bg-gray-50 transition">
+                <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300&h=200&fit=crop" alt="课程" class="w-full h-24 object-cover">
+                <div class="p-2.5">
+                    <p class="text-sm font-medium text-[#2D3436] leading-tight">公务员行测精讲</p>
+                    <p class="text-sm font-bold text-primary mt-1">¥60<span class="text-[10px] font-normal text-[#B2BEC3]">/课时</span></p>
+                </div>
+            </a>
+            <a href="course-detail.html" class="flex-shrink-0 w-40 bg-white rounded-xl overflow-hidden shadow-sm active:bg-gray-50 transition">
+                <img src="https://images.unsplash.com/photo-1516321318963-37678e7950e0?w=300&h=200&fit=crop" alt="课程" class="w-full h-24 object-cover">
+                <div class="p-2.5">
+                    <p class="text-sm font-medium text-[#2D3436] leading-tight">英语四级冲刺密训</p>
+                    <p class="text-sm font-bold text-primary mt-1">¥50<span class="text-[10px] font-normal text-[#B2BEC3]">/课时</span></p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Spacer -->
+    <div class="h-28"></div>
+
+    <!-- Bottom Action Bar -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 z-40" style="max-width: 430px; margin: 0 auto;">
+        <div class="flex items-center gap-3">
+            <a href="teacher-profile.html" class="flex-shrink-0 w-12 h-12 border border-gray-200 rounded-full flex items-center justify-center active:bg-gray-50 transition">
+                <i class="fas fa-headset text-[#636E72] text-lg"></i>
+            </a>
+            <div class="flex-1 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] text-[#B2BEC3]">单课时</span>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-xl font-bold text-primary">¥80</span>
+                        <span class="text-[10px] text-[#B2BEC3]">起</span>
+                    </div>
+                </div>
+                <a href="course-booking.html" class="bg-primary text-white rounded-full px-8 py-3 font-semibold text-base shadow-lg shadow-primary/25 active:bg-primary-dark transition">
+                    立即预约
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleFav() {
+            const icon = document.getElementById('favIcon');
+            if (icon.classList.contains('far')) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                icon.style.color = '#ef4444';
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                icon.style.color = '';
+            }
+        }
+    </script>
+</body>
+</html>

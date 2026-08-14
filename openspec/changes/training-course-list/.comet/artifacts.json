@@ -1,0 +1,8 @@
+{
+  "openspec_proposal": "openspec/changes/training-course-list/proposal.md",
+  "openspec_design": "openspec/changes/training-course-list/design.md",
+  "openspec_tasks": "openspec/changes/training-course-list/tasks.md",
+  "openspec_delta_spec": "openspec/changes/training-course-list/specs/study-room-booking-api/spec.md",
+  "handoff_context": "openspec/changes/training-course-list/.comet/handoff/design-context.json",
+  "handoff_markdown": "openspec/changes/training-course-list/.comet/handoff/design-context.md"
+}

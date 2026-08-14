@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>培训订单管理 - 去K书管理后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#4F6EF7', 'primary-light': '#E8EDFF', 'primary-dark': '#3A56D4' } } } }</script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #F5F6FA; -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+        .nav-item { transition: all 0.2s; }
+        .nav-item:hover { background: rgba(79, 110, 247, 0.08); }
+        .nav-item.active { background: rgba(79, 110, 247, 0.12); color: #4F6EF7; border-right: 3px solid #4F6EF7; }
+        .status-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .tab-item { position: relative; transition: color 0.2s ease; cursor: pointer; }
+        .tab-item.active { color: #4F6EF7; font-weight: 600; border-bottom: 2px solid #4F6EF7; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <aside class="w-60 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+        <div class="h-16 flex items-center gap-2.5 px-5 border-b border-gray-100">
+            <div class="w-8 h-8 bg-gradient-to-br from-primary to-[#6C5CE7] rounded-lg flex items-center justify-center"><i class="fas fa-book-open text-white text-sm"></i></div>
+            <div><p class="text-sm font-bold text-[#2D3436]">去K书</p><p class="text-[10px] text-gray-400">管理后台</p></div>
+        </div>
+        <nav class="flex-1 py-3 overflow-y-auto">
+            <div class="px-5 mb-1"><p class="text-[10px] font-medium text-gray-400 uppercase tracking-wider">主功能</p></div>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-gauge-high w-4 text-center"></i><span>仪表盘</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-building w-4 text-center"></i><span>门店管理</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-couch w-4 text-center"></i><span>座位管理</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-receipt w-4 text-center"></i><span>自习室订单</span></a>
+            <div class="px-5 mt-4 mb-1"><p class="text-[10px] font-medium text-gray-400 uppercase tracking-wider">培训模块</p></div>
+            <a href="admin-courses.html" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-graduation-cap w-4 text-center"></i><span>培训课程</span></a>
+            <a href="admin-teachers.html" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-chalkboard-user w-4 text-center"></i><span>老师管理</span></a>
+            <a href="admin-training-orders.html" class="nav-item active flex items-center gap-3 px-5 py-2.5 text-sm"><i class="fas fa-clipboard-list w-4 text-center"></i><span class="font-medium">培训订单</span></a>
+            <div class="px-5 mt-4 mb-1"><p class="text-[10px] font-medium text-gray-400 uppercase tracking-wider">运营</p></div>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-ticket w-4 text-center"></i><span>卡券管理</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-users w-4 text-center"></i><span>用户管理</span></a>
+        </nav>
+        <div class="border-t border-gray-100 p-4 flex items-center gap-2.5">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&h=60&fit=crop&crop=face" alt="管理员" class="w-8 h-8 rounded-full object-cover">
+            <div class="flex-1 min-w-0"><p class="text-sm font-medium text-[#2D3436] truncate">管理员</p><p class="text-[10px] text-gray-400">admin@qukshu.com</p></div>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
+            <div class="flex items-center gap-4"><h1 class="text-lg font-semibold text-[#2D3436]">培训订单管理</h1><span class="text-xs text-gray-400">共 286 条订单</span></div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1.5"><i class="fas fa-magnifying-glass text-gray-400 text-xs"></i><input type="text" placeholder="搜索订单号/学员" class="bg-transparent text-sm text-gray-700 placeholder-gray-300 outline-none w-48"></div>
+                <button class="px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition flex items-center gap-2"><i class="fas fa-download text-xs"></i>导出</button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6">
+
+            <!-- Stats -->
+            <div class="grid grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-50">
+                    <div class="flex items-center justify-between mb-2"><div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><i class="fas fa-clipboard-list text-primary"></i></div></div>
+                    <p class="text-2xl font-bold text-[#2D3436]">286</p><p class="text-xs text-gray-400 mt-1">订单总数</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-50">
+                    <div class="flex items-center justify-between mb-2"><div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center"><i class="fas fa-circle-check text-green-500"></i></div></div>
+                    <p class="text-2xl font-bold text-[#2D3436]">12</p><p class="text-xs text-gray-400 mt-1">待上课</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-50">
+                    <div class="flex items-center justify-between mb-2"><div class="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center"><i class="fas fa-clock text-orange-500"></i></div></div>
+                    <p class="text-2xl font-bold text-[#2D3436]">268</p><p class="text-xs text-gray-400 mt-1">已完成</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-50">
+                    <div class="flex items-center justify-between mb-2"><div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center"><i class="fas fa-yen-sign text-purple-500"></i></div><span class="text-xs text-green-500 font-medium">+12%</span></div>
+                    <p class="text-2xl font-bold text-[#2D3436]">¥48,600</p><p class="text-xs text-gray-400 mt-1">本月收入</p>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="bg-white rounded-t-xl border border-gray-50 border-b-0">
+                <div class="flex items-center gap-6 px-4 border-b border-gray-100">
+                    <div class="tab-item active py-3 text-sm" onclick="switchTab(this)">全部订单</div>
+                    <div class="tab-item py-3 text-sm text-gray-500" onclick="switchTab(this)">待上课 <span class="ml-1 bg-primary text-white text-[10px] px-1.5 rounded-full">12</span></div>
+                    <div class="tab-item py-3 text-sm text-gray-500" onclick="switchTab(this)">已完成</div>
+                    <div class="tab-item py-3 text-sm text-gray-500" onclick="switchTab(this)">已取消</div>
+                    <div class="tab-item py-3 text-sm text-gray-500" onclick="switchTab(this)">已退款</div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-white rounded-b-xl shadow-sm border border-gray-50 border-t-0 overflow-hidden">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-100">
+                            <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">订单号</th>
+                            <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">学员</th>
+                            <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">课程</th>
+                            <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">老师</th>
+                            <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">课时</th>
+                            <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">上课时间</th>
+                            <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">金额</th>
+                            <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">状态</th>
+                            <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600 font-mono">TC202608140001</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&h=60&fit=crop&crop=face" alt="" class="w-7 h-7 rounded-full object-cover"><span class="text-sm text-gray-700">学习达人</span></div></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">考研政治冲刺班</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">李明华</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">第1讲</span></td>
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600">08-14 14:00</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm font-medium text-primary">¥75</span></td>
+                            <td class="px-4 py-3.5"><span class="status-badge bg-orange-50 text-orange-500">待上课</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><button class="text-xs text-primary hover:underline">详情</button><span class="text-gray-200">|</span><button class="text-xs text-gray-500 hover:text-red-500">取消</button></div></td>
+                        </tr>
+                        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600 font-mono">TC202608130008</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1599566159882-aa1b6c5f0c3a?w=60&h=60&fit=crop&crop=face" alt="" class="w-7 h-7 rounded-full object-cover"><span class="text-sm text-gray-700">考研上岸君</span></div></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">雅思口语1v1</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">陈雅琪</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">第3讲</span></td>
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600">08-13 16:00</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm font-medium text-primary">¥120</span></td>
+                            <td class="px-4 py-3.5"><span class="status-badge bg-green-50 text-green-600">已完成</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><button class="text-xs text-primary hover:underline">详情</button></div></td>
+                        </tr>
+                        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600 font-mono">TC202608120015</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1607746755531-e42f2c35a319?w=60&h=60&fit=crop&crop=face" alt="" class="w-7 h-7 rounded-full object-cover"><span class="text-sm text-gray-700">勤奋小张</span></div></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">英语四级冲刺</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">张伟强</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">第5讲</span></td>
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600">08-12 19:00</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm font-medium text-primary">¥50</span></td>
+                            <td class="px-4 py-3.5"><span class="status-badge bg-green-50 text-green-600">已完成</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><button class="text-xs text-primary hover:underline">详情</button></div></td>
+                        </tr>
+                        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600 font-mono">TC202608100022</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1580489944761-4d81d45578ea?w=60&h=60&fit=crop&crop=face" alt="" class="w-7 h-7 rounded-full object-cover"><span class="text-sm text-gray-700">努力的小李</span></div></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">公务员行测精讲</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">王晓雯</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">全套16讲</span></td>
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600">08-10 14:00</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm font-medium text-primary">¥860</span></td>
+                            <td class="px-4 py-3.5"><span class="status-badge bg-orange-50 text-orange-500">待上课</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><button class="text-xs text-primary hover:underline">详情</button><span class="text-gray-200">|</span><button class="text-xs text-gray-500 hover:text-red-500">取消</button></div></td>
+                        </tr>
+                        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600 font-mono">TC202608080030</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1564564321837-a57b7070251d?w=60&h=60&fit=crop&crop=face" alt="" class="w-7 h-7 rounded-full object-cover"><span class="text-sm text-gray-700">王同学</span></div></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">教师资格证面试</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">刘芳芳</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">第2讲</span></td>
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600">08-08 10:00</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm font-medium text-primary">¥90</span></td>
+                            <td class="px-4 py-3.5"><span class="status-badge bg-red-50 text-red-500">已取消</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><button class="text-xs text-primary hover:underline">详情</button></div></td>
+                        </tr>
+                        <tr class="hover:bg-gray-50/50 transition">
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600 font-mono">TC202608050035</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&h=60&fit=crop&crop=face" alt="" class="w-7 h-7 rounded-full object-cover"><span class="text-sm text-gray-700">学习达人</span></div></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">考研政治冲刺班</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">李明华</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm text-gray-700">第1讲</span></td>
+                            <td class="px-4 py-3.5"><span class="text-xs text-gray-600">08-05 14:00</span></td>
+                            <td class="px-4 py-3.5"><span class="text-sm font-medium text-primary">¥75</span></td>
+                            <td class="px-4 py-3.5"><span class="status-badge bg-green-50 text-green-600">已完成</span></td>
+                            <td class="px-4 py-3.5"><div class="flex items-center gap-2"><button class="text-xs text-primary hover:underline">详情</button></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="flex items-center justify-between px-4 py-3 border-t border-gray-50">
+                    <span class="text-xs text-gray-400">共 286 条记录，第 1 页 / 共 29 页</span>
+                    <div class="flex items-center gap-1">
+                        <button class="px-3 py-1 text-xs text-gray-400 border border-gray-200 rounded disabled:opacity-50" disabled>上一页</button>
+                        <button class="px-3 py-1 text-xs text-white bg-primary border border-primary rounded">1</button>
+                        <button class="px-3 py-1 text-xs text-gray-400 border border-gray-200 rounded">2</button>
+                        <button class="px-3 py-1 text-xs text-gray-400 border border-gray-200 rounded">3</button>
+                        <button class="px-3 py-1 text-xs text-gray-400 border border-gray-200 rounded">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(el) {
+            document.querySelectorAll('.tab-item').forEach(t => {
+                t.classList.remove('active');
+                t.classList.add('text-gray-500');
+            });
+            el.classList.add('active');
+            el.classList.remove('text-gray-500');
+        }
+    </script>
+</body>
+</html>

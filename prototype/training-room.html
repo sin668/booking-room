@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>培训室概况 - 去K书</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F6EF7',
+                        'primary-light': '#E8EDFF',
+                        'primary-dark': '#3A56D4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #F5F6FA;
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeInUp 0.5s ease-out forwards; }
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.2s; opacity: 0; }
+        .delay-3 { animation-delay: 0.3s; opacity: 0; }
+        .delay-4 { animation-delay: 0.4s; opacity: 0; }
+    </style>
+</head>
+<body>
+    <!-- iOS Status Bar -->
+    <div class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 pt-2 pb-1" style="max-width: 430px; margin: 0 auto;">
+        <span class="text-white text-sm font-semibold">9:41</span>
+        <div class="w-[120px] h-[34px] bg-black rounded-full mx-auto"></div>
+        <div class="flex items-center gap-1.5 text-white text-xs">
+            <i class="fas fa-signal text-[11px]"></i>
+            <i class="fas fa-wifi text-[11px]"></i>
+            <i class="fas fa-battery-full text-[11px]"></i>
+        </div>
+    </div>
+
+    <!-- Back Navigation -->
+    <div class="fixed top-12 left-4 z-40">
+        <a href="training.html" class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg active:bg-white/40 transition block">
+            <i class="fas fa-chevron-left text-white text-sm"></i>
+        </a>
+    </div>
+    <div class="fixed top-12 right-4 z-40">
+        <button class="w-9 h-9 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg active:bg-white/40 transition">
+            <i class="fas fa-share-nodes text-white text-sm"></i>
+        </button>
+    </div>
+
+    <!-- Hero Image -->
+    <div class="relative h-56">
+        <img src="https://images.unsplash.com/photo-1580582932705-ff3c3993141f?w=800&h=400&fit=crop"
+             alt="培训教室"
+             class="w-full h-full object-cover">
+        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-transparent"></div>
+        <div class="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full">
+            <i class="fas fa-image mr-1"></i>1/8
+        </div>
+    </div>
+
+    <!-- Room Info Card -->
+    <div class="mx-4 -mt-6 relative z-10 bg-white rounded-2xl p-4 shadow-sm animate-in delay-1">
+        <div class="flex items-start justify-between">
+            <h1 class="text-lg font-bold text-[#2D3436]">去K书培训中心</h1>
+            <span class="bg-red-50 text-red-500 text-xs font-medium px-2 py-0.5 rounded-full">营业中</span>
+        </div>
+        <div class="flex items-center mt-2 gap-1">
+            <div class="flex items-center">
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                <i class="fas fa-star text-yellow-400 text-xs"></i>
+            </div>
+            <span class="text-sm font-semibold text-[#2D3436] ml-1">5.0</span>
+            <span class="text-xs text-[#B2BEC3]">（86条评价）</span>
+        </div>
+        <div class="mt-3 flex items-start gap-2">
+            <i class="fas fa-location-dot text-primary text-xs mt-0.5"></i>
+            <div class="flex-1">
+                <p class="text-sm text-[#636E72] leading-relaxed">茂名市茂南区光谷大道88号3楼</p>
+                <span class="text-xs text-primary mt-0.5 inline-block">距您1.2km</span>
+            </div>
+        </div>
+        <div class="mt-3 flex items-center gap-2">
+            <i class="fas fa-clock text-[#B2BEC3] text-xs"></i>
+            <p class="text-sm text-[#636E72]">营业时间 09:00 - 21:00</p>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2">
+            <span class="bg-primary/10 text-primary text-xs px-2.5 py-1 rounded-full">多媒体教室</span>
+            <span class="bg-primary/10 text-primary text-xs px-2.5 py-1 rounded-full">小班授课</span>
+            <span class="bg-primary/10 text-primary text-xs px-2.5 py-1 rounded-full">一对一辅导</span>
+            <span class="bg-green-50 text-green-600 text-xs px-2.5 py-1 rounded-full">免费WiFi</span>
+            <span class="bg-orange-50 text-orange-500 text-xs px-2.5 py-1 rounded-full">空调开放</span>
+        </div>
+    </div>
+
+    <!-- Introduction -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm animate-in delay-2">
+        <div class="flex items-center gap-2 mb-3">
+            <div class="w-6 h-1 bg-primary rounded-full"></div>
+            <h2 class="text-base font-bold text-[#2D3436]">培训室简介</h2>
+        </div>
+        <p class="text-sm text-[#636E72] leading-relaxed">
+            去K书培训中心致力于为考研、公考、语言培训等学员提供专业的线下辅导环境。中心配备多媒体教学设备、白板、投影仪等设施，可容纳小班授课（8-12人）及一对一辅导。
+        </p>
+        <p class="text-sm text-[#636E72] leading-relaxed mt-2">
+            所有培训教室均采用隔音设计，配备独立空调与新风系统，确保学员在舒适的环境中专注学习。每位授课老师均持有相关资质证书，拥有丰富的教学经验。
+        </p>
+    </div>
+
+    <!-- Environment Photos -->
+    <div class="mx-4 mt-4 animate-in delay-2">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-[#2D3436]">环境照片</h2>
+            <span class="text-xs text-[#B2BEC3]">共8张 <i class="fas fa-chevron-right text-[10px] ml-0.5"></i></span>
+        </div>
+        <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
+            <div class="flex-shrink-0 w-40 h-28 rounded-xl overflow-hidden shadow-sm">
+                <img src="https://images.unsplash.com/photo-1580582932705-ff3c3993141f?w=400&h=280&fit=crop" alt="多媒体教室" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-shrink-0 w-40 h-28 rounded-xl overflow-hidden shadow-sm">
+                <img src="https://images.unsplash.com/photo-1581726609236-1c7c860c5e8f?w=400&h=280&fit=crop" alt="小班教室" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-shrink-0 w-40 h-28 rounded-xl overflow-hidden shadow-sm">
+                <img src="https://images.unsplash.com/photo-1531542151005-2ec0a6ca7680?w=400&h=280&fit=crop" alt="一对一辅导室" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-shrink-0 w-40 h-28 rounded-xl overflow-hidden shadow-sm relative">
+                <img src="https://images.unsplash.com/photo-1497366754035-f200968a95e1?w=400&h=280&fit=crop" alt="休息区" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <span class="text-white text-sm font-semibold">+5</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Facilities -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm animate-in delay-3">
+        <div class="flex items-center gap-2 mb-3">
+            <div class="w-6 h-1 bg-primary rounded-full"></div>
+            <h2 class="text-base font-bold text-[#2D3436]">教学设施</h2>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-1.5">
+                    <i class="fas fa-chalkboard text-primary text-lg"></i>
+                </div>
+                <span class="text-xs text-[#636E72]">白板</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center mb-1.5">
+                    <i class="fas fa-tv text-orange-500 text-lg"></i>
+                </div>
+                <span class="text-xs text-[#636E72]">投影仪</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mb-1.5">
+                    <i class="fas fa-snowflake text-green-500 text-lg"></i>
+                </div>
+                <span class="text-xs text-[#636E72]">空调</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-1.5">
+                    <i class="fas fa-volume-low text-purple-500 text-lg"></i>
+                </div>
+                <span class="text-xs text-[#636E72]">隔音墙</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-1.5">
+                    <i class="fas fa-wifi text-blue-500 text-lg"></i>
+                </div>
+                <span class="text-xs text-[#636E72]">WiFi</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center mb-1.5">
+                    <i class="fas fa-plug text-red-400 text-lg"></i>
+                </div>
+                <span class="text-xs text-[#636E72]">充电口</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Stats -->
+    <div class="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm animate-in delay-3">
+        <div class="flex items-center gap-2 mb-3">
+            <div class="w-6 h-1 bg-primary rounded-full"></div>
+            <h2 class="text-base font-bold text-[#2D3436]">教室概况</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-blue-50 rounded-xl p-3 flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-door-open text-primary"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold text-[#2D3436]">6</p>
+                    <p class="text-xs text-[#B2BEC3]">培训教室</p>
+                </div>
+            </div>
+            <div class="bg-green-50 rounded-xl p-3 flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-green-500"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold text-green-600">8-12</p>
+                    <p class="text-xs text-[#B2BEC3]">小班容量</p>
+                </div>
+            </div>
+            <div class="bg-orange-50 rounded-xl p-3 flex items-center gap-3">
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chalkboard-user text-orange-400"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold text-[#2D3436]">12</p>
+                    <p class="text-xs text-[#B2BEC3]">认证讲师</p>
+                </div>
+            </div>
+            <div class="bg-purple-50 rounded-xl p-3 flex items-center gap-3">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-purple-500"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold text-[#2D3436]">1,280+</p>
+                    <p class="text-xs text-[#B2BEC3]">累计学员</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Teachers -->
+    <div class="mx-4 mt-4 animate-in delay-4">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-[#2D3436]">名师团队</h2>
+            <a href="training.html" class="text-xs text-primary">查看全部 <i class="fas fa-chevron-right text-[10px]"></i></a>
+        </div>
+        <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
+            <a href="teacher-profile.html" class="flex-shrink-0 w-32 bg-white rounded-xl p-3 shadow-sm text-center active:bg-gray-50 transition">
+                <img src="https://images.unsplash.com/photo-1568602471122-3b6f0c1c3f9a?w=200&h=200&fit=crop&crop=face" alt="老师" class="w-16 h-16 rounded-full mx-auto object-cover mb-2">
+                <p class="text-sm font-semibold text-[#2D3436]">李明华</p>
+                <p class="text-[10px] text-[#B2BEC3] mt-0.5">考研政治 · 8年教龄</p>
+                <div class="flex items-center justify-center gap-1 mt-1.5">
+                    <i class="fas fa-star text-yellow-400 text-[9px]"></i>
+                    <span class="text-xs font-medium text-[#2D3436]">4.9</span>
+                </div>
+            </a>
+            <a href="teacher-profile.html" class="flex-shrink-0 w-32 bg-white rounded-xl p-3 shadow-sm text-center active:bg-gray-50 transition">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face" alt="老师" class="w-16 h-16 rounded-full mx-auto object-cover mb-2">
+                <p class="text-sm font-semibold text-[#2D3436]">王晓雯</p>
+                <p class="text-[10px] text-[#B2BEC3] mt-0.5">公考行测 · 6年教龄</p>
+                <div class="flex items-center justify-center gap-1 mt-1.5">
+                    <i class="fas fa-star text-yellow-400 text-[9px]"></i>
+                    <span class="text-xs font-medium text-[#2D3436]">4.8</span>
+                </div>
+            </a>
+            <a href="teacher-profile.html" class="flex-shrink-0 w-32 bg-white rounded-xl p-3 shadow-sm text-center active:bg-gray-50 transition">
+                <img src="https://images.unsplash.com/photo-1573496359662-720d0fc0e725?w=200&h=200&fit=crop&crop=face" alt="老师" class="w-16 h-16 rounded-full mx-auto object-cover mb-2">
+                <p class="text-sm font-semibold text-[#2D3436]">陈雅琪</p>
+                <p class="text-[10px] text-[#B2BEC3] mt-0.5">雅思口语 · 10年教龄</p>
+                <div class="flex items-center justify-center gap-1 mt-1.5">
+                    <i class="fas fa-star text-yellow-400 text-[9px]"></i>
+                    <span class="text-xs font-medium text-[#2D3436]">5.0</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- All Courses in This Room -->
+    <div class="mx-4 mt-4 animate-in delay-4">
+        <div class="flex items-center gap-2 mb-3">
+            <div class="w-6 h-1 bg-primary rounded-full"></div>
+            <h2 class="text-base font-bold text-[#2D3436]">本培训室课程</h2>
+            <span class="text-xs text-[#B2BEC3]">共5门</span>
+        </div>
+
+        <div class="space-y-3">
+            <!-- Course 1 -->
+            <a href="course-detail.html" class="block bg-white rounded-2xl overflow-hidden shadow-sm active:bg-gray-50 transition">
+                <div class="flex">
+                    <div class="w-24 h-24 flex-shrink-0 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b5cb9?w=300&h=300&fit=crop" alt="课程" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 p-3 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-start justify-between">
+                                <h3 class="text-sm font-semibold text-[#2D3436] leading-tight">考研政治冲刺班</h3>
+                                <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0">热销</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <img src="https://images.unsplash.com/photo-1568602471122-3b6f0c1c3f9a?w=60&h=60&fit=crop&crop=face" alt="老师" class="w-4 h-4 rounded-full object-cover">
+                                <span class="text-[11px] text-[#636E72]">李明华</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <span class="text-[9px] text-[#B2BEC3]"><i class="far fa-clock text-[8px]"></i> 每周二 14:00</span>
+                                <span class="text-[9px] text-[#B2BEC3]">·</span>
+                                <span class="text-[9px] text-green-500">可预约</span>
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="text-sm font-bold text-primary">¥80<span class="text-[9px] text-[#B2BEC3] font-normal">/课时</span></span>
+                            <span class="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium">预约</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Course 2 -->
+            <a href="course-detail.html" class="block bg-white rounded-2xl overflow-hidden shadow-sm active:bg-gray-50 transition">
+                <div class="flex">
+                    <div class="w-24 h-24 flex-shrink-0 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300&h=300&fit=crop" alt="课程" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 p-3 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-start justify-between">
+                                <h3 class="text-sm font-semibold text-[#2D3436] leading-tight">公务员行测精讲</h3>
+                                <span class="bg-green-50 text-green-600 text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0">新课</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop&crop=face" alt="老师" class="w-4 h-4 rounded-full object-cover">
+                                <span class="text-[11px] text-[#636E72]">王晓雯</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <span class="text-[9px] text-[#B2BEC3]"><i class="far fa-clock text-[8px]"></i> 每周三 19:00</span>
+                                <span class="text-[9px] text-[#B2BEC3]">·</span>
+                                <span class="text-[9px] text-green-500">可预约</span>
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="text-sm font-bold text-primary">¥60<span class="text-[9px] text-[#B2BEC3] font-normal">/课时</span></span>
+                            <span class="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium">预约</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Course 3 -->
+            <a href="course-detail.html" class="block bg-white rounded-2xl overflow-hidden shadow-sm active:bg-gray-50 transition">
+                <div class="flex">
+                    <div class="w-24 h-24 flex-shrink-0 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300&h=300&fit=crop" alt="课程" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 p-3 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-start justify-between">
+                                <h3 class="text-sm font-semibold text-[#2D3436] leading-tight">雅思口语1v1冲刺</h3>
+                                <span class="bg-orange-50 text-orange-500 text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0">名师</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <img src="https://images.unsplash.com/photo-1573496359662-720d0fc0e725?w=60&h=60&fit=crop&crop=face" alt="老师" class="w-4 h-4 rounded-full object-cover">
+                                <span class="text-[11px] text-[#636E72]">陈雅琪</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <span class="text-[9px] text-[#B2BEC3]"><i class="far fa-clock text-[8px]"></i> 1V1 预约制</span>
+                                <span class="text-[9px] text-[#B2BEC3]">·</span>
+                                <span class="text-[9px] text-green-500">可预约</span>
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="text-sm font-bold text-primary">¥120<span class="text-[9px] text-[#B2BEC3] font-normal">/课时</span></span>
+                            <span class="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium">预约</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Course 4 -->
+            <a href="course-detail.html" class="block bg-white rounded-2xl overflow-hidden shadow-sm active:bg-gray-50 transition">
+                <div class="flex">
+                    <div class="w-24 h-24 flex-shrink-0 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1516321318963-37678e7950e0?w=300&h=300&fit=crop" alt="课程" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 p-3 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-start justify-between">
+                                <h3 class="text-sm font-semibold text-[#2D3436] leading-tight">英语四级冲刺密训</h3>
+                                <span class="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0">推荐</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <img src="https://images.unsplash.com/photo-1607746755531-e42f2c35a319?w=60&h=60&fit=crop&crop=face" alt="老师" class="w-4 h-4 rounded-full object-cover">
+                                <span class="text-[11px] text-[#636E72]">张伟强</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <span class="text-[9px] text-[#B2BEC3]"><i class="far fa-clock text-[8px]"></i> 每周六 09:00</span>
+                                <span class="text-[9px] text-[#B2BEC3]">·</span>
+                                <span class="text-[9px] text-green-500">可预约</span>
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="text-sm font-bold text-primary">¥50<span class="text-[9px] text-[#B2BEC3] font-normal">/课时</span></span>
+                            <span class="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium">预约</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Course 5 -->
+            <a href="course-detail.html" class="block bg-white rounded-2xl overflow-hidden shadow-sm active:bg-gray-50 transition">
+                <div class="flex">
+                    <div class="w-24 h-24 flex-shrink-0 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1454165184704-b8c9c3c2c94a?w=300&h=300&fit=crop" alt="课程" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 p-3 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-[#2D3436] leading-tight">教师资格证面试辅导</h3>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <img src="https://images.unsplash.com/photo-1580489944761-4d81d45578ea?w=60&h=60&fit=crop&crop=face" alt="老师" class="w-4 h-4 rounded-full object-cover">
+                                <span class="text-[11px] text-[#636E72]">刘芳芳</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <span class="text-[9px] text-[#B2BEC3]"><i class="far fa-clock text-[8px]"></i> 每周日 14:00</span>
+                                <span class="text-[9px] text-[#B2BEC3]">·</span>
+                                <span class="text-[9px] text-green-500">可预约</span>
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="text-sm font-bold text-primary">¥90<span class="text-[9px] text-[#B2BEC3] font-normal">/课时</span></span>
+                            <span class="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium">预约</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Spacer for bottom bar -->
+    <div class="h-24"></div>
+
+    <!-- Bottom Action Bar -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 z-40" style="max-width: 430px; margin: 0 auto;">
+        <div class="flex items-center gap-3">
+            <a href="training.html" class="flex-1 border border-gray-200 rounded-full py-3 text-center font-semibold text-sm text-[#636E72] active:bg-gray-50 transition">
+                返回课程
+            </a>
+            <a href="course-detail.html" class="flex-1 bg-primary text-white rounded-full py-3 text-center font-semibold text-base shadow-lg shadow-primary/25 active:bg-primary-dark transition">
+                查看课程
+            </a>
+        </div>
+    </div>
+</body>
+</html>

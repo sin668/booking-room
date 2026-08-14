@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑课程 - 去K书管理后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#4F6EF7', 'primary-light': '#E8EDFF', 'primary-dark': '#3A56D4' } } }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #F5F6FA; -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+        .nav-item { transition: all 0.2s; }
+        .nav-item:hover { background: rgba(79, 110, 247, 0.08); }
+        .nav-item.active { background: rgba(79, 110, 247, 0.12); color: #4F6EF7; border-right: 3px solid #4F6EF7; }
+        .form-label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+        .form-input { width: 100%; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px; font-size: 14px; color: #1F2937; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #fff; }
+        .form-input:focus { border-color: #4F6EF7; box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.1); }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-60 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+        <div class="h-16 flex items-center gap-2.5 px-5 border-b border-gray-100">
+            <div class="w-8 h-8 bg-gradient-to-br from-primary to-[#6C5CE7] rounded-lg flex items-center justify-center">
+                <i class="fas fa-book-open text-white text-sm"></i>
+            </div>
+            <div><p class="text-sm font-bold text-[#2D3436]">去K书</p><p class="text-[10px] text-gray-400">管理后台</p></div>
+        </div>
+        <nav class="flex-1 py-3 overflow-y-auto">
+            <div class="px-5 mb-1"><p class="text-[10px] font-medium text-gray-400 uppercase tracking-wider">主功能</p></div>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-gauge-high w-4 text-center"></i><span>仪表盘</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-building w-4 text-center"></i><span>门店管理</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-couch w-4 text-center"></i><span>座位管理</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-receipt w-4 text-center"></i><span>自习室订单</span></a>
+            <div class="px-5 mt-4 mb-1"><p class="text-[10px] font-medium text-gray-400 uppercase tracking-wider">培训模块</p></div>
+            <a href="admin-courses.html" class="nav-item active flex items-center gap-3 px-5 py-2.5 text-sm"><i class="fas fa-graduation-cap w-4 text-center"></i><span class="font-medium">培训课程</span></a>
+            <a href="admin-teachers.html" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-chalkboard-user w-4 text-center"></i><span>老师管理</span></a>
+            <a href="admin-training-orders.html" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-clipboard-list w-4 text-center"></i><span>培训订单</span></a>
+            <div class="px-5 mt-4 mb-1"><p class="text-[10px] font-medium text-gray-400 uppercase tracking-wider">运营</p></div>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-ticket w-4 text-center"></i><span>卡券管理</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-users w-4 text-center"></i><span>用户管理</span></a>
+        </nav>
+        <div class="border-t border-gray-100 p-4 flex items-center gap-2.5">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&h=60&fit=crop&crop=face" alt="管理员" class="w-8 h-8 rounded-full object-cover">
+            <div class="flex-1 min-w-0"><p class="text-sm font-medium text-[#2D3436] truncate">管理员</p><p class="text-[10px] text-gray-400">admin@qukshu.com</p></div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <a href="admin-courses.html" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition"><i class="fas fa-arrow-left text-gray-500 text-sm"></i></a>
+                <h1 class="text-lg font-semibold text-[#2D3436]">编辑课程</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="admin-courses.html" class="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">取消</a>
+                <button class="px-4 py-2 text-sm text-white bg-primary rounded-lg hover:bg-primary-dark transition flex items-center gap-2"><i class="fas fa-floppy-disk text-xs"></i>保存</button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6">
+            <div class="max-w-3xl mx-auto space-y-4">
+
+                <!-- Basic Info -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-50">
+                    <h2 class="text-sm font-bold text-[#2D3436] mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-primary text-xs"></i>基本信息</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="form-label">课程名称 <span class="text-red-500">*</span></label>
+                            <input type="text" value="考研政治冲刺班" class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label">课程分类 <span class="text-red-500">*</span></label>
+                            <select class="form-input"><option>考研辅导</option><option>公考备考</option><option>语言培训</option><option>技能提升</option><option>职业资格</option></select>
+                        </div>
+                        <div>
+                            <label class="form-label">授课老师 <span class="text-red-500">*</span></label>
+                            <select class="form-input"><option>李明华</option><option>王晓雯</option><option>陈雅琪</option><option>张伟强</option><option>刘芳芳</option></select>
+                        </div>
+                        <div>
+                            <label class="form-label">单课时价格（元） <span class="text-red-500">*</span></label>
+                            <input type="number" value="80" class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label">总课时数 <span class="text-red-500">*</span></label>
+                            <input type="number" value="12" class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label">每课时时长（小时）</label>
+                            <input type="number" value="2" class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label">全套优惠价（元）</label>
+                            <input type="number" value="860" class="form-input" placeholder="选填，留空则无优惠">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cover Image -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-50">
+                    <h2 class="text-sm font-bold text-[#2D3436] mb-4 flex items-center gap-2"><i class="fas fa-image text-primary text-xs"></i>课程封面</h2>
+                    <div class="flex items-start gap-4">
+                        <div class="w-40 h-28 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+                            <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b5cb9?w=300&h=200&fit=crop" alt="封面" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1">
+                            <button class="px-4 py-2 text-sm text-primary border border-primary rounded-lg hover:bg-primary/5 transition flex items-center gap-2"><i class="fas fa-upload text-xs"></i>上传图片</button>
+                            <p class="text-xs text-gray-400 mt-2">建议尺寸 750×420px，支持 JPG/PNG 格式，最大 2MB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Description -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-50">
+                    <h2 class="text-sm font-bold text-[#2D3436] mb-4 flex items-center gap-2"><i class="fas fa-align-left text-primary text-xs"></i>课程介绍</h2>
+                    <textarea rows="4" class="form-input resize-none" placeholder="请输入课程介绍...">本课程专为考研政治冲刺阶段设计，涵盖马原、毛中特、史纲、思修、时政五大模块。通过高频考点梳理、真题精讲、模拟测试，帮助学员在最后阶段实现分数突破。</textarea>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="text-xs text-gray-400">教学特色标签（最多5个）</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <span class="bg-primary/10 text-primary text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">案例教学 <i class="fas fa-times text-[9px] cursor-pointer"></i></span>
+                        <span class="bg-primary/10 text-primary text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">精准押题 <i class="fas fa-times text-[9px] cursor-pointer"></i></span>
+                        <span class="bg-primary/10 text-primary text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">三步答题法 <i class="fas fa-times text-[9px] cursor-pointer"></i></span>
+                        <span class="bg-primary/10 text-primary text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">互动式课堂 <i class="fas fa-times text-[9px] cursor-pointer"></i></span>
+                        <button class="text-xs text-gray-400 border border-dashed border-gray-300 px-3 py-1.5 rounded-full hover:border-primary hover:text-primary transition">+ 添加标签</button>
+                    </div>
+                </div>
+
+                <!-- Syllabus -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-50">
+                    <h2 class="text-sm font-bold text-[#2D3436] mb-4 flex items-center gap-2"><i class="fas fa-list-ol text-primary text-xs"></i>课程目录</h2>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center flex-shrink-0">1</span>
+                            <input type="text" value="马克思主义基本原理概论" class="form-input flex-1">
+                            <span class="text-xs text-gray-400 flex-shrink-0">2小时</span>
+                            <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center flex-shrink-0">2</span>
+                            <input type="text" value="唯物论与辩证法核心考点" class="form-input flex-1">
+                            <span class="text-xs text-gray-400 flex-shrink-0">2小时</span>
+                            <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center flex-shrink-0">3</span>
+                            <input type="text" value="认识论与历史唯物主义" class="form-input flex-1">
+                            <span class="text-xs text-gray-400 flex-shrink-0">2小时</span>
+                            <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button>
+                        </div>
+                        <button class="w-full py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-400 hover:border-primary hover:text-primary transition flex items-center justify-center gap-2"><i class="fas fa-plus text-xs"></i>添加课时</button>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-50">
+                    <h2 class="text-sm font-bold text-[#2D3436] mb-4 flex items-center gap-2"><i class="fas fa-toggle-on text-primary text-xs"></i>发布设置</h2>
+                    <div class="flex items-center gap-6">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="status" checked class="text-primary">
+                            <span class="text-sm text-gray-700">立即上架</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="status" class="text-primary">
+                            <span class="text-sm text-gray-700">存为草稿</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="status" class="text-primary">
+                            <span class="text-sm text-gray-700">提交审核</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="flex items-center justify-end gap-3 pb-6">
+                    <a href="admin-courses.html" class="px-6 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">取消</a>
+                    <button class="px-6 py-2.5 text-sm text-white bg-primary rounded-lg hover:bg-primary-dark transition flex items-center gap-2"><i class="fas fa-floppy-disk text-xs"></i>保存课程</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>

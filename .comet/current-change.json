@@ -1,6 +1,6 @@
 {
   "schema": "comet.selection.v2",
   "workflow": "classic",
-  "change": "orders-payment-buttons",
+  "change": "training-course-list",
   "branch": "main"
 }

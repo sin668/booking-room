@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>去K书 - 自习室预约小程序 原型展示</title>
+    <title>去K书 - 自习室预约+培训课程小程序 原型展示</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -126,6 +126,56 @@
             text-align: center;
             backdrop-filter: blur(10px);
         }
+
+        .desktop-frame {
+            width: 100%;
+            max-width: 900px;
+            height: 560px;
+            border-radius: 12px;
+            background: #1a1a2e;
+            padding: 0;
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.1),
+                0 20px 60px rgba(0,0,0,0.5),
+                0 0 40px rgba(79,110,247,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+        .desktop-frame:hover {
+            transform: translateY(-4px);
+            box-shadow:
+                0 0 0 1px rgba(79,110,247,0.3),
+                0 30px 80px rgba(0,0,0,0.6),
+                0 0 60px rgba(79,110,247,0.2);
+        }
+        .desktop-titlebar {
+            height: 36px;
+            background: #2a2a3e;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 6px;
+        }
+        .desktop-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .desktop-screen {
+            width: 100%;
+            height: calc(100% - 36px);
+            overflow: hidden;
+            background: #fff;
+        }
+        .desktop-screen iframe {
+            width: 1280px;
+            height: 746px;
+            border: none;
+            transform-origin: top left;
+            transform: scale(0.703);
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body>
@@ -142,29 +192,29 @@
                 <span class="text-white/90 ml-2">自习室预约</span>
             </h1>
             <p class="text-white/50 text-lg mb-8 max-w-xl mx-auto">
-                共享自习室预约微信小程序 · 高保真原型设计 · 13个核心界面
+                共享自习室预约+培训课程微信小程序 · 高保真原型设计 · 24个核心界面
             </p>
 
             <!-- Stats -->
             <div class="flex justify-center gap-6 flex-wrap">
                 <div class="stat-card">
-                    <div class="text-2xl font-bold text-[#4F6EF7]">13</div>
-                    <div class="text-xs text-white/40 mt-1">界面总数</div>
+                    <div class="text-2xl font-bold text-[#4F6EF7]">15</div>
+                    <div class="text-xs text-white/40 mt-1">自习室界面</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-2xl font-bold text-[#6C5CE7]">4</div>
-                    <div class="text-xs text-white/40 mt-1">主Tab页</div>
+                    <div class="text-2xl font-bold text-[#6C5CE7]">5</div>
+                    <div class="text-xs text-white/40 mt-1">培训模块</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-2xl font-bold text-[#00B894]">9</div>
-                    <div class="text-xs text-white/40 mt-1">二级页面</div>
+                    <div class="text-2xl font-bold text-[#00B894]">4</div>
+                    <div class="text-xs text-white/40 mt-1">管理后台</div>
                 </div>
                 <div class="stat-card">
                     <div class="text-2xl font-bold text-[#FDCB6E]">393×852</div>
                     <div class="text-xs text-white/40 mt-1">iPhone 17 Pro</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-2xl font-bold text-[#E17055]">15</div>
+                    <div class="text-2xl font-bold text-[#E17055]">24</div>
                     <div class="text-xs text-white/40 mt-1">总页面数</div>
                 </div>
             </div>
@@ -440,8 +490,110 @@
     <!-- Divider -->
     <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
 
+    <!-- Section: Training Module -->
+    <section class="px-6 py-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-[#6C5CE7]/20 flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-[#6C5CE7] text-sm"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-white/90">培训课程模块</h2>
+                <span class="badge bg-[#6C5CE7]/20 text-[#6C5CE7]">Training</span>
+            </div>
+            <p class="text-white/30 text-sm mb-8 ml-11">新增培训课程预约模块，包含课程列表、培训室概况、老师简介、课程详情与在线预约</p>
+
+            <!-- Flow arrows -->
+            <div class="flex items-center justify-center gap-2 mb-8 text-white/20 text-xs flex-wrap">
+                <span class="bg-white/5 px-3 py-1 rounded-full">课程列表</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">培训室概况</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">课程详情</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">老师简介</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">预约支付</span>
+            </div>
+
+            <div class="grid-container">
+                <!-- Training Course List -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="training.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">培训课程列表</div>
+                        <div class="text-white/30 text-xs mt-1">training.html</div>
+                    </div>
+                </div>
+
+                <!-- Training Room -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="training-room.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">培训室概况</div>
+                        <div class="text-white/30 text-xs mt-1">training-room.html</div>
+                    </div>
+                </div>
+
+                <!-- Course Detail -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="course-detail.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">课程详情</div>
+                        <div class="text-white/30 text-xs mt-1">course-detail.html</div>
+                    </div>
+                </div>
+
+                <!-- Teacher Profile -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="teacher-profile.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">老师简介</div>
+                        <div class="text-white/30 text-xs mt-1">teacher-profile.html</div>
+                    </div>
+                </div>
+
+                <!-- Course Booking -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="course-booking.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">预约课程</div>
+                        <div class="text-white/30 text-xs mt-1">course-booking.html</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
+
     <!-- Section: Other Pages -->
-    <section class="px-6 py-12 pb-20">
+    <section class="px-6 py-12">
         <div class="max-w-6xl mx-auto">
             <div class="flex items-center gap-3 mb-2">
                 <div class="w-8 h-8 rounded-lg bg-[#E17055]/20 flex items-center justify-center">
@@ -484,10 +636,101 @@
         </div>
     </section>
 
+    <!-- Divider -->
+    <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
+
+    <!-- Section: Admin Backend -->
+    <section class="px-6 py-12 pb-20">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-[#00B894]/20 flex items-center justify-center">
+                    <i class="fas fa-desktop text-[#00B894] text-sm"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-white/90">管理后台</h2>
+                <span class="badge bg-[#00B894]/20 text-[#00B894]">Admin</span>
+            </div>
+            <p class="text-white/30 text-sm mb-8 ml-11">培训模块管理后台界面，包含课程管理、课程编辑、老师管理与培训订单管理</p>
+
+            <div class="space-y-12">
+                <!-- Admin Courses -->
+                <div>
+                    <div class="desktop-frame mx-auto">
+                        <div class="desktop-titlebar">
+                            <div class="desktop-dot bg-red-400"></div>
+                            <div class="desktop-dot bg-yellow-400"></div>
+                            <div class="desktop-dot bg-green-400"></div>
+                        </div>
+                        <div class="desktop-screen">
+                            <iframe src="admin-courses.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">培训课程管理</div>
+                        <div class="text-white/30 text-xs mt-1">admin-courses.html</div>
+                    </div>
+                </div>
+
+                <!-- Admin Course Edit -->
+                <div>
+                    <div class="desktop-frame mx-auto">
+                        <div class="desktop-titlebar">
+                            <div class="desktop-dot bg-red-400"></div>
+                            <div class="desktop-dot bg-yellow-400"></div>
+                            <div class="desktop-dot bg-green-400"></div>
+                        </div>
+                        <div class="desktop-screen">
+                            <iframe src="admin-course-edit.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">课程编辑</div>
+                        <div class="text-white/30 text-xs mt-1">admin-course-edit.html</div>
+                    </div>
+                </div>
+
+                <!-- Admin Teachers -->
+                <div>
+                    <div class="desktop-frame mx-auto">
+                        <div class="desktop-titlebar">
+                            <div class="desktop-dot bg-red-400"></div>
+                            <div class="desktop-dot bg-yellow-400"></div>
+                            <div class="desktop-dot bg-green-400"></div>
+                        </div>
+                        <div class="desktop-screen">
+                            <iframe src="admin-teachers.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">老师管理</div>
+                        <div class="text-white/30 text-xs mt-1">admin-teachers.html</div>
+                    </div>
+                </div>
+
+                <!-- Admin Training Orders -->
+                <div>
+                    <div class="desktop-frame mx-auto">
+                        <div class="desktop-titlebar">
+                            <div class="desktop-dot bg-red-400"></div>
+                            <div class="desktop-dot bg-yellow-400"></div>
+                            <div class="desktop-dot bg-green-400"></div>
+                        </div>
+                        <div class="desktop-screen">
+                            <iframe src="admin-training-orders.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">培训订单管理</div>
+                        <div class="text-white/30 text-xs mt-1">admin-training-orders.html</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
     <footer class="border-t border-white/5 py-8 text-center">
-        <p class="text-white/20 text-xs">去K书 · 自习室预约小程序 · High-Fidelity Prototype · Built with Tailwind CSS + FontAwesome</p>
-        <p class="text-white/10 text-xs mt-2">iPhone 17 Pro · 393×852 · iOS Design Guidelines</p>
+        <p class="text-white/20 text-xs">去K书 · 自习室预约+培训课程小程序 · High-Fidelity Prototype · Built with Tailwind CSS + FontAwesome</p>
+        <p class="text-white/10 text-xs mt-2">iPhone 17 Pro · 393×852 · iOS Design Guidelines · Desktop Admin Dashboard</p>
     </footer>
 
 </body>

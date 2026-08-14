@@ -1,0 +1,16 @@
+{
+  "change": "training-course-list",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "a1d471d8c8813e94aeef84d6f9c34b514762960f33b48ad3fd7553dbfd9674d3",
+  "files": [
+    { "path": "openspec/changes/training-course-list/proposal.md", "sha256": "d2b749a702450d41d82ea3a6ed076e85aea5bb83ae1719d34e385c25f316e6a7" },
+    { "path": "openspec/changes/training-course-list/design.md", "sha256": "9cbd75517a8f3aa2e14ba1bc49d9012b3a007ce7a42d8fceb691603722d82d26" },
+    { "path": "openspec/changes/training-course-list/tasks.md", "sha256": "07147e16d190906b8e5a0c9e8f3178dc337313afbc49224a8be8cd3924a821c4" },
+    { "path": "openspec/changes/training-course-list/specs/study-room-booking-api/spec.md", "sha256": "ea775d4af8cabf3b7ccff67a136ba6d77541f137305847aea57d0bdd6cee4f56" },
+    { "path": "openspec/changes/training-course-list/specs/training-course-list-api/spec.md", "sha256": "61854c95ab6528c1de71f6e5b3fc75ed9c47257bcc463a3f72cae7662e7db59d" },
+    { "path": "openspec/changes/training-course-list/specs/training-course-list-ui/spec.md", "sha256": "c9ffa0c9a94945b37e3a0d5046f8acdce56046b883efdfd6a0bbfe57d730cf2e" }
+  ]
+}

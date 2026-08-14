@@ -319,7 +319,7 @@ git commit -m "feat: add Teacher/Course models, room_type/rating columns, migrat
 **Bug 防护：**
 - 复用 schema，不在多个文件重复定义（参考 bug-fixed.md BUG-7 DRY 原则）
 
-- [ ] **Step 1: 创建 TeacherResponse schema**
+- [x] **Step 1: 创建 TeacherResponse schema**
 
 创建 `br-server/app/schemas/teacher.py`：
 
@@ -337,7 +337,7 @@ class TeacherResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 ```
 
-- [ ] **Step 2: 创建 CourseResponse 和 TrainingRoomDetailResponse schema**
+- [x] **Step 2: 创建 CourseResponse 和 TrainingRoomDetailResponse schema**
 
 创建 `br-server/app/schemas/course.py`：
 
@@ -395,7 +395,7 @@ class TrainingRoomDetailResponse(BaseModel):
     courses: list[CourseResponse]
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add br-server/app/schemas/teacher.py br-server/app/schemas/course.py

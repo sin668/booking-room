@@ -1272,7 +1272,7 @@ git commit -m "feat: add conditional bottom bar and navigation methods"
 - 不使用 `@import '@/uni.scss'`（参考 bug-fixed.md BUG-1，uni-app 自动注入）
 - 使用 rpx 单位、SCSS 变量、与现有 detail.vue 风格一致（rounded-2xl shadow-sm 对应 32rpx 圆角 + $shadow-card）
 
-- [ ] **Step 1: 在 `<style>` 末尾添加培训室相关样式**
+- [x] **Step 1: 在 `<style>` 末尾添加培训室相关样式**
 
 在现有样式之后（`@keyframes loadingPulse` 之前）添加：
 
@@ -1575,7 +1575,7 @@ git commit -m "feat: add conditional bottom bar and navigation methods"
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add br-app/src/pages/booking/detail.vue
@@ -1589,7 +1589,7 @@ git commit -m "style: add training room SCSS styles"
 **Files:**
 - 检查所有新建和修改的文件
 
-- [ ] **Step 1: 验证 Clean Architecture 分层**
+- [x] **Step 1: 验证 Clean Architecture 分层**
 
 确认：
 - `br-server/app/api/routes/training.py` — 仅处理 HTTP 请求/响应，不含业务逻辑
@@ -1597,15 +1597,15 @@ git commit -m "style: add training room SCSS styles"
 - `br-server/app/models/teacher.py` / `course.py` — 仅定义数据模型
 - `br-server/app/schemas/course.py` / `teacher.py` — 仅定义响应 schema
 
-- [ ] **Step 2: 确认无重复定义**
+- [x] **Step 2: 确认无重复定义**
 
 确认 `TeacherResponse` 只在 `br-server/app/schemas/teacher.py` 定义，`CourseResponse` 只在 `br-server/app/schemas/course.py` 定义，其他文件通过 import 引用。
 
-- [ ] **Step 3: 确认前端分层**
+- [x] **Step 3: 确认前端分层**
 
 确认 `detail.vue` 调用 `@/api/training.js`，`training.js` 调用 `@/utils/request.js`。
 
-- [ ] **Step 4: 检查所有新路由无尾部斜杠**
+- [x] **Step 4: 检查所有新路由无尾部斜杠**
 
 ```bash
 grep -r 'router\.get\|router\.post' br-server/app/api/routes/training.py
@@ -1620,7 +1620,7 @@ Expected: 所有路由路径不含尾部斜杠（如 `/{room_id}` 而非 `/{room
 **Files:**
 - Modify: `docs/api.md`
 
-- [ ] **Step 1: 在 api.md 中补充培训室详情接口文档**
+- [x] **Step 1: 在 api.md 中补培训室详情接口文档**
 
 在 `docs/api.md` 适当位置添加：
 
@@ -1693,7 +1693,7 @@ Expected: 所有路由路径不含尾部斜杠（如 `/{room_id}` 而非 `/{room
 | 404 | 培训室不存在或不是培训室类型（room_type 非 training/comprehensive） |
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs/api.md
@@ -1704,7 +1704,7 @@ git commit -m "docs: add training room detail API documentation"
 
 ### Task 14: 最终验证（tasks.md 9.1-9.3）
 
-- [ ] **Step 1: 运行后端全部测试**
+- [x] **Step 1: 运行后端全部测试**
 
 ```bash
 cd br-server && conda activate booking-room && pytest tests/ -q
@@ -1712,7 +1712,7 @@ cd br-server && conda activate booking-room && pytest tests/ -q
 
 Expected: 全部测试通过，无失败。如 training-course-list 的测试存在，确保不受影响。
 
-- [ ] **Step 2: 前端构建验证**
+- [x] **Step 2: 前端构建验证**
 
 ```bash
 nvm use v22.22.0 && cd br-app && npm run build
@@ -1720,14 +1720,14 @@ nvm use v22.22.0 && cd br-app && npm run build
 
 Expected: 构建成功，无编译错误。特别注意无 SCSS @import 警告（BUG-1）、无 HTML 实体编译错误（BUG-20）。
 
-- [ ] **Step 3: 验证现有自习室预约功能不受影响**
+- [x] **Step 3: 验证现有自习室预约功能不受影响**
 
 人工验证：
 1. 打开自习室详情页（room_type=study），确认座位概况、底部"立即预约"按钮行为与修改前完全一致
 2. 打开培训室详情页（room_type=training），确认显示教室概况、名师团队、课程列表，底部显示"返回课程"按钮
 3. 打开综合室详情页（room_type=comprehensive），确认同时显示座位概况和培训相关区块，底部显示"预约自习室"按钮
 
-- [ ] **Step 4: 最终 Commit**
+- [x] **Step 4: 最终 Commit**
 
 ```bash
 git add -A

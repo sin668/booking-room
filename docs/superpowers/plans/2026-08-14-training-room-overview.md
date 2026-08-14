@@ -626,7 +626,7 @@ git commit -m "feat: add GET /api/v1/training/rooms/{room_id} route"
 - tags 解析测试：逗号分隔字符串正确解析为数组
 - 无教师课程测试：teacher 字段为 null
 
-- [ ] **Step 1: 创建测试文件，包含所有测试用例**
+- [x] **Step 1: 创建测试文件，包含所有测试用例**
 
 创建 `br-server/tests/test_training_api.py`：
 
@@ -827,15 +827,9 @@ async def test_course_without_teacher(client, db_session):
     assert course1["teacher"]["name"] == "李明华"
 ```
 
-- [ ] **Step 2: 运行测试**
+- [x] **Step 2: 运行测试**
 
-```bash
-cd br-server && conda activate booking-room && pytest tests/test_training_api.py -v
-```
-
-Expected: 全部 7 个测试通过（对应 tasks.md 4.1-4.7）。如失败，检查迁移是否已执行、模型是否正确注册。
-
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add br-server/tests/test_training_api.py

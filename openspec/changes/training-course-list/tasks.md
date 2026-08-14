@@ -15,9 +15,9 @@
 
 ## 3. 后端 Service
 
-- [ ] 3.1 更新 `br-server/app/services/study_room_service.py`：`list_study_rooms` 和 `admin_list_rooms` 支持 `room_type` 过滤参数
-- [ ] 3.2 创建 `br-server/app/services/training_service.py`：实现 `list_training_rooms`（查询 room_type in [training, comprehensive]，附带热门课程，JOIN teachers 获取教师信息）和 `list_courses`（按 category 过滤，JOIN study_rooms 获取 room_name，JOIN teachers 获取教师信息）
-- [ ] 3.3 更新 `br-server/app/services/seed_data.py`：增加 3 间培训室（room_type=training）和 1 间综合室（room_type=comprehensive），约 5 位教师数据，以及约 10 条课程数据覆盖 primaryschool/middleschool/civil_service/skills 分类
+- [x] 3.1 更新 `br-server/app/services/study_room_service.py`：`list_study_rooms` 和 `admin_list_rooms` 支持 `room_type` 过滤参数
+- [x] 3.2 创建 `br-server/app/services/training_service.py`：实现 `list_training_rooms`（查询 room_type in [training, comprehensive]，附带热门课程，JOIN teachers 获取教师信息）和 `list_courses`（按 category 过滤，JOIN study_rooms 获取 room_name，JOIN teachers 获取教师信息）
+- [x] 3.3 更新 `br-server/app/services/seed_data.py`：增加 3 间培训室（room_type=training）和 1 间综合室（room_type=comprehensive），约 5 位教师数据，以及约 10 条课程数据覆盖 primaryschool/middleschool/civil_service/skills 分类
 
 ## 4. 后端 API Routes
 

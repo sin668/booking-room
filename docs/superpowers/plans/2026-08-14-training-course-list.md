@@ -424,7 +424,7 @@ git commit -m "feat: add Teacher/Course schemas and room_type in StudyRoom schem
 - Consumes: Task 1 的 `Teacher`、`Course`、`StudyRoom.room_type`；Task 2 的全部 Schema
 - Produces: `training_service.list_training_rooms(db, page, page_size, city_id) -> TrainingRoomListResponse`、`training_service.list_courses(db, page, page_size, category) -> CourseListResponse`；`study_room_service.list_study_rooms` 和 `admin_list_rooms` 增加 `room_type` 参数
 
-- [ ] **Step 1: 创建 training_service.py**
+- [x] **Step 1: 创建 training_service.py**
 
 创建 `br-server/app/services/training_service.py`：
 
@@ -551,7 +551,7 @@ async def list_courses(
     return CourseListResponse(items=items, total=total, page=page, page_size=page_size)
 ```
 
-- [ ] **Step 2: 修改 study_room_service.py，增加 room_type 过滤**
+- [x] **Step 2: 修改 study_room_service.py，增加 room_type 过滤**
 
 在 `br-server/app/services/study_room_service.py` 中：
 
@@ -590,7 +590,7 @@ async def admin_list_rooms(
         count_query = count_query.where(StudyRoom.room_type == room_type)
 ```
 
-- [ ] **Step 3: 修改 seed_data.py，增加培训相关种子数据**
+- [x] **Step 3: 修改 seed_data.py，增加培训相关种子数据**
 
 在 `br-server/app/services/seed_data.py` 中：
 
@@ -719,7 +719,7 @@ SEED_TEACHERS = [
             print(f"  + Course: {cd['name']}")
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-server/app/services/training_service.py \

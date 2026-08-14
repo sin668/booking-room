@@ -1772,7 +1772,7 @@ git commit -m "feat: add training course list page"
 - Consumes: Task 7 的 `pages/training/index` 页面
 - Produces: tabBar 中第 3 位插入"培训"入口
 
-- [ ] **Step 1: 在 pages.json 注册培训页面路由**
+- [x] **Step 1: 在 pages.json 注册培训页面路由**
 
 在 `br-app/src/pages.json` 的 `pages` 数组中增加培训页面注册条目（建议放在 `pages/index/index` 之后）：
 
@@ -1786,7 +1786,7 @@ git commit -m "feat: add training course list page"
 }
 ```
 
-- [ ] **Step 2: 在 tabBar 中第 3 位插入培训入口**
+- [x] **Step 2: 在 tabBar 中第 3 位插入培训入口**
 
 在 `br-app/src/pages.json` 的 `tabBar.list` 数组中，在"预约"和"订单"之间插入：
 
@@ -1801,12 +1801,12 @@ git commit -m "feat: add training course list page"
 
 **图标文件**：需准备 `br-app/src/static/tab/training.png` 和 `br-app/src/static/tab/training-active.png`（graduation-cap 风格，81x81px PNG，灰色和蓝色版本，参考现有 `booking.png`/`booking-active.png` 的风格和尺寸）。
 
-- [ ] **Step 3: 验证前端构建**
+- [x] **Step 3: 验证前端构建**
 
 Run: `nvm use v22.22.0 && cd br-app && npm run build`
 Expected: 构建成功，无错误
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-app/src/pages.json br-app/src/static/tab/training.png \

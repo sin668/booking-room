@@ -44,13 +44,13 @@
 - [x] 7.5 实现培训室卡片展开/收起热门课程（max-height 过渡动画，展开图标旋转）
 - [x] 7.6 实现分类 TAB 课程卡片列表（封面图、名称、状态标签、教师信息、所属培训室、评分、报名人数、价格、预约按钮）
 - [x] 7.7 实现加载状态和空状态提示（"暂无培训室"/"暂无课程"）
-- [ ] 7.8 在 `br-app/src/pages.json` 注册培训页面路由（pages/training/index）
+- [x] 7.8 在 `br-app/src/pages.json` 注册培训页面路由（pages/training/index）
 - [x] 7.9 **注意：Vue3 生命周期钩子（onMounted 等）从 `vue` 包导入，不能从 `@dcloudio/uni-app` 导入（参考 bug-fixed.md BUG-14）**
 - [x] 7.10 **注意：避免在 Vue 模板中使用 `&lt;` 和 `&gt;` HTML 实体，使用 Unicode 字符（参考 bug-fixed.md BUG-20）**
 
 ## 8. 前端底部导航
 
-- [ ] 8.1 在底部导航栏（tabBar 或自定义组件）增加"培训"入口，图标使用 graduation-cap，点击导航到 pages/training/index
+- [x] 8.1 在底部导航栏（tabBar 或自定义组件）增加"培训"入口，图标使用 graduation-cap，点击导航到 pages/training/index
 
 ## 9. 代码审查与重构
 

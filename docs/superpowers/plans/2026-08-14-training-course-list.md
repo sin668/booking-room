@@ -89,7 +89,7 @@ base-ref: d44876bfddcb2cece0156851fc79abbef62ddd3e
 - Consumes: `app.core.database.Base`（现有 Base 声明）
 - Produces: `Teacher` 模型（id, name, avatar, title, rating, created_at, updated_at）、`Course` 模型（id, room_id, teacher_id, name, cover_image, category, price, rating, enrollment_count, schedule, tags, status, is_hot, sort_order, created_at, updated_at）、`StudyRoom.room_type` 字段
 
-- [ ] **Step 1: 创建 Teacher 模型**
+- [x] **Step 1: 创建 Teacher 模型**
 
 创建 `br-server/app/models/teacher.py`：
 
@@ -114,7 +114,7 @@ class Teacher(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 ```
 
-- [ ] **Step 2: 创建 Course 模型**
+- [x] **Step 2: 创建 Course 模型**
 
 创建 `br-server/app/models/course.py`：
 
@@ -148,7 +148,7 @@ class Course(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 ```
 
-- [ ] **Step 3: 修改 StudyRoom 模型，增加 room_type 字段**
+- [x] **Step 3: 修改 StudyRoom 模型，增加 room_type 字段**
 
 在 `br-server/app/models/study_room.py` 的 `status` 字段行之后、`min_price` 之前插入：
 
@@ -156,7 +156,7 @@ class Course(Base):
     room_type: Mapped[str] = mapped_column(String(20), default="study", nullable=False)
 ```
 
-- [ ] **Step 4: 在 models/__init__.py 注册 Teacher 和 Course**
+- [x] **Step 4: 在 models/__init__.py 注册 Teacher 和 Course**
 
 在 `br-server/app/models/__init__.py` 中：
 - 在 `from app.models.study_room import StudyRoom` 之后增加两行导入
@@ -171,7 +171,7 @@ from app.models.teacher import Teacher
 
 `__all__` 中在 `"City"` 之后增加 `"Course"`，在 `"SystemSetting"` 之后增加 `"Teacher"`（按字母顺序）。
 
-- [ ] **Step 5: 创建 Alembic 迁移文件**
+- [x] **Step 5: 创建 Alembic 迁移文件**
 
 创建 `br-server/alembic/versions/2026_08_14_1000-add_room_type_teachers_courses.py`：
 
@@ -242,12 +242,12 @@ def downgrade() -> None:
     op.drop_column("study_rooms", "room_type")
 ```
 
-- [ ] **Step 6: 执行迁移并验证**
+- [x] **Step 6: 执行迁移并验证**
 
 Run: `cd br-server && conda activate booking-room && alembic upgrade head`
 Expected: 输出 `Running upgrade a2b3c4d5e6f7 -> b3c4d5e6f7a8, add room_type, teachers, courses`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add br-server/app/models/teacher.py br-server/app/models/course.py \

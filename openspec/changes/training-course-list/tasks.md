@@ -1,11 +1,11 @@
 ## 1. 数据库迁移与模型
 
-- [ ] 1.1 创建 Alembic 迁移文件：`study_rooms` 表增加 `room_type` 列（VARCHAR(20), server_default='study', nullable=False），同一迁移中创建 `teachers` 表和 `courses` 表（courses 含 teacher_id 外键关联 teachers.id，参照 specs/training-course-list-api Teacher/Course database model）
-- [ ] 1.2 更新 `br-server/app/models/study_room.py`：增加 `room_type` 字段（Mapped[str], default="study"）
-- [ ] 1.3 创建 `br-server/app/models/teacher.py`：定义 Teacher 模型（name, avatar, title, rating, created_at, updated_at）
-- [ ] 1.4 创建 `br-server/app/models/course.py`：定义 Course 模型（room_id FK, teacher_id FK→teachers.id 可空, name, cover_image, category, price, rating, enrollment_count, schedule, tags, status, is_hot, sort_order, created_at, updated_at）
-- [ ] 1.5 在 `br-server/app/models/__init__.py` 注册 Teacher 和 Course 模型导出
-- [ ] 1.6 执行 `alembic upgrade head` 并验证迁移成功
+- [x] 1.1 创建 Alembic 迁移文件：`study_rooms` 表增加 `room_type` 列（VARCHAR(20), server_default='study', nullable=False），同一迁移中创建 `teachers` 表和 `courses` 表（courses 含 teacher_id 外键关联 teachers.id，参照 specs/training-course-list-api Teacher/Course database model）
+- [x] 1.2 更新 `br-server/app/models/study_room.py`：增加 `room_type` 字段（Mapped[str], default="study"）
+- [x] 1.3 创建 `br-server/app/models/teacher.py`：定义 Teacher 模型（name, avatar, title, rating, created_at, updated_at）
+- [x] 1.4 创建 `br-server/app/models/course.py`：定义 Course 模型（room_id FK, teacher_id FK→teachers.id 可空, name, cover_image, category, price, rating, enrollment_count, schedule, tags, status, is_hot, sort_order, created_at, updated_at）
+- [x] 1.5 在 `br-server/app/models/__init__.py` 注册 Teacher 和 Course 模型导出
+- [x] 1.6 执行 `alembic upgrade head` 并验证迁移成功
 
 ## 2. 后端 Schema
 

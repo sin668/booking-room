@@ -37,16 +37,16 @@
 
 ## 7. 前端页面实现
 
-- [ ] 7.1 创建 `br-app/src/pages/training/index.vue` 页面骨架（参考 prototype/training.html 高保真原型图，保持配色 #4F6EF7、背景 #F5F6FA、卡片 rounded-2xl shadow-sm）
-- [ ] 7.2 实现搜索栏 UI（placeholder "搜索课程、老师"，纯展示不触发后端请求）
-- [ ] 7.3 实现分类 TAB 栏（全部 + 小学辅导/中学辅导/公考备考/技能提升，横向滚动，选中高亮下划线。各 TAB 对应 category 值：小学辅导=primaryschool、中学辅导=middleschool、公考备考=civil_service、技能提升=skills）
-- [ ] 7.4 实现"全部"TAB 培训室卡片列表（封面图、名称、营业状态、评分、地址、设施标签、可展开热门课程）
-- [ ] 7.5 实现培训室卡片展开/收起热门课程（max-height 过渡动画，展开图标旋转）
-- [ ] 7.6 实现分类 TAB 课程卡片列表（封面图、名称、状态标签、教师信息、所属培训室、评分、报名人数、价格、预约按钮）
-- [ ] 7.7 实现加载状态和空状态提示（"暂无培训室"/"暂无课程"）
+- [x] 7.1 创建 `br-app/src/pages/training/index.vue` 页面骨架（参考 prototype/training.html 高保真原型图，保持配色 #4F6EF7、背景 #F5F6FA、卡片 rounded-2xl shadow-sm）
+- [x] 7.2 实现搜索栏 UI（placeholder "搜索课程、老师"，纯展示不触发后端请求）
+- [x] 7.3 实现分类 TAB 栏（全部 + 小学辅导/中学辅导/公考备考/技能提升，横向滚动，选中高亮下划线。各 TAB 对应 category 值：小学辅导=primaryschool、中学辅导=middleschool、公考备考=civil_service、技能提升=skills）
+- [x] 7.4 实现"全部"TAB 培训室卡片列表（封面图、名称、营业状态、评分、地址、设施标签、可展开热门课程）
+- [x] 7.5 实现培训室卡片展开/收起热门课程（max-height 过渡动画，展开图标旋转）
+- [x] 7.6 实现分类 TAB 课程卡片列表（封面图、名称、状态标签、教师信息、所属培训室、评分、报名人数、价格、预约按钮）
+- [x] 7.7 实现加载状态和空状态提示（"暂无培训室"/"暂无课程"）
 - [ ] 7.8 在 `br-app/src/pages.json` 注册培训页面路由（pages/training/index）
-- [ ] 7.9 **注意：Vue3 生命周期钩子（onMounted 等）从 `vue` 包导入，不能从 `@dcloudio/uni-app` 导入（参考 bug-fixed.md BUG-14）**
-- [ ] 7.10 **注意：避免在 Vue 模板中使用 `&lt;` 和 `&gt;` HTML 实体，使用 Unicode 字符（参考 bug-fixed.md BUG-20）**
+- [x] 7.9 **注意：Vue3 生命周期钩子（onMounted 等）从 `vue` 包导入，不能从 `@dcloudio/uni-app` 导入（参考 bug-fixed.md BUG-14）**
+- [x] 7.10 **注意：避免在 Vue 模板中使用 `&lt;` 和 `&gt;` HTML 实体，使用 Unicode 字符（参考 bug-fixed.md BUG-20）**
 
 ## 8. 前端底部导航
 

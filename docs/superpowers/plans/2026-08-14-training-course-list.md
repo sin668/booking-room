@@ -1089,7 +1089,7 @@ git commit -m "feat: add training API module"
 - Consumes: Task 6 的 `getTrainingRooms`、`getTrainingCourses`；`@/utils/request` 间接通过 API 模块
 - Produces: 培训课程列表页 Vue 组件，包含搜索栏、分类 TAB、培训室卡片（可展开热门课程）、课程卡片列表
 
-- [ ] **Step 1: 创建培训课程列表页**
+- [x] **Step 1: 创建培训课程列表页**
 
 创建 `br-app/src/pages/training/index.vue`（注意：`onMounted` 从 `vue` 导入——BUG-14 防范；模板中不使用 `&lt;`/`&gt;`——BUG-20 防范）：
 
@@ -1754,7 +1754,7 @@ onReachBottom(() => {
 </style>
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add br-app/src/pages/training/index.vue

@@ -2024,24 +2024,24 @@ git commit -m "docs: add training API documentation and room_type param"
 **Interfaces:**
 - Consumes: Task 1-10 的全部产出
 
-- [ ] **Step 1: 运行后端全部测试**
+- [x] **Step 1: 运行后端全部测试**
 
 Run: `cd br-server && conda activate booking-room && pytest tests/ -q`
 Expected: 全部测试通过，0 FAIL，0 ERROR
 
-- [ ] **Step 2: 前端构建验证**
+- [x] **Step 2: 前端构建验证**
 
 Run: `nvm use v22.22.0 && cd br-app && npm run build`
 Expected: 构建成功，无 error
 
-- [ ] **Step 3: 验证现有自习室预约功能不受影响**
+- [x] **Step 3: 验证现有自习室预约功能不受影响**
 
 手动验证（或通过现有测试覆盖）：
 - `GET /api/v1/rooms` 不带 `room_type` 参数时返回所有类型房间（行为不变）
 - `GET /api/v1/rooms/{room_id}` 详情接口正常返回（增加了 `room_type` 字段但不影响现有字段）
 - 现有的 `test_api_homepage.py` 中原有测试仍然通过（Step 1 已覆盖）
 
-- [ ] **Step 4: 最终 Commit（如有遗漏的修改）**
+- [x] **Step 4: 最终 Commit（如有遗漏的修改）**
 
 ```bash
 git add -A

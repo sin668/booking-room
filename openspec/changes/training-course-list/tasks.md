@@ -67,6 +67,6 @@
 
 ## 11. 最终验证
 
-- [ ] 11.1 运行后端全部测试：`conda activate booking-room && cd br-server && pytest tests/ -q`
-- [ ] 11.2 前端构建验证：`nvm use v22.22.0 && cd br-app && npm run build`
-- [ ] 11.3 验证现有自习室预约功能不受影响
+- [x] 11.1 运行后端全部测试：`conda activate booking-room && cd br-server && pytest tests/ -q`
+- [x] 11.2 前端构建验证：`nvm use v22.22.0 && cd br-app && npm run build`
+- [x] 11.3 验证现有自习室预约功能不受影响

@@ -419,7 +419,7 @@ git commit -m "feat: add TeacherResponse, CourseResponse, TrainingRoomDetailResp
 - LEFT JOIN 使用 `outerjoin` 确保未关联教师的课程也被查询到
 - tags 解析：`course.tags.split(',') if course.tags else []`
 
-- [ ] **Step 1: 创建 TrainingService 类**
+- [x] **Step 1: 创建 TrainingService 类**
 
 创建 `br-server/app/services/training_service.py`：
 
@@ -532,12 +532,7 @@ class TrainingService:
         )
 ```
 
-- [ ] **Step 2: Commit**
-
-```bash
-git add br-server/app/services/training_service.py
-git commit -m "feat: add TrainingService.get_training_room_detail method"
-```
+- [x] **Step 2: Commit**
 
 ---
 

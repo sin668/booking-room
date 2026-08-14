@@ -27,9 +27,9 @@
 
 ## 5. 后端测试
 
-- [ ] 5.1 创建 `br-server/tests/test_training_api.py`：测试培训室列表（默认分页、城市过滤、综合室出现、自习室排除、热门课程附带含教师信息）、课程列表（分类过滤、分页、tags 解析、teacher 嵌套对象）
-- [ ] 5.2 更新 `br-server/tests/test_api_homepage.py` 或 `test_admin_room_routes.py`：增加 room_type 过滤和响应字段验证
-- [ ] 5.3 运行 `pytest tests/ -q` 确保全部测试通过
+- [x] 5.1 创建 `br-server/tests/test_training_api.py`：测试培训室列表（默认分页、城市过滤、综合室出现、自习室排除、热门课程附带含教师信息）、课程列表（分类过滤、分页、tags 解析、teacher 嵌套对象）
+- [x] 5.2 更新 `br-server/tests/test_api_homepage.py` 或 `test_admin_room_routes.py`：增加 room_type 过滤和响应字段验证
+- [x] 5.3 运行 `pytest tests/ -q` 确保全部测试通过
 
 ## 6. 前端 API 模块
 

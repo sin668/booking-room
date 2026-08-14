@@ -839,7 +839,7 @@ git commit -m "feat: add training routes and room_type query param"
 - Consumes: Task 1-4 的全部模型、Schema、Service、Route
 - Produces: 13 个培训 API 测试用例 + 2 个 room_type 测试用例
 
-- [ ] **Step 1: 创建培训 API 测试文件**
+- [x] **Step 1: 创建培训 API 测试文件**
 
 创建 `br-server/tests/test_training_api.py`：
 
@@ -997,7 +997,7 @@ class TestCoursesAPI:
         assert data["items"][0]["tags"] == []
 ```
 
-- [ ] **Step 2: 修改 test_api_homepage.py，增加 room_type 测试**
+- [x] **Step 2: 修改 test_api_homepage.py，增加 room_type 测试**
 
 在 `br-server/tests/test_api_homepage.py` 的 `TestStudyRoomAPI` 类中增加两个测试方法：
 
@@ -1024,12 +1024,12 @@ class TestCoursesAPI:
         assert resp.json()["items"][0]["room_type"] == "training"
 ```
 
-- [ ] **Step 3: 运行全部测试**
+- [x] **Step 3: 运行全部测试**
 
 Run: `cd br-server && conda activate booking-room && pytest tests/ -q`
 Expected: 全部测试通过，无 FAIL
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-server/tests/test_training_api.py br-server/tests/test_api_homepage.py

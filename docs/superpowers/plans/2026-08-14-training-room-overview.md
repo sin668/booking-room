@@ -1204,7 +1204,7 @@ git commit -m "feat: add training room conditional template sections"
 **Bug 防护：**
 - 综合室底部按钮跳转到座位选择页，不是课程列表
 
-- [ ] **Step 1: 修改底部操作栏为条件渲染**
+- [x] **Step 1: 修改底部操作栏为条件渲染**
 
 将现有 `<view class="bottom-bar">` 内容替换为：
 
@@ -1234,7 +1234,7 @@ git commit -m "feat: add training room conditional template sections"
 </view>
 ```
 
-- [ ] **Step 2: 在 methods 中新增方法**
+- [x] **Step 2: 在 methods 中新增方法**
 
 在 `methods: { ... }` 对象中添加（在 `onBook` 方法之后）：
 
@@ -1254,7 +1254,7 @@ onCourseDetail(course) {
 },
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add br-app/src/pages/booking/detail.vue

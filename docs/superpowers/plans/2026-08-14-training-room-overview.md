@@ -984,7 +984,7 @@ git commit -m "feat: add roomType conditional API loading in detail.vue"
 - Produces: `teachers` (array)
 - Produces: `trainingCourses` (array)
 
-- [ ] **Step 1: 在 computed 对象中新增计算属性**
+- [x] **Step 1: 在 computed 对象中新增计算属性**
 
 在 `computed: { ... }` 对象中，在现有 `seatStats` 之后添加：
 
@@ -1015,7 +1015,7 @@ trainingCourses() {
 },
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add br-app/src/pages/booking/detail.vue

@@ -15,3 +15,11 @@ export function getTrainingRooms(params) {
 export function getTrainingCourses(params) {
   return get('/api/v1/training/courses', params)
 }
+
+/**
+ * 获取培训室详情（含课程列表和教师团队）
+ * @param {number} roomId - 培训室ID
+ */
+export function getTrainingRoomDetail(roomId) {
+  return get(`/api/v1/training/rooms/${roomId}`)
+}

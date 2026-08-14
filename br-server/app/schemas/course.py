@@ -82,3 +82,35 @@ class CourseListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class TrainingRoomDetailResponse(BaseModel):
+    """培训室详情响应"""
+
+    # 房间基本信息
+    id: int
+    name: str
+    description: str | None = None
+    cover_image: str | None = None
+    address: str
+    business_hours: str | None = None
+    status: str
+    room_type: str
+    min_price: Decimal
+    city_id: int | None = None
+    city_name: str | None = None
+    rating: Decimal
+
+    # 教室概况统计
+    classroom_count: int
+    class_capacity: str
+    teacher_count: int
+    total_students: int
+
+    # 名师团队（使用 TeacherBrief 与 CourseResponse 保持一致）
+    teachers: list[TeacherBrief] = []
+
+    # 课程列表（复用现有 CourseResponse）
+    courses: list[CourseResponse] = []
+
+    model_config = ConfigDict(from_attributes=True)

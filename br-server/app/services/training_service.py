@@ -11,6 +11,8 @@ from app.schemas.course import (
     CourseListResponse,
     CourseResponse,
     HotCourseItem,
+    TeacherBrief,
+    TrainingRoomDetailResponse,
     TrainingRoomListResponse,
     TrainingRoomResponse,
 )
@@ -105,6 +107,85 @@ async def list_training_rooms(
 
     return TrainingRoomListResponse(
         items=items, total=total, page=page, page_size=page_size
+    )
+
+
+async def get_training_room_detail(
+    db: AsyncSession, room_id: int
+) -> TrainingRoomDetailResponse | None:
+    """返回培训室详情，包含课程列表和教师团队。
+
+    仅 room_type 为 training 或 comprehensive 的房间有效。
+    """
+    # Step 1: 查询房间，验证 room_type
+    room_result = await db.execute(
+        select(StudyRoom).where(
+            StudyRoom.id == room_id,
+            StudyRoom.room_type.in_(["training", "comprehensive"]),
+        )
+    )
+    room_obj = room_result.scalar_one_or_none()
+    if not room_obj:
+        return None
+
+    # Step 2: 查询该房间下 status=active 的课程，LEFT JOIN teachers
+    courses_result = await db.execute(
+        select(Course, Teacher)
+        .outerjoin(Teacher, Course.teacher_id == Teacher.id)
+        .where(Course.room_id == room_id, Course.status == "active")
+        .order_by(Course.sort_order)
+    )
+    rows = courses_result.all()
+
+    # Step 3: 组装课程列表 + 去重教师
+    courses_data = []
+    teachers_map: dict[int, TeacherBrief] = {}
+    total_students = 0
+
+    for course, teacher in rows:
+        teacher_brief = None
+        if teacher:
+            if teacher.id not in teachers_map:
+                teachers_map[teacher.id] = TeacherBrief(
+                    id=teacher.id,
+                    name=teacher.name,
+                    avatar=teacher.avatar,
+                    title=teacher.title,
+                    rating=teacher.rating,
+                )
+            teacher_brief = teachers_map[teacher.id]
+
+        course_dict = {c.name: getattr(course, c.name) for c in course.__table__.columns}
+        course_dict["room_name"] = room_obj.name
+        course_dict["teacher"] = teacher_brief
+        courses_data.append(CourseResponse(**course_dict))
+        total_students += course.enrollment_count
+
+    # Step 4: 聚合统计
+    classroom_count = len(courses_data)
+    teacher_count = len(teachers_map)
+
+    city_name = room_obj.city.name if room_obj.city else None
+
+    return TrainingRoomDetailResponse(
+        id=room_obj.id,
+        name=room_obj.name,
+        description=room_obj.description,
+        cover_image=room_obj.cover_image,
+        address=room_obj.address,
+        business_hours=room_obj.business_hours,
+        status=room_obj.status,
+        room_type=room_obj.room_type,
+        min_price=room_obj.min_price,
+        city_id=room_obj.city_id,
+        city_name=city_name,
+        rating=room_obj.rating,
+        classroom_count=classroom_count,
+        class_capacity="8-12",
+        teacher_count=teacher_count,
+        total_students=total_students,
+        teachers=list(teachers_map.values()),
+        courses=courses_data,
     )
 
 

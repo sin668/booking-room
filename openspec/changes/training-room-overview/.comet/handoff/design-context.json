@@ -1,0 +1,15 @@
+{
+  "change": "training-room-overview",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "a179c32c141dd55921de77c1a38f1b509953630af29c7a4998af2c6f9c5e6048",
+  "files": [
+    { "path": "openspec/changes/training-room-overview/proposal.md", "sha256": "2bd1545a4f80b4245953e6b60d7b2c1efad4ec1131733ec392ad187151ea3496" },
+    { "path": "openspec/changes/training-room-overview/design.md", "sha256": "5b85af8cc9eb2efd08de32d48c0dc6ade523bb0c430d39cfe7e482036dbca6ff" },
+    { "path": "openspec/changes/training-room-overview/tasks.md", "sha256": "f5eeb6aeee5123428cec60605ebcd1f0187ceb792f77b6af05e84fa28eb65223" },
+    { "path": "openspec/changes/training-room-overview/specs/study-room-booking-ui/spec.md", "sha256": "2b32d8ba0d5b3e19b62a7917b4a6556279985d634ec1e8c57a8499b45c17759c" },
+    { "path": "openspec/changes/training-room-overview/specs/training-room-detail-api/spec.md", "sha256": "e18fb03fc1ddb625327c38ccc558c136e599f63626219d06e2590ee07aa8d1cd" }
+  ]
+}

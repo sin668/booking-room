@@ -90,6 +90,17 @@
         </view>
       </view>
 
+      <!-- 培训室简介（仅 training/comprehensive） -->
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section intro-section animate-in" style="animation-delay: 0.05s;">
+        <view class="section-header">
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">培训室简介</text>
+          </view>
+        </view>
+        <text class="intro-text">{{ room.description || '暂无简介' }}</text>
+      </view>
+
       <view class="section animate-in" style="animation-delay: 0.1s;">
         <view class="section-header">
           <text class="section-title">环境照片</text>
@@ -113,7 +124,8 @@
         </scroll-view>
       </view>
 
-      <view class="section seat-section animate-in" style="animation-delay: 0.2s;">
+      <!-- 座位概况（仅 study/comprehensive） -->
+      <view v-if="isStudyRoom || isComprehensiveRoom" class="section seat-section animate-in" style="animation-delay: 0.2s;">
         <view class="section-header">
           <text class="section-title">座位概况</text>
           <text class="availability-copy">{{ availabilityLabel }}</text>
@@ -158,6 +170,120 @@
         </view>
       </view>
 
+      <!-- 教室概况（仅 training/comprehensive） -->
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section classroom-section animate-in" style="animation-delay: 0.2s;">
+        <view class="section-header">
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">教室概况</text>
+          </view>
+        </view>
+        <view class="stats-grid">
+          <view class="stat-card">
+            <view class="stat-icon stat-classroom">
+              <view class="door-icon" />
+            </view>
+            <view class="stat-body">
+              <text class="stat-count">{{ trainingStats?.classroom_count || 0 }}</text>
+              <text class="stat-label">培训教室</text>
+            </view>
+          </view>
+          <view class="stat-card">
+            <view class="stat-icon stat-capacity">
+              <view class="group-icon" />
+            </view>
+            <view class="stat-body">
+              <text class="stat-count">{{ trainingStats?.class_capacity || '8-12' }}</text>
+              <text class="stat-label">小班容量</text>
+            </view>
+          </view>
+          <view class="stat-card">
+            <view class="stat-icon stat-teacher">
+              <view class="board-icon" />
+            </view>
+            <view class="stat-body">
+              <text class="stat-count">{{ trainingStats?.teacher_count || 0 }}</text>
+              <text class="stat-label">认证讲师</text>
+            </view>
+          </view>
+          <view class="stat-card">
+            <view class="stat-icon stat-students">
+              <view class="cap-icon" />
+            </view>
+            <view class="stat-body">
+              <text class="stat-count">{{ trainingStats?.total_students || 0 }}</text>
+              <text class="stat-label">累计学员</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 名师团队（仅 training/comprehensive） -->
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section animate-in" style="animation-delay: 0.3s;">
+        <view class="section-header">
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">名师团队</text>
+          </view>
+        </view>
+        <view v-if="teachers.length === 0" class="empty-state">
+          <text class="empty-text">暂无讲师</text>
+        </view>
+        <scroll-view v-else scroll-x :show-scrollbar="false" class="teacher-scroll">
+          <view class="teacher-list">
+            <view v-for="teacher in teachers" :key="teacher.id" class="teacher-card">
+              <image class="teacher-avatar" :src="teacher.avatar || ''" mode="aspectFill" />
+              <text class="teacher-name">{{ teacher.name }}</text>
+              <text class="teacher-title">{{ teacher.title || '' }}</text>
+              <view class="teacher-rating">
+                <text class="star">★</text>
+                <text class="rating-text">{{ teacher.rating }}</text>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 本培训室课程（仅 training/comprehensive） -->
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section animate-in" style="animation-delay: 0.4s;">
+        <view class="section-header">
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">本培训室课程</text>
+          </view>
+          <text class="section-sub">共{{ trainingCourses.length }}门</text>
+        </view>
+        <view v-if="trainingCourses.length === 0" class="empty-state">
+          <text class="empty-text">暂无课程</text>
+        </view>
+        <view v-else class="course-list">
+          <view v-for="course in trainingCourses" :key="course.id" class="course-card" @tap="onCourseDetail(course)">
+            <image class="course-cover" :src="course.cover_image || ''" mode="aspectFill" />
+            <view class="course-body">
+              <view class="course-top">
+                <text class="course-name">{{ course.name }}</text>
+                <view v-if="course.is_hot" class="course-tag tag-hot">
+                  <text class="tag-text">热销</text>
+                </view>
+              </view>
+              <view v-if="course.teacher" class="course-teacher">
+                <text class="teacher-name-sm">{{ course.teacher.name }}</text>
+              </view>
+              <view class="course-schedule">
+                <text class="schedule-text">{{ course.schedule || '排课待定' }}</text>
+              </view>
+              <view class="course-bottom">
+                <text class="course-price">¥{{ course.price }}</text>
+                <text class="price-unit">/课时</text>
+                <view class="book-pill">
+                  <text class="book-pill-text">预约</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <view v-if="loading" class="loading-section">
         <view class="loading-pill" />
         <text class="loading-text">正在同步座位状态</text>
@@ -167,12 +293,26 @@
     </scroll-view>
 
     <view class="bottom-bar">
+      <!-- 心状关注按钮（所有类型通用） -->
       <view class="fav-btn" @tap="onToggleFav">
         <text :class="['heart-icon', { active: isFav }]">♥</text>
       </view>
-      <view class="book-btn" @tap="onBook">
+
+      <!-- 自习室：立即预约 -->
+      <view v-if="isStudyRoom" class="book-btn" @tap="onBook">
         <text class="book-btn-sub">{{ seatStats.available }} 个座位可选</text>
         <text class="book-btn-text">立即预约</text>
+      </view>
+
+      <!-- 培训室：返回课程 -->
+      <view v-else-if="isTrainingRoom" class="back-btn" @tap="onBackToCourses">
+        <text class="back-btn-text">返回课程</text>
+      </view>
+
+      <!-- 综合室：预约自习室 -->
+      <view v-else-if="isComprehensiveRoom" class="book-btn" @tap="onBookStudy">
+        <text class="book-btn-sub">{{ seatStats.available }} 个座位可选</text>
+        <text class="book-btn-text">预约自习室</text>
       </view>
     </view>
   </view>
@@ -180,6 +320,7 @@
 
 <script>
 import { getSeatStats } from '@/api/seats'
+import { getTrainingRoomDetail } from '@/api/training'
 import { followRoom, isRoomFollowed, unfollowRoom } from '@/services/followedRooms'
 import { fetchBookingRoom } from '@/services/bookingPageService'
 
@@ -197,6 +338,8 @@ export default {
       roomId: null,
       room: {},
       seatStatsData: null,
+      trainingData: null,
+      roomType: '',
       loading: true,
       isFav: false,
       reviewCount: 0,
@@ -265,6 +408,36 @@ export default {
         maintenance: Number(stats.maintenance || 0),
       }
     },
+
+    isStudyRoom() {
+      return this.roomType === 'study'
+    },
+
+    isTrainingRoom() {
+      return this.roomType === 'training'
+    },
+
+    isComprehensiveRoom() {
+      return this.roomType === 'comprehensive'
+    },
+
+    trainingStats() {
+      if (!this.trainingData) return null
+      return {
+        classroom_count: this.trainingData.classroom_count || 0,
+        class_capacity: this.trainingData.class_capacity || '8-12',
+        teacher_count: this.trainingData.teacher_count || 0,
+        total_students: this.trainingData.total_students || 0,
+      }
+    },
+
+    teachers() {
+      return this.trainingData?.teachers || []
+    },
+
+    trainingCourses() {
+      return this.trainingData?.courses || []
+    },
   },
 
   onLoad(options) {
@@ -282,9 +455,28 @@ export default {
     async loadData() {
       this.loading = true
       try {
-        await Promise.all([this.loadRoom(), this.loadSeatStats()])
+        await this.loadRoom()
+        if (!this.room || !this.room.id) return
+        this.roomType = this.room.room_type || 'study'
+        const tasks = []
+        if (this.roomType === 'study' || this.roomType === 'comprehensive') {
+          tasks.push(this.loadSeatStats())
+        }
+        if (this.roomType === 'training' || this.roomType === 'comprehensive') {
+          tasks.push(this.loadTrainingDetail())
+        }
+        await Promise.all(tasks)
       } finally {
         this.loading = false
+      }
+    },
+
+    async loadTrainingDetail() {
+      try {
+        const data = await getTrainingRoomDetail(this.roomId)
+        this.trainingData = data || null
+      } catch {
+        this.trainingData = null
       }
     },
 
@@ -354,6 +546,19 @@ export default {
 
     onBook() {
       uni.navigateTo({ url: '/pages/booking/seat-select?room_id=' + this.roomId })
+    },
+
+    onBackToCourses() {
+      uni.navigateTo({ url: '/pages/training/index' })
+    },
+
+    onBookStudy() {
+      uni.navigateTo({ url: '/pages/booking/seat-select?room_id=' + this.roomId })
+    },
+
+    onCourseDetail(course) {
+      if (!course || !course.id) return
+      uni.navigateTo({ url: '/pages/training/course-detail?course_id=' + course.id })
     },
   },
 }
@@ -1079,6 +1284,29 @@ export default {
   line-height: 1.2;
 }
 
+.back-btn {
+  flex: 1;
+  height: 92rpx;
+  border-radius: 44rpx;
+  border: 2rpx solid $border-color;
+  background: $white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: $shadow-card;
+}
+
+.back-btn:active {
+  background: $surface-soft;
+  transform: translateY(1rpx);
+}
+
+.back-btn-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-secondary;
+}
+
 .animate-in {
   animation: fadeInUp 0.4s ease both;
 }
@@ -1103,5 +1331,285 @@ export default {
     opacity: 1;
     transform: scaleX(1);
   }
+}
+/* === 培训室新增样式 === */
+
+.section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+/* === 培训室简介 === */
+.intro-section {
+  background: $surface;
+  border-radius: 32rpx;
+  padding: 28rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+}
+
+.intro-text {
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: $text-secondary;
+}
+
+/* === 教室概况 === */
+.classroom-section {
+  background: $surface;
+  border-radius: 32rpx;
+  padding: 28rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+}
+
+.section-bar {
+  width: 6rpx;
+  height: 28rpx;
+  border-radius: 6rpx;
+  background: $primary;
+  margin-right: 12rpx;
+}
+
+.stat-classroom {
+  background: rgba(79, 110, 247, 0.1);
+}
+
+.stat-capacity {
+  background: rgba(7, 193, 96, 0.11);
+}
+
+.stat-teacher {
+  background: rgba(255, 149, 0, 0.13);
+}
+
+.stat-students {
+  background: rgba(168, 85, 247, 0.12);
+}
+
+.door-icon {
+  width: 30rpx;
+  height: 36rpx;
+  border: 4rpx solid $primary;
+  border-radius: 8rpx 8rpx 0 0;
+}
+
+.group-icon {
+  width: 34rpx;
+  height: 18rpx;
+  border: 3rpx solid $success;
+  border-radius: 10rpx;
+  position: relative;
+}
+
+.group-icon::before,
+.group-icon::after {
+  content: '';
+  position: absolute;
+  bottom: -10rpx;
+  width: 4rpx;
+  height: 10rpx;
+  background: $success;
+}
+
+.group-icon::before { left: 4rpx; }
+.group-icon::after { right: 4rpx; }
+
+.board-icon {
+  width: 30rpx;
+  height: 22rpx;
+  border: 4rpx solid #e67900;
+  border-radius: 4rpx;
+}
+
+.cap-icon {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50% 50% 50% 0;
+  border: 4rpx solid #a855f7;
+  transform: rotate(-45deg);
+}
+
+/* === 名师团队 === */
+.teacher-scroll {
+  white-space: nowrap;
+}
+
+.teacher-list {
+  display: inline-flex;
+  gap: 18rpx;
+  padding-bottom: 4rpx;
+}
+
+.teacher-card {
+  width: 200rpx;
+  background: $surface;
+  border-radius: 24rpx;
+  padding: 24rpx 16rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.teacher-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  margin-bottom: 12rpx;
+}
+
+.teacher-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.teacher-title {
+  font-size: 20rpx;
+  color: $text-muted;
+  margin-top: 4rpx;
+  text-align: center;
+}
+
+.teacher-rating {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin-top: 8rpx;
+}
+
+.star {
+  font-size: 20rpx;
+  color: #ffc107;
+}
+
+.rating-text {
+  font-size: 22rpx;
+  font-weight: 500;
+  color: $text-primary;
+}
+
+/* === 课程列表 === */
+.course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.course-card {
+  display: flex;
+  background: $surface;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+}
+
+.course-cover {
+  width: 180rpx;
+  height: 180rpx;
+  flex-shrink: 0;
+}
+
+.course-body {
+  flex: 1;
+  padding: 18rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.course-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8rpx;
+}
+
+.course-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $text-primary;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.course-tag {
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}
+
+.tag-hot {
+  background: rgba(255, 107, 107, 0.12);
+}
+
+.tag-hot .tag-text {
+  color: $danger;
+  font-size: 20rpx;
+}
+
+.course-teacher {
+  margin-top: 8rpx;
+}
+
+.teacher-name-sm {
+  font-size: 22rpx;
+  color: $text-secondary;
+}
+
+.course-schedule {
+  margin-top: 6rpx;
+}
+
+.schedule-text {
+  font-size: 22rpx;
+  color: $text-muted;
+}
+
+.course-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 8rpx;
+}
+
+.course-price {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $primary;
+}
+
+.price-unit {
+  font-size: 20rpx;
+  color: $text-muted;
+}
+
+.book-pill {
+  padding: 6rpx 20rpx;
+  border-radius: 999rpx;
+  background: $primary-soft;
+}
+
+.book-pill-text {
+  font-size: 22rpx;
+  font-weight: 500;
+  color: $primary;
+}
+
+/* === 空状态 === */
+.empty-state {
+  padding: 40rpx 0;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: $text-muted;
 }
 </style>

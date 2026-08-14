@@ -21,9 +21,9 @@
 
 ## 4. 后端 API Routes
 
-- [ ] 4.1 更新 `br-server/app/api/routes/study_room.py`：list_study_rooms 增加 `room_type` 查询参数（Query(None, pattern="^(study|training|comprehensive)$")）
-- [ ] 4.2 创建 `br-server/app/api/routes/training.py`：GET /api/v1/training/rooms（培训室列表）和 GET /api/v1/training/courses（课程列表），**注意：路由定义不得使用尾部斜杠（参考 bug-fixed.md BUG-22）**
-- [ ] 4.3 在 `br-server/app/main.py` 注册 training_router
+- [x] 4.1 更新 `br-server/app/api/routes/study_room.py`：list_study_rooms 增加 `room_type` 查询参数（Query(None, pattern="^(study|training|comprehensive)$")）
+- [x] 4.2 创建 `br-server/app/api/routes/training.py`：GET /api/v1/training/rooms（培训室列表）和 GET /api/v1/training/courses（课程列表），**注意：路由定义不得使用尾部斜杠（参考 bug-fixed.md BUG-22）**
+- [x] 4.3 在 `br-server/app/main.py` 注册 training_router
 
 ## 5. 后端测试
 

@@ -741,7 +741,7 @@ git commit -m "feat: add training service, room_type filter, and seed data"
 - Consumes: Task 3 的 `training_service.list_training_rooms`、`training_service.list_courses`、`study_room_service.list_study_rooms`
 - Produces: `GET /api/v1/training/rooms`、`GET /api/v1/training/courses`；`GET /api/v1/rooms` 增加 `room_type` 查询参数
 
-- [ ] **Step 1: 创建 training 路由**
+- [x] **Step 1: 创建 training 路由**
 
 创建 `br-server/app/api/routes/training.py`：
 
@@ -783,7 +783,7 @@ async def list_training_courses(
     )
 ```
 
-- [ ] **Step 2: 修改 study_room 路由，增加 room_type 参数**
+- [x] **Step 2: 修改 study_room 路由，增加 room_type 参数**
 
 在 `br-server/app/api/routes/study_room.py` 的 `list_study_rooms` 函数签名中，在 `city_id` 参数之后增加：
 
@@ -799,7 +799,7 @@ async def list_training_courses(
     )
 ```
 
-- [ ] **Step 3: 在 main.py 注册 training_router**
+- [x] **Step 3: 在 main.py 注册 training_router**
 
 在 `br-server/app/main.py` 中：
 
@@ -813,12 +813,12 @@ from app.api.routes.training import router as training_router
 app.include_router(training_router)
 ```
 
-- [ ] **Step 4: 验证路由可访问**
+- [x] **Step 4: 验证路由可访问**
 
 Run: `cd br-server && conda activate booking-room && python -c "from app.main import app; routes = [r.path for r in app.routes]; print('/api/v1/training/rooms' in routes, '/api/v1/training/courses' in routes)"`
 Expected: `True True`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add br-server/app/api/routes/training.py \

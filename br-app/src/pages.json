@@ -7,6 +7,13 @@
       }
     },
     {
+      "path": "pages/training/index",
+      "style": {
+        "navigationBarTitleText": "培训课程",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/activity/detail",
       "style": {
         "navigationBarTitleText": "活动详情",
@@ -143,6 +150,12 @@
         "text": "预约",
         "iconPath": "static/tab/booking.png",
         "selectedIconPath": "static/tab/booking-active.png"
+      },
+      {
+        "pagePath": "pages/training/index",
+        "text": "培训",
+        "iconPath": "static/tab/training.png",
+        "selectedIconPath": "static/tab/training-active.png"
       },
       {
         "pagePath": "pages/orders/index",

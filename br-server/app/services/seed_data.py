@@ -15,8 +15,10 @@ from app.core.database import async_session
 from app.models.activity import Activity
 from app.models.banner import Banner
 from app.models.coupon import Coupon, UserCoupon
+from app.models.course import Course
 from app.models.notification import Notification, NotificationPreference
 from app.models.study_room import StudyRoom
+from app.models.teacher import Teacher
 from app.models.user import User
 
 CHINA_TIMEZONE = timezone(timedelta(hours=8))
@@ -113,6 +115,57 @@ SEED_STUDY_ROOMS = [
         status="open",
         min_price=12.00,
     ),
+]
+
+SEED_TRAINING_ROOMS = [
+    StudyRoom(
+        name="去K书培训中心",
+        description="名师一对一辅导，考研公考全方位提升",
+        cover_image="https://images.unsplash.com/photo-1580582932705-ff3c3993141f?w=400&h=300&fit=crop",
+        address="茂名市茂南区光谷大道88号3楼",
+        business_hours="08:00-22:00",
+        status="open",
+        min_price=50.00,
+        room_type="training",
+    ),
+    StudyRoom(
+        name="去K书·星火教室",
+        description="大班投影教学，英语技能专项训练",
+        cover_image="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=400&h=300&fit=crop",
+        address="茂名市茂南区文明中路56号2楼",
+        business_hours="08:00-21:00",
+        status="open",
+        min_price=40.00,
+        room_type="training",
+    ),
+    StudyRoom(
+        name="去K书·精英学堂",
+        description="一对一隔音教室，雅思托福专项辅导",
+        cover_image="https://images.unsplash.com/photo-1531542151005-2ec6f3e3a4e3?w=400&h=300&fit=crop",
+        address="茂名市茂南区站前路120号5楼",
+        business_hours="09:00-21:00",
+        status="open",
+        min_price=80.00,
+        room_type="training",
+    ),
+    StudyRoom(
+        name="去K书·综合学习中心",
+        description="自习+培训一体化空间，满足多样化学习需求",
+        cover_image="https://images.unsplash.com/photo-1522202176988-662241b9a3ee?w=400&h=300&fit=crop",
+        address="茂名市茂南区光华南路200号",
+        business_hours="07:00-23:00",
+        status="open",
+        min_price=10.00,
+        room_type="comprehensive",
+    ),
+]
+
+SEED_TEACHERS = [
+    Teacher(name="李明华", avatar="https://images.unsplash.com/photo-1568602471122-3b6f0c1c3f9a?w=200&h=200&fit=crop&crop=face", title="考研政治名师", rating=4.9),
+    Teacher(name="王晓雯", avatar="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face", title="公考行测专家", rating=4.8),
+    Teacher(name="陈雅琪", avatar="https://images.unsplash.com/photo-1573496359662-720d0fc0e725?w=200&h=200&fit=crop&crop=face", title="雅思口语讲师", rating=5.0),
+    Teacher(name="张伟强", avatar="https://images.unsplash.com/photo-1507006616952-0e0531ab0e1e?w=200&h=200&fit=crop&crop=face", title="英语四级讲师", rating=4.7),
+    Teacher(name="刘芳芳", avatar="https://images.unsplash.com/photo-1438761681033-6461ffade8d5?w=200&h=200&fit=crop&crop=face", title="教师资格证面试官", rating=4.8),
 ]
 
 SEED_COUPONS = [
@@ -418,6 +471,76 @@ async def seed_all() -> None:
             if existing.scalar_one_or_none() is None:
                 session.add(room)
                 print(f"  + StudyRoom: {room.name}")
+
+        # Seed teachers
+        teacher_map = {}
+        for teacher in SEED_TEACHERS:
+            existing = await session.execute(
+                select(Teacher).where(Teacher.name == teacher.name)
+            )
+            obj = existing.scalar_one_or_none()
+            if obj is None:
+                session.add(teacher)
+                await session.flush()
+                obj = teacher
+                print(f"  + Teacher: {obj.name}")
+            teacher_map[obj.name] = obj
+
+        # Seed training rooms
+        training_room_map = {}
+        for room in SEED_TRAINING_ROOMS:
+            existing = await session.execute(
+                select(StudyRoom).where(StudyRoom.name == room.name)
+            )
+            obj = existing.scalar_one_or_none()
+            if obj is None:
+                session.add(room)
+                await session.flush()
+                obj = room
+                print(f"  + TrainingRoom: {obj.name}")
+            training_room_map[obj.name] = obj
+
+        # Seed courses
+        seed_courses_data = [
+            {"room_name": "去K书培训中心", "teacher_name": "李明华", "name": "考研政治冲刺班", "category": "postgraduate", "price": 80.00, "rating": 4.9, "enrollment_count": 328, "schedule": "周六 9:00-12:00", "tags": "考研,政治,冲刺", "is_hot": True, "sort_order": 1},
+            {"room_name": "去K书培训中心", "teacher_name": "王晓雯", "name": "公务员行测精讲", "category": "civil_service", "price": 60.00, "rating": 4.8, "enrollment_count": 156, "schedule": "周日 14:00-17:00", "tags": "公考,行测", "is_hot": True, "sort_order": 2},
+            {"room_name": "去K书培训中心", "teacher_name": "陈雅琪", "name": "雅思口语1v1冲刺", "category": "language", "price": 120.00, "rating": 5.0, "enrollment_count": 89, "schedule": "预约制", "tags": "雅思,口语,一对一", "is_hot": True, "sort_order": 3},
+            {"room_name": "去K书·星火教室", "teacher_name": "张伟强", "name": "英语四级冲刺密训", "category": "language", "price": 50.00, "rating": 4.7, "enrollment_count": 512, "schedule": "周六 9:00-11:30", "tags": "英语,四级,冲刺", "is_hot": True, "sort_order": 1},
+            {"room_name": "去K书·星火教室", "teacher_name": "刘芳芳", "name": "教师资格证面试辅导", "category": "professional", "price": 90.00, "rating": 4.8, "enrollment_count": 203, "schedule": "周日 9:00-12:00", "tags": "教师资格,面试", "is_hot": True, "sort_order": 2},
+            {"room_name": "去K书·精英学堂", "teacher_name": "陈雅琪", "name": "雅思口语1v1冲刺", "category": "language", "price": 120.00, "rating": 5.0, "enrollment_count": 89, "schedule": "预约制", "tags": "雅思,口语", "is_hot": True, "sort_order": 1},
+            {"room_name": "去K书·精英学堂", "teacher_name": "李明华", "name": "考研政治冲刺班", "category": "postgraduate", "price": 80.00, "rating": 4.9, "enrollment_count": 328, "schedule": "周六 14:00-17:00", "tags": "考研,政治", "is_hot": True, "sort_order": 2},
+            {"room_name": "去K书·精英学堂", "teacher_name": "刘芳芳", "name": "教师资格证面试辅导", "category": "professional", "price": 90.00, "rating": 4.8, "enrollment_count": 203, "schedule": "周日 14:00-17:00", "tags": "教师资格", "is_hot": True, "sort_order": 3},
+            {"room_name": "去K书培训中心", "teacher_name": None, "name": "小学数学同步辅导", "category": "primaryschool", "price": 45.00, "rating": 4.6, "enrollment_count": 78, "schedule": "工作日 18:00-20:00", "tags": "小学,数学", "is_hot": False, "sort_order": 4},
+            {"room_name": "去K书培训中心", "teacher_name": None, "name": "初中物理提升班", "category": "middleschool", "price": 55.00, "rating": 4.7, "enrollment_count": 95, "schedule": "工作日 19:00-21:00", "tags": "初中,物理", "is_hot": False, "sort_order": 5},
+            {"room_name": "去K书·综合学习中心", "teacher_name": "张伟强", "name": "英语六级冲刺班", "category": "language", "price": 55.00, "rating": 4.7, "enrollment_count": 120, "schedule": "周六 14:00-16:30", "tags": "英语,六级", "is_hot": False, "sort_order": 1},
+            {"room_name": "去K书·综合学习中心", "teacher_name": "王晓雯", "name": "公务员申论精讲", "category": "civil_service", "price": 65.00, "rating": 4.8, "enrollment_count": 110, "schedule": "周日 9:00-12:00", "tags": "公考,申论", "is_hot": False, "sort_order": 2},
+        ]
+        for cd in seed_courses_data:
+            existing = await session.execute(
+                select(Course).where(
+                    Course.name == cd["name"],
+                    Course.room_id == training_room_map[cd["room_name"]].id,
+                )
+            )
+            if existing.scalar_one_or_none() is not None:
+                continue
+            teacher_id = teacher_map[cd["teacher_name"]].id if cd["teacher_name"] else None
+            session.add(Course(
+                room_id=training_room_map[cd["room_name"]].id,
+                teacher_id=teacher_id,
+                name=cd["name"],
+                cover_image=cd.get("cover_image"),
+                category=cd["category"],
+                price=cd["price"],
+                rating=cd["rating"],
+                enrollment_count=cd["enrollment_count"],
+                schedule=cd["schedule"],
+                tags=cd["tags"],
+                status="active",
+                is_hot=cd["is_hot"],
+                sort_order=cd["sort_order"],
+            ))
+            print(f"  + Course: {cd['name']}")
 
         await seed_coupons(session)
         await seed_notifications(session)

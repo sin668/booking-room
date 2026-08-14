@@ -1091,6 +1091,7 @@ HTTP 429 用户名修改冷却中：
 | page | integer | 1 | 页码（从 1 开始） |
 | page_size | integer | 10 | 每页数量（最大 50） |
 | city_id | integer | - | 城市 ID；不传时返回全部城市的自习室 |
+| room_type | string | - | 房间类型：`study` / `training` / `comprehensive`；不传时返回全部类型 |
 
 **响应 200：**
 ```json
@@ -1104,6 +1105,7 @@ HTTP 429 用户名修改冷却中：
       "address": "茂名市茂南区油城三路88号",
       "business_hours": "07:00-23:00",
       "status": "open",
+      "room_type": "study",
       "min_price": "8.00",
       "city_id": 1,
       "city_name": "茂名市"
@@ -1126,6 +1128,7 @@ HTTP 429 用户名修改冷却中：
 | address | string | 地址 |
 | business_hours | string \| null | 营业时间（如 "08:00-22:00"） |
 | status | string | 状态：open / closed |
+| room_type | string | 房间类型：study / training / comprehensive |
 | min_price | decimal | 最低价格（单位：元） |
 | city_id | integer \| null | 城市 ID |
 | city_name | string \| null | 城市名称 |
@@ -1161,6 +1164,159 @@ HTTP 429 用户名修改冷却中：
 | id | integer | 城市 ID |
 | name | string | 城市名称 |
 | province | string | 省份名称 |
+
+---
+
+## 培训课程
+
+### GET /api/v1/training/rooms
+
+获取培训室分页列表（含热门课程），返回 `room_type` 为 `training` 或 `comprehensive` 且 `status` 为 `open` 的培训室。无需认证。
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | integer | 1 | 页码（从 1 开始） |
+| page_size | integer | 10 | 每页数量（最大 50） |
+| city_id | integer | - | 可选城市 ID 过滤 |
+
+**响应 200：**
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "去K书培训中心",
+      "description": "名师一对一辅导",
+      "cover_image": "https://...",
+      "address": "茂名市茂南区光谷大道88号3楼",
+      "city_id": 1,
+      "city_name": "茂名市",
+      "business_hours": "08:00-22:00",
+      "status": "open",
+      "room_type": "training",
+      "min_price": "50.00",
+      "hot_courses": [
+        {
+          "id": 1,
+          "name": "考研政治冲刺班",
+          "cover_image": "https://...",
+          "teacher": {
+            "id": 1,
+            "name": "李明华",
+            "avatar": "https://...",
+            "title": "考研政治名师",
+            "rating": "4.9"
+          },
+          "price": "80.00",
+          "enrollment_count": 328
+        }
+      ]
+    }
+  ],
+  "total": 3,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+每间培训室附带最多 3 条热门课程（`is_hot=true` 且 `status=active`），按 `sort_order` 升序排列。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 培训室 ID |
+| name | string | 名称 |
+| description | string \| null | 描述 |
+| cover_image | string \| null | 封面图 URL |
+| address | string | 地址 |
+| city_id | integer \| null | 城市 ID |
+| city_name | string \| null | 城市名称 |
+| business_hours | string \| null | 营业时间 |
+| status | string | 状态：open / closed |
+| room_type | string | 房间类型：training / comprehensive |
+| min_price | decimal | 最低价格 |
+| hot_courses | array | 热门课程列表（最多 3 条） |
+| hot_courses[].id | integer | 课程 ID |
+| hot_courses[].name | string | 课程名称 |
+| hot_courses[].cover_image | string \| null | 课程封面图 |
+| hot_courses[].teacher | object \| null | 教师信息 |
+| hot_courses[].teacher.id | integer | 教师 ID |
+| hot_courses[].teacher.name | string | 教师姓名 |
+| hot_courses[].teacher.avatar | string \| null | 教师头像 |
+| hot_courses[].teacher.title | string \| null | 教师职称 |
+| hot_courses[].teacher.rating | decimal | 教师评分 |
+| hot_courses[].price | decimal | 课程价格 |
+| hot_courses[].enrollment_count | integer | 报名人数 |
+
+---
+
+### GET /api/v1/training/courses
+
+获取培训课程分页列表，仅返回 `status` 为 `active` 的课程。无需认证。
+
+**查询参数：**
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | integer | 1 | 页码（从 1 开始） |
+| page_size | integer | 10 | 每页数量（最大 50） |
+| category | string | - | 可选分类：`primaryschool` / `middleschool` / `postgraduate` / `civil_service` / `language` / `skills` / `professional` |
+
+**响应 200：**
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "考研政治冲刺班",
+      "cover_image": "https://...",
+      "teacher": {
+        "id": 1,
+        "name": "李明华",
+        "avatar": "https://...",
+        "title": "考研政治名师",
+        "rating": "4.9"
+      },
+      "category": "postgraduate",
+      "price": "80.00",
+      "rating": "4.9",
+      "enrollment_count": 328,
+      "schedule": "周六 9:00-12:00",
+      "tags": ["考研", "政治"],
+      "status": "active",
+      "room_id": 1,
+      "room_name": "去K书培训中心"
+    }
+  ],
+  "total": 10,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+按 `sort_order` 升序、`id` 升序排列。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 课程 ID |
+| name | string | 课程名称 |
+| cover_image | string \| null | 课程封面图 |
+| teacher | object \| null | 教师信息（无关联教师时为 null） |
+| teacher.id | integer | 教师 ID |
+| teacher.name | string | 教师姓名 |
+| teacher.avatar | string \| null | 教师头像 |
+| teacher.title | string \| null | 教师职称 |
+| teacher.rating | decimal | 教师评分 |
+| category | string | 分类：primaryschool / middleschool / postgraduate / civil_service / language / skills / professional |
+| price | decimal | 课程价格 |
+| rating | decimal | 课程评分 |
+| enrollment_count | integer | 报名人数 |
+| schedule | string \| null | 上课时间 |
+| tags | array | 标签列表（从逗号分隔字符串解析） |
+| status | string | 状态：active |
+| room_id | integer | 所属培训室 ID |
+| room_name | string | 所属培训室名称 |
 
 ---
 

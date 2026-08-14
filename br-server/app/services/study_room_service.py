@@ -21,6 +21,7 @@ async def list_study_rooms(
     page: int = 1,
     page_size: int = DEFAULT_PAGE_SIZE,
     city_id: int | None = None,
+    room_type: str | None = None,
 ) -> StudyRoomListResponse:
     """Return paginated list of open study rooms."""
     page_size = min(page_size, MAX_PAGE_SIZE)
@@ -29,6 +30,8 @@ async def list_study_rooms(
     filters = [StudyRoom.status == "open"]
     if city_id is not None:
         filters.append(StudyRoom.city_id == city_id)
+    if room_type is not None:
+        filters.append(StudyRoom.room_type == room_type)
 
     count_result = await db.execute(
         select(func.count()).select_from(StudyRoom).where(*filters)
@@ -78,6 +81,7 @@ async def admin_list_rooms(
     page: int = 1,
     page_size: int = DEFAULT_PAGE_SIZE,
     status: str | None = None,
+    room_type: str | None = None,
 ) -> RoomAdminListResponse:
     """Return paginated list of all rooms, optionally filtered by status."""
     page_size = min(page_size, MAX_PAGE_SIZE)
@@ -88,6 +92,9 @@ async def admin_list_rooms(
     if status is not None:
         query = query.where(StudyRoom.status == status)
         count_query = count_query.where(StudyRoom.status == status)
+    if room_type is not None:
+        query = query.where(StudyRoom.room_type == room_type)
+        count_query = count_query.where(StudyRoom.room_type == room_type)
 
     total = (await db.execute(count_query)).scalar_one()
 

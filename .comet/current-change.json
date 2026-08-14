@@ -2,5 +2,5 @@
   "schema": "comet.selection.v2",
   "workflow": "classic",
   "change": "training-course-list",
-  "branch": "main"
+  "branch": "feature/20260814/training-course-list"
 }

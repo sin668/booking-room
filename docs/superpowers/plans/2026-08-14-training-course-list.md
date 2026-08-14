@@ -89,7 +89,7 @@ base-ref: d44876bfddcb2cece0156851fc79abbef62ddd3e
 - Consumes: `app.core.database.Base`（现有 Base 声明）
 - Produces: `Teacher` 模型（id, name, avatar, title, rating, created_at, updated_at）、`Course` 模型（id, room_id, teacher_id, name, cover_image, category, price, rating, enrollment_count, schedule, tags, status, is_hot, sort_order, created_at, updated_at）、`StudyRoom.room_type` 字段
 
-- [ ] **Step 1: 创建 Teacher 模型**
+- [x] **Step 1: 创建 Teacher 模型**
 
 创建 `br-server/app/models/teacher.py`：
 
@@ -114,7 +114,7 @@ class Teacher(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 ```
 
-- [ ] **Step 2: 创建 Course 模型**
+- [x] **Step 2: 创建 Course 模型**
 
 创建 `br-server/app/models/course.py`：
 
@@ -148,7 +148,7 @@ class Course(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 ```
 
-- [ ] **Step 3: 修改 StudyRoom 模型，增加 room_type 字段**
+- [x] **Step 3: 修改 StudyRoom 模型，增加 room_type 字段**
 
 在 `br-server/app/models/study_room.py` 的 `status` 字段行之后、`min_price` 之前插入：
 
@@ -156,7 +156,7 @@ class Course(Base):
     room_type: Mapped[str] = mapped_column(String(20), default="study", nullable=False)
 ```
 
-- [ ] **Step 4: 在 models/__init__.py 注册 Teacher 和 Course**
+- [x] **Step 4: 在 models/__init__.py 注册 Teacher 和 Course**
 
 在 `br-server/app/models/__init__.py` 中：
 - 在 `from app.models.study_room import StudyRoom` 之后增加两行导入
@@ -171,7 +171,7 @@ from app.models.teacher import Teacher
 
 `__all__` 中在 `"City"` 之后增加 `"Course"`，在 `"SystemSetting"` 之后增加 `"Teacher"`（按字母顺序）。
 
-- [ ] **Step 5: 创建 Alembic 迁移文件**
+- [x] **Step 5: 创建 Alembic 迁移文件**
 
 创建 `br-server/alembic/versions/2026_08_14_1000-add_room_type_teachers_courses.py`：
 
@@ -242,12 +242,12 @@ def downgrade() -> None:
     op.drop_column("study_rooms", "room_type")
 ```
 
-- [ ] **Step 6: 执行迁移并验证**
+- [x] **Step 6: 执行迁移并验证**
 
 Run: `cd br-server && conda activate booking-room && alembic upgrade head`
 Expected: 输出 `Running upgrade a2b3c4d5e6f7 -> b3c4d5e6f7a8, add room_type, teachers, courses`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add br-server/app/models/teacher.py br-server/app/models/course.py \
@@ -269,7 +269,7 @@ git commit -m "feat: add Teacher/Course models and room_type migration"
 - Consumes: Task 1 的 `Teacher`、`Course`、`StudyRoom.room_type`
 - Produces: `TeacherResponse`、`TeacherBrief`、`HotCourseItem`、`TrainingRoomResponse`、`TrainingRoomListResponse`、`CourseResponse`、`CourseListResponse`
 
-- [ ] **Step 1: 创建 Teacher Schema**
+- [x] **Step 1: 创建 Teacher Schema**
 
 创建 `br-server/app/schemas/teacher.py`：
 
@@ -289,7 +289,7 @@ class TeacherResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 ```
 
-- [ ] **Step 2: 创建 Course Schema**
+- [x] **Step 2: 创建 Course Schema**
 
 创建 `br-server/app/schemas/course.py`：
 
@@ -379,7 +379,7 @@ class CourseListResponse(BaseModel):
     page_size: int
 ```
 
-- [ ] **Step 3: 修改 StudyRoom Schema，增加 room_type 字段**
+- [x] **Step 3: 修改 StudyRoom Schema，增加 room_type 字段**
 
 在 `br-server/app/schemas/study_room.py` 中：
 
@@ -403,7 +403,7 @@ class CourseListResponse(BaseModel):
     room_type: str
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-server/app/schemas/teacher.py br-server/app/schemas/course.py \
@@ -424,7 +424,7 @@ git commit -m "feat: add Teacher/Course schemas and room_type in StudyRoom schem
 - Consumes: Task 1 的 `Teacher`、`Course`、`StudyRoom.room_type`；Task 2 的全部 Schema
 - Produces: `training_service.list_training_rooms(db, page, page_size, city_id) -> TrainingRoomListResponse`、`training_service.list_courses(db, page, page_size, category) -> CourseListResponse`；`study_room_service.list_study_rooms` 和 `admin_list_rooms` 增加 `room_type` 参数
 
-- [ ] **Step 1: 创建 training_service.py**
+- [x] **Step 1: 创建 training_service.py**
 
 创建 `br-server/app/services/training_service.py`：
 
@@ -551,7 +551,7 @@ async def list_courses(
     return CourseListResponse(items=items, total=total, page=page, page_size=page_size)
 ```
 
-- [ ] **Step 2: 修改 study_room_service.py，增加 room_type 过滤**
+- [x] **Step 2: 修改 study_room_service.py，增加 room_type 过滤**
 
 在 `br-server/app/services/study_room_service.py` 中：
 
@@ -590,7 +590,7 @@ async def admin_list_rooms(
         count_query = count_query.where(StudyRoom.room_type == room_type)
 ```
 
-- [ ] **Step 3: 修改 seed_data.py，增加培训相关种子数据**
+- [x] **Step 3: 修改 seed_data.py，增加培训相关种子数据**
 
 在 `br-server/app/services/seed_data.py` 中：
 
@@ -719,7 +719,7 @@ SEED_TEACHERS = [
             print(f"  + Course: {cd['name']}")
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-server/app/services/training_service.py \
@@ -741,7 +741,7 @@ git commit -m "feat: add training service, room_type filter, and seed data"
 - Consumes: Task 3 的 `training_service.list_training_rooms`、`training_service.list_courses`、`study_room_service.list_study_rooms`
 - Produces: `GET /api/v1/training/rooms`、`GET /api/v1/training/courses`；`GET /api/v1/rooms` 增加 `room_type` 查询参数
 
-- [ ] **Step 1: 创建 training 路由**
+- [x] **Step 1: 创建 training 路由**
 
 创建 `br-server/app/api/routes/training.py`：
 
@@ -783,7 +783,7 @@ async def list_training_courses(
     )
 ```
 
-- [ ] **Step 2: 修改 study_room 路由，增加 room_type 参数**
+- [x] **Step 2: 修改 study_room 路由，增加 room_type 参数**
 
 在 `br-server/app/api/routes/study_room.py` 的 `list_study_rooms` 函数签名中，在 `city_id` 参数之后增加：
 
@@ -799,7 +799,7 @@ async def list_training_courses(
     )
 ```
 
-- [ ] **Step 3: 在 main.py 注册 training_router**
+- [x] **Step 3: 在 main.py 注册 training_router**
 
 在 `br-server/app/main.py` 中：
 
@@ -813,12 +813,12 @@ from app.api.routes.training import router as training_router
 app.include_router(training_router)
 ```
 
-- [ ] **Step 4: 验证路由可访问**
+- [x] **Step 4: 验证路由可访问**
 
 Run: `cd br-server && conda activate booking-room && python -c "from app.main import app; routes = [r.path for r in app.routes]; print('/api/v1/training/rooms' in routes, '/api/v1/training/courses' in routes)"`
 Expected: `True True`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add br-server/app/api/routes/training.py \
@@ -839,7 +839,7 @@ git commit -m "feat: add training routes and room_type query param"
 - Consumes: Task 1-4 的全部模型、Schema、Service、Route
 - Produces: 13 个培训 API 测试用例 + 2 个 room_type 测试用例
 
-- [ ] **Step 1: 创建培训 API 测试文件**
+- [x] **Step 1: 创建培训 API 测试文件**
 
 创建 `br-server/tests/test_training_api.py`：
 
@@ -997,7 +997,7 @@ class TestCoursesAPI:
         assert data["items"][0]["tags"] == []
 ```
 
-- [ ] **Step 2: 修改 test_api_homepage.py，增加 room_type 测试**
+- [x] **Step 2: 修改 test_api_homepage.py，增加 room_type 测试**
 
 在 `br-server/tests/test_api_homepage.py` 的 `TestStudyRoomAPI` 类中增加两个测试方法：
 
@@ -1024,12 +1024,12 @@ class TestCoursesAPI:
         assert resp.json()["items"][0]["room_type"] == "training"
 ```
 
-- [ ] **Step 3: 运行全部测试**
+- [x] **Step 3: 运行全部测试**
 
 Run: `cd br-server && conda activate booking-room && pytest tests/ -q`
 Expected: 全部测试通过，无 FAIL
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-server/tests/test_training_api.py br-server/tests/test_api_homepage.py
@@ -1047,7 +1047,7 @@ git commit -m "test: add training API and room_type tests"
 - Consumes: `@/utils/request` 的 `get` 函数
 - Produces: `getTrainingRooms(params)` → `GET /api/v1/training/rooms`；`getTrainingCourses(params)` → `GET /api/v1/training/courses`
 
-- [ ] **Step 1: 创建 training API 模块**
+- [x] **Step 1: 创建 training API 模块**
 
 创建 `br-app/src/api/training.js`：
 
@@ -1071,7 +1071,7 @@ export function getTrainingCourses(params) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add br-app/src/api/training.js
@@ -1089,7 +1089,7 @@ git commit -m "feat: add training API module"
 - Consumes: Task 6 的 `getTrainingRooms`、`getTrainingCourses`；`@/utils/request` 间接通过 API 模块
 - Produces: 培训课程列表页 Vue 组件，包含搜索栏、分类 TAB、培训室卡片（可展开热门课程）、课程卡片列表
 
-- [ ] **Step 1: 创建培训课程列表页**
+- [x] **Step 1: 创建培训课程列表页**
 
 创建 `br-app/src/pages/training/index.vue`（注意：`onMounted` 从 `vue` 导入——BUG-14 防范；模板中不使用 `&lt;`/`&gt;`——BUG-20 防范）：
 
@@ -1754,7 +1754,7 @@ onReachBottom(() => {
 </style>
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add br-app/src/pages/training/index.vue
@@ -1772,7 +1772,7 @@ git commit -m "feat: add training course list page"
 - Consumes: Task 7 的 `pages/training/index` 页面
 - Produces: tabBar 中第 3 位插入"培训"入口
 
-- [ ] **Step 1: 在 pages.json 注册培训页面路由**
+- [x] **Step 1: 在 pages.json 注册培训页面路由**
 
 在 `br-app/src/pages.json` 的 `pages` 数组中增加培训页面注册条目（建议放在 `pages/index/index` 之后）：
 
@@ -1786,7 +1786,7 @@ git commit -m "feat: add training course list page"
 }
 ```
 
-- [ ] **Step 2: 在 tabBar 中第 3 位插入培训入口**
+- [x] **Step 2: 在 tabBar 中第 3 位插入培训入口**
 
 在 `br-app/src/pages.json` 的 `tabBar.list` 数组中，在"预约"和"订单"之间插入：
 
@@ -1801,12 +1801,12 @@ git commit -m "feat: add training course list page"
 
 **图标文件**：需准备 `br-app/src/static/tab/training.png` 和 `br-app/src/static/tab/training-active.png`（graduation-cap 风格，81x81px PNG，灰色和蓝色版本，参考现有 `booking.png`/`booking-active.png` 的风格和尺寸）。
 
-- [ ] **Step 3: 验证前端构建**
+- [x] **Step 3: 验证前端构建**
 
 Run: `nvm use v22.22.0 && cd br-app && npm run build`
 Expected: 构建成功，无错误
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-app/src/pages.json br-app/src/static/tab/training.png \
@@ -1825,7 +1825,7 @@ git commit -m "feat: add training tab to bottom navigation"
 - Consumes: Task 1-8 的全部产出
 - Produces: 代码质量确认，必要时进行小范围重构
 
-- [ ] **Step 1: 验证后端 Clean Architecture 分层**
+- [x] **Step 1: 验证后端 Clean Architecture 分层**
 
 检查以下分层约束：
 - `br-server/app/api/routes/training.py`：仅处理 HTTP 请求/响应，调用 service 层，不直接操作 ORM
@@ -1835,7 +1835,7 @@ git commit -m "feat: add training tab to bottom navigation"
 
 如发现分层违规，在此步骤修正。
 
-- [ ] **Step 2: 消除重复代码 — 提取枚举常量**
+- [x] **Step 2: 消除重复代码 — 提取枚举常量**
 
 检查 `room_type` 枚举值（`study`/`training`/`comprehensive`）和 `category` 枚举值（`primaryschool`/`middleschool`/`postgraduate`/`civil_service`/`language`/`skills`/`professional`）是否在多处硬编码。
 
@@ -1848,14 +1848,14 @@ COURSE_CATEGORIES = ("primaryschool", "middleschool", "postgraduate", "civil_ser
 
 并在路由的 `pattern` 参数和 service 层的 `in_()` 过滤中引用。
 
-- [ ] **Step 3: 验证前端组件分层**
+- [x] **Step 3: 验证前端组件分层**
 
 检查：
 - `br-app/src/pages/training/index.vue` 调用 `@/api/training.js`
 - `br-app/src/api/training.js` 调用 `@/utils/request.js` 的 `get` 函数
 - 页面不直接调用 `uni.request`，API 模块不包含 UI 逻辑
 
-- [ ] **Step 4: 检查路由无尾部斜杠**
+- [x] **Step 4: 检查路由无尾部斜杠**
 
 验证 `br-server/app/api/routes/training.py` 中：
 - `@router.get("/rooms")` — 无尾部斜杠 ✓
@@ -1863,7 +1863,7 @@ COURSE_CATEGORIES = ("primaryschool", "middleschool", "postgraduate", "civil_ser
 
 验证 `br-server/app/api/routes/study_room.py` 中新增的 `room_type` 参数不引入尾部斜杠问题。
 
-- [ ] **Step 5: Commit（如有修改）**
+- [x] **Step 5: Commit（如有修改）**
 
 ```bash
 git add -A
@@ -1881,7 +1881,7 @@ git commit -m "refactor: code review fixes for training feature"
 - Consumes: Task 4 的路由定义
 - Produces: `docs/api.md` 中 3 个接口文档段落
 
-- [ ] **Step 1: 补充 GET /api/v1/training/rooms 接口文档**
+- [x] **Step 1: 补充 GET /api/v1/training/rooms 接口文档**
 
 在 `docs/api.md` 中适当位置（如"自习室"章节之后）增加：
 
@@ -1942,7 +1942,7 @@ git commit -m "refactor: code review fixes for training feature"
 ```
 ```
 
-- [ ] **Step 2: 补充 GET /api/v1/training/courses 接口文档**
+- [x] **Step 2: 补充 GET /api/v1/training/courses 接口文档**
 
 紧接上一步之后增加：
 
@@ -1993,7 +1993,7 @@ git commit -m "refactor: code review fixes for training feature"
 ```
 ```
 
-- [ ] **Step 3: 更新 GET /api/v1/rooms 接口文档**
+- [x] **Step 3: 更新 GET /api/v1/rooms 接口文档**
 
 在 `docs/api.md` 中现有的 `GET /api/v1/rooms` 文档的查询参数表格中增加 `room_type` 行：
 
@@ -2007,7 +2007,7 @@ git commit -m "refactor: code review fixes for training feature"
 "room_type": "study"
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/api.md
@@ -2024,24 +2024,24 @@ git commit -m "docs: add training API documentation and room_type param"
 **Interfaces:**
 - Consumes: Task 1-10 的全部产出
 
-- [ ] **Step 1: 运行后端全部测试**
+- [x] **Step 1: 运行后端全部测试**
 
 Run: `cd br-server && conda activate booking-room && pytest tests/ -q`
 Expected: 全部测试通过，0 FAIL，0 ERROR
 
-- [ ] **Step 2: 前端构建验证**
+- [x] **Step 2: 前端构建验证**
 
 Run: `nvm use v22.22.0 && cd br-app && npm run build`
 Expected: 构建成功，无 error
 
-- [ ] **Step 3: 验证现有自习室预约功能不受影响**
+- [x] **Step 3: 验证现有自习室预约功能不受影响**
 
 手动验证（或通过现有测试覆盖）：
 - `GET /api/v1/rooms` 不带 `room_type` 参数时返回所有类型房间（行为不变）
 - `GET /api/v1/rooms/{room_id}` 详情接口正常返回（增加了 `room_type` 字段但不影响现有字段）
 - 现有的 `test_api_homepage.py` 中原有测试仍然通过（Step 1 已覆盖）
 
-- [ ] **Step 4: 最终 Commit（如有遗漏的修改）**
+- [x] **Step 4: 最终 Commit（如有遗漏的修改）**
 
 ```bash
 git add -A

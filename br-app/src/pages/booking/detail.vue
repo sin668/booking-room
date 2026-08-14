@@ -293,12 +293,26 @@
     </scroll-view>
 
     <view class="bottom-bar">
+      <!-- 心状关注按钮（所有类型通用） -->
       <view class="fav-btn" @tap="onToggleFav">
         <text :class="['heart-icon', { active: isFav }]">♥</text>
       </view>
-      <view class="book-btn" @tap="onBook">
+
+      <!-- 自习室：立即预约 -->
+      <view v-if="isStudyRoom" class="book-btn" @tap="onBook">
         <text class="book-btn-sub">{{ seatStats.available }} 个座位可选</text>
         <text class="book-btn-text">立即预约</text>
+      </view>
+
+      <!-- 培训室：返回课程 -->
+      <view v-else-if="isTrainingRoom" class="back-btn" @tap="onBackToCourses">
+        <text class="back-btn-text">返回课程</text>
+      </view>
+
+      <!-- 综合室：预约自习室 -->
+      <view v-else-if="isComprehensiveRoom" class="book-btn" @tap="onBookStudy">
+        <text class="book-btn-sub">{{ seatStats.available }} 个座位可选</text>
+        <text class="book-btn-text">预约自习室</text>
       </view>
     </view>
   </view>
@@ -531,6 +545,14 @@ export default {
     },
 
     onBook() {
+      uni.navigateTo({ url: '/pages/booking/seat-select?room_id=' + this.roomId })
+    },
+
+    onBackToCourses() {
+      uni.navigateTo({ url: '/pages/training/index' })
+    },
+
+    onBookStudy() {
       uni.navigateTo({ url: '/pages/booking/seat-select?room_id=' + this.roomId })
     },
 
@@ -1259,6 +1281,30 @@ export default {
   font-size: 30rpx;
   font-weight: 600;
   color: $white;
+  line-height: 1.2;
+}
+
+.back-btn {
+  flex: 1;
+  height: 92rpx;
+  background: $surface;
+  border: 2rpx solid $primary;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: $shadow-float;
+}
+
+.back-btn:active {
+  background: $primary-soft;
+  transform: translateY(1rpx);
+}
+
+.back-btn-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $primary;
   line-height: 1.2;
 }
 

@@ -19,6 +19,7 @@ class StudyRoom(Base):
     )
     business_hours: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="open", nullable=False)
+    room_type: Mapped[str] = mapped_column(String(20), default="study", nullable=False)
     min_price: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

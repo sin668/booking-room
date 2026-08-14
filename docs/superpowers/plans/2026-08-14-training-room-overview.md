@@ -850,7 +850,7 @@ git commit -m "test: add training room detail API tests"
 - **BUG-22（关键）**: URL 不使用尾部斜杠，路径为 `/api/v1/training/rooms/${roomId}`
 - **BUG-13**: 使用详情接口而非列表接口获取数据
 
-- [ ] **Step 1: 创建 training.js API 模块**
+- [x] **Step 1: 创建 training.js API 模块**
 
 创建 `br-app/src/api/training.js`：
 
@@ -866,7 +866,7 @@ export function getTrainingRoomDetail(roomId) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add br-app/src/api/training.js

@@ -90,6 +90,17 @@
         </view>
       </view>
 
+      <!-- 培训室简介（仅 training/comprehensive） -->
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section intro-section animate-in" style="animation-delay: 0.05s;">
+        <view class="section-header">
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">培训室简介</text>
+          </view>
+        </view>
+        <text class="intro-text">{{ room.description || '暂无简介' }}</text>
+      </view>
+
       <view class="section animate-in" style="animation-delay: 0.1s;">
         <view class="section-header">
           <text class="section-title">环境照片</text>
@@ -113,7 +124,8 @@
         </scroll-view>
       </view>
 
-      <view class="section seat-section animate-in" style="animation-delay: 0.2s;">
+      <!-- 座位概况（仅 study/comprehensive） -->
+      <view v-if="isStudyRoom || isComprehensiveRoom" class="section seat-section animate-in" style="animation-delay: 0.2s;">
         <view class="section-header">
           <text class="section-title">座位概况</text>
           <text class="availability-copy">{{ availabilityLabel }}</text>
@@ -153,6 +165,120 @@
             <view class="stat-body">
               <text class="stat-count">{{ seatStats.maintenance }}</text>
               <text class="stat-label">维护中</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 教室概况（仅 training/comprehensive） -->
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section classroom-section animate-in" style="animation-delay: 0.2s;">
+        <view class="section-header">
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">教室概况</text>
+          </view>
+        </view>
+        <view class="stats-grid">
+          <view class="stat-card">
+            <view class="stat-icon stat-classroom">
+              <view class="door-icon" />
+            </view>
+            <view class="stat-body">
+              <text class="stat-count">{{ trainingStats?.classroom_count || 0 }}</text>
+              <text class="stat-label">培训教室</text>
+            </view>
+          </view>
+          <view class="stat-card">
+            <view class="stat-icon stat-capacity">
+              <view class="group-icon" />
+            </view>
+            <view class="stat-body">
+              <text class="stat-count">{{ trainingStats?.class_capacity || '8-12' }}</text>
+              <text class="stat-label">小班容量</text>
+            </view>
+          </view>
+          <view class="stat-card">
+            <view class="stat-icon stat-teacher">
+              <view class="board-icon" />
+            </view>
+            <view class="stat-body">
+              <text class="stat-count">{{ trainingStats?.teacher_count || 0 }}</text>
+              <text class="stat-label">认证讲师</text>
+            </view>
+          </view>
+          <view class="stat-card">
+            <view class="stat-icon stat-students">
+              <view class="cap-icon" />
+            </view>
+            <view class="stat-body">
+              <text class="stat-count">{{ trainingStats?.total_students || 0 }}</text>
+              <text class="stat-label">累计学员</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 名师团队（仅 training/comprehensive） -->
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section animate-in" style="animation-delay: 0.3s;">
+        <view class="section-header">
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">名师团队</text>
+          </view>
+        </view>
+        <view v-if="teachers.length === 0" class="empty-state">
+          <text class="empty-text">暂无讲师</text>
+        </view>
+        <scroll-view v-else scroll-x :show-scrollbar="false" class="teacher-scroll">
+          <view class="teacher-list">
+            <view v-for="teacher in teachers" :key="teacher.id" class="teacher-card">
+              <image class="teacher-avatar" :src="teacher.avatar || ''" mode="aspectFill" />
+              <text class="teacher-name">{{ teacher.name }}</text>
+              <text class="teacher-title">{{ teacher.title || '' }}</text>
+              <view class="teacher-rating">
+                <text class="star">★</text>
+                <text class="rating-text">{{ teacher.rating }}</text>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 本培训室课程（仅 training/comprehensive） -->
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section animate-in" style="animation-delay: 0.4s;">
+        <view class="section-header">
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">本培训室课程</text>
+          </view>
+          <text class="section-sub">共{{ trainingCourses.length }}门</text>
+        </view>
+        <view v-if="trainingCourses.length === 0" class="empty-state">
+          <text class="empty-text">暂无课程</text>
+        </view>
+        <view v-else class="course-list">
+          <view v-for="course in trainingCourses" :key="course.id" class="course-card" @tap="onCourseDetail(course)">
+            <image class="course-cover" :src="course.cover_image || ''" mode="aspectFill" />
+            <view class="course-body">
+              <view class="course-top">
+                <text class="course-name">{{ course.name }}</text>
+                <view v-if="course.is_hot" class="course-tag tag-hot">
+                  <text class="tag-text">热销</text>
+                </view>
+              </view>
+              <view v-if="course.teacher" class="course-teacher">
+                <text class="teacher-name-sm">{{ course.teacher.name }}</text>
+              </view>
+              <view class="course-schedule">
+                <text class="schedule-text">{{ course.schedule || '排课待定' }}</text>
+              </view>
+              <view class="course-bottom">
+                <text class="course-price">¥{{ course.price }}</text>
+                <text class="price-unit">/课时</text>
+                <view class="book-pill">
+                  <text class="book-pill-text">预约</text>
+                </view>
+              </view>
             </view>
           </view>
         </view>
@@ -406,6 +532,11 @@ export default {
 
     onBook() {
       uni.navigateTo({ url: '/pages/booking/seat-select?room_id=' + this.roomId })
+    },
+
+    onCourseDetail(course) {
+      if (!course || !course.id) return
+      uni.navigateTo({ url: '/pages/training/course-detail?course_id=' + course.id })
     },
   },
 }
@@ -1155,5 +1286,280 @@ export default {
     opacity: 1;
     transform: scaleX(1);
   }
+}
+/* === 培训室新增样式 === */
+
+.section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.section-bar {
+  width: 48rpx;
+  height: 8rpx;
+  border-radius: 8rpx;
+  background: $primary;
+  flex-shrink: 0;
+}
+
+.intro-section,
+.classroom-section {
+  background: $surface;
+  border-radius: 32rpx;
+  padding: 28rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+}
+
+.intro-text {
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: $text-secondary;
+}
+
+.stat-classroom { background: rgba(79, 110, 247, 0.1); }
+.stat-capacity { background: rgba(7, 193, 96, 0.11); }
+.stat-teacher { background: rgba(255, 149, 0, 0.13); }
+.stat-students { background: rgba(168, 85, 247, 0.12); }
+
+.door-icon {
+  width: 24rpx;
+  height: 30rpx;
+  border: 4rpx solid $primary;
+  border-radius: 12rpx 12rpx 4rpx 4rpx;
+}
+
+.group-icon {
+  width: 28rpx;
+  height: 24rpx;
+  border-radius: 50% 50% 8rpx 8rpx;
+  background: $success;
+  position: relative;
+}
+
+.group-icon::before {
+  content: '';
+  position: absolute;
+  top: -12rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: $success;
+}
+
+.board-icon {
+  width: 30rpx;
+  height: 22rpx;
+  border: 4rpx solid #e67900;
+  border-radius: 4rpx;
+}
+
+.cap-icon {
+  width: 0;
+  height: 0;
+  border-left: 18rpx solid transparent;
+  border-right: 18rpx solid transparent;
+  border-bottom: 12rpx solid #a855f7;
+  position: relative;
+}
+
+.cap-icon::after {
+  content: '';
+  position: absolute;
+  top: 12rpx;
+  left: -8rpx;
+  width: 16rpx;
+  height: 8rpx;
+  background: #a855f7;
+  border-radius: 0 0 4rpx 4rpx;
+}
+
+.teacher-scroll {
+  white-space: nowrap;
+}
+
+.teacher-list {
+  display: inline-flex;
+  gap: 18rpx;
+  padding-bottom: 4rpx;
+}
+
+.teacher-card {
+  width: 200rpx;
+  background: $surface;
+  border-radius: 24rpx;
+  padding: 24rpx 16rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.teacher-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  margin-bottom: 14rpx;
+}
+
+.teacher-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.teacher-title {
+  font-size: 20rpx;
+  color: $text-muted;
+  margin-top: 4rpx;
+}
+
+.teacher-rating {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin-top: 10rpx;
+}
+
+.star {
+  font-size: 20rpx;
+  color: #facc15;
+}
+
+.rating-text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: $text-muted;
+}
+
+.course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.course-card {
+  display: flex;
+  background: $surface;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+}
+
+.course-cover {
+  width: 180rpx;
+  height: 180rpx;
+  flex-shrink: 0;
+}
+
+.course-body {
+  flex: 1;
+  padding: 18rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.course-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.course-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $text-primary;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.course-tag {
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}
+
+.tag-hot {
+  background: rgba(255, 107, 107, 0.12);
+}
+
+.tag-hot .tag-text {
+  color: $danger;
+  font-size: 18rpx;
+}
+
+.course-teacher {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-top: 8rpx;
+}
+
+.teacher-name-sm {
+  font-size: 22rpx;
+  color: $text-secondary;
+}
+
+.course-schedule {
+  display: flex;
+  align-items: center;
+  margin-top: 8rpx;
+}
+
+.schedule-text {
+  font-size: 20rpx;
+  color: $text-muted;
+}
+
+.course-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 8rpx;
+}
+
+.course-price {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: $primary;
+}
+
+.price-unit {
+  font-size: 20rpx;
+  color: $text-muted;
+  font-weight: 400;
+}
+
+.book-pill {
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  background: $primary-soft;
+}
+
+.book-pill-text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: $primary;
 }
 </style>

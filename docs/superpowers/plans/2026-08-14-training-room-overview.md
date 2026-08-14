@@ -550,7 +550,7 @@ class TrainingService:
 - **BUG-22（关键）**: 路由定义 `@router.get("/{room_id}")` 不使用尾部斜杠
 - 404 处理：房间不存在或类型不是 training/comprehensive 时返回 HTTP 404
 
-- [ ] **Step 1: 创建 training 路由文件**
+- [x] **Step 1: 创建 training 路由文件**
 
 创建 `br-server/app/api/routes/training.py`：
 
@@ -580,7 +580,7 @@ async def get_training_room_detail(
     return result
 ```
 
-- [ ] **Step 2: 在 main.py 中注册路由**
+- [x] **Step 2: 在 main.py 中注册路由**
 
 在 `br-server/app/main.py` 的 import 区域添加：
 
@@ -594,7 +594,7 @@ from app.api.routes.training import router as training_router
 app.include_router(training_router)
 ```
 
-- [ ] **Step 3: 验证路由注册**
+- [x] **Step 3: 验证路由注册**
 
 ```bash
 cd br-server && conda activate booking-room && python -c "from app.main import app; print([r.path for r in app.routes if 'training' in str(r.path)])"
@@ -602,7 +602,7 @@ cd br-server && conda activate booking-room && python -c "from app.main import a
 
 Expected: 输出包含 `/api/v1/training/rooms/{room_id}`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-server/app/api/routes/training.py br-server/app/main.py

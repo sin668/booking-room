@@ -1034,7 +1034,7 @@ git commit -m "feat: add computed properties for training room rendering"
 - 空状态：培训室无课程时显示"暂无课程"
 - 参考 prototype/training-room.html 的 UI 结构
 
-- [ ] **Step 1: 在座位概况 section 之前添加培训室简介**
+- [x] **Step 1: 在座位概况 section 之前添加培训室简介**
 
 在 `<view class="info-card ...">` 结束后、`<view class="section animate-in" ...>环境照片</view>` 之前插入：
 
@@ -1049,7 +1049,7 @@ git commit -m "feat: add computed properties for training room rendering"
 </view>
 ```
 
-- [ ] **Step 2: 将座位概况 section 包裹在条件渲染中**
+- [x] **Step 2: 将座位概况 section 包裹在条件渲染中**
 
 将现有座位概况 `<view class="section seat-section animate-in" ...>` 修改为：
 
@@ -1061,7 +1061,7 @@ git commit -m "feat: add computed properties for training room rendering"
 </view>
 ```
 
-- [ ] **Step 3: 在座位概况之后添加教室概况 section**
+- [x] **Step 3: 在座位概况之后添加教室概况 section**
 
 在座位概况 section 之后添加（仅 training/comprehensive 显示）：
 
@@ -1113,7 +1113,7 @@ git commit -m "feat: add computed properties for training room rendering"
 </view>
 ```
 
-- [ ] **Step 4: 添加名师团队 section**
+- [x] **Step 4: 添加名师团队 section**
 
 在教室概况之后添加：
 
@@ -1143,7 +1143,7 @@ git commit -m "feat: add computed properties for training room rendering"
 </view>
 ```
 
-- [ ] **Step 5: 添加本培训室课程 section**
+- [x] **Step 5: 添加本培训室课程 section**
 
 在名师团队之后添加：
 
@@ -1187,7 +1187,7 @@ git commit -m "feat: add computed properties for training room rendering"
 </view>
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add br-app/src/pages/booking/detail.vue

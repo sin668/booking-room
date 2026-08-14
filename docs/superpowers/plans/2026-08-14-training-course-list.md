@@ -1047,7 +1047,7 @@ git commit -m "test: add training API and room_type tests"
 - Consumes: `@/utils/request` 的 `get` 函数
 - Produces: `getTrainingRooms(params)` → `GET /api/v1/training/rooms`；`getTrainingCourses(params)` → `GET /api/v1/training/courses`
 
-- [ ] **Step 1: 创建 training API 模块**
+- [x] **Step 1: 创建 training API 模块**
 
 创建 `br-app/src/api/training.js`：
 
@@ -1071,7 +1071,7 @@ export function getTrainingCourses(params) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add br-app/src/api/training.js

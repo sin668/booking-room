@@ -33,7 +33,7 @@
 
 ## 6. 前端 API 模块
 
-- [ ] 6.1 创建 `br-app/src/api/training.js`：封装 getTrainingRooms(params) 和 getTrainingCourses(params) 接口调用
+- [x] 6.1 创建 `br-app/src/api/training.js`：封装 getTrainingRooms(params) 和 getTrainingCourses(params) 接口调用
 
 ## 7. 前端页面实现
 

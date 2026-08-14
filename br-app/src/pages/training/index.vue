@@ -475,15 +475,15 @@ onReachBottom(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 18rpx 0;
-  margin: 0 20rpx;
+  padding: 24rpx 0;
+  margin: 0 22rpx;
   position: relative;
 }
 
 .tab-text {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: $text-secondary;
-  letter-spacing: 0.5rpx;
+  letter-spacing: 1rpx;
 }
 
 .tab-active .tab-text {
@@ -494,18 +494,18 @@ onReachBottom(() => {
 .tab-active::after {
   content: '';
   position: absolute;
-  bottom: 2rpx;
+  bottom: 4rpx;
   left: 50%;
   transform: translateX(-50%);
-  width: 36rpx;
-  height: 5rpx;
+  width: 32rpx;
+  height: 4rpx;
   background: $primary;
-  border-radius: 3rpx;
+  border-radius: 2rpx;
 }
 
 /* ── Content ── */
 .content {
-  padding-top: 232rpx;
+  padding-top: 244rpx;
 }
 
 /* ── Banner ── */

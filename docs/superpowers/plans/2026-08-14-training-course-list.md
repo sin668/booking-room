@@ -269,7 +269,7 @@ git commit -m "feat: add Teacher/Course models and room_type migration"
 - Consumes: Task 1 的 `Teacher`、`Course`、`StudyRoom.room_type`
 - Produces: `TeacherResponse`、`TeacherBrief`、`HotCourseItem`、`TrainingRoomResponse`、`TrainingRoomListResponse`、`CourseResponse`、`CourseListResponse`
 
-- [ ] **Step 1: 创建 Teacher Schema**
+- [x] **Step 1: 创建 Teacher Schema**
 
 创建 `br-server/app/schemas/teacher.py`：
 
@@ -289,7 +289,7 @@ class TeacherResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 ```
 
-- [ ] **Step 2: 创建 Course Schema**
+- [x] **Step 2: 创建 Course Schema**
 
 创建 `br-server/app/schemas/course.py`：
 
@@ -379,7 +379,7 @@ class CourseListResponse(BaseModel):
     page_size: int
 ```
 
-- [ ] **Step 3: 修改 StudyRoom Schema，增加 room_type 字段**
+- [x] **Step 3: 修改 StudyRoom Schema，增加 room_type 字段**
 
 在 `br-server/app/schemas/study_room.py` 中：
 
@@ -403,7 +403,7 @@ class CourseListResponse(BaseModel):
     room_type: str
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-server/app/schemas/teacher.py br-server/app/schemas/course.py \

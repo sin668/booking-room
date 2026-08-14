@@ -5,10 +5,13 @@
 - review_mode: standard
 - tdd_mode: tdd
 
-## Current Task: Task 1 — 数据库迁移与模型
+## Completed Tasks
+- Task 1: complete (commits 4ecad22..8543cb6, 1 minor parked: __all__ ordering)
+
+## Current Task: Task 2 — 后端 Schema
 - Phase: task-review
-- Implementer commit: 8543cb6
-- BASE: 4ecad22
-- HEAD: 8543cb6
-- Risk signals: schema migration, diff > 200 lines
+- Implementer commit: e86a083
+- BASE: 206bd75
+- HEAD: e86a083
+- Risk signals: Public API contract change (new schemas)
 - Review fix round: 0/1 (standard max)

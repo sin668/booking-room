@@ -9,9 +9,9 @@
 
 ## 2. 后端 Schema
 
-- [ ] 2.1 更新 `br-server/app/schemas/study_room.py`：StudyRoomResponse 增加 `room_type` 字段；RoomCreate/RoomUpdate 增加 `room_type` 可选字段
-- [ ] 2.2 创建 `br-server/app/schemas/teacher.py`：定义 TeacherResponse（id, name, avatar, title, rating）
-- [ ] 2.3 创建 `br-server/app/schemas/course.py`：定义 CourseResponse（含 teacher 嵌套对象、tags 数组解析）、CourseListResponse、TrainingRoomResponse（含 hot_courses，hot_courses 中每条含 teacher 嵌套对象）、TrainingRoomListResponse
+- [x] 2.1 更新 `br-server/app/schemas/study_room.py`：StudyRoomResponse 增加 `room_type` 字段；RoomCreate/RoomUpdate 增加 `room_type` 可选字段
+- [x] 2.2 创建 `br-server/app/schemas/teacher.py`：定义 TeacherResponse（id, name, avatar, title, rating）
+- [x] 2.3 创建 `br-server/app/schemas/course.py`：定义 CourseResponse（含 teacher 嵌套对象、tags 数组解析）、CourseListResponse、TrainingRoomResponse（含 hot_courses，hot_courses 中每条含 teacher 嵌套对象）、TrainingRoomListResponse
 
 ## 3. 后端 Service
 

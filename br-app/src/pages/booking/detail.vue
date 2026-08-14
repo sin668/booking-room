@@ -180,6 +180,7 @@
 
 <script>
 import { getSeatStats } from '@/api/seats'
+import { getTrainingRoomDetail } from '@/api/training'
 import { followRoom, isRoomFollowed, unfollowRoom } from '@/services/followedRooms'
 import { fetchBookingRoom } from '@/services/bookingPageService'
 
@@ -197,6 +198,8 @@ export default {
       roomId: null,
       room: {},
       seatStatsData: null,
+      trainingData: null,
+      roomType: '',
       loading: true,
       isFav: false,
       reviewCount: 0,
@@ -282,9 +285,28 @@ export default {
     async loadData() {
       this.loading = true
       try {
-        await Promise.all([this.loadRoom(), this.loadSeatStats()])
+        await this.loadRoom()
+        if (!this.room || !this.room.id) return
+        this.roomType = this.room.room_type || 'study'
+        const tasks = []
+        if (this.roomType === 'study' || this.roomType === 'comprehensive') {
+          tasks.push(this.loadSeatStats())
+        }
+        if (this.roomType === 'training' || this.roomType === 'comprehensive') {
+          tasks.push(this.loadTrainingDetail())
+        }
+        await Promise.all(tasks)
       } finally {
         this.loading = false
+      }
+    },
+
+    async loadTrainingDetail() {
+      try {
+        const data = await getTrainingRoomDetail(this.roomId)
+        this.trainingData = data || null
+      } catch {
+        this.trainingData = null
       }
     },
 

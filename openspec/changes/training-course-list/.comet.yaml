@@ -8,7 +8,7 @@ subagent_dispatch: confirmed
 tdd_mode: tdd
 review_mode: standard
 isolation: worktree
-verify_mode: null
+verify_mode: full
 auto_transition: true
 base_ref: d44876bfddcb2cece0156851fc79abbef62ddd3e
 design_doc: docs/superpowers/specs/2026-08-14-training-course-list-design.md

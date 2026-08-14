@@ -1320,6 +1320,93 @@ HTTP 429 用户名修改冷却中：
 
 ---
 
+### GET /api/v1/training/rooms/{room_id}
+
+获取培训室（或综合室）的详细信息，包含教室概况统计、名师团队、课程列表。仅返回 `room_type` 为 `training` 或 `comprehensive` 的房间。无需认证。
+
+**路径参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| room_id | integer | 是 | 培训室 ID |
+
+**响应 200：**
+```json
+{
+  "id": 1,
+  "name": "去K书培训中心",
+  "description": "专业培训环境",
+  "cover_image": "https://...",
+  "address": "茂南区光谷大道88号3楼",
+  "business_hours": "09:00 - 21:00",
+  "status": "open",
+  "room_type": "training",
+  "min_price": "50.00",
+  "city_id": 1,
+  "city_name": "茂名市",
+  "rating": "4.8",
+  "classroom_count": 4,
+  "class_capacity": "8-12",
+  "teacher_count": 2,
+  "total_students": 335,
+  "teachers": [
+    {
+      "id": 1,
+      "name": "李明华",
+      "avatar": "https://...",
+      "title": "考研政治 · 8年教龄",
+      "rating": "4.9"
+    }
+  ],
+  "courses": [
+    {
+      "id": 1,
+      "name": "考研政治冲刺班",
+      "cover_image": "https://...",
+      "teacher": { "id": 1, "name": "李明华", "avatar": "https://...", "title": "考研政治名师", "rating": "4.9" },
+      "category": "postgraduate",
+      "price": "80.00",
+      "rating": "4.9",
+      "enrollment_count": 120,
+      "schedule": "每周二 14:00",
+      "tags": ["热销", "小班"],
+      "status": "active",
+      "room_id": 1,
+      "room_name": "去K书培训中心"
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | integer | 房间 ID |
+| name | string | 房间名称 |
+| description | string \| null | 房间描述 |
+| cover_image | string \| null | 封面图 |
+| address | string | 地址 |
+| business_hours | string \| null | 营业时间 |
+| status | string | 状态：open / closed |
+| room_type | string | 房间类型：training / comprehensive |
+| min_price | decimal | 最低价格 |
+| city_id | integer \| null | 城市 ID |
+| city_name | string \| null | 城市名称 |
+| rating | decimal | 评分 |
+| classroom_count | integer | 培训教室数（该房间下 active 课程总数） |
+| class_capacity | string | 小班容量（固定值 "8-12"） |
+| teacher_count | integer | 认证讲师数（去重教师数） |
+| total_students | integer | 累计学员数（所有课程 enrollment_count 之和） |
+| teachers | array | 名师团队列表（关联该房间课程的教师去重后） |
+| courses | array | 课程列表（该房间下所有 active 课程，按 sort_order 排序） |
+
+**错误响应：**
+
+| 状态码 | 说明 |
+|--------|------|
+| 404 | 培训室不存在或 room_type 不是 training/comprehensive |
+
+---
+
 ## 四、管理端 - 活动管理
 
 所有管理端接口需要通过 `X-Admin-Token` header 传递管理员 Token。

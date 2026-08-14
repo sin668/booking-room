@@ -76,7 +76,7 @@ base-ref: 4ecad224175e2279d7e824f8c6292e1000b137b5
 - BUG-22: 迁移中不涉及路由，无尾部斜杠问题
 - 参考现有迁移文件格式（如 `2026_06_02_1000-c9d0e1f2a3b4_add_room_follows.py`），`down_revision` 指向最新迁移 `a2b3c4d5e6f7`
 
-- [ ] **Step 1: 修改 StudyRoom 模型，新增 room_type、rating 列和 city relationship**
+- [x] **Step 1: 修改 StudyRoom 模型，新增 room_type、rating 列和 city relationship**
 
 修改 `br-server/app/models/study_room.py`，在 `min_price` 之后添加 `room_type` 和 `rating` 列，并添加 `city` relationship：
 
@@ -108,7 +108,7 @@ class StudyRoom(Base):
     city = relationship("City")
 ```
 
-- [ ] **Step 2: 创建 Teacher 模型**
+- [x] **Step 2: 创建 Teacher 模型**
 
 创建 `br-server/app/models/teacher.py`：
 
@@ -134,7 +134,7 @@ class Teacher(Base):
     )
 ```
 
-- [ ] **Step 3: 创建 Course 模型**
+- [x] **Step 3: 创建 Course 模型**
 
 创建 `br-server/app/models/course.py`：
 
@@ -173,7 +173,7 @@ class Course(Base):
     )
 ```
 
-- [ ] **Step 4: 注册新模型到 __init__.py**
+- [x] **Step 4: 注册新模型到 __init__.py**
 
 修改 `br-server/app/models/__init__.py`，添加导入和 __all__ 条目：
 
@@ -184,7 +184,7 @@ from app.models.teacher import Teacher
 
 在 `__all__` 列表中添加 `"Course"` 和 `"Teacher"`。
 
-- [ ] **Step 5: 创建 Alembic 迁移文件**
+- [x] **Step 5: 创建 Alembic 迁移文件**
 
 创建 `br-server/alembic/versions/2026_08_14_1000-e3f4a5b6c7d8_add_training_tables.py`：
 
@@ -288,7 +288,7 @@ def downgrade() -> None:
         op.drop_column("study_rooms", "room_type")
 ```
 
-- [ ] **Step 6: 运行迁移**
+- [x] **Step 6: 运行迁移**
 
 ```bash
 cd br-server && conda activate booking-room && alembic upgrade head
@@ -296,7 +296,7 @@ cd br-server && conda activate booking-room && alembic upgrade head
 
 Expected: 迁移成功，无报错。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add br-server/app/models/study_room.py br-server/app/models/teacher.py br-server/app/models/course.py br-server/app/models/__init__.py br-server/alembic/versions/2026_08_14_1000-e3f4a5b6c7d8_add_training_tables.py

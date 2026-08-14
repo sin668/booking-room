@@ -1,10 +1,14 @@
 """培训课程列表 API 路由。"""
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.schemas.course import CourseListResponse, TrainingRoomListResponse
+from app.schemas.course import (
+    CourseListResponse,
+    TrainingRoomDetailResponse,
+    TrainingRoomListResponse,
+)
 from app.services import training_service
 
 router = APIRouter(prefix="/api/v1/training", tags=["training"])
@@ -35,3 +39,14 @@ async def list_training_courses(
     return await training_service.list_courses(
         db, page=page, page_size=page_size, category=category
     )
+
+
+@router.get("/rooms/{room_id}", response_model=TrainingRoomDetailResponse)
+async def get_training_room_detail(
+    room_id: int,
+    db: AsyncSession = Depends(get_db),
+) -> TrainingRoomDetailResponse:
+    result = await training_service.get_training_room_detail(db, room_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="培训室不存在或不是培训室类型")
+    return result

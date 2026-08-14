@@ -61,9 +61,9 @@
 
 ## 10. API 文档更新
 
-- [ ] 10.1 在 `docs/api.md` 补充 `GET /api/v1/training/rooms` 接口文档（路径、参数、响应示例）
-- [ ] 10.2 在 `docs/api.md` 补充 `GET /api/v1/training/courses` 接口文档
-- [ ] 10.3 更新 `docs/api.md` 中 `GET /api/v1/rooms` 接口文档，增加 `room_type` 查询参数和响应字段说明
+- [x] 10.1 在 `docs/api.md` 补充 `GET /api/v1/training/rooms` 接口文档（路径、参数、响应示例）
+- [x] 10.2 在 `docs/api.md` 补充 `GET /api/v1/training/courses` 接口文档
+- [x] 10.3 更新 `docs/api.md` 中 `GET /api/v1/rooms` 接口文档，增加 `room_type` 查询参数和响应字段说明
 
 ## 11. 最终验证
 

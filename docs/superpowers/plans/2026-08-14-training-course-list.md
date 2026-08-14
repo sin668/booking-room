@@ -1881,7 +1881,7 @@ git commit -m "refactor: code review fixes for training feature"
 - Consumes: Task 4 的路由定义
 - Produces: `docs/api.md` 中 3 个接口文档段落
 
-- [ ] **Step 1: 补充 GET /api/v1/training/rooms 接口文档**
+- [x] **Step 1: 补充 GET /api/v1/training/rooms 接口文档**
 
 在 `docs/api.md` 中适当位置（如"自习室"章节之后）增加：
 
@@ -1942,7 +1942,7 @@ git commit -m "refactor: code review fixes for training feature"
 ```
 ```
 
-- [ ] **Step 2: 补充 GET /api/v1/training/courses 接口文档**
+- [x] **Step 2: 补充 GET /api/v1/training/courses 接口文档**
 
 紧接上一步之后增加：
 
@@ -1993,7 +1993,7 @@ git commit -m "refactor: code review fixes for training feature"
 ```
 ```
 
-- [ ] **Step 3: 更新 GET /api/v1/rooms 接口文档**
+- [x] **Step 3: 更新 GET /api/v1/rooms 接口文档**
 
 在 `docs/api.md` 中现有的 `GET /api/v1/rooms` 文档的查询参数表格中增加 `room_type` 行：
 
@@ -2007,7 +2007,7 @@ git commit -m "refactor: code review fixes for training feature"
 "room_type": "study"
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/api.md

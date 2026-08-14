@@ -187,12 +187,15 @@
                 :src="courseCover(course)"
                 mode="aspectFill"
               />
-              <text v-if="course.is_hot" class="course-badge badge-hot">热销</text>
             </view>
             <view class="course-info">
               <view class="course-info-top">
                 <view class="course-name-row">
                   <text class="course-name">{{ course.name }}</text>
+                  <text
+                    v-if="courseBadge(course)"
+                    :class="['course-badge', `badge-${courseBadge(course).type}`]"
+                  >{{ courseBadge(course).text }}</text>
                 </view>
                 <view class="course-teacher-row">
                   <image
@@ -205,7 +208,12 @@
                     <view class="icon icon-user teacher-avatar-icon" />
                   </view>
                   <text class="teacher-name">{{ course.teacher ? course.teacher.name + ' 老师' : '待分配老师' }}</text>
-                  <text class="course-dot">·</text>
+                </view>
+                <view v-if="course.schedule" class="course-schedule-row">
+                  <view class="icon icon-clock schedule-icon" />
+                  <text class="course-schedule">{{ course.schedule }}</text>
+                </view>
+                <view class="course-room-row">
                   <view class="icon icon-location course-location-icon" />
                   <text class="room-name-text">{{ course.room_name }}</text>
                 </view>

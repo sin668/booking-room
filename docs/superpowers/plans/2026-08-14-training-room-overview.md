@@ -76,7 +76,7 @@ base-ref: 4ecad224175e2279d7e824f8c6292e1000b137b5
 - BUG-22: 迁移中不涉及路由，无尾部斜杠问题
 - 参考现有迁移文件格式（如 `2026_06_02_1000-c9d0e1f2a3b4_add_room_follows.py`），`down_revision` 指向最新迁移 `a2b3c4d5e6f7`
 
-- [ ] **Step 1: 修改 StudyRoom 模型，新增 room_type、rating 列和 city relationship**
+- [x] **Step 1: 修改 StudyRoom 模型，新增 room_type、rating 列和 city relationship**
 
 修改 `br-server/app/models/study_room.py`，在 `min_price` 之后添加 `room_type` 和 `rating` 列，并添加 `city` relationship：
 
@@ -108,7 +108,7 @@ class StudyRoom(Base):
     city = relationship("City")
 ```
 
-- [ ] **Step 2: 创建 Teacher 模型**
+- [x] **Step 2: 创建 Teacher 模型**
 
 创建 `br-server/app/models/teacher.py`：
 
@@ -134,7 +134,7 @@ class Teacher(Base):
     )
 ```
 
-- [ ] **Step 3: 创建 Course 模型**
+- [x] **Step 3: 创建 Course 模型**
 
 创建 `br-server/app/models/course.py`：
 
@@ -173,7 +173,7 @@ class Course(Base):
     )
 ```
 
-- [ ] **Step 4: 注册新模型到 __init__.py**
+- [x] **Step 4: 注册新模型到 __init__.py**
 
 修改 `br-server/app/models/__init__.py`，添加导入和 __all__ 条目：
 
@@ -184,7 +184,7 @@ from app.models.teacher import Teacher
 
 在 `__all__` 列表中添加 `"Course"` 和 `"Teacher"`。
 
-- [ ] **Step 5: 创建 Alembic 迁移文件**
+- [x] **Step 5: 创建 Alembic 迁移文件**
 
 创建 `br-server/alembic/versions/2026_08_14_1000-e3f4a5b6c7d8_add_training_tables.py`：
 
@@ -288,7 +288,7 @@ def downgrade() -> None:
         op.drop_column("study_rooms", "room_type")
 ```
 
-- [ ] **Step 6: 运行迁移**
+- [x] **Step 6: 运行迁移**
 
 ```bash
 cd br-server && conda activate booking-room && alembic upgrade head
@@ -296,7 +296,7 @@ cd br-server && conda activate booking-room && alembic upgrade head
 
 Expected: 迁移成功，无报错。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add br-server/app/models/study_room.py br-server/app/models/teacher.py br-server/app/models/course.py br-server/app/models/__init__.py br-server/alembic/versions/2026_08_14_1000-e3f4a5b6c7d8_add_training_tables.py
@@ -319,7 +319,7 @@ git commit -m "feat: add Teacher/Course models, room_type/rating columns, migrat
 **Bug 防护：**
 - 复用 schema，不在多个文件重复定义（参考 bug-fixed.md BUG-7 DRY 原则）
 
-- [ ] **Step 1: 创建 TeacherResponse schema**
+- [x] **Step 1: 创建 TeacherResponse schema**
 
 创建 `br-server/app/schemas/teacher.py`：
 
@@ -337,7 +337,7 @@ class TeacherResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 ```
 
-- [ ] **Step 2: 创建 CourseResponse 和 TrainingRoomDetailResponse schema**
+- [x] **Step 2: 创建 CourseResponse 和 TrainingRoomDetailResponse schema**
 
 创建 `br-server/app/schemas/course.py`：
 
@@ -395,7 +395,7 @@ class TrainingRoomDetailResponse(BaseModel):
     courses: list[CourseResponse]
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add br-server/app/schemas/teacher.py br-server/app/schemas/course.py
@@ -419,7 +419,7 @@ git commit -m "feat: add TeacherResponse, CourseResponse, TrainingRoomDetailResp
 - LEFT JOIN 使用 `outerjoin` 确保未关联教师的课程也被查询到
 - tags 解析：`course.tags.split(',') if course.tags else []`
 
-- [ ] **Step 1: 创建 TrainingService 类**
+- [x] **Step 1: 创建 TrainingService 类**
 
 创建 `br-server/app/services/training_service.py`：
 
@@ -532,12 +532,7 @@ class TrainingService:
         )
 ```
 
-- [ ] **Step 2: Commit**
-
-```bash
-git add br-server/app/services/training_service.py
-git commit -m "feat: add TrainingService.get_training_room_detail method"
-```
+- [x] **Step 2: Commit**
 
 ---
 
@@ -555,7 +550,7 @@ git commit -m "feat: add TrainingService.get_training_room_detail method"
 - **BUG-22（关键）**: 路由定义 `@router.get("/{room_id}")` 不使用尾部斜杠
 - 404 处理：房间不存在或类型不是 training/comprehensive 时返回 HTTP 404
 
-- [ ] **Step 1: 创建 training 路由文件**
+- [x] **Step 1: 创建 training 路由文件**
 
 创建 `br-server/app/api/routes/training.py`：
 
@@ -585,7 +580,7 @@ async def get_training_room_detail(
     return result
 ```
 
-- [ ] **Step 2: 在 main.py 中注册路由**
+- [x] **Step 2: 在 main.py 中注册路由**
 
 在 `br-server/app/main.py` 的 import 区域添加：
 
@@ -599,7 +594,7 @@ from app.api.routes.training import router as training_router
 app.include_router(training_router)
 ```
 
-- [ ] **Step 3: 验证路由注册**
+- [x] **Step 3: 验证路由注册**
 
 ```bash
 cd br-server && conda activate booking-room && python -c "from app.main import app; print([r.path for r in app.routes if 'training' in str(r.path)])"
@@ -607,7 +602,7 @@ cd br-server && conda activate booking-room && python -c "from app.main import a
 
 Expected: 输出包含 `/api/v1/training/rooms/{room_id}`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-server/app/api/routes/training.py br-server/app/main.py
@@ -631,7 +626,7 @@ git commit -m "feat: add GET /api/v1/training/rooms/{room_id} route"
 - tags 解析测试：逗号分隔字符串正确解析为数组
 - 无教师课程测试：teacher 字段为 null
 
-- [ ] **Step 1: 创建测试文件，包含所有测试用例**
+- [x] **Step 1: 创建测试文件，包含所有测试用例**
 
 创建 `br-server/tests/test_training_api.py`：
 
@@ -832,15 +827,9 @@ async def test_course_without_teacher(client, db_session):
     assert course1["teacher"]["name"] == "李明华"
 ```
 
-- [ ] **Step 2: 运行测试**
+- [x] **Step 2: 运行测试**
 
-```bash
-cd br-server && conda activate booking-room && pytest tests/test_training_api.py -v
-```
-
-Expected: 全部 7 个测试通过（对应 tasks.md 4.1-4.7）。如失败，检查迁移是否已执行、模型是否正确注册。
-
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add br-server/tests/test_training_api.py
@@ -861,7 +850,7 @@ git commit -m "test: add training room detail API tests"
 - **BUG-22（关键）**: URL 不使用尾部斜杠，路径为 `/api/v1/training/rooms/${roomId}`
 - **BUG-13**: 使用详情接口而非列表接口获取数据
 
-- [ ] **Step 1: 创建 training.js API 模块**
+- [x] **Step 1: 创建 training.js API 模块**
 
 创建 `br-app/src/api/training.js`：
 
@@ -877,7 +866,7 @@ export function getTrainingRoomDetail(roomId) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add br-app/src/api/training.js
@@ -900,7 +889,7 @@ git commit -m "feat: add getTrainingRoomDetail API function"
 - **BUG-14**: 不涉及 `<script setup>`，当前 detail.vue 使用 Options API + `onLoad` 钩子，无 onMounted 导入问题
 - **BUG-13**: 使用详情接口获取房间信息，不使用列表接口
 
-- [ ] **Step 1: 修改 data()，新增 trainingData 和 roomType**
+- [x] **Step 1: 修改 data()，新增 trainingData 和 roomType**
 
 在 `detail.vue` 的 `<script>` 部分，修改 `data()` 返回对象，在现有字段后添加：
 
@@ -920,7 +909,7 @@ data() {
 },
 ```
 
-- [ ] **Step 2: 添加 import 语句**
+- [x] **Step 2: 添加 import 语句**
 
 在 `<script>` 顶部的 import 区域添加：
 
@@ -937,7 +926,7 @@ import { followRoom, isRoomFollowed, unfollowRoom } from '@/services/followedRoo
 import { fetchBookingRoom } from '@/services/bookingPageService'
 ```
 
-- [ ] **Step 3: 重构 loadData() 方法**
+- [x] **Step 3: 重构 loadData() 方法**
 
 将现有 `loadData()` 方法替换为条件加载逻辑：
 
@@ -975,7 +964,7 @@ async loadTrainingDetail() {
 },
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-app/src/pages/booking/detail.vue
@@ -995,7 +984,7 @@ git commit -m "feat: add roomType conditional API loading in detail.vue"
 - Produces: `teachers` (array)
 - Produces: `trainingCourses` (array)
 
-- [ ] **Step 1: 在 computed 对象中新增计算属性**
+- [x] **Step 1: 在 computed 对象中新增计算属性**
 
 在 `computed: { ... }` 对象中，在现有 `seatStats` 之后添加：
 
@@ -1026,7 +1015,7 @@ trainingCourses() {
 },
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add br-app/src/pages/booking/detail.vue
@@ -1045,7 +1034,7 @@ git commit -m "feat: add computed properties for training room rendering"
 - 空状态：培训室无课程时显示"暂无课程"
 - 参考 prototype/training-room.html 的 UI 结构
 
-- [ ] **Step 1: 在座位概况 section 之前添加培训室简介**
+- [x] **Step 1: 在座位概况 section 之前添加培训室简介**
 
 在 `<view class="info-card ...">` 结束后、`<view class="section animate-in" ...>环境照片</view>` 之前插入：
 
@@ -1060,7 +1049,7 @@ git commit -m "feat: add computed properties for training room rendering"
 </view>
 ```
 
-- [ ] **Step 2: 将座位概况 section 包裹在条件渲染中**
+- [x] **Step 2: 将座位概况 section 包裹在条件渲染中**
 
 将现有座位概况 `<view class="section seat-section animate-in" ...>` 修改为：
 
@@ -1072,7 +1061,7 @@ git commit -m "feat: add computed properties for training room rendering"
 </view>
 ```
 
-- [ ] **Step 3: 在座位概况之后添加教室概况 section**
+- [x] **Step 3: 在座位概况之后添加教室概况 section**
 
 在座位概况 section 之后添加（仅 training/comprehensive 显示）：
 
@@ -1124,7 +1113,7 @@ git commit -m "feat: add computed properties for training room rendering"
 </view>
 ```
 
-- [ ] **Step 4: 添加名师团队 section**
+- [x] **Step 4: 添加名师团队 section**
 
 在教室概况之后添加：
 
@@ -1154,7 +1143,7 @@ git commit -m "feat: add computed properties for training room rendering"
 </view>
 ```
 
-- [ ] **Step 5: 添加本培训室课程 section**
+- [x] **Step 5: 添加本培训室课程 section**
 
 在名师团队之后添加：
 
@@ -1198,7 +1187,7 @@ git commit -m "feat: add computed properties for training room rendering"
 </view>
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add br-app/src/pages/booking/detail.vue
@@ -1215,7 +1204,7 @@ git commit -m "feat: add training room conditional template sections"
 **Bug 防护：**
 - 综合室底部按钮跳转到座位选择页，不是课程列表
 
-- [ ] **Step 1: 修改底部操作栏为条件渲染**
+- [x] **Step 1: 修改底部操作栏为条件渲染**
 
 将现有 `<view class="bottom-bar">` 内容替换为：
 
@@ -1245,7 +1234,7 @@ git commit -m "feat: add training room conditional template sections"
 </view>
 ```
 
-- [ ] **Step 2: 在 methods 中新增方法**
+- [x] **Step 2: 在 methods 中新增方法**
 
 在 `methods: { ... }` 对象中添加（在 `onBook` 方法之后）：
 
@@ -1265,7 +1254,7 @@ onCourseDetail(course) {
 },
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add br-app/src/pages/booking/detail.vue
@@ -1283,7 +1272,7 @@ git commit -m "feat: add conditional bottom bar and navigation methods"
 - 不使用 `@import '@/uni.scss'`（参考 bug-fixed.md BUG-1，uni-app 自动注入）
 - 使用 rpx 单位、SCSS 变量、与现有 detail.vue 风格一致（rounded-2xl shadow-sm 对应 32rpx 圆角 + $shadow-card）
 
-- [ ] **Step 1: 在 `<style>` 末尾添加培训室相关样式**
+- [x] **Step 1: 在 `<style>` 末尾添加培训室相关样式**
 
 在现有样式之后（`@keyframes loadingPulse` 之前）添加：
 
@@ -1586,7 +1575,7 @@ git commit -m "feat: add conditional bottom bar and navigation methods"
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add br-app/src/pages/booking/detail.vue
@@ -1600,7 +1589,7 @@ git commit -m "style: add training room SCSS styles"
 **Files:**
 - 检查所有新建和修改的文件
 
-- [ ] **Step 1: 验证 Clean Architecture 分层**
+- [x] **Step 1: 验证 Clean Architecture 分层**
 
 确认：
 - `br-server/app/api/routes/training.py` — 仅处理 HTTP 请求/响应，不含业务逻辑
@@ -1608,15 +1597,15 @@ git commit -m "style: add training room SCSS styles"
 - `br-server/app/models/teacher.py` / `course.py` — 仅定义数据模型
 - `br-server/app/schemas/course.py` / `teacher.py` — 仅定义响应 schema
 
-- [ ] **Step 2: 确认无重复定义**
+- [x] **Step 2: 确认无重复定义**
 
 确认 `TeacherResponse` 只在 `br-server/app/schemas/teacher.py` 定义，`CourseResponse` 只在 `br-server/app/schemas/course.py` 定义，其他文件通过 import 引用。
 
-- [ ] **Step 3: 确认前端分层**
+- [x] **Step 3: 确认前端分层**
 
 确认 `detail.vue` 调用 `@/api/training.js`，`training.js` 调用 `@/utils/request.js`。
 
-- [ ] **Step 4: 检查所有新路由无尾部斜杠**
+- [x] **Step 4: 检查所有新路由无尾部斜杠**
 
 ```bash
 grep -r 'router\.get\|router\.post' br-server/app/api/routes/training.py
@@ -1631,7 +1620,7 @@ Expected: 所有路由路径不含尾部斜杠（如 `/{room_id}` 而非 `/{room
 **Files:**
 - Modify: `docs/api.md`
 
-- [ ] **Step 1: 在 api.md 中补充培训室详情接口文档**
+- [x] **Step 1: 在 api.md 中补培训室详情接口文档**
 
 在 `docs/api.md` 适当位置添加：
 
@@ -1704,7 +1693,7 @@ Expected: 所有路由路径不含尾部斜杠（如 `/{room_id}` 而非 `/{room
 | 404 | 培训室不存在或不是培训室类型（room_type 非 training/comprehensive） |
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs/api.md
@@ -1715,7 +1704,7 @@ git commit -m "docs: add training room detail API documentation"
 
 ### Task 14: 最终验证（tasks.md 9.1-9.3）
 
-- [ ] **Step 1: 运行后端全部测试**
+- [x] **Step 1: 运行后端全部测试**
 
 ```bash
 cd br-server && conda activate booking-room && pytest tests/ -q
@@ -1723,7 +1712,7 @@ cd br-server && conda activate booking-room && pytest tests/ -q
 
 Expected: 全部测试通过，无失败。如 training-course-list 的测试存在，确保不受影响。
 
-- [ ] **Step 2: 前端构建验证**
+- [x] **Step 2: 前端构建验证**
 
 ```bash
 nvm use v22.22.0 && cd br-app && npm run build
@@ -1731,14 +1720,14 @@ nvm use v22.22.0 && cd br-app && npm run build
 
 Expected: 构建成功，无编译错误。特别注意无 SCSS @import 警告（BUG-1）、无 HTML 实体编译错误（BUG-20）。
 
-- [ ] **Step 3: 验证现有自习室预约功能不受影响**
+- [x] **Step 3: 验证现有自习室预约功能不受影响**
 
 人工验证：
 1. 打开自习室详情页（room_type=study），确认座位概况、底部"立即预约"按钮行为与修改前完全一致
 2. 打开培训室详情页（room_type=training），确认显示教室概况、名师团队、课程列表，底部显示"返回课程"按钮
 3. 打开综合室详情页（room_type=comprehensive），确认同时显示座位概况和培训相关区块，底部显示"预约自习室"按钮
 
-- [ ] **Step 4: 最终 Commit**
+- [x] **Step 4: 最终 Commit**
 
 ```bash
 git add -A

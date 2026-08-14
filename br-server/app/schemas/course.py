@@ -62,6 +62,7 @@ class CourseResponse(BaseModel):
     schedule: str | None = None
     tags: list[str] = []
     status: str
+    is_hot: bool = False
     room_id: int
     room_name: str
 

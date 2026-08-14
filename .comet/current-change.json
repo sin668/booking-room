@@ -1,6 +1,6 @@
 {
   "schema": "comet.selection.v2",
   "workflow": "classic",
-  "change": "training-course-list",
-  "branch": "feature/20260814/training-course-list"
+  "change": "training-room-overview",
+  "branch": "main"
 }

@@ -1287,25 +1287,24 @@ export default {
 .back-btn {
   flex: 1;
   height: 92rpx;
-  background: $surface;
-  border: 2rpx solid $primary;
   border-radius: 44rpx;
+  border: 2rpx solid $border-color;
+  background: $white;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: $shadow-float;
+  box-shadow: $shadow-card;
 }
 
 .back-btn:active {
-  background: $primary-soft;
+  background: $surface-soft;
   transform: translateY(1rpx);
 }
 
 .back-btn-text {
   font-size: 30rpx;
   font-weight: 600;
-  color: $primary;
-  line-height: 1.2;
+  color: $text-secondary;
 }
 
 .animate-in {
@@ -1341,16 +1340,8 @@ export default {
   gap: 12rpx;
 }
 
-.section-bar {
-  width: 48rpx;
-  height: 8rpx;
-  border-radius: 8rpx;
-  background: $primary;
-  flex-shrink: 0;
-}
-
-.intro-section,
-.classroom-section {
+/* === 培训室简介 === */
+.intro-section {
   background: $surface;
   border-radius: 32rpx;
   padding: 28rpx;
@@ -1364,37 +1355,66 @@ export default {
   color: $text-secondary;
 }
 
-.stat-classroom { background: rgba(79, 110, 247, 0.1); }
-.stat-capacity { background: rgba(7, 193, 96, 0.11); }
-.stat-teacher { background: rgba(255, 149, 0, 0.13); }
-.stat-students { background: rgba(168, 85, 247, 0.12); }
+/* === 教室概况 === */
+.classroom-section {
+  background: $surface;
+  border-radius: 32rpx;
+  padding: 28rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+}
+
+.section-bar {
+  width: 6rpx;
+  height: 28rpx;
+  border-radius: 6rpx;
+  background: $primary;
+  margin-right: 12rpx;
+}
+
+.stat-classroom {
+  background: rgba(79, 110, 247, 0.1);
+}
+
+.stat-capacity {
+  background: rgba(7, 193, 96, 0.11);
+}
+
+.stat-teacher {
+  background: rgba(255, 149, 0, 0.13);
+}
+
+.stat-students {
+  background: rgba(168, 85, 247, 0.12);
+}
 
 .door-icon {
-  width: 24rpx;
-  height: 30rpx;
+  width: 30rpx;
+  height: 36rpx;
   border: 4rpx solid $primary;
-  border-radius: 12rpx 12rpx 4rpx 4rpx;
+  border-radius: 8rpx 8rpx 0 0;
 }
 
 .group-icon {
-  width: 28rpx;
-  height: 24rpx;
-  border-radius: 50% 50% 8rpx 8rpx;
-  background: $success;
+  width: 34rpx;
+  height: 18rpx;
+  border: 3rpx solid $success;
+  border-radius: 10rpx;
   position: relative;
 }
 
-.group-icon::before {
+.group-icon::before,
+.group-icon::after {
   content: '';
   position: absolute;
-  top: -12rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 14rpx;
-  height: 14rpx;
-  border-radius: 50%;
+  bottom: -10rpx;
+  width: 4rpx;
+  height: 10rpx;
   background: $success;
 }
+
+.group-icon::before { left: 4rpx; }
+.group-icon::after { right: 4rpx; }
 
 .board-icon {
   width: 30rpx;
@@ -1404,25 +1424,14 @@ export default {
 }
 
 .cap-icon {
-  width: 0;
-  height: 0;
-  border-left: 18rpx solid transparent;
-  border-right: 18rpx solid transparent;
-  border-bottom: 12rpx solid #a855f7;
-  position: relative;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50% 50% 50% 0;
+  border: 4rpx solid #a855f7;
+  transform: rotate(-45deg);
 }
 
-.cap-icon::after {
-  content: '';
-  position: absolute;
-  top: 12rpx;
-  left: -8rpx;
-  width: 16rpx;
-  height: 8rpx;
-  background: #a855f7;
-  border-radius: 0 0 4rpx 4rpx;
-}
-
+/* === 名师团队 === */
 .teacher-scroll {
   white-space: nowrap;
 }
@@ -1450,7 +1459,7 @@ export default {
   width: 96rpx;
   height: 96rpx;
   border-radius: 50%;
-  margin-bottom: 14rpx;
+  margin-bottom: 12rpx;
 }
 
 .teacher-name {
@@ -1463,38 +1472,28 @@ export default {
   font-size: 20rpx;
   color: $text-muted;
   margin-top: 4rpx;
+  text-align: center;
 }
 
 .teacher-rating {
   display: flex;
   align-items: center;
   gap: 4rpx;
-  margin-top: 10rpx;
+  margin-top: 8rpx;
 }
 
 .star {
   font-size: 20rpx;
-  color: #facc15;
+  color: #ffc107;
 }
 
 .rating-text {
   font-size: 22rpx;
-  font-weight: 600;
+  font-weight: 500;
   color: $text-primary;
 }
 
-.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40rpx 0;
-}
-
-.empty-text {
-  font-size: 26rpx;
-  color: $text-muted;
-}
-
+/* === 课程列表 === */
 .course-list {
   display: flex;
   flex-direction: column;
@@ -1529,7 +1528,7 @@ export default {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12rpx;
+  gap: 8rpx;
 }
 
 .course-name {
@@ -1552,13 +1551,10 @@ export default {
 
 .tag-hot .tag-text {
   color: $danger;
-  font-size: 18rpx;
+  font-size: 20rpx;
 }
 
 .course-teacher {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
   margin-top: 8rpx;
 }
 
@@ -1568,13 +1564,11 @@ export default {
 }
 
 .course-schedule {
-  display: flex;
-  align-items: center;
-  margin-top: 8rpx;
+  margin-top: 6rpx;
 }
 
 .schedule-text {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: $text-muted;
 }
 
@@ -1586,7 +1580,7 @@ export default {
 }
 
 .course-price {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 700;
   color: $primary;
 }
@@ -1594,18 +1588,28 @@ export default {
 .price-unit {
   font-size: 20rpx;
   color: $text-muted;
-  font-weight: 400;
 }
 
 .book-pill {
-  padding: 8rpx 20rpx;
+  padding: 6rpx 20rpx;
   border-radius: 999rpx;
   background: $primary-soft;
 }
 
 .book-pill-text {
   font-size: 22rpx;
-  font-weight: 600;
+  font-weight: 500;
   color: $primary;
+}
+
+/* === 空状态 === */
+.empty-state {
+  padding: 40rpx 0;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: $text-muted;
 }
 </style>

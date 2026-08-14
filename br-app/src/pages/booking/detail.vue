@@ -268,6 +268,36 @@ export default {
         maintenance: Number(stats.maintenance || 0),
       }
     },
+
+    isStudyRoom() {
+      return this.roomType === 'study'
+    },
+
+    isTrainingRoom() {
+      return this.roomType === 'training'
+    },
+
+    isComprehensiveRoom() {
+      return this.roomType === 'comprehensive'
+    },
+
+    trainingStats() {
+      if (!this.trainingData) return null
+      return {
+        classroom_count: this.trainingData.classroom_count || 0,
+        class_capacity: this.trainingData.class_capacity || '8-12',
+        teacher_count: this.trainingData.teacher_count || 0,
+        total_students: this.trainingData.total_students || 0,
+      }
+    },
+
+    teachers() {
+      return this.trainingData?.teachers || []
+    },
+
+    trainingCourses() {
+      return this.trainingData?.courses || []
+    },
   },
 
   onLoad(options) {

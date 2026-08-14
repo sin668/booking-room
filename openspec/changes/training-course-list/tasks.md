@@ -54,10 +54,10 @@
 
 ## 9. 代码审查与重构
 
-- [ ] 9.1 确保后端 Clean Architecture 分层：routes 仅处理 HTTP → services 处理业务逻辑 → models 定义数据 → schemas 定义响应
-- [ ] 9.2 消除重复代码：room_type 枚举值和 category 枚举值提取为常量复用
-- [ ] 9.3 确保前端组件分层：页面调用 api 模块，api 模块调用 utils/request.js
-- [ ] 9.4 检查所有新路由无尾部斜杠，现有路由风格一致
+- [x] 9.1 确保后端 Clean Architecture 分层：routes 仅处理 HTTP → services 处理业务逻辑 → models 定义数据 → schemas 定义响应
+- [x] 9.2 消除重复代码：room_type 枚举值和 category 枚举值提取为常量复用
+- [x] 9.3 确保前端组件分层：页面调用 api 模块，api 模块调用 utils/request.js
+- [x] 9.4 检查所有新路由无尾部斜杠，现有路由风格一致
 
 ## 10. API 文档更新
 

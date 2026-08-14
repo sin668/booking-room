@@ -1825,7 +1825,7 @@ git commit -m "feat: add training tab to bottom navigation"
 - Consumes: Task 1-8 的全部产出
 - Produces: 代码质量确认，必要时进行小范围重构
 
-- [ ] **Step 1: 验证后端 Clean Architecture 分层**
+- [x] **Step 1: 验证后端 Clean Architecture 分层**
 
 检查以下分层约束：
 - `br-server/app/api/routes/training.py`：仅处理 HTTP 请求/响应，调用 service 层，不直接操作 ORM
@@ -1835,7 +1835,7 @@ git commit -m "feat: add training tab to bottom navigation"
 
 如发现分层违规，在此步骤修正。
 
-- [ ] **Step 2: 消除重复代码 — 提取枚举常量**
+- [x] **Step 2: 消除重复代码 — 提取枚举常量**
 
 检查 `room_type` 枚举值（`study`/`training`/`comprehensive`）和 `category` 枚举值（`primaryschool`/`middleschool`/`postgraduate`/`civil_service`/`language`/`skills`/`professional`）是否在多处硬编码。
 
@@ -1848,14 +1848,14 @@ COURSE_CATEGORIES = ("primaryschool", "middleschool", "postgraduate", "civil_ser
 
 并在路由的 `pattern` 参数和 service 层的 `in_()` 过滤中引用。
 
-- [ ] **Step 3: 验证前端组件分层**
+- [x] **Step 3: 验证前端组件分层**
 
 检查：
 - `br-app/src/pages/training/index.vue` 调用 `@/api/training.js`
 - `br-app/src/api/training.js` 调用 `@/utils/request.js` 的 `get` 函数
 - 页面不直接调用 `uni.request`，API 模块不包含 UI 逻辑
 
-- [ ] **Step 4: 检查路由无尾部斜杠**
+- [x] **Step 4: 检查路由无尾部斜杠**
 
 验证 `br-server/app/api/routes/training.py` 中：
 - `@router.get("/rooms")` — 无尾部斜杠 ✓
@@ -1863,7 +1863,7 @@ COURSE_CATEGORIES = ("primaryschool", "middleschool", "postgraduate", "civil_ser
 
 验证 `br-server/app/api/routes/study_room.py` 中新增的 `room_type` 参数不引入尾部斜杠问题。
 
-- [ ] **Step 5: Commit（如有修改）**
+- [x] **Step 5: Commit（如有修改）**
 
 ```bash
 git add -A

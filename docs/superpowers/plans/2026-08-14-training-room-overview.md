@@ -889,7 +889,7 @@ git commit -m "feat: add getTrainingRoomDetail API function"
 - **BUG-14**: 不涉及 `<script setup>`，当前 detail.vue 使用 Options API + `onLoad` 钩子，无 onMounted 导入问题
 - **BUG-13**: 使用详情接口获取房间信息，不使用列表接口
 
-- [ ] **Step 1: 修改 data()，新增 trainingData 和 roomType**
+- [x] **Step 1: 修改 data()，新增 trainingData 和 roomType**
 
 在 `detail.vue` 的 `<script>` 部分，修改 `data()` 返回对象，在现有字段后添加：
 
@@ -909,7 +909,7 @@ data() {
 },
 ```
 
-- [ ] **Step 2: 添加 import 语句**
+- [x] **Step 2: 添加 import 语句**
 
 在 `<script>` 顶部的 import 区域添加：
 
@@ -926,7 +926,7 @@ import { followRoom, isRoomFollowed, unfollowRoom } from '@/services/followedRoo
 import { fetchBookingRoom } from '@/services/bookingPageService'
 ```
 
-- [ ] **Step 3: 重构 loadData() 方法**
+- [x] **Step 3: 重构 loadData() 方法**
 
 将现有 `loadData()` 方法替换为条件加载逻辑：
 
@@ -964,7 +964,7 @@ async loadTrainingDetail() {
 },
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add br-app/src/pages/booking/detail.vue

@@ -14,6 +14,7 @@ class StudyRoomResponse(BaseModel):
     city_name: str | None = None
     business_hours: str | None
     status: str
+    room_type: str
     min_price: Decimal
 
     model_config = ConfigDict(from_attributes=True)
@@ -32,6 +33,7 @@ class RoomCreate(BaseModel):
     description: str | None = Field(None, max_length=1000)
     cover_image: str | None = Field(None, max_length=512)
     business_hours: str | None = Field(None, max_length=50)
+    room_type: str = Field("study", pattern="^(study|training|comprehensive)$")
     min_price: Decimal = Field(default=Decimal("0"), ge=0)
 
 
@@ -41,6 +43,7 @@ class RoomUpdate(BaseModel):
     description: str | None = Field(None, max_length=1000)
     cover_image: str | None = Field(None, max_length=512)
     business_hours: str | None = Field(None, max_length=50)
+    room_type: str | None = Field(None, pattern="^(study|training|comprehensive)$")
     min_price: Decimal | None = Field(None, ge=0)
 
 
@@ -56,6 +59,7 @@ class RoomAdminResponse(BaseModel):
     address: str
     business_hours: str | None
     status: str
+    room_type: str
     min_price: Decimal
     created_at: datetime
     updated_at: datetime

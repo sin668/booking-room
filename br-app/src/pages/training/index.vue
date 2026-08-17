@@ -242,13 +242,15 @@
                   <view class="icon icon-location course-location-icon" />
                   <text class="room-name-text">{{ course.room_name }}</text>
                 </view>
+                <!--
                 <view class="course-stats">
                   <view class="stats-rating-wrap">
                     <view class="icon icon-star star-icon" />
                     <text class="stats-rating">{{ course.rating }}</text>
                   </view>
-                  <text class="stats-count">{{ course.enrollment_count }}人已学</text>
+                  <text class="stats-count">{{ course.enrollment_count }}人已学</text>                 
                 </view>
+                -->
               </view>
               <view class="course-footer">
                 <view class="course-price-wrap">

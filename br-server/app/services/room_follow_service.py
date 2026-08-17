@@ -37,9 +37,48 @@ async def list_followed_rooms(
     user_id: uuid.UUID,
     follow_type: str = "room",
 ) -> FollowedRoomListResponse:
-    # Current phase: course type returns empty list
     if follow_type == "course":
-        return FollowedRoomListResponse(items=[], total=0)
+        # Course follows: join with courses table
+        count = (
+            await db.execute(
+                select(func.count())
+                .select_from(RoomFollow)
+                .join(Course, RoomFollow.room_id == Course.id)
+                .where(
+                    RoomFollow.user_id == user_id,
+                    RoomFollow.follow_type == "course",
+                    Course.status == "active",
+                )
+            )
+        ).scalar_one()
+
+        result = await db.execute(
+            select(RoomFollow, Course)
+            .join(Course, RoomFollow.room_id == Course.id)
+            .where(
+                RoomFollow.user_id == user_id,
+                RoomFollow.follow_type == "course",
+                Course.status == "active",
+            )
+            .order_by(RoomFollow.created_at.desc(), RoomFollow.id.desc())
+        )
+        items = [
+            FollowedRoomResponse(
+                id=course.id,
+                name=course.name,
+                description=course.description,
+                cover_image=course.cover_image,
+                address="",
+                city_id=None,
+                city_name=None,
+                business_hours=None,
+                status=course.status,
+                min_price=course.price,
+                followed_at=follow.created_at,
+            )
+            for follow, course in result.all()
+        ]
+        return FollowedRoomListResponse(items=items, total=count)
 
     count = (
         await db.execute(

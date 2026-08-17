@@ -30,6 +30,8 @@ class HotCourseItem(BaseModel):
     def parse_tags(cls, v):
         if v is None or v == "":
             return []
+        if isinstance(v, list):
+            return v
         return [tag.strip() for tag in v.split(",") if tag.strip()]
 
 
@@ -84,6 +86,8 @@ class CourseResponse(BaseModel):
         """将逗号分隔字符串解析为列表，None 或空字符串返回空列表"""
         if v is None or v == "":
             return []
+        if isinstance(v, list):
+            return v
         return [tag.strip() for tag in v.split(",") if tag.strip()]
 
 
@@ -181,4 +185,6 @@ class CourseDetailResponse(BaseModel):
     def parse_tags(cls, v):
         if v is None or v == "":
             return []
+        if isinstance(v, list):
+            return v
         return [tag.strip() for tag in v.split(",") if tag.strip()]

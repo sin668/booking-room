@@ -427,3 +427,50 @@ class TestCourseDetailRoute:
         data = resp.json()
 
         assert len(data["related_courses"]) <= 6
+
+    @pytest.mark.asyncio
+    async def test_related_courses_exceeds_6_returns_exactly_6(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
+        """相关课程超过 6 门时，只返回 6 门，排除当前课程。"""
+        city = City(name="六门课城市", province="广东", sort_order=1, status="active")
+        db_session.add(city)
+        await db_session.flush()
+
+        room = StudyRoom(
+            name="六门课教室", address="地址", status="open",
+            room_type="training", min_price=10.0, city_id=city.id,
+        )
+        db_session.add(room)
+        await db_session.flush()
+
+        teacher = Teacher(name="教师X", title="名师", rating=4.5)
+        db_session.add(teacher)
+        await db_session.flush()
+
+        main_course = Course(
+            room_id=room.id, teacher_id=teacher.id,
+            name="主课程", category="postgraduate", price=80.0,
+            rating=4.9, enrollment_count=300, sort_order=0,
+            status="active",
+        )
+        db_session.add(main_course)
+        await db_session.flush()
+
+        # 创建 8 门同分类相关课程
+        for i in range(8):
+            db_session.add(Course(
+                room_id=room.id, teacher_id=teacher.id,
+                name=f"相关课程{i}", category="postgraduate", price=50.0 + i,
+                rating=4.0, enrollment_count=100 + i, sort_order=i + 1,
+                status="active",
+            ))
+        await db_session.flush()
+
+        resp = await client.get(f"/api/v1/training/courses/{main_course.id}")
+        data = resp.json()
+
+        assert len(data["related_courses"]) == 6
+        # 排除当前课程
+        related_ids = [c["id"] for c in data["related_courses"]]
+        assert main_course.id not in related_ids

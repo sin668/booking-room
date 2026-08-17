@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.schemas.course import (
+    CourseDetailResponse,
     CourseListResponse,
     TrainingRoomDetailResponse,
     TrainingRoomListResponse,
@@ -39,6 +40,17 @@ async def list_training_courses(
     return await training_service.list_courses(
         db, page=page, page_size=page_size, category=category
     )
+
+
+@router.get("/courses/{course_id}", response_model=CourseDetailResponse)
+async def get_course_detail(
+    course_id: int,
+    db: AsyncSession = Depends(get_db),
+) -> CourseDetailResponse:
+    result = await training_service.get_course_detail(db, course_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="课程不存在或未上架")
+    return result
 
 
 @router.get("/rooms/{room_id}", response_model=TrainingRoomDetailResponse)

@@ -23,3 +23,11 @@ export function getTrainingCourses(params) {
 export function getTrainingRoomDetail(roomId) {
   return get(`/api/v1/training/rooms/${roomId}`)
 }
+
+/**
+ * 获取课程详情
+ * @param {number} courseId - 课程ID
+ */
+export function getCourseDetail(courseId) {
+  return get(`/api/v1/training/courses/${courseId}`)
+}

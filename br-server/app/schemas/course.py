@@ -135,3 +135,50 @@ class LessonResponse(BaseModel):
     sort_order: int
     is_free_preview: bool = False
     model_config = ConfigDict(from_attributes=True)
+
+
+class RoomBrief(BaseModel):
+    """轻量教室信息，嵌套在课程详情中"""
+    id: int
+    name: str
+    address: str
+    cover_image: str | None = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RelatedCourseItem(BaseModel):
+    """相关课程推荐项"""
+    id: int
+    name: str
+    cover_image: str | None = None
+    price: Decimal
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CourseDetailResponse(BaseModel):
+    """课程详情响应"""
+    id: int
+    name: str
+    cover_image: str | None = None
+    category: str
+    price: Decimal
+    rating: Decimal
+    enrollment_count: int
+    schedule: str | None = None
+    tags: list[str] = []
+    status: str
+    is_hot: bool = False
+    description: str | None = None
+    teacher: TeacherBrief | None = None
+    room: RoomBrief | None = None
+    lessons: list[LessonResponse] = []
+    related_courses: list[RelatedCourseItem] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def parse_tags(cls, v):
+        if v is None or v == "":
+            return []
+        return [tag.strip() for tag in v.split(",") if tag.strip()]

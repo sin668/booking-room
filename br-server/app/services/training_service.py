@@ -5,12 +5,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.city import City
 from app.models.course import Course
+from app.models.course_lesson import CourseLesson
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.schemas.course import (
+    CourseDetailResponse,
     CourseListResponse,
     CourseResponse,
     HotCourseItem,
+    LessonResponse,
+    RelatedCourseItem,
+    RoomBrief,
     TeacherBrief,
     TrainingRoomDetailResponse,
     TrainingRoomListResponse,
@@ -233,4 +238,85 @@ async def list_courses(
 
     return CourseListResponse(
         items=items, total=total, page=page, page_size=page_size
+    )
+
+
+async def get_course_detail(
+    db: AsyncSession, course_id: int
+) -> CourseDetailResponse | None:
+    """返回课程详情，含教师、教室、课时和相关课程。
+
+    3 步查询，避免 N+1：
+    Step 1: courses + LEFT JOIN teachers + JOIN study_rooms
+    Step 2: course_lessons WHERE course_id ORDER BY sort_order
+    Step 3: 同分类其他活跃课程 LIMIT 6
+    """
+    # Step 1: 课程基本信息 + 教师 + 教室
+    result = await db.execute(
+        select(Course, Teacher, StudyRoom)
+        .outerjoin(Teacher, Course.teacher_id == Teacher.id)
+        .outerjoin(StudyRoom, Course.room_id == StudyRoom.id)
+        .where(Course.id == course_id, Course.status == "active")
+    )
+    row = result.one_or_none()
+    if row is None:
+        return None
+    course, teacher, study_room = row
+
+    # Step 2: 课时列表
+    lessons_result = await db.execute(
+        select(CourseLesson)
+        .where(CourseLesson.course_id == course_id)
+        .order_by(CourseLesson.sort_order.asc())
+    )
+    lessons = [LessonResponse.model_validate(l) for l in lessons_result.scalars().all()]
+
+    # Step 3: 相关课程（同分类，排除当前课程，最多 6 门）
+    related_result = await db.execute(
+        select(Course)
+        .where(
+            Course.category == course.category,
+            Course.id != course_id,
+            Course.status == "active",
+        )
+        .order_by(Course.sort_order.asc())
+        .limit(6)
+    )
+    related_courses = [
+        RelatedCourseItem(id=c.id, name=c.name, cover_image=c.cover_image, price=c.price)
+        for c in related_result.scalars().all()
+    ]
+
+    # 组装响应
+    teacher_brief = None
+    if teacher:
+        teacher_brief = TeacherBrief(
+            id=teacher.id, name=teacher.name,
+            avatar=teacher.avatar, title=teacher.title, rating=teacher.rating,
+        )
+
+    room_brief = None
+    if study_room:
+        room_brief = RoomBrief(
+            id=study_room.id, name=study_room.name,
+            address=study_room.address, cover_image=study_room.cover_image,
+        )
+
+    return CourseDetailResponse(
+        id=course.id,
+        name=course.name,
+        cover_image=course.cover_image,
+        category=course.category,
+        price=course.price,
+        rating=course.rating,
+        enrollment_count=course.enrollment_count,
+        schedule=course.schedule,
+        tags=course.tags or [],
+        status=course.status,
+        is_hot=course.is_hot,
+        description=course.description,
+        teacher=teacher_brief,
+        room=room_brief,
+        lessons=lessons,
+        related_courses=related_courses,
     )

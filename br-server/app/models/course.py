@@ -21,6 +21,7 @@ class Course(Base):
     schedule: Mapped[str | None] = mapped_column(String(200), nullable=True)
     tags: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
+    description: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     is_hot: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)

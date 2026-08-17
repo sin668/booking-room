@@ -14,6 +14,13 @@
       }
     },
     {
+      "path": "pages/training/course-detail",
+      "style": {
+        "navigationBarTitleText": "课程详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/activity/detail",
       "style": {
         "navigationBarTitleText": "活动详情",

@@ -21,6 +21,13 @@
       }
     },
     {
+      "path": "pages/training/course-booking",
+      "style": {
+        "navigationBarTitleText": "预约课程",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/activity/detail",
       "style": {
         "navigationBarTitleText": "活动详情",

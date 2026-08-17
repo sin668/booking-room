@@ -385,7 +385,10 @@ export default {
     },
 
     onBook() {
-      uni.showToast({ title: '预约功能开发中', icon: 'none' })
+      if (!this.courseId) return
+      uni.navigateTo({
+        url: `/pages/training/course-booking?course_id=${this.courseId}`,
+      })
     },
 
     toggleLessons() {

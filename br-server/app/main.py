@@ -25,6 +25,7 @@ from app.api.routes.admin_study_room import router as admin_study_room_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.banner import router as banner_router
 from app.api.routes.booking import router as booking_router
+from app.api.routes.course_booking import router as course_booking_router
 from app.api.routes.coupon import router as coupon_router
 from app.api.routes.booking_verification import router as booking_verification_router
 from app.api.routes.cities import router as cities_router
@@ -242,6 +243,7 @@ app.include_router(study_room_router)
 app.include_router(training_router)
 app.include_router(study_record_router)
 app.include_router(booking_router)
+app.include_router(course_booking_router)
 app.include_router(booking_verification_router)
 app.include_router(wallet_router)
 app.include_router(notification_router)

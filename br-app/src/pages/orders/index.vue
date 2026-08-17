@@ -53,11 +53,12 @@
           :key="order.id"
           :class="['order-card', `status-${order.status}`, `card-enter-${index % 5}`]"
         >
-          <!-- Top row: store name + status badge -->
+          <!-- Top row: title + status badge -->
           <view class="card-header">
             <view class="store-title-wrap">
               <view :class="['status-dot', `dot-${order.status}`]" />
-              <text class="store-name">{{ order.room ? order.room.name : '未知门店' }}</text>
+              <text v-if="isCourseBooking(order)" class="store-name">{{ order.course_name || '课程预约' }}</text>
+              <text v-else class="store-name">{{ order.room ? order.room.name : '未知门店' }}</text>
             </view>
             <view :class="['status-badge', `badge-${order.status}`]">
               <text class="status-badge-text">{{ statusLabel(order.status) }}</text>
@@ -69,26 +70,45 @@
             <view class="dash" v-for="i in 20" :key="i" />
           </view>
 
-          <!-- Seat info -->
-          <view class="card-info-row">
-            <view class="info-icon seat-icon">
-              <view class="seat-icon-shape" />
+          <!-- Seat info (seat booking) -->
+          <template v-if="!isCourseBooking(order)">
+            <view class="card-info-row">
+              <view class="info-icon seat-icon">
+                <view class="seat-icon-shape" />
+              </view>
+              <text class="info-text">{{ seatInfoText(order) }}</text>
             </view>
-            <text class="info-text">{{ seatInfoText(order) }}</text>
-          </view>
 
-          <!-- Time -->
-          <view class="card-info-row">
-            <view class="info-icon clock-icon">
-              <view class="clock-icon-circle" />
-              <view class="clock-icon-hand" />
+            <!-- Time -->
+            <view class="card-info-row">
+              <view class="info-icon clock-icon">
+                <view class="clock-icon-circle" />
+                <view class="clock-icon-hand" />
+              </view>
+              <text class="info-text">{{ order.date }} {{ order.start_time }} - {{ order.end_time }}</text>
             </view>
-            <text class="info-text">{{ order.date }} {{ order.start_time }} - {{ order.end_time }}</text>
-          </view>
+          </template>
+
+          <!-- Course info (course booking) -->
+          <template v-else>
+            <view class="card-info-row">
+              <view class="info-icon course-icon">
+                <text class="course-icon-text">课</text>
+              </view>
+              <text class="info-text">{{ courseInfoText(order) }}</text>
+            </view>
+            <view v-if="order.lesson_titles && order.lesson_titles.length" class="card-info-row">
+              <view class="info-icon lesson-icon">
+                <view class="lesson-icon-dot" />
+              </view>
+              <text class="info-text lesson-titles">{{ order.lesson_titles.join('、') }}</text>
+            </view>
+          </template>
 
           <!-- Duration + Price -->
           <view class="card-bottom-row">
-            <text class="duration-text">{{ calcHours(order) }}小时</text>
+            <text v-if="!isCourseBooking(order)" class="duration-text">{{ calcHours(order) }}小时</text>
+            <text v-else class="duration-text">{{ (order.lesson_titles || []).length }}课时</text>
             <text class="price-text">
               <text class="price-symbol">¥</text>{{ order.total_price || '0.00' }}
             </text>
@@ -113,11 +133,18 @@
               </text>
             </view>
             <view
-              v-if="order.status === 'confirmed' && order.payment_status !== 'pending'"
+              v-if="order.status === 'confirmed' && order.payment_status !== 'pending' && !isCourseBooking(order)"
               class="action-btn"
               @tap="viewSeat(order)"
             >
               <text class="action-btn-text">查看座位</text>
+            </view>
+            <view
+              v-if="order.status === 'confirmed' && order.payment_status !== 'pending' && isCourseBooking(order)"
+              class="action-btn"
+              @tap="viewCourse(order)"
+            >
+              <text class="action-btn-text">查看课程</text>
             </view>
             <view
               v-if="order.can_cancel === true && order.payment_status !== 'pending'"
@@ -160,6 +187,7 @@
 
 <script>
 import { cancelBookingOrder, fetchBookingsPage } from '@/services/bookingPageService'
+import { cancelCourseBooking } from '@/api/courseBooking'
 import { BOOKING_TABS, SEAT_ZONE_LABELS } from '@/constants/booking'
 import { formatBookingStatus, formatHourCount, formatMoney } from '@/utils/formatters'
 
@@ -258,6 +286,15 @@ export default {
       return formatBookingStatus(status)
     },
 
+    isCourseBooking(order) {
+      return order.booking_type === 'course'
+    },
+
+    courseInfoText(order) {
+      const count = (order.lesson_titles || []).length
+      return count ? `${count}课时` : '课程预约'
+    },
+
     seatInfoText(order) {
       if (!order.seat) return '暂无座位信息'
       const seat = order.seat
@@ -308,7 +345,9 @@ export default {
       if (!order || this.cancellingOrderId === order.id) return
       this.cancellingOrderId = order.id
       try {
-        const result = await cancelBookingOrder(order.id)
+        const result = order.booking_type === 'course'
+          ? await cancelCourseBooking(order.id)
+          : await cancelBookingOrder(order.id)
         const refund = result && result.refund_amount ? result.refund_amount : '0.00'
         uni.showToast({
           title: `已取消，退款¥${refund}`,
@@ -332,7 +371,20 @@ export default {
       return formatMoney(value)
     },
 
+    viewCourse(order) {
+      if (!order.course_id) return
+      uni.navigateTo({
+        url: `/pages/training/course-detail?course_id=${order.course_id}`,
+      })
+    },
+
     rebook(order) {
+      if (order.booking_type === 'course' && order.course_id) {
+        uni.navigateTo({
+          url: `/pages/training/course-booking?course_id=${order.course_id}`,
+        })
+        return
+      }
       uni.switchTab({ url: '/pages/booking/index' })
     },
 
@@ -699,6 +751,32 @@ export default {
 
   &::before { left: 2rpx; }
   &::after { right: 2rpx; }
+}
+
+/* Course icon */
+.course-icon {
+  background: $primary-light;
+  border-radius: 8rpx;
+}
+
+.course-icon-text {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: $primary;
+}
+
+/* Lesson icon */
+.lesson-icon-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: $primary;
+}
+
+.lesson-titles {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Clock icon */

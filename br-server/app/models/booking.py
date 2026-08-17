@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Time, func
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -22,7 +23,7 @@ class Booking(Base):
     __tablename__ = "bookings"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    seat_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    seat_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     room_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     date: Mapped[datetime] = mapped_column(Date, nullable=False)
@@ -45,6 +46,10 @@ class Booking(Base):
     penalty_amount: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     refund_amount: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     cancel_policy: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    booking_type: Mapped[str] = mapped_column(String(20), default="seat", nullable=False, index=True)
+    course_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("courses.id"), nullable=True)
+    lesson_ids: Mapped[list[int] | None] = mapped_column(ARRAY(Integer), nullable=True)
+    schedule_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False

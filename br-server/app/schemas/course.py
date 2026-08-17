@@ -71,6 +71,8 @@ class CourseResponse(BaseModel):
     teacher: TeacherBrief | None = None
     category: str
     price: Decimal
+    custom_price: Decimal
+    full_package_price: Decimal | None = None
     rating: Decimal
     enrollment_count: int
     schedule: str | None = None
@@ -168,6 +170,8 @@ class CourseDetailResponse(BaseModel):
     cover_image: str | None = None
     category: str
     price: Decimal
+    custom_price: Decimal
+    full_package_price: Decimal | None = None
     rating: Decimal
     enrollment_count: int
     schedule: str | None = None

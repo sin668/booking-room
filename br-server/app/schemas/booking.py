@@ -46,7 +46,7 @@ class BookingCreate(BaseModel):
 
 class BookingResponse(BaseModel):
     id: int
-    seat_id: int
+    seat_id: int | None = None
     user_id: str
     room_id: int
     date: date
@@ -70,8 +70,13 @@ class BookingResponse(BaseModel):
     cancel_refund_amount: Decimal = Decimal("0.00")
     can_cancel: bool = False
     created_at: datetime
-    seat: SeatBrief
+    seat: SeatBrief | None = None
     room: RoomBrief
+    # 课程预约扩展字段
+    booking_type: str = "seat"
+    course_id: int | None = None
+    course_name: str | None = None
+    lesson_titles: list[str] | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id
+from app.models.course import Course
 from app.models.room_follow import RoomFollow
 from app.models.study_room import StudyRoom
 from app.models.user import User
@@ -161,3 +162,102 @@ async def test_follow_missing_or_closed_room_is_rejected(
 
     assert closed_response.status_code == 404
     assert missing_response.status_code == 404
+
+
+# ── follow_type query parameter tests ────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_list_followed_rooms_default_type_is_room(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_room_follow_data: dict[str, StudyRoom],
+) -> None:
+    """GET without follow_type defaults to 'room'."""
+    room = seed_room_follow_data["open"]
+    db_session.add(RoomFollow(user_id=USER_ID, room_id=room.id, follow_type="room"))
+    await db_session.flush()
+
+    response = await auth_client.get("/api/v1/room-follows")
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+
+
+@pytest.mark.asyncio
+async def test_list_followed_rooms_course_type(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_room_follow_data: dict[str, StudyRoom],
+) -> None:
+    """GET with follow_type=course returns empty list (current phase)."""
+    room = seed_room_follow_data["open"]
+    db_session.add(RoomFollow(user_id=USER_ID, room_id=room.id, follow_type="room"))
+    await db_session.flush()
+
+    response = await auth_client.get("/api/v1/room-follows?follow_type=course")
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 0
+
+
+@pytest.mark.asyncio
+async def test_list_followed_rooms_invalid_type_rejected(
+    auth_client: AsyncClient,
+) -> None:
+    """GET with invalid follow_type returns 422."""
+    response = await auth_client.get("/api/v1/room-follows?follow_type=invalid")
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_follow_room_with_course_type(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_room_follow_data: dict[str, StudyRoom],
+) -> None:
+    """POST with follow_type=course validates against courses table."""
+    # No course exists yet, so should return 404
+    response = await auth_client.post("/api/v1/room-follows/999?follow_type=course")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_follow_room_with_invalid_type_rejected(
+    auth_client: AsyncClient,
+    seed_room_follow_data: dict[str, StudyRoom],
+) -> None:
+    """POST with invalid follow_type returns 422."""
+    room = seed_room_follow_data["open"]
+    response = await auth_client.post(f"/api/v1/room-follows/{room.id}?follow_type=invalid")
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_unfollow_room_with_course_type(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_room_follow_data: dict[str, StudyRoom],
+) -> None:
+    """DELETE with follow_type=course only deletes course follows."""
+    room = seed_room_follow_data["open"]
+    db_session.add(RoomFollow(user_id=USER_ID, room_id=room.id, follow_type="room"))
+    db_session.add(RoomFollow(user_id=USER_ID, room_id=room.id, follow_type="course"))
+    await db_session.flush()
+
+    response = await auth_client.delete(f"/api/v1/room-follows/{room.id}?follow_type=course")
+    assert response.status_code == 204
+
+    # Room follow should still exist
+    remaining = (
+        await db_session.execute(
+            select(RoomFollow).where(
+                RoomFollow.user_id == USER_ID,
+                RoomFollow.room_id == room.id,
+            )
+        )
+    ).scalars().all()
+    assert len(remaining) == 1
+    assert remaining[0].follow_type == "room"

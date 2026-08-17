@@ -308,6 +308,8 @@ async def get_course_detail(
         cover_image=course.cover_image,
         category=course.category,
         price=course.price,
+        custom_price=course.custom_price,
+        full_package_price=course.full_package_price,
         rating=course.rating,
         enrollment_count=course.enrollment_count,
         schedule=course.schedule,

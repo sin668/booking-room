@@ -149,6 +149,7 @@
                 v-for="course in room.hot_courses"
                 :key="course.id"
                 class="hot-course-item"
+                @tap="onCourseDetail(course)"
               >
                 <image
                   class="hot-course-cover"
@@ -205,6 +206,7 @@
             v-for="(course, index) in courses"
             :key="course.id"
             :class="['course-card', 'animate-in', `delay-${Math.min(index + 1, 3)}`]"
+            @tap="onCourseDetail(course)"
           >
             <view class="course-cover-wrap">
               <image
@@ -359,6 +361,11 @@ function isAccentTag(tag) {
 
 function goRoomDetail(roomId) {
   uni.navigateTo({ url: `/pages/booking/detail?room_id=${roomId}` })
+}
+
+function onCourseDetail(course) {
+  if (!course || !course.id) return
+  uni.navigateTo({ url: '/pages/training/course-detail?course_id=' + course.id })
 }
 
 function hotCourseBadge(course) {

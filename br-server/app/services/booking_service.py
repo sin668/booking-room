@@ -12,6 +12,8 @@ from app.domain.booking_rules import (
     should_mark_booking_completed,
 )
 from app.models.booking import Booking
+from app.models.course import Course
+from app.models.course_lesson import CourseLesson
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.models.user import User
@@ -340,7 +342,7 @@ async def list_bookings(
     )
     bookings = result.scalars().all()
 
-    seat_ids = {b.seat_id for b in bookings}
+    seat_ids = {b.seat_id for b in bookings if b.seat_id is not None}
     room_ids = {b.room_id for b in bookings}
 
     seats_result = await db.execute(select(Seat).where(Seat.id.in_(seat_ids))) if seat_ids else None
@@ -348,9 +350,36 @@ async def list_bookings(
     seat_map = {s.id: s for s in seats_result.scalars().all()} if seats_result else {}
     room_map = {r.id: r for r in rooms_result.scalars().all()} if rooms_result else {}
 
+    # 查询课程预约相关数据
+    course_booking_ids = {b.id for b in bookings if getattr(b, "booking_type", None) == "course"}
+    course_map: dict[int, str] = {}  # course_id -> course_name
+    lesson_map: dict[int, list[str]] = {}  # booking_id -> lesson_titles
+    if course_booking_ids:
+        course_ids = {b.course_id for b in bookings if getattr(b, "booking_type", None) == "course" and b.course_id is not None}
+        if course_ids:
+            courses_result = await db.execute(select(Course).where(Course.id.in_(course_ids)))
+            course_map = {c.id: c.name for c in courses_result.scalars().all()}
+
+        for b in bookings:
+            if getattr(b, "booking_type", None) == "course" and b.lesson_ids:
+                lessons_result = await db.execute(
+                    select(CourseLesson.title).where(CourseLesson.id.in_(b.lesson_ids))
+                )
+                lesson_map[b.id] = list(lessons_result.scalars().all())
+
     items: list[BookingResponse] = []
     for b in bookings:
-        items.append(_build_booking_response(b, seat_map[b.seat_id], room_map[b.room_id]))
+        if getattr(b, "booking_type", None) == "course":
+            # 课程预约：无座位，附加课程信息
+            resp = _build_booking_response(
+                b, seat_map.get(b.seat_id), room_map[b.room_id]
+            )
+            resp.booking_type = "course"
+            resp.course_name = course_map.get(b.course_id) if b.course_id else None
+            resp.lesson_titles = lesson_map.get(b.id)
+            items.append(resp)
+        else:
+            items.append(_build_booking_response(b, seat_map[b.seat_id], room_map[b.room_id]))
 
     return BookingListResponse(
         items=items,

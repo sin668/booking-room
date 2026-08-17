@@ -99,7 +99,7 @@
           </view>
 
           <view
-            v-for="(lesson, index) in lessons"
+            v-for="(lesson, index) in visibleLessons"
             :key="lesson.id"
             :class="['lesson-item', { selected: selectedLessonIds.includes(lesson.id) }]"
             @tap="toggleLesson(lesson.id)"
@@ -127,13 +127,25 @@
             @tap="selectFullPackage"
           >
             <view class="full-package-left">
-              <text class="full-package-tag">¥</text>
+              <view class="full-package-icon-wrap">
+                <text class="full-package-icon-text">¥</text>
+              </view>
               <view class="full-package-text">
                 <text class="full-package-title">全套{{ lessons.length }}课时更划算</text>
                 <text class="full-package-save">立省¥{{ fullPackageSaveAmount }}</text>
               </view>
             </view>
-            <text class="full-package-link">查看全套 ›</text>
+            <text class="full-package-link">选择全套 ›</text>
+          </view>
+
+          <!-- Expand/collapse toggle -->
+          <view
+            v-if="lessons.length > 4 && !isFullPackage"
+            class="lessons-expand-btn"
+            @tap="lessonsExpanded = !lessonsExpanded"
+          >
+            <text class="lessons-expand-text">{{ lessonsExpanded ? '收起课时' : '查看全部' + lessons.length + '节课时' }}</text>
+            <text class="lessons-expand-arrow">{{ lessonsExpanded ? '∧' : '›' }}</text>
           </view>
         </view>
 
@@ -168,8 +180,8 @@
         <!-- Coupon Row -->
         <view class="card coupon-card" @tap="openCouponSheet">
           <view class="coupon-row-left">
-            <view class="small-icon-wrap coupon-icon-wrap">
-              <text class="coupon-ticket-icon">🎫</text>
+            <view class="small-icon-wrap coupon-icon">
+              <view class="ticket-icon" />
             </view>
             <text class="coupon-row-title">优惠券</text>
           </view>
@@ -186,8 +198,8 @@
           <view class="payment-title">支付方式</view>
           <view class="payment-option" @tap="selectPaymentMethod('balance')">
             <view class="payment-option-left">
-              <view class="small-icon-wrap balance-icon-wrap">
-                <text class="balance-wallet-icon">💰</text>
+              <view class="small-icon-wrap balance-icon">
+                <view class="wallet-shape-icon" />
               </view>
               <view class="payment-copy">
                 <view class="payment-name-row">
@@ -206,7 +218,7 @@
           <view class="payment-divider" />
           <view class="payment-option" @tap="selectPaymentMethod('wechat')">
             <view class="payment-option-left">
-              <view class="small-icon-wrap wechat-icon-wrap">
+              <view class="small-icon-wrap wechat-icon">
                 <text class="wechat-mark">微</text>
               </view>
               <text class="payment-name">微信支付</text>
@@ -234,11 +246,12 @@
             </text>
           </view>
           <view class="price-divider" />
-          <view class="price-row total-row">
+          <view class="price-total-section">
             <text class="total-label">实付金额</text>
-            <text class="total-value">
-              <text class="total-symbol">¥</text>{{ priceSummary.totalPrice }}
-            </text>
+            <view class="total-value-wrap">
+              <text class="total-symbol">¥</text>
+              <text class="total-value">{{ priceSummary.totalPrice }}</text>
+            </view>
           </view>
         </view>
 
@@ -366,6 +379,7 @@ export default {
       bookingType: 'fixed',
       scheduleType: 'fixed',
       isFullPackage: false,
+      lessonsExpanded: false,
 
       // Coupon
       coupon: null,
@@ -415,6 +429,13 @@ export default {
       const standardTotal = this.lessons.length * this.courseInfo.price
       const save = standardTotal - this.courseInfo.full_package_price
       return money(save > 0 ? save : 0)
+    },
+
+    visibleLessons() {
+      if (this.lessonsExpanded || this.isFullPackage) {
+        return this.lessons
+      }
+      return this.lessons.slice(0, 4)
     },
 
     priceSummary() {
@@ -534,7 +555,8 @@ export default {
     selectFullPackage() {
       this.selectedLessonIds = this.lessons.map(l => l.id)
       this.isFullPackage = true
-      uni.showToast({ title: `已选择全套${this.lessons.length}课时`, icon: 'none' })
+      this.lessonsExpanded = true
+      uni.showToast({ title: `已选择全套${this.lessons.length}课时，立省¥${this.fullPackageSaveAmount}`, icon: 'none' })
     },
 
     switchBookingType(type) {
@@ -1092,17 +1114,21 @@ function money(value) {
   gap: 16rpx;
 }
 
-.full-package-tag {
+.full-package-icon-wrap {
   width: 48rpx;
   height: 48rpx;
-  border-radius: 12rpx;
-  background: $primary-light;
-  color: $primary;
-  font-size: 24rpx;
-  font-weight: 700;
+  border-radius: 14rpx;
+  background: $primary;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+.full-package-icon-text {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #fff;
 }
 
 .full-package-text {
@@ -1126,6 +1152,28 @@ function money(value) {
   font-size: 24rpx;
   color: $primary;
   font-weight: 600;
+}
+
+/* Lessons expand toggle */
+.lessons-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 20rpx 0 4rpx;
+}
+
+.lessons-expand-text {
+  font-size: 24rpx;
+  color: $primary;
+  font-weight: 500;
+}
+
+.lessons-expand-arrow {
+  font-size: 24rpx;
+  color: $primary;
+  font-weight: 700;
+  transform: rotate(90deg);
 }
 
 /* Schedule */
@@ -1225,21 +1273,44 @@ function money(value) {
 }
 
 .small-icon-wrap {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 14rpx;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.coupon-icon-wrap {
+.coupon-icon {
   background: #FFEBEE;
 }
 
-.coupon-ticket-icon {
-  font-size: 24rpx;
+.ticket-icon {
+  width: 34rpx;
+  height: 24rpx;
+  border-radius: 6rpx;
+  background: #EF5350;
+  position: relative;
+}
+
+.ticket-icon::before,
+.ticket-icon::after {
+  content: '';
+  position: absolute;
+  top: 8rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.ticket-icon::before {
+  left: -4rpx;
+}
+
+.ticket-icon::after {
+  right: -4rpx;
 }
 
 /* Payment */
@@ -1336,15 +1407,30 @@ function money(value) {
   background: $primary;
 }
 
-.balance-icon-wrap {
+.balance-icon {
   background: $primary-light;
 }
 
-.balance-wallet-icon {
-  font-size: 24rpx;
+.wallet-shape-icon {
+  width: 34rpx;
+  height: 28rpx;
+  border-radius: 8rpx;
+  border: 4rpx solid $primary;
+  position: relative;
 }
 
-.wechat-icon-wrap {
+.wallet-shape-icon::after {
+  content: '';
+  position: absolute;
+  right: -4rpx;
+  top: 7rpx;
+  width: 12rpx;
+  height: 10rpx;
+  border-radius: 6rpx 0 0 6rpx;
+  background: $primary;
+}
+
+.wechat-icon {
   background: #E8F5E9;
 }
 
@@ -1360,7 +1446,7 @@ function money(value) {
   align-items: center;
   justify-content: space-between;
   gap: 24rpx;
-  margin-bottom: 18rpx;
+  margin-bottom: 14rpx;
 }
 
 .price-row:last-child {
@@ -1383,7 +1469,18 @@ function money(value) {
 
 .price-divider {
   border-top: 2rpx dashed $border-color;
-  margin: 20rpx 0;
+  margin: 16rpx 0;
+}
+
+.price-total-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.total-value-wrap {
+  display: flex;
+  align-items: baseline;
 }
 
 .total-row {
@@ -1391,19 +1488,22 @@ function money(value) {
 }
 
 .total-label {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: $text-primary;
 }
 
 .total-value {
-  font-size: 40rpx;
+  font-size: 44rpx;
   font-weight: 700;
   color: $primary;
+  letter-spacing: -0.5rpx;
 }
 
 .total-symbol {
-  font-size: 26rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  margin-right: 2rpx;
 }
 
 /* Fixed bottom bar */

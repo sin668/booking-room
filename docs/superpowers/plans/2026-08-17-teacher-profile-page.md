@@ -514,9 +514,9 @@ npm run build
 **目标**: 确认避免 bug-fixed.md 中的 BUG-14/20/22
 
 **检查项**:
-- [ ] `onMounted` 从 `vue` 导入，不从 `@dcloudio/uni-app` 导入
-- [ ] 模板中不使用 `<` `>` HTML 实体
-- [ ] 后端路由定义不使用尾部斜杠
+- [x] `onMounted` 从 `vue` 导入，不从 `@dcloudio/uni-app` 导入
+- [x] 模板中不使用 `<` `>` HTML 实体
+- [x] 后端路由定义不使用尾部斜杠
 
 **依赖**: 任务 7.1, 7.2
 

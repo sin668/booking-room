@@ -445,7 +445,8 @@ export default {
       const couponDiscount = this.couponDiscount
 
       if (this.isFullPackage && this.courseInfo.full_package_price) {
-        const originalPrice = money(this.courseInfo.full_package_price)
+        // 全套课时显示原价（未优惠前的标准价格）
+        const originalPrice = money(totalLessons * unitPrice)
         const standardPrice = totalLessons * unitPrice
         const discountAmount = money(Math.max(0, standardPrice - this.courseInfo.full_package_price))
         const totalPrice = money(Math.max(0, this.courseInfo.full_package_price - couponDiscount))

@@ -14,5 +14,7 @@ class Teacher(Base):
     avatar: Mapped[str | None] = mapped_column(String(512), nullable=True)
     title: Mapped[str | None] = mapped_column(String(50), nullable=True)
     rating: Mapped[float] = mapped_column(Numeric(3, 1), default=0.0, nullable=False)
+    bio: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    student_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)

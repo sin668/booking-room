@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/v1/room-follows", tags=["room-follows"])
 
 @router.get("", response_model=FollowedRoomListResponse)
 async def list_followed_rooms(
-    follow_type: str = Query("room", pattern="^(room|course)$"),
+    follow_type: str = Query("room", pattern="^(room|course|teacher)$"),
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> FollowedRoomListResponse:
@@ -24,7 +24,7 @@ async def list_followed_rooms(
 async def follow_room(
     room_id: int,
     response: Response,
-    follow_type: str = Query("room", pattern="^(room|course)$"),
+    follow_type: str = Query("room", pattern="^(room|course|teacher)$"),
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> FollowedRoomResponse:
@@ -42,7 +42,7 @@ async def follow_room(
 @router.delete("/{room_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def unfollow_room(
     room_id: int,
-    follow_type: str = Query("room", pattern="^(room|course)$"),
+    follow_type: str = Query("room", pattern="^(room|course|teacher)$"),
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> None:

@@ -1,0 +1,6 @@
+{
+  "schema": "comet.selection.v2",
+  "workflow": "classic",
+  "change": "teacher-profile-page",
+  "branch": "feature/20260817/teacher-profile-page"
+}

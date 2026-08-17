@@ -9,6 +9,7 @@ from app.models.city import City
 from app.models.course import Course
 from app.models.room_follow import RoomFollow
 from app.models.study_room import StudyRoom
+from app.models.teacher import Teacher
 from app.schemas.room_follow import FollowedRoomListResponse, FollowedRoomResponse
 
 
@@ -37,6 +38,47 @@ async def list_followed_rooms(
     user_id: uuid.UUID,
     follow_type: str = "room",
 ) -> FollowedRoomListResponse:
+    if follow_type == "teacher":
+        # Teacher follows: join with teachers table
+        count = (
+            await db.execute(
+                select(func.count())
+                .select_from(RoomFollow)
+                .join(Teacher, RoomFollow.room_id == Teacher.id)
+                .where(
+                    RoomFollow.user_id == user_id,
+                    RoomFollow.follow_type == "teacher",
+                )
+            )
+        ).scalar_one()
+
+        result = await db.execute(
+            select(RoomFollow, Teacher)
+            .join(Teacher, RoomFollow.room_id == Teacher.id)
+            .where(
+                RoomFollow.user_id == user_id,
+                RoomFollow.follow_type == "teacher",
+            )
+            .order_by(RoomFollow.created_at.desc(), RoomFollow.id.desc())
+        )
+        items = [
+            FollowedRoomResponse(
+                id=teacher.id,
+                name=teacher.name,
+                description=teacher.bio or "",
+                cover_image=teacher.avatar,
+                address="",
+                city_id=None,
+                city_name=None,
+                business_hours=None,
+                status="active",
+                min_price=0,
+                followed_at=follow.created_at,
+            )
+            for follow, teacher in result.all()
+        ]
+        return FollowedRoomListResponse(items=items, total=count)
+
     if follow_type == "course":
         # Course follows: join with courses table
         count = (
@@ -117,6 +159,39 @@ async def follow_room(
     room_id: int,
     follow_type: str = "room",
 ) -> tuple[FollowedRoomResponse, bool]:
+    if follow_type == "teacher":
+        # Validate against teachers table
+        teacher = await db.get(Teacher, room_id)
+        if teacher is None:
+            raise ValueError(f"Teacher {room_id} not found")
+        # Check for existing follow
+        follow = (
+            await db.execute(
+                select(RoomFollow).where(
+                    RoomFollow.user_id == user_id,
+                    RoomFollow.room_id == room_id,
+                    RoomFollow.follow_type == follow_type,
+                )
+            )
+        ).scalar_one_or_none()
+        created = follow is None
+        if follow is None:
+            follow = RoomFollow(user_id=user_id, room_id=room_id, follow_type=follow_type)
+            db.add(follow)
+            await db.flush()
+        await db.commit()
+        await db.refresh(follow)
+        return FollowedRoomResponse(
+            id=teacher.id,
+            name=teacher.name,
+            description=teacher.bio or "",
+            cover_image=teacher.avatar,
+            address="",
+            status="active",
+            min_price=0,
+            followed_at=follow.created_at,
+        ), created
+
     if follow_type == "course":
         # Validate against courses table
         row = (

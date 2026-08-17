@@ -10,6 +10,8 @@ class TeacherBrief(BaseModel):
     avatar: str | None = None
     title: str | None = None
     rating: Decimal
+    bio: str | None = None
+    student_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 

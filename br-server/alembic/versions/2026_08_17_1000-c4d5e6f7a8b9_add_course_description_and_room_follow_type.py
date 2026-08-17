@@ -1,7 +1,7 @@
 """add_course_description_and_room_follow_type
 
-Revision ID: b3c4d5e6f7a8
-Revises: a2b3c4d5e6f7
+Revision ID: c4d5e6f7a8b9
+Revises: fccf087f0f34
 Create Date: 2026-08-17 10:00:00.000000
 
 """
@@ -11,8 +11,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = "b3c4d5e6f7a8"
-down_revision: Union[str, None] = "a2b3c4d5e6f7"
+revision: str = "c4d5e6f7a8b9"
+down_revision: Union[str, None] = "fccf087f0f34"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -47,8 +47,8 @@ def upgrade() -> None:
         op.drop_constraint("room_follows_room_id_fkey", "room_follows", type_="foreignkey")
         op.create_unique_constraint(
             "uq_room_follows_user_room_type",
+            "room_follows",
             ["user_id", "room_id", "follow_type"],
-            table_name="room_follows",
         )
 
 
@@ -83,8 +83,8 @@ def downgrade() -> None:
         )
         op.create_unique_constraint(
             "uq_room_follows_user_room",
+            "room_follows",
             ["user_id", "room_id"],
-            table_name="room_follows",
         )
         op.drop_column("room_follows", "follow_type")
 

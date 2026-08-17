@@ -50,6 +50,7 @@ def test_import_course_schemas():
     tr = TrainingRoomResponse(
         id=1, name="培训室A", address="地址1", status="open",
         room_type="training", min_price=Decimal("50.00"),
+        rating=Decimal("4.5"),
         hot_courses=[hc],
     )
     assert tr.room_type == "training"

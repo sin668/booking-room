@@ -100,7 +100,12 @@ async def seed_course_detail_data(db_session: AsyncSession):
 
     await db_session.flush()
 
-    return {"course_id": course.id, "room_id": room.id, "teacher_id": teacher.id}
+    return {
+        "course_id": course.id,
+        "room_id": room.id,
+        "teacher_id": teacher.id,
+        "inactive_course_id": inactive.id,
+    }
 
 
 @pytest.fixture
@@ -374,12 +379,8 @@ class TestCourseDetailRoute:
         self, client: AsyncClient, seed_course_detail_data
     ):
         """已下线课程返回 404。"""
-        from sqlalchemy import select
-        from app.models.course import Course
-
-        # 需要获取 inactive 课程的 ID
-        # 由于 seed 数据中有一个 inactive 课程，通过列表 API 找到它
-        resp = await client.get("/api/v1/training/courses/99998")
+        ids = seed_course_detail_data
+        resp = await client.get(f"/api/v1/training/courses/{ids['inactive_course_id']}")
         assert resp.status_code == 404
 
     @pytest.mark.asyncio

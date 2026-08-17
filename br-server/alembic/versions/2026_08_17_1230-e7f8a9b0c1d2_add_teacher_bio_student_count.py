@@ -1,6 +1,6 @@
 """add teacher bio and student_count
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: e7f8a9b0c1d2
 Revises: c84abd1322d4
 Create Date: 2026-08-17 12:30:00.000000
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a1b2c3d4e5f6'
+revision: str = 'e7f8a9b0c1d2'
 down_revision: Union[str, None] = 'c84abd1322d4'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

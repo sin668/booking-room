@@ -124,3 +124,14 @@ class TrainingRoomDetailResponse(BaseModel):
     courses: list[CourseResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LessonResponse(BaseModel):
+    """课时响应 Schema"""
+    id: int
+    title: str
+    description: str | None = None
+    duration_minutes: int | None = None
+    sort_order: int
+    is_free_preview: bool = False
+    model_config = ConfigDict(from_attributes=True)

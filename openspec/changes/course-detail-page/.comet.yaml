@@ -16,11 +16,11 @@ plan: docs/superpowers/plans/2026-08-17-course-detail-page.md
 verify_result: pass
 verify_failures: 0
 verification_report: docs/superpowers/reports/2026-08-17-course-detail-page-verify.md
-branch_status: pending
+branch_status: handled
 created_at: 2026-08-17
 verified_at: 2026-08-17
 archive_confirmation: confirmed
-archived: false
+archived: true
 bound_branch: feature/20260817/course-detail-page
 direct_override: null
 handoff_context: openspec/changes/course-detail-page/.comet/handoff/design-context.json

@@ -324,8 +324,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import '@/uni.scss';
-
+/* ── Page scaffold ── */
 .page {
   min-height: 100vh;
   background: $bg-color;

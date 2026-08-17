@@ -149,7 +149,7 @@ def _build_cancellation_preview(
 
 def _build_booking_response(
     booking: Booking,
-    seat: Seat,
+    seat: Seat | None,
     room: StudyRoom,
     refund_transaction_id: uuid.UUID | None = None,
 ) -> BookingResponse:
@@ -184,7 +184,7 @@ def _build_booking_response(
         cancel_refund_amount=cancel_refund_amount,
         can_cancel=can_cancel,
         created_at=booking.created_at,
-        seat=SeatBrief.model_validate(seat),
+        seat=SeatBrief.model_validate(seat) if seat is not None else None,
         room=RoomBrief.model_validate(room),
     )
 
@@ -380,7 +380,7 @@ async def list_bookings(
             resp.lesson_titles = lesson_map.get(b.id)
             items.append(resp)
         else:
-            items.append(_build_booking_response(b, seat_map[b.seat_id], room_map[b.room_id]))
+            items.append(_build_booking_response(b, seat_map.get(b.seat_id), room_map.get(b.room_id)))
 
     return BookingListResponse(
         items=items,

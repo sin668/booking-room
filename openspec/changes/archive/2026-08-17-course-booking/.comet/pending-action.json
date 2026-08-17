@@ -1,0 +1,6 @@
+{
+  "id": "classic-archive:course-booking",
+  "stepId": "full.archive.execute",
+  "type": "checkpoint",
+  "ref": "course-booking"
+}

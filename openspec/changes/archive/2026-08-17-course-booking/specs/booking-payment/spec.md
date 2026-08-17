@@ -1,41 +1,4 @@
-## Purpose
-
-预约支付相关能力：支付方式选择（余额/微信）、余额扣款、微信支付创建与回调、支付状态查询、未支付超时清理、取消退款结算。
-## Requirements
-### Requirement: Booking payment method selection
-系统 SHALL 在订单确认页提供支付方式选择，支持"账户余额"和"微信支付"两种方式。默认选中"账户余额"。UI 参照 `prototype/order-confirm.html` 原型图，使用 radio 样式展示选项。
-
-#### Scenario: Display payment method selector
-- **GIVEN** 用户进入订单确认页
-- **WHEN** 页面加载完成
-- **THEN** 页面显示支付方式选择区域，包含"账户余额"选项（显示当前余额金额）和"微信支付"选项
-- **AND** "账户余额"默认选中，radio 样式显示蓝色选中态
-
-#### Scenario: Select WeChat payment
-- **GIVEN** 用户位于订单确认页
-- **WHEN** 用户点击"微信支付"选项
-- **THEN** "微信支付"显示蓝色选中态，"账户余额"取消选中
-- **AND** 底部按钮文字保持"立即支付"
-
-#### Scenario: Select balance payment
-- **GIVEN** 用户已选择"微信支付"
-- **WHEN** 用户点击"账户余额"选项
-- **THEN** "账户余额"显示蓝色选中态，"微信支付"取消选中
-
-### Requirement: Balance payment insufficient warning
-当选择余额支付且余额不足时，系统 SHALL 在支付方式旁显示余额不足提示，但仍允许用户切换到微信支付。
-
-#### Scenario: Show insufficient balance warning
-- **GIVEN** 用户选择"账户余额"支付
-- **AND** 账户余额小于实付金额
-- **WHEN** 页面渲染
-- **THEN** "账户余额"选项旁显示余额不足提示文字
-
-#### Scenario: Switch to WeChat when balance insufficient
-- **GIVEN** 用户选择"账户余额"且余额不足
-- **WHEN** 用户点击"微信支付"
-- **THEN** 切换到微信支付选中态
-- **AND** 余额不足提示消失
+## MODIFIED Requirements
 
 ### Requirement: Booking payment with balance
 系统 SHALL 在用户选择"账户余额"时，使用现有余额扣款逻辑创建预约，行为与改造前一致。此逻辑同时适用于自习室座位预约和课程预约订单。
@@ -115,60 +78,6 @@
 - **WHEN** 微信通知金额不为 9.00
 - **THEN** 系统拒绝处理，记录错误日志，预约保持 pending
 
-### Requirement: Booking payment status query
-系统 SHALL 提供 `GET /api/v1/bookings/{booking_id}/payment-status` 供前端轮询支付结果。
-
-#### Scenario: Query pending payment
-- **GIVEN** 预约 `payment_status='pending'`
-- **WHEN** 前端查询支付状态
-- **THEN** 返回 `payment_status='pending'`
-
-#### Scenario: Query paid booking
-- **GIVEN** 预约 `payment_status='paid'`
-- **WHEN** 前端查询支付状态
-- **THEN** 返回 `payment_status='paid'`、`paid_at`、`transaction_id`
-
-### Requirement: WeChat payment flow UI management
-前端 SHALL 在微信支付流程中管理状态（创建订单、唤起支付、轮询结果、完成），避免重复提交。
-
-#### Scenario: Prevent duplicate submission during WeChat payment
-- **GIVEN** 用户正在等待微信支付结果
-- **WHEN** 用户重复点击"立即支付"
-- **THEN** 前端忽略重复点击
-
-#### Scenario: WeChat payment cancelled by user
-- **GIVEN** 前端调用 `uni.requestPayment`
-- **WHEN** 用户取消支付
-- **THEN** 显示"支付已取消"
-- **AND** 不自动取消预约，允许用户重新支付
-
-#### Scenario: WeChat payment failed
-- **GIVEN** 前端调用 `uni.requestPayment`
-- **WHEN** 支付返回非取消类错误
-- **THEN** 显示"支付失败，请重试"
-
-#### Scenario: Poll payment result after WeChat success
-- **GIVEN** `uni.requestPayment` 返回 success
-- **WHEN** 前端轮询 `GET /api/v1/bookings/{id}/payment-status`
-- **AND** 响应 `payment_status='paid'`
-- **THEN** 显示预约成功弹窗
-- **AND** 关闭弹窗后跳转到"订单"tab 页
-
-#### Scenario: Payment callback delayed
-- **GIVEN** `uni.requestPayment` 返回 success
-- **WHEN** 前端轮询多次后 `payment_status` 仍为 'pending'
-- **THEN** 显示"支付处理中，请稍后在订单中查看"
-
-### Requirement: Unpaid booking timeout cleanup
-系统 SHALL 对 `payment_status='pending'` 超过 15 分钟的预约自动取消并释放座位。
-
-#### Scenario: Auto-cancel unpaid booking
-- **GIVEN** 预约创建超过 15 分钟且 `payment_status='pending'`
-- **WHEN** 定时任务扫描
-- **THEN** 预约状态变为 'cancelled'
-- **AND** 若使用了卡券，卡券恢复为可用
-- **AND** 座位时段释放
-
 ### Requirement: Booking cancellation refund settlement
 系统 SHALL 在已支付预约取消成功时，将可退金额退回用户钱包，并记录扣款金额、退款金额和退款流水。退款金额 SHALL 基于预约 `total_price` 计算。余额支付和微信支付预约取消后均退回钱包余额。课程预约取消时，已使用的优惠券 MUST 恢复为可用状态。
 
@@ -218,4 +127,3 @@
 - **WHEN** 系统计算扣款金额和退款金额
 - **THEN** 金额按人民币两位小数稳定取值
 - **AND** `penalty_amount + refund_amount = total_price`
-

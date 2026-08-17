@@ -1,0 +1,8 @@
+{
+  "openspec_proposal": "openspec/changes/course-booking/proposal.md",
+  "openspec_design": "openspec/changes/course-booking/design.md",
+  "openspec_tasks": "openspec/changes/course-booking/tasks.md",
+  "openspec_delta_spec": "openspec/changes/course-booking/specs/booking-payment/spec.md",
+  "handoff_context": "openspec/changes/course-booking/.comet/handoff/design-context.json",
+  "handoff_markdown": "openspec/changes/course-booking/.comet/handoff/design-context.md"
+}

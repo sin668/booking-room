@@ -1,0 +1,16 @@
+{
+  "change": "course-booking",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "46e95459a46c77441bac2a944090e9d7bf973db8c190c8112764f42d26993e9e",
+  "files": [
+    { "path": "openspec/changes/course-booking/proposal.md", "sha256": "23ed3b37ef881a44ab810664f8d371fb5e71b02c63b5a75b5495a125efa204eb" },
+    { "path": "openspec/changes/course-booking/design.md", "sha256": "97e424e3e51ee9690d8c0c9e3bfff3bfbab597211f33b21fa6834f1a32d54dd4" },
+    { "path": "openspec/changes/course-booking/tasks.md", "sha256": "6bee3c6b58e5e59be48aed7fa7e2ab5591c583e39a9f8abb01f1e4e3edb654fb" },
+    { "path": "openspec/changes/course-booking/specs/booking-payment/spec.md", "sha256": "6738a5724fbd024f8f5dfe25beacaf3e4314482c49577ecf6bb0186c7a010d07" },
+    { "path": "openspec/changes/course-booking/specs/course-booking-api/spec.md", "sha256": "0c65fb25b22744c0282bd9e78a9692f0f55a2aa7d690c86b0fbb33aa44188872" },
+    { "path": "openspec/changes/course-booking/specs/course-booking-ui/spec.md", "sha256": "53651e2449bc29e66ca2bb72bfaf305b344981de24f9e67ed1229e1fd6b29867" }
+  ]
+}

@@ -442,12 +442,12 @@ export default {
       const count = this.selectedLessonIds.length
       const totalLessons = this.lessons.length
       const unitPrice = this.currentUnitPrice
+      const couponDiscount = this.couponDiscount
 
       if (this.isFullPackage && this.courseInfo.full_package_price) {
         const originalPrice = money(this.courseInfo.full_package_price)
         const standardPrice = totalLessons * unitPrice
         const discountAmount = money(Math.max(0, standardPrice - this.courseInfo.full_package_price))
-        const couponDiscount = this.couponDiscount
         const totalPrice = money(Math.max(0, this.courseInfo.full_package_price - couponDiscount))
         return { originalPrice, discountAmount, couponDiscount, totalPrice, unitPrice }
       }

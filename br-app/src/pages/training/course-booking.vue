@@ -122,7 +122,7 @@
 
           <!-- Full course promo -->
           <view
-            v-if="!isFullPackage && courseInfo.full_package_price"
+            v-if="!isFullPackage && currentFullPackagePrice"
             class="full-package-bar"
             @tap="selectFullPackage"
           >
@@ -172,8 +172,36 @@
             <view class="section-bar" />
             <text class="section-title">选择上课时间</text>
           </view>
-          <view class="schedule-custom-notice">
-            <text class="schedule-custom-text">选择课时后可与老师协商上课时间</text>
+
+          <!-- Weekday selector -->
+          <scroll-view class="weekday-scroll" scroll-x :show-scrollbar="false">
+            <view class="weekday-list">
+              <view
+                v-for="day in weekdayList"
+                :key="day.value"
+                :class="['weekday-item', { active: selectedWeekday === day.value }]"
+                @tap="onSelectWeekday(day)"
+              >
+                <text class="weekday-name">{{ day.name }}</text>
+                <text class="weekday-date">{{ day.date }}</text>
+              </view>
+            </view>
+          </scroll-view>
+
+          <!-- Time slots grid -->
+          <view class="time-grid">
+            <view
+              v-for="slot in timeSlots"
+              :key="slot.value"
+              :class="['time-slot', { selected: selectedTimeSlot === slot.value }]"
+              @tap="onSelectTimeSlot(slot)"
+            >
+              <view class="time-slot-range">
+                <text class="time-slot-start">{{ slot.start }}</text>
+                <text class="time-slot-sep">-</text>
+                <text class="time-slot-end">{{ slot.end }}</text>
+              </view>
+            </view>
           </view>
         </view>
 
@@ -381,6 +409,10 @@ export default {
       isFullPackage: false,
       lessonsExpanded: false,
 
+      // Custom schedule time picker
+      selectedWeekday: 1,
+      selectedTimeSlot: '',
+
       // Coupon
       coupon: null,
       couponDiscount: 0,
@@ -425,10 +457,47 @@ export default {
     },
 
     fullPackageSaveAmount() {
-      if (!this.courseInfo.full_package_price) return '0.00'
-      const standardTotal = this.lessons.length * this.courseInfo.price
-      const save = standardTotal - this.courseInfo.full_package_price
+      if (!this.currentFullPackagePrice) return '0.00'
+      const unitPrice = this.bookingType === 'fixed' ? this.courseInfo.price : this.courseInfo.custom_price
+      const standardTotal = this.lessons.length * unitPrice
+      const save = standardTotal - this.currentFullPackagePrice
       return money(save > 0 ? save : 0)
+    },
+
+    currentFullPackagePrice() {
+      return this.bookingType === 'fixed'
+        ? this.courseInfo.full_package_price
+        : this.courseInfo.full_custom_price
+    },
+
+    weekdayList() {
+      const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+      const today = new Date()
+      const currentDay = today.getDay() || 7 // Convert Sunday (0) to 7
+      const list = []
+      for (let i = 0; i < 7; i++) {
+        const dayIndex = (currentDay + i - 1) % 7
+        const d = new Date(today)
+        d.setDate(today.getDate() + i)
+        list.push({
+          value: dayIndex + 1, // 1=Monday, 7=Sunday
+          name: weekdays[dayIndex],
+          date: `${d.getMonth() + 1}/${d.getDate()}`,
+        })
+      }
+      return list
+    },
+
+    timeSlots() {
+      return [
+        { value: '08:00-10:00', start: '08:00', end: '10:00' },
+        { value: '10:00-12:00', start: '10:00', end: '12:00' },
+        { value: '12:00-14:00', start: '12:00', end: '14:00' },
+        { value: '14:00-16:00', start: '14:00', end: '16:00' },
+        { value: '16:00-18:00', start: '16:00', end: '18:00' },
+        { value: '18:00-20:00', start: '18:00', end: '20:00' },
+        { value: '20:00-22:00', start: '20:00', end: '22:00' },
+      ]
     },
 
     visibleLessons() {
@@ -444,12 +513,12 @@ export default {
       const unitPrice = this.currentUnitPrice
       const couponDiscount = this.couponDiscount
 
-      if (this.isFullPackage && this.courseInfo.full_package_price) {
+      if (this.isFullPackage && this.currentFullPackagePrice) {
         // 全套课时显示原价（未优惠前的标准价格）
         const originalPrice = money(totalLessons * unitPrice)
         const standardPrice = totalLessons * unitPrice
-        const discountAmount = money(Math.max(0, standardPrice - this.courseInfo.full_package_price))
-        const totalPrice = money(Math.max(0, this.courseInfo.full_package_price - couponDiscount))
+        const discountAmount = money(Math.max(0, standardPrice - this.currentFullPackagePrice))
+        const totalPrice = money(Math.max(0, this.currentFullPackagePrice - couponDiscount))
         return { originalPrice, discountAmount, couponDiscount, totalPrice, unitPrice }
       }
 
@@ -462,7 +531,7 @@ export default {
     priceLabel() {
       const count = this.selectedLessonIds.length
       const unitPrice = this.currentUnitPrice
-      if (this.isFullPackage && this.courseInfo.full_package_price) {
+      if (this.isFullPackage && this.currentFullPackagePrice) {
         return `全套课时（${this.lessons.length}课时）`
       }
       return `课程费（${count}课时 × ¥${unitPrice}）`
@@ -541,6 +610,14 @@ export default {
       } finally {
         this.couponLoading = false
       }
+    },
+
+    onSelectWeekday(day) {
+      this.selectedWeekday = day.value
+    },
+
+    onSelectTimeSlot(slot) {
+      this.selectedTimeSlot = slot.value
     },
 
     toggleLesson(lessonId) {
@@ -1220,15 +1297,107 @@ function money(value) {
   color: $text-muted;
 }
 
-.schedule-custom-notice {
-  background: $primary-soft;
-  border-radius: 20rpx;
-  padding: 24rpx;
+/* Custom schedule time picker */
+.weekday-scroll {
+  margin-bottom: 16rpx;
 }
 
-.schedule-custom-text {
-  font-size: 24rpx;
+.weekday-list {
+  display: flex;
+  gap: 12rpx;
+  padding: 4rpx 0;
+}
+
+.weekday-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 104rpx;
+  height: 120rpx;
+  border-radius: 22rpx;
+  background: $surface;
+  box-shadow: $shadow-sm;
+  border: 1rpx solid $border-soft;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.weekday-item.active {
+  background: $gradient-primary;
+  box-shadow: $shadow-float;
+  border-color: transparent;
+}
+
+.weekday-name {
+  font-size: 20rpx;
   color: $text-secondary;
+}
+
+.weekday-item.active .weekday-name {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.weekday-date {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: $text-primary;
+  margin-top: 4rpx;
+}
+
+.weekday-item.active .weekday-date {
+  color: #fff;
+}
+
+/* Time slots grid */
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+}
+
+.time-slot {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 72rpx;
+  padding: 0 8rpx;
+  border-radius: 18rpx;
+  border: 2rpx solid $border-soft;
+  background: $surface;
+  transition: all 0.2s;
+}
+
+.time-slot.selected {
+  background: $gradient-primary;
+  border-color: $primary;
+  box-shadow: 0 8rpx 18rpx rgba(79, 110, 247, 0.18);
+}
+
+.time-slot-range {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.time-slot-start,
+.time-slot-end,
+.time-slot-sep {
+  font-size: 23rpx;
+  line-height: 1;
+  color: $text-secondary;
+}
+
+.time-slot-sep {
+  margin: 0 2rpx;
+}
+
+.time-slot.selected .time-slot-start,
+.time-slot.selected .time-slot-end,
+.time-slot.selected .time-slot-sep {
+  color: #fff;
 }
 
 /* Coupon */

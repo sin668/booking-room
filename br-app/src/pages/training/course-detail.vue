@@ -393,7 +393,10 @@ export default {
     },
 
     onTeacherTap() {
-      uni.showToast({ title: '教师主页开发中', icon: 'none' })
+      if (!this.teacher || !this.teacher.id) return
+      uni.navigateTo({
+        url: `/pages/teacher/profile?teacher_id=${this.teacher.id}`,
+      })
     },
 
     onRelatedCourse(course) {

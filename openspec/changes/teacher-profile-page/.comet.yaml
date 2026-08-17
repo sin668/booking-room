@@ -7,7 +7,7 @@ build_pause: null
 subagent_dispatch: confirmed
 tdd_mode: direct
 review_mode: standard
-isolation: null
+isolation: worktree
 verify_mode: null
 auto_transition: true
 base_ref: 7ff33ae11cbc0c499c0cd1d11a7a9961b97d8688
@@ -21,7 +21,7 @@ created_at: 2026-08-17
 verified_at: null
 archive_confirmation: null
 archived: false
-bound_branch: null
+bound_branch: feature/20260817/teacher-profile-page
 direct_override: null
 handoff_context: openspec/changes/teacher-profile-page/.comet/handoff/design-context.json
 handoff_hash: ccaa8cbca092d7eded3687ad91f31ded5e836a0da3a957a00d794a62662535c1

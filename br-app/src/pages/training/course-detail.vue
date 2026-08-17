@@ -57,7 +57,7 @@
             <text class="stats-sub">({{ course.review_count || 0 }})</text>
           </view>
           <view class="stats-item">
-            <text class="stats-text">{{ course.student_count || 0 }}人已学</text>
+            <text class="stats-text">{{ course.enrollment_count || 0 }}人已学</text>
           </view>
           <view class="stats-item">
             <text class="stats-text">{{ course.lesson_count || lessons.length }}课时</text>
@@ -159,19 +159,19 @@
             :key="lesson.id || idx"
             class="lesson-item"
           >
-            <view :class="['lesson-icon-wrap', lesson.status === 'available' ? 'active' : 'locked']">
-              <text :class="['lesson-icon', lesson.status === 'available' ? 'play' : 'lock']">
-                {{ lesson.status === 'available' ? '▶' : '◼' }}
+            <view :class="['lesson-icon-wrap', lesson.is_free_preview ? 'active' : 'locked']">
+              <text :class="['lesson-icon', lesson.is_free_preview ? 'play' : 'lock']">
+                {{ lesson.is_free_preview ? '▶' : '◼' }}
               </text>
             </view>
             <view class="lesson-body">
-              <text class="lesson-title">{{ lesson.title || lesson.name }}</text>
+              <text class="lesson-title">{{ lesson.title }}</text>
               <text class="lesson-meta">
-                {{ lesson.duration || '45分钟' }}{{ lesson.status_label ? ' · ' + lesson.status_label : '' }}
+                {{ lesson.duration_minutes ? lesson.duration_minutes + '分钟' : '45分钟' }}{{ lesson.is_free_preview ? ' · 免费试听' : '' }}
               </text>
             </view>
-            <text :class="['lesson-status', lesson.status === 'available' ? 'available' : '']">
-              {{ lesson.status === 'available' ? '可预约' : '需预约' }}
+            <text :class="['lesson-status', lesson.is_free_preview ? 'available' : '']">
+              {{ lesson.is_free_preview ? '可试听' : '付费' }}
             </text>
           </view>
           <view v-if="lessons.length > 4" class="expand-btn" @tap="toggleLessons">

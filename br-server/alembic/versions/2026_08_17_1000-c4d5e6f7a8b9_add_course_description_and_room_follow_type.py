@@ -26,6 +26,23 @@ def upgrade() -> None:
         sa.Column("description", sa.String(1000), nullable=True),
     )
 
+    # 1.5 Create course_lessons table
+    op.create_table(
+        "course_lessons",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("course_id", sa.Integer(), nullable=False),
+        sa.Column("title", sa.String(200), nullable=False),
+        sa.Column("description", sa.String(500), nullable=True),
+        sa.Column("duration_minutes", sa.Integer(), nullable=True),
+        sa.Column("sort_order", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("is_free_preview", sa.Boolean(), nullable=False, server_default=sa.false()),
+        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.PrimaryKeyConstraint("id"),
+        sa.ForeignKeyConstraint(["course_id"], ["courses.id"], ondelete="CASCADE"),
+    )
+    op.create_index("ix_course_lessons_course_id", "course_lessons", ["course_id"])
+
     # 2. Modify room_follows: add follow_type, drop old FK + unique, add new unique
     if dialect_name == "sqlite":
         with op.batch_alter_table("room_follows", recreate="always") as batch_op:
@@ -88,4 +105,6 @@ def downgrade() -> None:
         )
         op.drop_column("room_follows", "follow_type")
 
+    op.drop_index("ix_course_lessons_course_id", table_name="course_lessons")
+    op.drop_table("course_lessons")
     op.drop_column("courses", "description")

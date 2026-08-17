@@ -1,0 +1,6 @@
+{
+  "id": "classic-archive:course-detail-page",
+  "stepId": "full.archive.execute",
+  "type": "checkpoint",
+  "ref": "course-detail-page"
+}

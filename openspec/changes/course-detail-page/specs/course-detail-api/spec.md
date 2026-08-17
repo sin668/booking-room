@@ -21,6 +21,7 @@
 - `description`：课程介绍（可空）
 - `teacher`：教师信息对象（可空），含 `id`、`name`、`avatar`、`title`、`rating`
 - `room`：教室信息对象，含 `id`、`name`、`address`、`cover_image`
+- `lessons`：课时列表，按 `sort_order` 升序排列，每项含 `id`、`title`、`description`、`duration_minutes`、`sort_order`、`is_free_preview`
 - `related_courses`：相关课程列表（同分类其他课程，最多 6 门）
 
 **错误场景**：
@@ -34,3 +35,7 @@ Course 模型新增可选 `description` 字段（String(1000)），用于存储�
 ### REQ-CDA-3: 相关课程查询
 
 详情 API 返回的 `related_courses` 字段包含同分类下其他活跃课程（排除当前课程），按 `sort_order` 排序，最多返回 6 门。每门课程包含 `id`、`name`、`cover_image`、`price`。
+
+### REQ-CDA-4: 课时数据嵌入
+
+课程详情 API 的 `lessons` 字段从 `course_lessons` 表查询，按 `sort_order` 升序排列。无课时时返回空数组。

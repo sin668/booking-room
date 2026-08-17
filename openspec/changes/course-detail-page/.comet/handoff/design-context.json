@@ -1,0 +1,17 @@
+{
+  "change": "course-detail-page",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "f00931f94e40180e5a6849164c0ef824b4a1e4e487f8262fed0f2e67138188a9",
+  "files": [
+    { "path": "openspec/changes/course-detail-page/proposal.md", "sha256": "a4d561d847b097f4c4711b5a4702441802a0ca486ab1a17cb221e86f29139f8b" },
+    { "path": "openspec/changes/course-detail-page/design.md", "sha256": "be6f92fb419b506938200d60238c41aeaa891c2f181684e7a8ced06cef7eef3f" },
+    { "path": "openspec/changes/course-detail-page/tasks.md", "sha256": "f199c660b17d5ee2fb6d4e73694a5277d0ca1364feb132bd756b51f3f24bc549" },
+    { "path": "openspec/changes/course-detail-page/specs/course-detail-api/spec.md", "sha256": "fcdbe3bd950ca7d784a5199476c346a299b524e8e55cd21c5d86661f16290487" },
+    { "path": "openspec/changes/course-detail-page/specs/course-detail-ui/spec.md", "sha256": "16cb79f50319143ee2d7cf121970626538fb4e205c7ff24884f4f58befbcbabb" },
+    { "path": "openspec/changes/course-detail-page/specs/course-follow/spec.md", "sha256": "c69ad20faa13b027d64f5ad944af83ca49386924dfa47749289d51dcfca0a302" },
+    { "path": "openspec/changes/course-detail-page/specs/course-lessons/spec.md", "sha256": "4021a93462675779705f211c3835675664cd6ccaa0d6c855f9394243a4dca5d4" }
+  ]
+}

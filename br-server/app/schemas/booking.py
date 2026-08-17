@@ -74,6 +74,7 @@ class BookingResponse(BaseModel):
     room: RoomBrief
     # 课程预约扩展字段
     booking_type: str = "seat"
+    course_id: int | None = None
     course_name: str | None = None
     lesson_titles: list[str] | None = None
 

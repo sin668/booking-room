@@ -375,6 +375,7 @@ async def list_bookings(
                 b, seat_map.get(b.seat_id), room_map[b.room_id]
             )
             resp.booking_type = "course"
+            resp.course_id = b.course_id
             resp.course_name = course_map.get(b.course_id) if b.course_id else None
             resp.lesson_titles = lesson_map.get(b.id)
             items.append(resp)

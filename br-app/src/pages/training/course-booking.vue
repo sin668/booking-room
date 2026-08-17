@@ -111,7 +111,7 @@
               <text class="lesson-play-icon">▶</text>
             </view>
             <view class="lesson-info">
-              <text class="lesson-title">第{{ lesson.sort_order || index + 1 }}讲 · {{ lesson.title }}</text>
+              <text class="lesson-title">{{ lesson.title }}</text>
               <view class="lesson-meta">
                 <text class="lesson-duration">{{ formatDuration(lesson.duration_minutes) }}</text>
                 <text class="lesson-status">可预约</text>

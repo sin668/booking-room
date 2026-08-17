@@ -77,6 +77,9 @@ class BookingResponse(BaseModel):
     course_id: int | None = None
     course_name: str | None = None
     lesson_titles: list[str] | None = None
+    teacher_name: str | None = None
+    teacher_avatar: str | None = None
+    schedule: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

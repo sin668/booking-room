@@ -16,6 +16,7 @@ from app.models.course import Course
 from app.models.course_lesson import CourseLesson
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
+from app.models.teacher import Teacher
 from app.models.user import User
 from app.models.wallet import WalletTransaction
 from app.repositories.booking_repository import BookingRepository
@@ -353,12 +354,25 @@ async def list_bookings(
     # 查询课程预约相关数据
     course_booking_ids = {b.id for b in bookings if getattr(b, "booking_type", None) == "course"}
     course_map: dict[int, str] = {}  # course_id -> course_name
+    course_schedule_map: dict[int, str] = {}  # course_id -> schedule
+    course_teacher_map: dict[int, int | None] = {}  # course_id -> teacher_id
+    teacher_map: dict[int, dict] = {}  # teacher_id -> {name, avatar}
     lesson_map: dict[int, list[str]] = {}  # booking_id -> lesson_titles
     if course_booking_ids:
         course_ids = {b.course_id for b in bookings if getattr(b, "booking_type", None) == "course" and b.course_id is not None}
         if course_ids:
             courses_result = await db.execute(select(Course).where(Course.id.in_(course_ids)))
-            course_map = {c.id: c.name for c in courses_result.scalars().all()}
+            courses_list = list(courses_result.scalars().all())
+            for c in courses_list:
+                course_map[c.id] = c.name
+                course_schedule_map[c.id] = c.schedule
+                course_teacher_map[c.id] = c.teacher_id
+            
+            # 查询教师信息
+            teacher_ids = {c.teacher_id for c in courses_list if c.teacher_id is not None}
+            if teacher_ids:
+                teachers_result = await db.execute(select(Teacher).where(Teacher.id.in_(teacher_ids)))
+                teacher_map = {t.id: {"name": t.name, "avatar": t.avatar} for t in teachers_result.scalars().all()}
 
         for b in bookings:
             if getattr(b, "booking_type", None) == "course" and b.lesson_ids:
@@ -378,6 +392,14 @@ async def list_bookings(
             resp.course_id = b.course_id
             resp.course_name = course_map.get(b.course_id) if b.course_id else None
             resp.lesson_titles = lesson_map.get(b.id)
+            resp.schedule = course_schedule_map.get(b.course_id) if b.course_id else None
+            # 设置教师信息
+            if b.course_id and b.course_id in course_teacher_map:
+                teacher_id = course_teacher_map[b.course_id]
+                if teacher_id and teacher_id in teacher_map:
+                    teacher_info = teacher_map[teacher_id]
+                    resp.teacher_name = teacher_info["name"]
+                    resp.teacher_avatar = teacher_info["avatar"]
             items.append(resp)
         else:
             items.append(_build_booking_response(b, seat_map.get(b.seat_id), room_map.get(b.room_id)))

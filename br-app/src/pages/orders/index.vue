@@ -91,12 +91,37 @@
 
           <!-- Course info (course booking) -->
           <template v-else>
+            <!-- Teacher row -->
             <view class="card-info-row">
-              <view class="info-icon course-icon">
-                <text class="course-icon-text">课</text>
+              <view class="info-icon teacher-icon">
+                <image
+                  v-if="order.teacher_avatar"
+                  class="teacher-avatar-img"
+                  :src="order.teacher_avatar"
+                  mode="aspectFill"
+                />
+                <view v-else class="teacher-avatar-placeholder">
+                  <view class="icon icon-user teacher-avatar-icon" />
+                </view>
               </view>
-              <text class="info-text">{{ courseInfoText(order) }}</text>
+              <text class="info-text">{{ order.teacher_name ? order.teacher_name + ' 老师' : '待分配老师' }}</text>
             </view>
+            <!-- Schedule row -->
+            <view v-if="order.schedule" class="card-info-row">
+              <view class="info-icon clock-icon">
+                <view class="clock-icon-circle" />
+                <view class="clock-icon-hand" />
+              </view>
+              <text class="info-text">{{ order.schedule }}</text>
+            </view>
+            <!-- Room row -->
+            <view class="card-info-row">
+              <view class="info-icon location-icon">
+                <view class="icon icon-location location-icon-shape" />
+              </view>
+              <text class="info-text">{{ order.room ? order.room.name : '未知培训室' }}</text>
+            </view>
+            <!-- Lesson titles -->
             <view v-if="order.lesson_titles && order.lesson_titles.length" class="card-info-row">
               <view class="info-icon lesson-icon">
                 <view class="lesson-icon-dot" />
@@ -108,7 +133,6 @@
           <!-- Duration + Price -->
           <view class="card-bottom-row">
             <text v-if="!isCourseBooking(order)" class="duration-text">{{ calcHours(order) }}小时</text>
-            <text v-else class="duration-text">{{ (order.lesson_titles || []).length }}课时</text>
             <text class="price-text">
               <text class="price-symbol">¥</text>{{ order.total_price || '0.00' }}
             </text>
@@ -763,6 +787,43 @@ export default {
   font-size: 22rpx;
   font-weight: 700;
   color: $primary;
+}
+
+/* Teacher icon */
+.teacher-icon {
+  background: $primary-light;
+  border-radius: 50%;
+}
+
+.teacher-avatar-img {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+}
+
+.teacher-avatar-placeholder {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background: rgba(79, 110, 247, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teacher-avatar-icon {
+  font-size: 18rpx;
+  color: $primary;
+}
+
+/* Location icon */
+.location-icon {
+  background: transparent;
+}
+
+.location-icon-shape {
+  font-size: 28rpx;
+  color: $text-muted;
 }
 
 /* Lesson icon */

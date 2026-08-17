@@ -199,17 +199,34 @@ def _scope_allows(user: Any, coupon: Coupon, seat: Seat, has_history: bool) -> b
 async def list_available_coupons_for_booking(
     db: AsyncSession,
     user_id: str | uuid.UUID,
-    seat_id: int,
-    date: date,
-    start_time: time,
-    end_time: time,
+    *,
+    seat_id: int | None = None,
+    date: date | None = None,
+    start_time: time | None = None,
+    end_time: time | None = None,
+    course_id: int | None = None,
+    booking_type: str | None = None,
 ) -> AvailableCouponsForBookingListResponse:
-    seat_result = await db.execute(select(Seat).where(Seat.id == seat_id))
-    seat = seat_result.scalar_one_or_none()
-    if seat is None:
-        raise CouponNotFoundError("座位不存在")
+    # 座位预约场景
+    if seat_id is not None:
+        seat_result = await db.execute(select(Seat).where(Seat.id == seat_id))
+        seat = seat_result.scalar_one_or_none()
+        if seat is None:
+            raise CouponNotFoundError("座位不存在")
+        original_price = _calculate_original_price(Decimal(str(seat.price_per_hour)), start_time, end_time)
+    # 课程预约场景
+    elif course_id is not None:
+        from app.models.course import Course
+        course_result = await db.execute(select(Course).where(Course.id == course_id))
+        course = course_result.scalar_one_or_none()
+        if course is None:
+            raise CouponNotFoundError("课程不存在")
+        # 课程价格作为原价（单课时价格，前端会根据选择课时数计算总价）
+        original_price = Decimal(str(course.price))
+        seat = None  # 课程预约无座位
+    else:
+        raise CouponError("缺少必要参数：seat_id 或 course_id")
 
-    original_price = _calculate_original_price(Decimal(str(seat.price_per_hour)), start_time, end_time)
     has_history = await _has_booking_history(db, str(user_id))
     user = await _load_user(db, user_id)
     rows = await _load_user_coupons(db, str(user_id))
@@ -222,7 +239,12 @@ async def list_available_coupons_for_booking(
         status = _get_coupon_status(user_coupon, coupon, now=now)
         if status != "available":
             continue
-        if not _scope_allows(user, coupon, seat, has_history):
+        # 课程预约跳过 seat_zone 类型优惠券
+        if seat is None and coupon.scope == "seat_zone":
+            continue
+        if seat is not None and not _scope_allows(user, coupon, seat, has_history):
+            continue
+        if seat is None and not _check_scope(user, coupon, has_prior_bookings=has_history):
             continue
         discount_amount = _calc_discount(coupon, original_price)
         if discount_amount <= Decimal("0.00"):

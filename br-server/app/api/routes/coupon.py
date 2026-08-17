@@ -25,15 +25,21 @@ async def list_coupons(
 
 @router.get("/available-for-booking", response_model=AvailableCouponsForBookingListResponse)
 async def list_available_coupons_for_booking(
-    seat_id: int = Query(..., ge=1),
-    date: date = Query(...),
-    start_time: time = Query(...),
-    end_time: time = Query(...),
+    seat_id: int | None = Query(None, ge=1),
+    date: date | None = Query(None),
+    start_time: time | None = Query(None),
+    end_time: time | None = Query(None),
+    course_id: int | None = Query(None, ge=1),
+    booking_type: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     user_id=Depends(get_current_user_id),
 ) -> AvailableCouponsForBookingListResponse:
     try:
-        return await coupon_service.list_available_coupons_for_booking(db, user_id, seat_id, date, start_time, end_time)
+        return await coupon_service.list_available_coupons_for_booking(
+            db, user_id,
+            seat_id=seat_id, date=date, start_time=start_time, end_time=end_time,
+            course_id=course_id, booking_type=booking_type,
+        )
     except coupon_service.CouponNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="座位不存在")
     except coupon_service.CouponError as exc:

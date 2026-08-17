@@ -1,0 +1,17 @@
+{
+  "change": "teacher-profile-page",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "ccaa8cbca092d7eded3687ad91f31ded5e836a0da3a957a00d794a62662535c1",
+  "files": [
+    { "path": "openspec/changes/teacher-profile-page/proposal.md", "sha256": "7dec3e2a3f7ec58804ebba62692ff833be86cd963716bccbaa0d407bf0e023de" },
+    { "path": "openspec/changes/teacher-profile-page/design.md", "sha256": "7b6c5d8c1f0733aa0499ca8e41a793d619f3899463c4b0b2c8b3f626a2a7ff1e" },
+    { "path": "openspec/changes/teacher-profile-page/tasks.md", "sha256": "68bea3b967324333713c0fe3d255a440d442653c338cda6cbf0ab13a8004e6be" },
+    { "path": "openspec/changes/teacher-profile-page/specs/teacher-follow/spec.md", "sha256": "6a35d1708b00895853563377754327ba57ebfb954d014f1605accd5b9807cb87" },
+    { "path": "openspec/changes/teacher-profile-page/specs/teacher-profile-api/spec.md", "sha256": "8eba93b1992ca56a21ae9eebd08a1dee53ac86fdaf6d29a46a5d9e1030a923a9" },
+    { "path": "openspec/changes/teacher-profile-page/specs/teacher-profile-ui/spec.md", "sha256": "db21474356d31a5fd69f80083f72b3051b1a4debeb8c523043a815d2e6526790" },
+    { "path": "openspec/changes/teacher-profile-page/specs/training-room-detail-api/spec.md", "sha256": "bc3cf440ebc9ab041223ee8ef3bad907291ef4df3468bf53400dbc9a43fcc9c6" }
+  ]
+}

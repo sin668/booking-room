@@ -1,0 +1,8 @@
+{
+  "openspec_proposal": "openspec/changes/teacher-profile-page/proposal.md",
+  "openspec_design": "openspec/changes/teacher-profile-page/design.md",
+  "openspec_tasks": "openspec/changes/teacher-profile-page/tasks.md",
+  "openspec_delta_spec": "openspec/changes/teacher-profile-page/specs/teacher-follow/spec.md",
+  "handoff_context": "openspec/changes/teacher-profile-page/.comet/handoff/design-context.json",
+  "handoff_markdown": "openspec/changes/teacher-profile-page/.comet/handoff/design-context.md"
+}

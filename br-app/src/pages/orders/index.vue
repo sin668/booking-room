@@ -133,6 +133,7 @@
           <!-- Duration + Price -->
           <view class="card-bottom-row">
             <text v-if="!isCourseBooking(order)" class="duration-text">{{ calcHours(order) }}小时</text>
+            <text v-else class="duration-text">{{ (order.lesson_titles || []).length }}课时</text>
             <text class="price-text">
               <text class="price-symbol">¥</text>{{ order.total_price || '0.00' }}
             </text>

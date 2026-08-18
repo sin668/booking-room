@@ -60,7 +60,7 @@ class AdminCourseService:
         # 分页查询
         query = (
             select(Course, StudyRoom.name.label("room_name"))
-            .join(StudyRoom, Course.room_id == StudyRoom.id)
+            .outerjoin(StudyRoom, Course.room_id == StudyRoom.id)
         )
         if filters:
             query = query.where(*filters)

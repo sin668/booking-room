@@ -54,8 +54,8 @@ MENU_SEEDS = [
     MenuSeed("booking.list", "menu", "预约列表", "booking:view", "list", "BookingList", "/booking/list/index", None, "CalendarOutlined", 61, parent="booking"),
     MenuSeed("wallet", "directory", "钱包管理", "wallet:manage", "wallet", "Wallet", "LAYOUT", "/wallet", "WalletOutlined", 70),
     MenuSeed("wallet.transactions", "menu", "钱包流水", "wallet:view", "transactions", "WalletTransactions", "/wallet/transactions", None, "WalletOutlined", 71, parent="wallet"),
-    MenuSeed("training", "directory", "培训管理", "training:manage", "training", "Training", "LAYOUT", "/training", "SchoolOutlined", 45),
-    MenuSeed("training.courses", "menu", "培训课程", "training:courses:view", "courses", "TrainingCourses", "/training/courses/index", None, "SchoolOutlined", 46, parent="training"),
+    MenuSeed("training", "directory", "培训管理", "training:manage", "training", "Training", "LAYOUT", "/training", "SchoolOutline", 45),
+    MenuSeed("training.courses", "menu", "培训课程", "training:courses:view", "courses", "TrainingCourses", "/training/courses/index", None, "SchoolOutline", 46, parent="training"),
 ]
 
 BUTTON_SEEDS = [

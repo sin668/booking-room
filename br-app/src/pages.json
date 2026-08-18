@@ -37,7 +37,7 @@
     {
       "path": "pages/booking/index",
       "style": {
-        "navigationBarTitleText": "预约"
+        "navigationBarTitleText": "自习室"
       }
     },
     {
@@ -151,7 +151,8 @@
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "去静界",
     "navigationBarBackgroundColor": "#F5F6FA",
-    "backgroundColor": "#F5F6FA"
+    "backgroundColor": "#F5F6FA",
+    "locale": "zh-CN"
   },
   "tabBar": {
     "color": "#B2BEC3",
@@ -168,7 +169,7 @@
       },
       {
         "pagePath": "pages/booking/index",
-        "text": "预约",
+        "text": "自习",
         "iconPath": "static/tab/booking.png",
         "selectedIconPath": "static/tab/booking-active.png"
       },

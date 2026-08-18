@@ -177,6 +177,9 @@ async def update_coupon(db: AsyncSession, coupon_id: int, data: dict[str, Any]) 
     _validate_time_range(merged)
     for key, value in data.items():
         setattr(coupon, key, value)
+    # 延长有效期后卡券未过期，自动恢复为启用状态
+    if coupon.expires_at >= _now_for_db() and not coupon.is_active:
+        coupon.is_active = True
     await db.flush()
     await db.refresh(coupon)
     return AdminCouponResponse.model_validate(coupon)

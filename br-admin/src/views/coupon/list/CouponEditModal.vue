@@ -110,6 +110,7 @@
     type AdminCouponCreateParams,
     type AdminCouponItem,
   } from '@/api/coupon';
+  import { isCouponExpired } from './columns';
 
   const props = defineProps<{
     show: boolean;
@@ -231,6 +232,15 @@
       }
     }
   );
+
+  // 编辑过期卡券时，延长有效期超过当前时间后自动恢复启用状态
+  watch(dateRange, (range) => {
+    if (!props.editData || !range?.[1]) return;
+    const newExpiresAt = new Date(range[1]);
+    if (newExpiresAt >= new Date() && isCouponExpired(props.editData)) {
+      formValues.is_active = true;
+    }
+  });
 
   function handleTypeChange() {
     formValues.discount_amount = null;

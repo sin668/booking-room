@@ -47,6 +47,10 @@ export function formatCouponScope(record: Pick<AdminCouponItem, 'scope' | 'seat_
   return couponScopeLabels[record.scope] || record.scope;
 }
 
+export function isCouponExpired(record: Pick<AdminCouponItem, 'expires_at'>): boolean {
+  return new Date(record.expires_at) < new Date();
+}
+
 export function buildCouponTableColumns(): BasicColumn<AdminCouponItem>[] {
   return [
     { title: 'ID', key: 'id', width: 70 },
@@ -90,6 +94,10 @@ export function buildCouponTableColumns(): BasicColumn<AdminCouponItem>[] {
       key: 'is_active',
       width: 90,
       render(record) {
+        const expired = isCouponExpired(record);
+        if (expired) {
+          return h(NTag, { type: 'error', size: 'small' }, { default: () => '过期' });
+        }
         return h(
           NTag,
           { type: record.is_active ? 'success' : 'default', size: 'small' },

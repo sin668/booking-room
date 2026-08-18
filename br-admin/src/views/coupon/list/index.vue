@@ -40,7 +40,7 @@
     type AdminCouponItem,
   } from '@/api/coupon';
   import { toBasicTableResult } from '@/api/contracts/admin';
-  import { buildCouponTableColumns } from './columns';
+  import { buildCouponTableColumns, isCouponExpired } from './columns';
   import CouponEditModal from './CouponEditModal.vue';
 
   const actionRef = ref();
@@ -141,6 +141,7 @@
             label: record.is_active ? '停用' : '启用',
             key: record.is_active ? 'disable' : 'enable',
             auth: ['coupon:update'],
+            disabled: isCouponExpired(record),
           },
         ],
         select: () => handleToggleStatus(record),

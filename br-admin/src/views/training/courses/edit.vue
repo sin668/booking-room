@@ -213,14 +213,12 @@
               <span class="text-sm font-bold">发布设置</span>
             </div>
           </template>
-          <n-form-item :show-feedback="false">
-            <n-radio-group v-model:value="formValues.status">
-              <n-space>
-                <n-radio value="active">立即上架</n-radio>
-                <n-radio value="inactive">存为草稿</n-radio>
-              </n-space>
-            </n-radio-group>
-          </n-form-item>
+          <n-radio-group v-model:value="formValues.status">
+            <n-space>
+              <n-radio value="active">立即上架</n-radio>
+              <n-radio value="inactive">存为草稿</n-radio>
+            </n-space>
+          </n-radio-group>
         </n-card>
       </div>
     </n-spin>

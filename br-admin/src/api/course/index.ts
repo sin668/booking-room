@@ -229,6 +229,8 @@ export type ScheduleUpdateParams = ScheduleCreateParams;
 export function getCourseSchedules(courseId: number) {
   return Alova.Get<ScheduleRecord[]>(`/v1/admin/courses/${courseId}/schedules`, {
     meta: ADMIN_NATIVE_META,
+    // 强制绕过 Alova GET 默认内存缓存，保证增删改后列表数据最新
+    force: true,
   });
 }
 

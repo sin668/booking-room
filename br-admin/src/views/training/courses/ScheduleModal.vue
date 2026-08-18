@@ -3,7 +3,7 @@
     :show="show"
     preset="card"
     :title="`排课管理 - ${courseName}`"
-    style="width: 800px; max-width: 95vw"
+    style="width: 900px; max-width: 95vw"
     :mask-closable="false"
     @update:show="(val) => emit('update:show', val)"
   >
@@ -81,23 +81,59 @@
                 />
               </n-form-item>
             </n-gi>
-            <n-gi :span="2">
-              <n-form-item label="上课时间段" path="time_slots">
-                <n-flex vertical :size="8" style="width: 100%">
-                  <n-checkbox-group v-model:value="selectedSlots">
-                    <n-flex wrap :size="8">
-                      <n-checkbox
-                        v-for="slot in availableSlots"
-                        :key="slot.value"
-                        :value="slot.value"
-                        :label="slot.label"
-                      />
-                    </n-flex>
-                  </n-checkbox-group>
-                </n-flex>
-              </n-form-item>
-            </n-gi>
           </n-grid>
+
+          <!-- 时间段选择器 -->
+          <n-form-item label="上课时间段" path="time_slots">
+            <div v-if="weekDates.length > 0" class="schedule-grid">
+              <!-- 日期表头 -->
+              <div class="schedule-header">
+                <div class="header-cell"></div>
+                <div
+                  v-for="date in weekDates"
+                  :key="date.dateStr"
+                  class="header-cell date-header"
+                >
+                  <div class="weekday">{{ date.weekdayName }}</div>
+                  <div class="date">{{ date.dateDisplay }}</div>
+                </div>
+              </div>
+              <!-- 时间段网格 -->
+              <div
+                v-for="timeSlot in timeSlots"
+                :key="timeSlot"
+                class="schedule-row"
+              >
+                <div class="time-label">{{ timeSlot }}</div>
+                <div
+                  v-for="date in weekDates"
+                  :key="`${date.dateStr}-${timeSlot}`"
+                  class="slot-cell"
+                  :class="{ selected: isSelected(date.dateStr, timeSlot) }"
+                  @click="toggleSlot(date.dateStr, timeSlot)"
+                >
+                  {{ isSelected(date.dateStr, timeSlot) ? '✓' : '' }}
+                </div>
+              </div>
+            </div>
+            <n-empty v-else description="请先选择开始日期" />
+          </n-form-item>
+
+          <!-- 已选时间段显示 -->
+          <n-form-item v-if="selectedSlotList.length > 0" label="已选时间段">
+            <n-flex wrap>
+              <n-tag
+                v-for="slot in selectedSlotList"
+                :key="slot.key"
+                type="info"
+                size="small"
+                closable
+                @close="removeSlot(slot.key)"
+              >
+                {{ slot.label }}
+              </n-tag>
+            </n-flex>
+          </n-form-item>
         </n-form>
         <template #footer>
           <n-flex justify="end" :size="12">
@@ -113,7 +149,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, h, onMounted, ref, watch } from 'vue';
+  import { computed, h, ref, watch } from 'vue';
   import type { FormInst, FormRules } from 'naive-ui';
   import { NButton, NTag } from 'naive-ui';
   import {
@@ -137,28 +173,18 @@
     (e: 'success'): void;
   }>();
 
-  // 预设时间段选项
-  const availableSlots = [
-    { label: '周一 09:00-11:00', value: JSON.stringify({ weekday: 1, start: '09:00', end: '11:00' }) },
-    { label: '周一 14:00-16:00', value: JSON.stringify({ weekday: 1, start: '14:00', end: '16:00' }) },
-    { label: '周一 19:00-21:00', value: JSON.stringify({ weekday: 1, start: '19:00', end: '21:00' }) },
-    { label: '周二 09:00-11:00', value: JSON.stringify({ weekday: 2, start: '09:00', end: '11:00' }) },
-    { label: '周二 14:00-16:00', value: JSON.stringify({ weekday: 2, start: '14:00', end: '16:00' }) },
-    { label: '周二 19:00-21:00', value: JSON.stringify({ weekday: 2, start: '19:00', end: '21:00' }) },
-    { label: '周三 09:00-11:00', value: JSON.stringify({ weekday: 3, start: '09:00', end: '11:00' }) },
-    { label: '周三 14:00-16:00', value: JSON.stringify({ weekday: 3, start: '14:00', end: '16:00' }) },
-    { label: '周三 19:00-21:00', value: JSON.stringify({ weekday: 3, start: '19:00', end: '21:00' }) },
-    { label: '周四 09:00-11:00', value: JSON.stringify({ weekday: 4, start: '09:00', end: '11:00' }) },
-    { label: '周四 14:00-16:00', value: JSON.stringify({ weekday: 4, start: '14:00', end: '16:00' }) },
-    { label: '周四 19:00-21:00', value: JSON.stringify({ weekday: 4, start: '19:00', end: '21:00' }) },
-    { label: '周五 09:00-11:00', value: JSON.stringify({ weekday: 5, start: '09:00', end: '11:00' }) },
-    { label: '周五 14:00-16:00', value: JSON.stringify({ weekday: 5, start: '14:00', end: '16:00' }) },
-    { label: '周五 19:00-21:00', value: JSON.stringify({ weekday: 5, start: '19:00', end: '21:00' }) },
-    { label: '周六 09:00-11:00', value: JSON.stringify({ weekday: 6, start: '09:00', end: '11:00' }) },
-    { label: '周六 14:00-16:00', value: JSON.stringify({ weekday: 6, start: '14:00', end: '16:00' }) },
-    { label: '周日 09:00-11:00', value: JSON.stringify({ weekday: 7, start: '09:00', end: '11:00' }) },
-    { label: '周日 14:00-16:00', value: JSON.stringify({ weekday: 7, start: '14:00', end: '16:00' }) },
+  // 时间段选项（2小时一个时间段）
+  const timeSlots = [
+    '08:00-10:00',
+    '10:00-12:00',
+    '12:00-14:00',
+    '14:00-16:00',
+    '16:00-18:00',
+    '18:00-20:00',
+    '20:00-22:00',
   ];
+
+  const weekdayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
   // 状态
   const formRef = ref<FormInst | null>(null);
@@ -167,7 +193,6 @@
   const saving = ref(false);
   const scheduleList = ref<ScheduleRecord[]>([]);
   const teacherOptions = ref<Array<{ label: string; value: number }>>([]);
-  const selectedSlots = ref<string[]>([]);
   const editingId = ref<number | null>(null);
 
   const formValues = ref({
@@ -177,15 +202,49 @@
     full_package_price: null as number | null,
   });
 
+  // 已选时间段（格式：dateStr|timeSlot）
+  const selectedSlots = ref<Set<string>>(new Set());
+
   const formRules: FormRules = {
     price: { required: true, type: 'number', message: '请输入每课时价格', trigger: 'blur' },
   };
 
-  // 表格列定义
-  const weekdayNames: Record<number, string> = {
-    1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日',
-  };
+  // 计算一周的日期（从开始日期起7天）
+  const weekDates = computed(() => {
+    if (!formValues.value.start_date) return [];
+    const startDate = new Date(formValues.value.start_date);
+    if (isNaN(startDate.getTime())) return [];
 
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      const dateStr = formatDate(date);
+      dates.push({
+        dateStr,
+        weekdayName: weekdayNames[date.getDay()],
+        dateDisplay: `${date.getMonth() + 1}/${date.getDate()}`,
+      });
+    }
+    return dates;
+  });
+
+  // 已选时间段列表（用于显示）
+  const selectedSlotList = computed(() => {
+    const list = [];
+    selectedSlots.value.forEach((key) => {
+      const [dateStr, timeSlot] = key.split('|');
+      const date = new Date(dateStr);
+      const weekdayName = weekdayNames[date.getDay()];
+      list.push({
+        key,
+        label: `${weekdayName} ${timeSlot}`,
+      });
+    });
+    return list.sort((a, b) => a.key.localeCompare(b.key));
+  });
+
+  // 表格列定义
   const tableColumns = [
     {
       title: '授课老师',
@@ -218,16 +277,18 @@
     {
       title: '上课时间',
       key: 'time_slots',
-      width: 200,
+      width: 250,
       render(row: ScheduleRecord) {
         if (!row.time_slots) return '-';
         try {
           const slots = JSON.parse(row.time_slots);
           if (!Array.isArray(slots)) return row.time_slots;
           return slots
-            .map((s: { weekday: number; start: string; end: string }) =>
-              `${weekdayNames[s.weekday] || s.weekday} ${s.start}-${s.end}`
-            )
+            .map((s: { date: string; time_slot: string }) => {
+              const date = new Date(s.date);
+              const weekdayName = weekdayNames[date.getDay()];
+              return `${weekdayName} ${s.time_slot}`;
+            })
             .join('、');
         } catch {
           return row.time_slots;
@@ -282,7 +343,7 @@
     try {
       const result = await getTeacherList();
       teacherOptions.value = result.items.map((t: TeacherItem) => ({
-        label: t.title ? `${t.name}（${t.title}）` : t.name,
+        label: t.name,
         value: t.id,
       }));
     } catch {
@@ -304,6 +365,33 @@
     }
   }
 
+  function formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function isSelected(dateStr: string, timeSlot: string): boolean {
+    return selectedSlots.value.has(`${dateStr}|${timeSlot}`);
+  }
+
+  function toggleSlot(dateStr: string, timeSlot: string) {
+    const key = `${dateStr}|${timeSlot}`;
+    if (selectedSlots.value.has(key)) {
+      selectedSlots.value.delete(key);
+    } else {
+      selectedSlots.value.add(key);
+    }
+    // 触发响应式更新
+    selectedSlots.value = new Set(selectedSlots.value);
+  }
+
+  function removeSlot(key: string) {
+    selectedSlots.value.delete(key);
+    selectedSlots.value = new Set(selectedSlots.value);
+  }
+
   function handleEdit(row: ScheduleRecord) {
     editingId.value = row.id;
     formValues.value.teacher_id = row.teacher_id;
@@ -312,18 +400,20 @@
     formValues.value.full_package_price = row.full_package_price;
 
     // 解析 time_slots
+    selectedSlots.value = new Set();
     if (row.time_slots) {
       try {
         const slots = JSON.parse(row.time_slots);
-        selectedSlots.value = slots.map((s: { weekday: number; start: string; end: string }) =>
-          JSON.stringify({ weekday: s.weekday, start: s.start, end: s.end })
-        );
+        if (Array.isArray(slots)) {
+          slots.forEach((s: { date: string; time_slot: string }) => {
+            selectedSlots.value.add(`${s.date}|${s.time_slot}`);
+          });
+        }
       } catch {
-        selectedSlots.value = [];
+        // ignore
       }
-    } else {
-      selectedSlots.value = [];
     }
+    selectedSlots.value = new Set(selectedSlots.value);
   }
 
   function cancelEdit() {
@@ -339,7 +429,7 @@
       price: 0,
       full_package_price: null,
     };
-    selectedSlots.value = [];
+    selectedSlots.value = new Set();
   }
 
   async function handleSave() {
@@ -354,9 +444,11 @@
     saving.value = true;
     try {
       // 序列化时间段
-      const timeSlotsJson = selectedSlots.value.length > 0
-        ? JSON.stringify(selectedSlots.value.map((v) => JSON.parse(v)))
-        : null;
+      const slotsArray = Array.from(selectedSlots.value).map((key) => {
+        const [date, time_slot] = key.split('|');
+        return { date, time_slot };
+      });
+      const timeSlotsJson = slotsArray.length > 0 ? JSON.stringify(slotsArray) : null;
 
       const payload = {
         teacher_id: formValues.value.teacher_id,
@@ -405,3 +497,89 @@
     });
   }
 </script>
+
+<style scoped>
+  .schedule-grid {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .schedule-header {
+    display: flex;
+    background: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .header-cell {
+    flex: 1;
+    padding: 8px 4px;
+    text-align: center;
+    border-right: 1px solid #e0e0e0;
+  }
+
+  .header-cell:last-child {
+    border-right: none;
+  }
+
+  .header-cell.date-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .weekday {
+    font-size: 12px;
+    color: #666;
+  }
+
+  .date {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .schedule-row {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .schedule-row:last-child {
+    border-bottom: none;
+  }
+
+  .time-label {
+    flex: 1;
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    border-right: 1px solid #e0e0e0;
+    background: #fafafa;
+  }
+
+  .slot-cell {
+    flex: 1;
+    padding: 8px 4px;
+    text-align: center;
+    cursor: pointer;
+    border-right: 1px solid #e0e0e0;
+    transition: all 0.2s;
+    font-size: 14px;
+  }
+
+  .slot-cell:last-child {
+    border-right: none;
+  }
+
+  .slot-cell:hover {
+    background: #f0f0f0;
+  }
+
+  .slot-cell.selected {
+    background: #e6f7ff;
+    color: #1890ff;
+    font-weight: 600;
+  }
+</style>

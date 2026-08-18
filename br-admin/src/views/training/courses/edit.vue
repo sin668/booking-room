@@ -254,6 +254,7 @@
   import { getRoomList, type RoomItem } from '@/api/room';
   import { uploadImage } from '@/api/upload';
   import { COURSE_CATEGORY_OPTIONS } from './options';
+  import { useTabsViewStore } from '@/store/modules/tabsView';
 
   interface LessonDraft extends Partial<LessonItem> {
     _editable: boolean;
@@ -262,6 +263,7 @@
 
   const route = useRoute();
   const router = useRouter();
+  const tabsViewStore = useTabsViewStore();
   const courseId = computed(() => {
     const id = route.params.id;
     return id ? Number(id) : null;
@@ -305,11 +307,39 @@
   const lessons = ref<LessonDraft[]>([]);
 
   onMounted(async () => {
+    // 移除课程列表 tab，实现原 tab 内跳转到编辑页的效果
+    removeListTab();
     await loadRooms();
     if (courseId.value) {
       await loadCourse(courseId.value);
     }
   });
+
+  // 移除课程列表标签页
+  function removeListTab() {
+    const idx = tabsViewStore.tabsList.findIndex((t) => t.name === 'training_courses');
+    if (idx > -1) {
+      tabsViewStore.tabsList.splice(idx, 1);
+    }
+  }
+
+  // 返回列表页：将当前编辑页 tab 原地替换为列表 tab，保持标签位置不变
+  function backToList() {
+    const listTab = {
+      fullPath: '/training/courses',
+      path: '/training/courses',
+      name: 'training_courses',
+      hash: '',
+      meta: { title: '培训课程' },
+      params: {},
+      query: {},
+    };
+    const idx = tabsViewStore.tabsList.findIndex((t) => t.fullPath === route.fullPath);
+    if (idx > -1) {
+      tabsViewStore.tabsList[idx] = listTab as any;
+    }
+    router.push({ name: 'training_courses' });
+  }
 
   async function loadRooms() {
     roomLoading.value = true;
@@ -506,8 +536,8 @@
         await createCourse(payload);
         window['$message']?.success('课程创建成功');
       }
-      // 保存成功后返回列表页
-      router.push({ name: 'training_courses' });
+      // 保存成功后返回列表页（原 tab 内跳转）
+      backToList();
     } catch {
       window['$message']?.error('保存失败');
     } finally {
@@ -516,7 +546,7 @@
   }
 
   function goBack() {
-    router.push({ name: 'training_courses' });
+    backToList();
   }
 </script>
 

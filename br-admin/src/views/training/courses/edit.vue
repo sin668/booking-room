@@ -56,14 +56,6 @@
               <n-form-item-gi label="排序值" :show-feedback="false">
                 <n-input-number v-model:value="formValues.sort_order" :min="0" style="width: 100%" />
               </n-form-item-gi>
-              <n-form-item-gi :span="2" label="课程状态" :show-feedback="false">
-                <n-radio-group v-model:value="formValues.status">
-                  <n-space>
-                    <n-radio value="active">立即上架</n-radio>
-                    <n-radio value="inactive">存为草稿</n-radio>
-                  </n-space>
-                </n-radio-group>
-              </n-form-item-gi>
             </n-grid>
           </n-form>
         </n-card>
@@ -221,7 +213,7 @@
               <span class="text-sm font-bold">发布设置</span>
             </div>
           </template>
-          <n-form-item label="课程状态" :show-feedback="false">
+          <n-form-item :show-feedback="false">
             <n-radio-group v-model:value="formValues.status">
               <n-space>
                 <n-radio value="active">立即上架</n-radio>

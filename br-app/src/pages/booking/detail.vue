@@ -280,7 +280,10 @@
               </view>
               <view class="course-schedule">
                 <view class="icon icon-clock course-clock-icon" />
-                <text class="schedule-text">{{ course.schedule || '排课待定' }}</text>
+                <view class="schedule-wrap" @longpress="onScheduleLongPress(course)">
+                  <text class="schedule-text">{{ scheduleText(course) }}</text>
+                  <view v-if="isScheduleTruncated(course)" class="schedule-tooltip">{{ scheduleText(course) }}</view>
+                </view>
                 <text class="schedule-dot">·</text>
                 <text class="schedule-status">可预约</text>
               </view>
@@ -337,6 +340,9 @@ import { getSeatStats } from '@/api/seats'
 import { getTrainingRoomDetail } from '@/api/training'
 import { followRoom, isRoomFollowed, unfollowRoom } from '@/services/followedRooms'
 import { fetchBookingRoom } from '@/services/bookingPageService'
+import { formatCourseSchedule } from '@/utils/formatters'
+
+const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
 const REAL_ROOM_PHOTOS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&h=560&fit=crop&q=85',
@@ -582,6 +588,21 @@ export default {
       if (tags.includes('名师')) return { type: 'master', text: '名师' }
       if (tags.includes('推荐')) return { type: 'rec', text: '推荐' }
       return null
+    },
+
+    scheduleText(course) {
+      return formatCourseSchedule(course?.schedule) || '排课待定'
+    },
+
+    isScheduleTruncated(course) {
+      const text = formatCourseSchedule(course?.schedule)
+      return Boolean(text && text.length > SCHEDULE_TRUNCATE_THRESHOLD)
+    },
+
+    onScheduleLongPress(course) {
+      const text = formatCourseSchedule(course?.schedule)
+      if (!text) return
+      uni.showToast({ title: text, icon: 'none', duration: 2500 })
     },
   },
 }
@@ -1653,16 +1674,52 @@ export default {
   display: flex;
   align-items: center;
   gap: 6rpx;
+  min-width: 0;
 }
 
 .course-clock-icon {
   font-size: 18rpx;
   color: $text-muted;
+  flex-shrink: 0;
+}
+
+.schedule-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 300rpx;
+  min-width: 0;
 }
 
 .schedule-text {
   font-size: 22rpx;
   color: $text-muted;
+  max-width: 300rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-tooltip {
+  display: none;
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10rpx);
+  z-index: 30;
+  background: rgba(24, 31, 54, 0.92);
+  border-radius: 12rpx;
+  padding: 12rpx 18rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #fff;
+  white-space: normal;
+  width: max-content;
+  max-width: 480rpx;
+  box-shadow: $shadow-card;
+}
+
+.schedule-wrap:hover .schedule-tooltip {
+  display: block;
 }
 
 .schedule-dot {

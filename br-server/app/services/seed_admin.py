@@ -52,7 +52,7 @@ MENU_SEEDS = [
     MenuSeed("coupon.list", "menu", "卡券列表", "coupon:view", "list", "CouponList", "/coupon/list/index", None, "GiftOutlined", 56, parent="coupon"),
     MenuSeed("booking", "directory", "预约管理", "booking:manage", "booking", "Booking", "LAYOUT", "/booking", "CalendarOutlined", 60),
     MenuSeed("booking.list", "menu", "预约列表", "booking:view", "list", "BookingList", "/booking/list/index", None, "CalendarOutlined", 61, parent="booking"),
-    MenuSeed("wallet", "directory", "钱包管理", "wallet:manage", "wallet", "Wallet", "LAYOUT", "/wallet/transactions", "WalletOutlined", 70),
+    MenuSeed("wallet", "directory", "钱包管理", "wallet:manage", "wallet", "Wallet", "LAYOUT", "/wallet", "WalletOutlined", 70),
     MenuSeed("wallet.transactions", "menu", "钱包流水", "wallet:view", "transactions", "WalletTransactions", "/wallet/transactions", None, "WalletOutlined", 71, parent="wallet"),
 ]
 

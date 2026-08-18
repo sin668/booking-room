@@ -588,6 +588,68 @@ class StripTrailingSlashMiddleware:
 
 ---
 
+## BUG-23: Naive UI 组件未注册导致活动列表页及卡券配置报错
+
+### 报错信息
+```
+[Vue warn]: Failed to resolve component: n-flex
+[Vue warn]: Failed to resolve component: n-image
+[Vue warn]: Failed to resolve component: n-text
+[Vue warn]: Failed to resolve component: n-empty
+```
+
+### 根本原因
+`br-admin/src/plugins/naive.ts` 通过 Naive UI 的 `create()` 方法按需注册全局组件，但缺少以下 6 个组件的导入和注册：
+
+- `NFlex` — 活动列表、房间列表、卡券列表、预约列表、座位管理等多个页面使用 `<n-flex>` 布局
+- `NImage` — 活动编辑弹窗、房间编辑弹窗、用户编辑弹窗、系统设置等使用 `<n-image>` 展示图片
+- `NText` — 卡券配置组件 (`ActivityCouponConfig`)、座位管理页等使用 `<n-text>` 展示文本
+- `NEmpty` — 卡券配置组件、角色弹窗等使用 `<n-empty>` 展示空状态
+- `NGi` — 表单组件 (`BasicForm`)、菜单管理、钱包流水等使用 `<n-gi>` 网格布局
+- `NScrollbar` — 座位批量创建弹窗使用 `<n-scrollbar>` 滚动容器
+
+`components.d.ts` 由 `unplugin-vue-components` 自动生成，仅提供 TypeScript 类型声明，不代表运行时注册。Vue 在模板中遇到未注册组件时视为原生自定义元素，导致组件逻辑（如 `onMounted`）不执行、布局样式失效。
+
+卡券模板数据加载不出来也是因为 `n-text` 和 `n-empty` 未注册导致 `ActivityCouponConfig` 组件无法正常挂载，`onMounted` 中的 `loadCouponOptions()` 未执行。
+
+### 解决方案
+在 `br-admin/src/plugins/naive.ts` 的 `import` 和 `create()` 组件列表中补充缺失的 6 个组件：
+
+```diff
+  NSkeleton,
+  NCascader,
++ NFlex,
++ NImage,
++ NText,
++ NEmpty,
++ NGi,
++ NScrollbar,
+} from 'naive-ui';
+```
+
+**文件**: `br-admin/src/plugins/naive.ts`
+
+---
+
+## BUG-24: 钱包管理菜单路由路径错误（同 BUG-19 模式）
+
+### 报错信息
+钱包管理目录菜单 `path` 存储完整路径 `/wallet/transactions`，前端路由生成器拼接后子路由变为 `/wallet/transactions/transactions`，与实际页面路径 `/wallet/transactions` 不匹配。
+
+### 根本原因
+与 BUG-19 相同：`seed_admin.py` 中钱包管理目录类型菜单的 `path` 字段存储了完整路径而非基路径。前端路由生成器会将父路径与子路径拼接，导致子路由路径重复。
+
+### 解决方案
+将钱包管理目录的 `path` 从 `/wallet/transactions` 修正为 `wallet`（基路径），拼接后得到正确的路由 `/wallet/transactions`。
+
+| 菜单 | 修改前 | 修改后 |
+|------|--------|--------|
+| 钱包管理 | `/wallet/transactions` | `/wallet` |
+
+**文件**: `br-server/app/services/seed_admin.py`
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -628,3 +690,5 @@ class StripTrailingSlashMiddleware:
 | `br-server/app/api/routes/booking.py` | #22 |
 | `br-server/app/api/routes/admin_study_room.py` | #22 |
 | `br-server/app/api/routes/admin_seat.py` | #22 |
+| `br-admin/src/plugins/naive.ts` | #23 |
+| `br-server/app/services/seed_admin.py` | #24 |

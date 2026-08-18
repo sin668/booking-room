@@ -28,7 +28,7 @@ const routes: Array<RouteRecordRaw> = [
         name: 'training_course_edit',
         meta: {
           title: '编辑课程',
-          hidden: true,
+          hideInMenu: true,
           activeMenu: 'training_courses',
         },
         component: () => import('@/views/training/courses/edit.vue'),

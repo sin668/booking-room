@@ -59,8 +59,8 @@ const mockAdapter = createAlovaMockAdapter([...mocks], {
 export const Alova = createAlova({
   baseURL: apiUrl,
   statesHook: VueHook,
-  // 关闭全局请求缓存
-  // cacheFor: null,
+  // 关闭全局请求缓存，避免增删改后列表命中缓存返回旧数据
+  cacheFor: null,
   // 全局缓存配置
   // cacheFor: {
   //   POST: {

@@ -108,12 +108,12 @@
                 <div class="time-label">{{ timeSlot }}</div>
                 <div
                   v-for="date in weekDates"
-                  :key="`${date.dateStr}-${timeSlot}`"
+                  :key="`${date.weekday}-${timeSlot}`"
                   class="slot-cell"
-                  :class="{ selected: isSelected(date.dateStr, timeSlot) }"
-                  @click="toggleSlot(date.dateStr, timeSlot)"
+                  :class="{ selected: isSelected(date.weekday, timeSlot) }"
+                  @click="toggleSlot(date.weekday, timeSlot)"
                 >
-                  {{ isSelected(date.dateStr, timeSlot) ? '✓' : '' }}
+                  {{ isSelected(date.weekday, timeSlot) ? '✓' : '' }}
                 </div>
               </div>
             </div>
@@ -186,6 +186,8 @@
   ];
 
   const weekdayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  // 周几索引（1-7，周日为7），用于 time_slots 存储
+  const weekdayIndexMap: Record<number, number> = { 0: 7, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6 };
 
   // 状态
   const formRef = ref<FormInst | null>(null);
@@ -224,6 +226,7 @@
       const dateStr = formatDate(date);
       dates.push({
         dateStr,
+        weekday: weekdayIndexMap[date.getDay()],
         weekdayName: weekdayNames[date.getDay()],
         dateDisplay: `${date.getMonth() + 1}/${date.getDate()}`,
       });
@@ -231,17 +234,16 @@
     return dates;
   });
 
-  // 已选时间段列表（用于显示）
+  // 已选时间段列表（用于显示，按周几+时间排序）
   const selectedSlotList = computed(() => {
-    const list = [];
-    selectedSlots.value.forEach((key) => {
-      const [dateStr, timeSlot] = key.split('|');
-      const date = new Date(dateStr);
-      const weekdayName = weekdayNames[date.getDay()];
-      list.push({
+    const list = Array.from(selectedSlots.value).map((key) => {
+      const [weekdayStr, timeSlot] = key.split('|');
+      const weekday = Number(weekdayStr);
+      return {
         key,
-        label: `${weekdayName} ${timeSlot}`,
-      });
+        weekday,
+        label: `${weekdayNames[weekday % 7]} ${timeSlot}`,
+      };
     });
     return list.sort((a, b) => a.key.localeCompare(b.key));
   });
@@ -286,10 +288,9 @@
           const slots = JSON.parse(row.time_slots);
           if (!Array.isArray(slots)) return row.time_slots;
           return slots
-            .map((s: { date: string; time_slot: string }) => {
-              const date = new Date(s.date);
-              const weekdayName = weekdayNames[date.getDay()];
-              return `${weekdayName} ${s.time_slot}`;
+            .map((s: { weekday: number; time_slot: string }) => {
+              const [start, end] = s.time_slot.split('-');
+              return `${weekdayNames[s.weekday % 7]} ${start}-${end}`;
             })
             .join('、');
         } catch {
@@ -377,12 +378,12 @@
     return `${year}-${month}-${day}`;
   }
 
-  function isSelected(dateStr: string, timeSlot: string): boolean {
-    return selectedSlots.value.has(`${dateStr}|${timeSlot}`);
+  function isSelected(weekday: number, timeSlot: string): boolean {
+    return selectedSlots.value.has(`${weekday}|${timeSlot}`);
   }
 
-  function toggleSlot(dateStr: string, timeSlot: string) {
-    const key = `${dateStr}|${timeSlot}`;
+  function toggleSlot(weekday: number, timeSlot: string) {
+    const key = `${weekday}|${timeSlot}`;
     if (selectedSlots.value.has(key)) {
       selectedSlots.value.delete(key);
     } else {
@@ -404,14 +405,20 @@
     formValues.value.price = row.price;
     formValues.value.full_package_price = row.full_package_price;
 
-    // 解析 time_slots
+    // 解析 time_slots（周几 + 时间段格式，兼容旧的日期格式）
     selectedSlots.value = new Set();
     if (row.time_slots) {
       try {
         const slots = JSON.parse(row.time_slots);
         if (Array.isArray(slots)) {
-          slots.forEach((s: { date: string; time_slot: string }) => {
-            selectedSlots.value.add(`${s.date}|${s.time_slot}`);
+          slots.forEach((s: { weekday?: number; date?: string; time_slot: string }) => {
+            if (s.weekday) {
+              selectedSlots.value.add(`${s.weekday}|${s.time_slot}`);
+            } else if (s.date) {
+              // 兼容旧数据：由日期换算为周几
+              const weekday = weekdayIndexMap[new Date(s.date).getDay()];
+              selectedSlots.value.add(`${weekday}|${s.time_slot}`);
+            }
           });
         }
       } catch {
@@ -448,10 +455,10 @@
 
     saving.value = true;
     try {
-      // 序列化时间段
+      // 序列化时间段：保存周几（1-7）+ 时间段，表示每周循环上课
       const slotsArray = Array.from(selectedSlots.value).map((key) => {
-        const [date, time_slot] = key.split('|');
-        return { date, time_slot };
+        const [weekdayStr, time_slot] = key.split('|');
+        return { weekday: Number(weekdayStr), time_slot };
       });
       const timeSlotsJson = slotsArray.length > 0 ? JSON.stringify(slotsArray) : null;
 

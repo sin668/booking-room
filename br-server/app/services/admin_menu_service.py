@@ -32,6 +32,7 @@ COMPONENT_WHITELIST = {
     "/coupon/list/index",
     "/booking/list/index",
     "/wallet/transactions",
+    "/training/courses/index",
 }
 
 

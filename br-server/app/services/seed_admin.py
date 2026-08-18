@@ -54,6 +54,8 @@ MENU_SEEDS = [
     MenuSeed("booking.list", "menu", "预约列表", "booking:view", "list", "BookingList", "/booking/list/index", None, "CalendarOutlined", 61, parent="booking"),
     MenuSeed("wallet", "directory", "钱包管理", "wallet:manage", "wallet", "Wallet", "LAYOUT", "/wallet", "WalletOutlined", 70),
     MenuSeed("wallet.transactions", "menu", "钱包流水", "wallet:view", "transactions", "WalletTransactions", "/wallet/transactions", None, "WalletOutlined", 71, parent="wallet"),
+    MenuSeed("training", "directory", "培训管理", "training:manage", "training", "Training", "LAYOUT", "/training", "SchoolOutlined", 45),
+    MenuSeed("training.courses", "menu", "培训课程", "training:courses:view", "courses", "TrainingCourses", "/training/courses/index", None, "SchoolOutlined", 46, parent="training"),
 ]
 
 BUTTON_SEEDS = [
@@ -92,6 +94,10 @@ BUTTON_SEEDS = [
     ("booking.list", "booking:cancel", "预约-取消"),
     ("wallet.transactions", "wallet:export", "钱包流水-导出"),
     ("booking.list", "upload:create", "文件-上传"),
+    ("training.courses", "training:courses:create", "培训课程-新增"),
+    ("training.courses", "training:courses:update", "培训课程-编辑"),
+    ("training.courses", "training:courses:delete", "培训课程-删除"),
+    ("training.courses", "training:courses:status", "培训课程-状态"),
 ]
 
 BASIC_SETTING_DEFAULTS = {

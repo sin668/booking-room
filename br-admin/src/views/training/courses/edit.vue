@@ -253,6 +253,7 @@
   } from '@/api/course';
   import { getRoomList, type RoomItem } from '@/api/room';
   import { uploadImage } from '@/api/upload';
+  import { COURSE_CATEGORY_OPTIONS } from './options';
 
   interface LessonDraft extends Partial<LessonItem> {
     _editable: boolean;
@@ -289,15 +290,7 @@
     room_id: { required: true, type: 'number', message: '请选择所属教室', trigger: 'change' },
   };
 
-  const categoryOptions = [
-    { label: '考研辅导', value: 'postgraduate' },
-    { label: '公考备考', value: 'civil_service' },
-    { label: '语言培训', value: 'language' },
-    { label: '技能提升', value: 'skills' },
-    { label: '职业资格', value: 'professional' },
-    { label: '小学辅导', value: 'primaryschool' },
-    { label: '中学辅导', value: 'middleschool' },
-  ];
+  const categoryOptions = COURSE_CATEGORY_OPTIONS;
 
   // 教室选项
   const roomOptions = ref<{ label: string; value: number }[]>([]);
@@ -510,11 +503,11 @@
         await updateCourse(courseId.value, payload);
         window['$message']?.success('课程更新成功');
       } else {
-        const created = await createCourse(payload);
+        await createCourse(payload);
         window['$message']?.success('课程创建成功');
-        // 跳转到编辑页
-        router.replace({ name: 'training_course_edit', params: { id: created.id } });
       }
+      // 保存成功后返回列表页
+      router.push({ name: 'training_courses' });
     } catch {
       window['$message']?.error('保存失败');
     } finally {

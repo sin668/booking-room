@@ -116,12 +116,15 @@ export function getCourseList(params?: {
   return Alova.Get<CourseListResult>('/v1/admin/courses', {
     params,
     meta: ADMIN_NATIVE_META,
+    // 强制绕过 Alova GET 默认内存缓存，保证增删改后列表数据最新
+    force: true,
   });
 }
 
 export function getCourseById(id: number) {
   return Alova.Get<CourseDetail>(`/v1/admin/courses/${id}`, {
     meta: ADMIN_NATIVE_META,
+    force: true,
   });
 }
 
@@ -158,6 +161,7 @@ export function toggleCourseStatus(id: number, status: string) {
 export function getCourseLessons(courseId: number) {
   return Alova.Get<LessonItem[]>(`/v1/admin/courses/${courseId}/lessons`, {
     meta: ADMIN_NATIVE_META,
+    force: true,
   });
 }
 

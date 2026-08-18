@@ -41,7 +41,7 @@
   import { getCourseList, deleteCourse, toggleCourseStatus, type CourseItem } from '@/api/course';
   import { toBasicTableResult } from '@/api/contracts/admin';
   import { createTextColumn, createTagColumn, createDateTimeColumn } from '@/views/business/shared/tableBuilders';
-  import { COURSE_STATUS_TAGS } from './options';
+  import { COURSE_STATUS_TAGS, COURSE_CATEGORY_OPTIONS, COURSE_CATEGORY_LABELS } from './options';
   import ScheduleModal from './ScheduleModal.vue';
 
   const router = useRouter();
@@ -50,7 +50,14 @@
   const columns = [
     { title: 'ID', key: 'id', width: 60 },
     createTextColumn<CourseItem>('课程名称', 'name', 180),
-    createTextColumn<CourseItem>('分类', 'category', 100),
+    {
+      title: '分类',
+      key: 'category',
+      width: 100,
+      render(record: CourseItem) {
+        return COURSE_CATEGORY_LABELS[record.category] || record.category;
+      },
+    },
     { title: '学员数', key: 'enrollment_count', width: 90 },
     { title: '评分', key: 'rating', width: 70 },
     createTagColumn<CourseItem>('状态', 'status', COURSE_STATUS_TAGS, 80),
@@ -103,15 +110,7 @@
         label: '分类',
         componentProps: {
           placeholder: '全部',
-          options: [
-            { label: '考研辅导', value: 'postgraduate' },
-            { label: '公考备考', value: 'civil_service' },
-            { label: '语言培训', value: 'language' },
-            { label: '技能提升', value: 'skills' },
-            { label: '职业资格', value: 'professional' },
-            { label: '小学辅导', value: 'primaryschool' },
-            { label: '中学辅导', value: 'middleschool' },
-          ],
+          options: COURSE_CATEGORY_OPTIONS,
         },
       },
       {

@@ -1,0 +1,6 @@
+{
+  "id": "classic-archive:course-schedule-time-display",
+  "stepId": "tweak.archive.execute",
+  "type": "checkpoint",
+  "ref": "course-schedule-time-display"
+}

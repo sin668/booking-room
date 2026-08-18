@@ -1,0 +1,55 @@
+# course-schedule-time-ui Specification
+
+## Purpose
+TBD - created by archiving change course-schedule-time-display. Update Purpose after archive.
+## Requirements
+### Requirement: 上课时间统一格式化
+
+br-app SHALL 提供统一的课程上课时间格式化工具，将 `course_schedules.time_slots` 数据处理为可读文案后返回。规则：
+
+- 单个时间段：`每周三 14:00上课`，其中 `14:00` 为所选时间段的开始时间
+- 多个时间段：按周几升序拼接，首项带"每"，如 `每周三 14:00，周四 15:00上课`
+- 周一至周五均选择且时间段完全相同：`工作日 14:00上课`
+- 旧版纯文本数据（如 `周六 9:00-11:30`、`预约制`）原样返回
+- 空值返回空字符串，由调用方回退显示
+
+#### Scenario: 单个时间段格式化
+
+- **GIVEN** time_slots 为 `[{"weekday":3,"time_slot":"14:00-16:00"}]`
+- **WHEN** 调用格式化函数
+- **THEN** 返回 `每周三 14:00上课`
+
+#### Scenario: 多个时间段格式化
+
+- **GIVEN** time_slots 为 `[{"weekday":3,"time_slot":"14:00-16:00"},{"weekday":4,"time_slot":"15:00-17:00"}]`
+- **WHEN** 调用格式化函数
+- **THEN** 返回 `每周三 14:00，周四 15:00上课`
+
+#### Scenario: 工作日同一时间段格式化
+
+- **GIVEN** time_slots 为周一至周五（weekday 1-5）且时间段均为 `14:00-16:00`
+- **WHEN** 调用格式化函数
+- **THEN** 返回 `工作日 14:00上课`
+
+#### Scenario: 旧版文本兼容
+
+- **GIVEN** schedule 字段为旧版纯文本 `预约制`
+- **WHEN** 调用格式化函数
+- **THEN** 原样返回 `预约制`
+
+### Requirement: 培训室详情页课程上课时间显示
+
+`/pages/booking/detail` 培训室详情页的"本培训室课程"列表 SHALL 使用统一格式化函数显示每门课程的上课时间；空值显示"排课待定"。文案超过显示宽度时 SHALL 单行截断并以省略号结尾；用户悬停（H5）或长按（移动端）该区域时 SHALL 显示完整上课时间信息。
+
+#### Scenario: 正常显示格式化上课时间
+
+- **GIVEN** 用户进入某培训室详情页，课程 schedule 为 `[{"weekday":3,"time_slot":"14:00-16:00"}]`
+- **WHEN** 页面渲染"本培训室课程"
+- **THEN** 该课程卡片上课时间显示为 `每周三 14:00上课`
+
+#### Scenario: 超长文案截断并悬停查看完整信息
+
+- **GIVEN** 课程上课时间格式化后超过显示宽度
+- **WHEN** 页面渲染课程卡片
+- **THEN** 文案单行截断并以省略号结尾；鼠标悬停或长按时显示完整上课时间
+

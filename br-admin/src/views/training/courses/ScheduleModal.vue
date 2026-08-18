@@ -12,6 +12,7 @@
       <n-spin :show="listLoading">
         <n-data-table
           v-if="scheduleList.length > 0"
+          :key="tableKey"
           :columns="tableColumns"
           :data="scheduleList"
           :bordered="false"
@@ -192,6 +193,7 @@
   const teacherLoading = ref(false);
   const saving = ref(false);
   const scheduleList = ref<ScheduleRecord[]>([]);
+  const tableKey = ref(0);
   const teacherOptions = ref<Array<{ label: string; value: number }>>([]);
   const editingId = ref<number | null>(null);
 
@@ -357,7 +359,10 @@
     if (!props.courseId) return;
     listLoading.value = true;
     try {
-      scheduleList.value = await getCourseSchedules(props.courseId);
+      const data = await getCourseSchedules(props.courseId);
+      // 深拷贝生成新引用并递增 key，强制表格重新渲染，避免数据更新后视图不变
+      scheduleList.value = data.map((item) => ({ ...item }));
+      tableKey.value += 1;
     } catch {
       window['$message']?.error('加载排课记录失败');
     } finally {

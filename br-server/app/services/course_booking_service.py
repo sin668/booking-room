@@ -56,12 +56,18 @@ class CourseBookingService:
         self, course_id: int, db: AsyncSession
     ) -> dict | None:
         """查询课程详情 + 课时列表 + 排课信息。"""
-        course_result = await db.execute(
-            select(Course).where(Course.id == course_id)
+        # 使用 JOIN 一次性获取课程和排课信息
+        result = await db.execute(
+            select(Course, CourseSchedule, Teacher)
+            .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+            .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
+            .where(Course.id == course_id)
         )
-        course = course_result.scalar_one_or_none()
-        if course is None:
+        row = result.one_or_none()
+        if row is None:
             return None
+        
+        course, schedule, teacher = row
 
         lessons_result = await db.execute(
             select(CourseLesson)
@@ -70,17 +76,37 @@ class CourseBookingService:
         )
         lessons = list(lessons_result.scalars().all())
 
-        # 获取排课信息
-        schedule_result = await db.execute(
-            select(CourseSchedule)
-            .where(CourseSchedule.course_id == course_id)
-            .order_by(CourseSchedule.created_at)
-            .limit(1)
-        )
-        schedule = schedule_result.scalar_one_or_none()
+        # 构建返回数据，将排课信息合并到课程对象中
+        course_dict = {
+            "id": course.id,
+            "name": course.name,
+            "cover_image": course.cover_image,
+            "category": course.category,
+            "description": course.description,
+            "rating": course.rating,
+            "enrollment_count": course.enrollment_count,
+            "status": course.status,
+            "tags": course.tags,
+            "room_id": course.room_id,
+            # 从排课表获取价格信息
+            "price": schedule.price if schedule else 0,
+            "custom_price": schedule.custom_price if schedule else 0,
+            "full_package_price": schedule.full_package_price if schedule else None,
+            "full_custom_price": schedule.full_custom_price if schedule else None,
+            # 从排课表获取时间信息
+            "schedule": schedule.time_slots if schedule else None,
+            # 教师信息
+            "teacher": {
+                "id": teacher.id,
+                "name": teacher.name,
+                "avatar": teacher.avatar,
+                "title": teacher.title,
+                "rating": teacher.rating,
+            } if teacher else None,
+        }
 
         return {
-            "course": course,
+            "course": course_dict,
             "lessons": lessons,
             "total_lessons_count": len(lessons),
             "schedule": schedule,

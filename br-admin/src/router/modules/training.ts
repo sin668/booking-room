@@ -23,6 +23,16 @@ const routes: Array<RouteRecordRaw> = [
         },
         component: () => import('@/views/training/courses/index.vue'),
       },
+      {
+        path: 'courses/edit/:id?',
+        name: 'training_course_edit',
+        meta: {
+          title: '编辑课程',
+          hidden: true,
+          activeMenu: 'training_courses',
+        },
+        component: () => import('@/views/training/courses/edit.vue'),
+      },
     ],
   },
 ];

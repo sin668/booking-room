@@ -56,6 +56,7 @@ MENU_SEEDS = [
     MenuSeed("wallet.transactions", "menu", "钱包流水", "wallet:view", "transactions", "WalletTransactions", "/wallet/transactions", None, "WalletOutlined", 71, parent="wallet"),
     MenuSeed("training", "directory", "培训管理", "training:manage", "training", "Training", "LAYOUT", "/training", "SchoolOutline", 45),
     MenuSeed("training.courses", "menu", "培训课程", "training:courses:view", "courses", "TrainingCourses", "/training/courses/index", None, "SchoolOutline", 46, parent="training"),
+    MenuSeed("training.course_edit", "menu", "编辑课程", "training:courses:edit", "courses/edit/:id?", "TrainingCourseEdit", "/training/courses/edit/index", None, "SchoolOutline", 47, hidden=True, parent="training"),
 ]
 
 BUTTON_SEEDS = [

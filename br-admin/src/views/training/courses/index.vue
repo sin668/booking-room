@@ -28,6 +28,7 @@
 
 <script lang="ts" setup>
   import { h, ref } from 'vue';
+  import { useRouter } from 'vue-router';
   import { PlusOutlined } from '@vicons/antd';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, useForm } from '@/components/Form/index';
@@ -36,6 +37,7 @@
   import { createTextColumn, createTagColumn, createDateTimeColumn } from '@/views/business/shared/tableBuilders';
   import { COURSE_STATUS_TAGS } from './options';
 
+  const router = useRouter();
   const actionRef = ref();
 
   const columns = [
@@ -142,13 +144,11 @@
   }
 
   function addCourse() {
-    // TODO: 打开新增课程弹窗或跳转到编辑页
-    console.log('Add course');
+    router.push({ name: 'training_course_edit' });
   }
 
   function editCourse(record: CourseItem) {
-    // TODO: 打开编辑课程弹窗或跳转到编辑页
-    console.log('Edit course', record.id);
+    router.push({ name: 'training_course_edit', params: { id: record.id } });
   }
 
   async function handleToggleStatus(record: CourseItem) {

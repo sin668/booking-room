@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.course import Course
+from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
@@ -17,6 +18,7 @@ from app.schemas.admin_course import (
     AdminCourseItem,
     AdminCourseListResponse,
     AdminCourseUpdate,
+    AdminLessonItem,
     AdminTeacherBrief,
     CourseScheduleItem,
 )
@@ -167,6 +169,14 @@ class AdminCourseService:
 
         tags = course.tags.split(",") if course.tags else []
 
+        # 查询课时列表
+        lessons_result = await db.execute(
+            select(CourseLesson)
+            .where(CourseLesson.course_id == course_id)
+            .order_by(CourseLesson.sort_order.asc())
+        )
+        lessons = [AdminLessonItem.model_validate(l) for l in lessons_result.scalars().all()]
+
         return AdminCourseDetailResponse(
             id=course.id,
             name=course.name,
@@ -185,6 +195,7 @@ class AdminCourseService:
             updated_at=course.updated_at.isoformat() if isinstance(course.updated_at, datetime) else str(course.updated_at),
             teacher=teacher_brief,
             description=course.description,
+            lessons=lessons,
         )
 
     async def create_course(self, db: AsyncSession, data: AdminCourseCreate) -> Course:
@@ -298,3 +309,79 @@ class AdminCourseService:
         course.status = status
         await db.flush()
         return course
+
+    # ── 课时 CRUD ──────────────────────────────────────────────
+
+    async def list_lessons(self, db: AsyncSession, course_id: int) -> list[AdminLessonItem]:
+        """查询课程的课时列表。"""
+        result = await db.execute(
+            select(CourseLesson)
+            .where(CourseLesson.course_id == course_id)
+            .order_by(CourseLesson.sort_order.asc())
+        )
+        return [AdminLessonItem.model_validate(l) for l in result.scalars().all()]
+
+    async def create_lesson(
+        self, db: AsyncSession, course_id: int, data: "AdminLessonCreate"
+    ) -> AdminLessonItem:
+        """创建课时。"""
+        from app.schemas.admin_course import AdminLessonCreate  # noqa: F811
+
+        # 自动设置 sort_order
+        if data.sort_order == 0:
+            max_result = await db.execute(
+                select(func.coalesce(func.max(CourseLesson.sort_order), 0))
+                .where(CourseLesson.course_id == course_id)
+            )
+            auto_order = (max_result.scalar() or 0) + 1
+        else:
+            auto_order = data.sort_order
+
+        lesson = CourseLesson(
+            course_id=course_id,
+            title=data.title,
+            description=data.description,
+            duration_minutes=data.duration_minutes,
+            sort_order=auto_order,
+            is_free_preview=data.is_free_preview,
+        )
+        db.add(lesson)
+        await db.flush()
+        return AdminLessonItem.model_validate(lesson)
+
+    async def update_lesson(
+        self, db: AsyncSession, lesson_id: int, data: "AdminLessonUpdate"
+    ) -> AdminLessonItem | None:
+        """更新课时。"""
+        result = await db.execute(
+            select(CourseLesson).where(CourseLesson.id == lesson_id)
+        )
+        lesson = result.scalar_one_or_none()
+        if not lesson:
+            return None
+
+        if data.title is not None:
+            lesson.title = data.title
+        if data.description is not None:
+            lesson.description = data.description
+        if data.duration_minutes is not None:
+            lesson.duration_minutes = data.duration_minutes
+        if data.sort_order is not None:
+            lesson.sort_order = data.sort_order
+        if data.is_free_preview is not None:
+            lesson.is_free_preview = data.is_free_preview
+
+        await db.flush()
+        return AdminLessonItem.model_validate(lesson)
+
+    async def delete_lesson(self, db: AsyncSession, lesson_id: int) -> bool:
+        """删除课时。"""
+        result = await db.execute(
+            select(CourseLesson).where(CourseLesson.id == lesson_id)
+        )
+        lesson = result.scalar_one_or_none()
+        if not lesson:
+            return False
+        await db.delete(lesson)
+        await db.flush()
+        return True

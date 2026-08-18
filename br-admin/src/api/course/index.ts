@@ -75,6 +75,32 @@ export interface TeacherBrief {
 export interface CourseDetail extends CourseItem {
   teacher?: TeacherBrief | null;
   description?: string | null;
+  lessons?: LessonItem[];
+}
+
+export interface LessonItem {
+  id: number;
+  title: string;
+  description?: string | null;
+  duration_minutes?: number | null;
+  sort_order: number;
+  is_free_preview: boolean;
+}
+
+export interface LessonCreateParams {
+  title: string;
+  description?: string | null;
+  duration_minutes?: number | null;
+  sort_order?: number;
+  is_free_preview?: boolean;
+}
+
+export interface LessonUpdateParams {
+  title?: string;
+  description?: string | null;
+  duration_minutes?: number | null;
+  sort_order?: number;
+  is_free_preview?: boolean;
 }
 
 // --- API Functions ---
@@ -125,4 +151,30 @@ export function toggleCourseStatus(id: number, status: string) {
       meta: ADMIN_NATIVE_META,
     }
   );
+}
+
+// --- Lesson API Functions ---
+
+export function getCourseLessons(courseId: number) {
+  return Alova.Get<LessonItem[]>(`/v1/admin/courses/${courseId}/lessons`, {
+    meta: ADMIN_NATIVE_META,
+  });
+}
+
+export function createLesson(courseId: number, data: LessonCreateParams) {
+  return Alova.Post<LessonItem>(`/v1/admin/courses/${courseId}/lessons`, data, {
+    meta: ADMIN_NATIVE_META,
+  });
+}
+
+export function updateLesson(courseId: number, lessonId: number, data: LessonUpdateParams) {
+  return Alova.Put<LessonItem>(`/v1/admin/courses/${courseId}/lessons/${lessonId}`, data, {
+    meta: ADMIN_NATIVE_META,
+  });
+}
+
+export function deleteLesson(courseId: number, lessonId: number) {
+  return Alova.Delete(`/v1/admin/courses/${courseId}/lessons/${lessonId}`, {
+    meta: ADMIN_NATIVE_META,
+  });
 }

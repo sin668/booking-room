@@ -17,6 +17,36 @@ class CourseScheduleItem(BaseModel):
     full_custom_price: Decimal | None = None
 
 
+class AdminLessonItem(BaseModel):
+    """Admin 课时项"""
+    id: int
+    title: str
+    description: str | None = None
+    duration_minutes: int | None = None
+    sort_order: int
+    is_free_preview: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminLessonCreate(BaseModel):
+    """创建课时请求"""
+    title: str = Field(..., min_length=1, max_length=200)
+    description: str | None = Field(None, max_length=500)
+    duration_minutes: int | None = None
+    sort_order: int = 0
+    is_free_preview: bool = False
+
+
+class AdminLessonUpdate(BaseModel):
+    """更新课时请求"""
+    title: str | None = Field(None, min_length=1, max_length=200)
+    description: str | None = Field(None, max_length=500)
+    duration_minutes: int | None = None
+    sort_order: int | None = None
+    is_free_preview: bool | None = None
+
+
 class AdminCourseItem(BaseModel):
     """Admin 课程列表项"""
     id: int
@@ -95,3 +125,4 @@ class AdminCourseDetailResponse(AdminCourseItem):
     """Admin 课程详情响应"""
     teacher: AdminTeacherBrief | None = None
     description: str | None = None
+    lessons: list[AdminLessonItem] = []

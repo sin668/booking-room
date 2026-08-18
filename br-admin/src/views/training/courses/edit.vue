@@ -50,6 +50,20 @@
                   filterable
                 />
               </n-form-item-gi>
+              <n-form-item-gi label="热门课程" :show-feedback="false">
+                <n-switch v-model:value="formValues.is_hot" />
+              </n-form-item-gi>
+              <n-form-item-gi label="排序值" :show-feedback="false">
+                <n-input-number v-model:value="formValues.sort_order" :min="0" style="width: 100%" />
+              </n-form-item-gi>
+              <n-form-item-gi :span="2" label="课程状态" :show-feedback="false">
+                <n-radio-group v-model:value="formValues.status">
+                  <n-space>
+                    <n-radio value="active">立即上架</n-radio>
+                    <n-radio value="inactive">存为草稿</n-radio>
+                  </n-space>
+                </n-radio-group>
+              </n-form-item-gi>
             </n-grid>
           </n-form>
         </n-card>
@@ -161,15 +175,17 @@
                 class="flex-1"
                 :disabled="!lesson._editable"
               />
-              <n-input-number
-                v-if="lesson._editable"
-                v-model:value="lesson.duration_minutes"
-                placeholder="分钟"
-                :min="0"
-                style="width: 100px"
-                size="small"
-              />
-              <n-text v-else depth="3" class="text-xs flex-shrink-0">
+              <div v-if="lesson._editable" class="flex items-center gap-1" style="width: 140px; flex-shrink: 0">
+                <n-input-number
+                  v-model:value="lesson.duration_minutes"
+                  placeholder="分钟"
+                  :min="0"
+                  style="width: 100px"
+                  size="small"
+                />
+                <n-text depth="3" class="text-xs">分钟</n-text>
+              </div>
+              <n-text v-else depth="3" class="text-xs flex-shrink-0" style="width: 140px; text-align: center">
                 {{ lesson.duration_minutes ? `${lesson.duration_minutes}分钟` : '-' }}
               </n-text>
               <n-space v-if="lesson._editable" :size="4">
@@ -182,7 +198,7 @@
                 </n-button>
                 <n-popconfirm @positive-click="handleDeleteLesson(lesson, index)">
                   <template #trigger>
-                    <n-button size="tiny" quaternary type="error">
+                    <n-button size="tiny" quaternary type="error" style="display: inline-flex">
                       <template #icon><n-icon><DeleteOutlined /></n-icon></template>
                     </n-button>
                   </template>
@@ -195,30 +211,6 @@
               添加课时
             </n-button>
           </div>
-        </n-card>
-
-        <!-- 发布设置 -->
-        <n-card :bordered="false" class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2">
-              <n-icon color="#4F6EF7"><SettingOutlined /></n-icon>
-              <span class="text-sm font-bold">发布设置</span>
-            </div>
-          </template>
-          <n-form-item label="课程状态" :show-feedback="false">
-            <n-radio-group v-model:value="formValues.status">
-              <n-space>
-                <n-radio value="active">立即上架</n-radio>
-                <n-radio value="inactive">存为草稿</n-radio>
-              </n-space>
-            </n-radio-group>
-          </n-form-item>
-          <n-form-item label="热门课程" :show-feedback="false">
-            <n-switch v-model:value="formValues.is_hot" />
-          </n-form-item>
-          <n-form-item label="排序值" :show-feedback="false">
-            <n-input-number v-model:value="formValues.sort_order" :min="0" style="width: 200px" />
-          </n-form-item>
         </n-card>
       </div>
     </n-spin>
@@ -236,7 +228,6 @@
     PictureOutlined,
     AlignLeftOutlined,
     OrderedListOutlined,
-    SettingOutlined,
     PlusOutlined,
     EditOutlined,
     DeleteOutlined,

@@ -650,6 +650,50 @@ class StripTrailingSlashMiddleware:
 
 ---
 
+## BUG-25: 排课保存后列表不刷新，需整页刷新才可见新数据
+
+### 报错信息
+无报错。现象：在排课管理弹窗中编辑排课并点击"更新"，提示"排课更新成功"，但弹窗内排课列表仍显示旧数据。关闭弹窗、刷新整个页面后重新进入弹窗，才能看到更新后的数据。浏览器 Network 面板中保存后看不到对应的 GET 请求（缓存命中不产生网络请求），容易误判为"前端没有重新拉取数据"。
+
+### 根本原因
+br-admin 使用 Alova v3 作为 HTTP 客户端，`createAlova` 配置中 `cacheFor: null` 处于注释状态。Alova 默认对所有 GET 请求启用内存缓存（`mode: 'memory'`，`expire: 300秒`）。
+
+排课弹窗保存成功后虽然调用了 `loadSchedules()` 重新请求 `GET /api/v1/admin/courses/{course_id}/schedules`，但该请求命中了 Alova 内存缓存，直接返回 5 分钟内的旧响应，未真正访问后端，导致列表数据不变。整页刷新后内存缓存清空，重新打开弹窗才能拿到最新数据。
+
+### 解决方案
+分两步修复：
+
+1. **全局关闭 Alova 请求缓存**（根本修复）：在 `createAlova` 中启用 `cacheFor: null`，所有 GET 请求均真实发起：
+
+```diff
+  export const Alova = createAlova({
+    baseURL: apiUrl,
+    statesHook: VueHook,
+-   // 关闭全局请求缓存
+-   // cacheFor: null,
++   // 关闭全局请求缓存，避免增删改后列表命中缓存返回旧数据
++   cacheFor: null,
+```
+
+2. **接口级兜底**：对需要实时数据的 `getCourseSchedules` 接口额外添加 `force: true` 参数，强制绕过缓存；若未来调整全局缓存配置，该参数仍能保证列表实时性：
+
+```typescript
+export function getCourseSchedules(courseId: number) {
+  return Alova.Get<ScheduleRecord[]>(`/v1/admin/courses/${courseId}/schedules`, {
+    meta: ADMIN_NATIVE_META,
+    force: true,
+  });
+}
+```
+
+**经验教训**：排查此类问题时，若保存成功但列表不变，且 Network 面板看不到刷新请求，应优先怀疑 HTTP 客户端的请求缓存，而非前端状态更新逻辑。
+
+**文件**: `br-admin/src/utils/http/alova/index.ts`, `br-admin/src/api/course/index.ts`
+
+**提交**: `c06c18f`, `8438d36`
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -692,3 +736,5 @@ class StripTrailingSlashMiddleware:
 | `br-server/app/api/routes/admin_seat.py` | #22 |
 | `br-admin/src/plugins/naive.ts` | #23 |
 | `br-server/app/services/seed_admin.py` | #24 |
+| `br-admin/src/utils/http/alova/index.ts` | #25 |
+| `br-admin/src/api/course/index.ts` | #25 |

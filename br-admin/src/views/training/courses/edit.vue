@@ -212,6 +212,24 @@
             </n-button>
           </div>
         </n-card>
+
+        <!-- 发布设置 -->
+        <n-card :bordered="false" class="shadow-sm">
+          <template #header>
+            <div class="flex items-center gap-2">
+              <n-icon color="#4F6EF7"><SettingOutlined /></n-icon>
+              <span class="text-sm font-bold">发布设置</span>
+            </div>
+          </template>
+          <n-form-item label="课程状态" :show-feedback="false">
+            <n-radio-group v-model:value="formValues.status">
+              <n-space>
+                <n-radio value="active">立即上架</n-radio>
+                <n-radio value="inactive">存为草稿</n-radio>
+              </n-space>
+            </n-radio-group>
+          </n-form-item>
+        </n-card>
       </div>
     </n-spin>
   </n-flex>
@@ -228,6 +246,7 @@
     PictureOutlined,
     AlignLeftOutlined,
     OrderedListOutlined,
+    SettingOutlined,
     PlusOutlined,
     EditOutlined,
     DeleteOutlined,

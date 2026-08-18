@@ -12,6 +12,7 @@ from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
+from app.models.teacher import Teacher
 from app.models.coupon import Coupon, UserCoupon
 from app.models.user import User
 from app.models.wallet import WalletTransaction

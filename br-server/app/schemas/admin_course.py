@@ -126,3 +126,43 @@ class AdminCourseDetailResponse(AdminCourseItem):
     teacher: AdminTeacherBrief | None = None
     description: str | None = None
     lessons: list[AdminLessonItem] = []
+
+
+# ── 排课独立 CRUD Schema ──────────────────────────────────────
+
+
+class CourseScheduleCreate(BaseModel):
+    """创建排课记录"""
+    teacher_id: int | None = None
+    start_date: str | None = None
+    time_slots: str | None = None
+    price: float = 0
+    custom_price: float = 0
+    full_package_price: float | None = None
+    full_custom_price: float | None = None
+
+
+class CourseScheduleUpdate(BaseModel):
+    """更新排课记录"""
+    teacher_id: int | None = None
+    start_date: str | None = None
+    time_slots: str | None = None
+    price: float | None = None
+    custom_price: float | None = None
+    full_package_price: float | None = None
+    full_custom_price: float | None = None
+
+
+class CourseScheduleResponse(BaseModel):
+    """排课记录响应"""
+    id: int
+    course_id: int
+    teacher_id: int | None = None
+    start_date: str | None = None
+    time_slots: str | None = None
+    price: float
+    custom_price: float
+    full_package_price: float | None = None
+    full_custom_price: float | None = None
+
+    model_config = ConfigDict(from_attributes=True)

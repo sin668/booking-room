@@ -178,3 +178,74 @@ export function deleteLesson(courseId: number, lessonId: number) {
     meta: ADMIN_NATIVE_META,
   });
 }
+
+// --- Teacher API Functions ---
+
+export interface TeacherItem {
+  id: number;
+  name: string;
+  avatar?: string | null;
+  title?: string | null;
+}
+
+export interface TeacherListResult {
+  items: TeacherItem[];
+  total: number;
+}
+
+export function getTeacherList(params?: { keyword?: string }) {
+  return Alova.Get<TeacherListResult>('/v1/admin/teachers', {
+    params,
+    meta: ADMIN_NATIVE_META,
+  });
+}
+
+// --- Schedule API Functions ---
+
+export interface ScheduleRecord {
+  id: number;
+  course_id: number;
+  teacher_id?: number | null;
+  start_date?: string | null;
+  time_slots?: string | null;
+  price: number;
+  custom_price: number;
+  full_package_price?: number | null;
+  full_custom_price?: number | null;
+}
+
+export interface ScheduleCreateParams {
+  teacher_id?: number | null;
+  start_date?: string | null;
+  time_slots?: string | null;
+  price?: number;
+  custom_price?: number;
+  full_package_price?: number | null;
+  full_custom_price?: number | null;
+}
+
+export type ScheduleUpdateParams = ScheduleCreateParams;
+
+export function getCourseSchedules(courseId: number) {
+  return Alova.Get<ScheduleRecord[]>(`/v1/admin/courses/${courseId}/schedules`, {
+    meta: ADMIN_NATIVE_META,
+  });
+}
+
+export function createCourseSchedule(courseId: number, data: ScheduleCreateParams) {
+  return Alova.Post<ScheduleRecord>(`/v1/admin/courses/${courseId}/schedules`, data, {
+    meta: ADMIN_NATIVE_META,
+  });
+}
+
+export function updateCourseSchedule(courseId: number, scheduleId: number, data: ScheduleUpdateParams) {
+  return Alova.Put<ScheduleRecord>(`/v1/admin/courses/${courseId}/schedules/${scheduleId}`, data, {
+    meta: ADMIN_NATIVE_META,
+  });
+}
+
+export function deleteCourseSchedule(courseId: number, scheduleId: number) {
+  return Alova.Delete(`/v1/admin/courses/${courseId}/schedules/${scheduleId}`, {
+    meta: ADMIN_NATIVE_META,
+  });
+}

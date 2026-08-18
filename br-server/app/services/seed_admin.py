@@ -99,6 +99,7 @@ BUTTON_SEEDS = [
     ("training.courses", "training:courses:update", "培训课程-编辑"),
     ("training.courses", "training:courses:delete", "培训课程-删除"),
     ("training.courses", "training:courses:status", "培训课程-状态"),
+    ("training.courses", "training:courses:schedule", "培训课程-排课"),
 ]
 
 BASIC_SETTING_DEFAULTS = {

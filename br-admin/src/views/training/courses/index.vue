@@ -23,6 +23,12 @@
         </template>
       </BasicTable>
     </n-card>
+    <ScheduleModal
+      v-model:show="showScheduleModal"
+      :course-id="scheduleCourseId"
+      :course-name="scheduleCourseName"
+      @success="reloadTable"
+    />
   </n-flex>
 </template>
 
@@ -36,6 +42,7 @@
   import { toBasicTableResult } from '@/api/contracts/admin';
   import { createTextColumn, createTagColumn, createDateTimeColumn } from '@/views/business/shared/tableBuilders';
   import { COURSE_STATUS_TAGS } from './options';
+  import ScheduleModal from './ScheduleModal.vue';
 
   const router = useRouter();
   const actionRef = ref();
@@ -51,7 +58,7 @@
   ];
 
   const actionColumn = {
-    width: 150,
+    width: 200,
     title: '操作',
     key: 'action',
     fixed: 'right' as const,
@@ -61,6 +68,10 @@
           {
             label: '编辑',
             onClick: () => editCourse(record),
+          },
+          {
+            label: '排课',
+            onClick: () => handleSchedule(record),
           },
           {
             label: record.status === 'active' ? '下架' : '上架',
@@ -178,5 +189,16 @@
         }
       },
     });
+  }
+
+  // 排课弹窗
+  const showScheduleModal = ref(false);
+  const scheduleCourseId = ref<number | null>(null);
+  const scheduleCourseName = ref('');
+
+  function handleSchedule(record: CourseItem) {
+    scheduleCourseId.value = record.id;
+    scheduleCourseName.value = record.name;
+    showScheduleModal.value = true;
   }
 </script>

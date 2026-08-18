@@ -12,6 +12,9 @@ from app.schemas.admin_course import (
     AdminLessonCreate,
     AdminLessonItem,
     AdminLessonUpdate,
+    CourseScheduleCreate,
+    CourseScheduleResponse,
+    CourseScheduleUpdate,
 )
 from app.services.admin_course_service import AdminCourseService
 
@@ -173,5 +176,75 @@ async def delete_lesson(
     success = await service.delete_lesson(db, lesson_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="课时不存在")
+    await db.commit()
+    return {"message": "删除成功"}
+
+
+# ── 排课 CRUD ──────────────────────────────────────────────────
+
+
+@router.get("/{course_id}/schedules", response_model=list[CourseScheduleResponse])
+async def list_schedules(course_id: int, db: AsyncSession = Depends(get_db)):
+    """查询课程的所有排课记录。"""
+    service = AdminCourseService()
+    return await service.list_schedules(db, course_id)
+
+
+@router.post(
+    "/{course_id}/schedules",
+    response_model=CourseScheduleResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_schedule(
+    course_id: int,
+    data: CourseScheduleCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    """新增排课记录。"""
+    service = AdminCourseService()
+    try:
+        result = await service.create_schedule(db, course_id, data)
+        await db.commit()
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.put("/{course_id}/schedules/{schedule_id}", response_model=CourseScheduleResponse)
+async def update_schedule(
+    course_id: int,
+    schedule_id: int,
+    data: CourseScheduleUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    """更新排课记录。"""
+    service = AdminCourseService()
+    try:
+        result = await service.update_schedule(db, schedule_id, data)
+        if not result:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="排课记录不存在")
+        await db.commit()
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.delete("/{course_id}/schedules/{schedule_id}")
+async def delete_schedule(
+    course_id: int,
+    schedule_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """删除排课记录。"""
+    service = AdminCourseService()
+    success = await service.delete_schedule(db, schedule_id)
+    if not success:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="排课记录不存在")
     await db.commit()
     return {"message": "删除成功"}

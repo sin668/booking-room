@@ -20,7 +20,10 @@ from app.schemas.admin_course import (
     AdminCourseUpdate,
     AdminLessonItem,
     AdminTeacherBrief,
+    CourseScheduleCreate,
     CourseScheduleItem,
+    CourseScheduleResponse,
+    CourseScheduleUpdate,
 )
 
 MAX_PAGE_SIZE = 50
@@ -383,5 +386,116 @@ class AdminCourseService:
         if not lesson:
             return False
         await db.delete(lesson)
+        await db.flush()
+        return True
+
+    # ── 排课 CRUD ──────────────────────────────────────────────────
+
+    async def list_schedules(
+        self, db: AsyncSession, course_id: int
+    ) -> list[CourseScheduleResponse]:
+        """查询课程的所有排课记录。"""
+        result = await db.execute(
+            select(CourseSchedule)
+            .where(CourseSchedule.course_id == course_id)
+            .order_by(CourseSchedule.created_at)
+        )
+        schedules = list(result.scalars().all())
+        return [
+            CourseScheduleResponse(
+                id=s.id,
+                course_id=s.course_id,
+                teacher_id=s.teacher_id,
+                start_date=str(s.start_date) if s.start_date else None,
+                time_slots=s.time_slots,
+                price=float(s.price),
+                custom_price=float(s.custom_price),
+                full_package_price=float(s.full_package_price) if s.full_package_price else None,
+                full_custom_price=float(s.full_custom_price) if s.full_custom_price else None,
+            )
+            for s in schedules
+        ]
+
+    async def create_schedule(
+        self, db: AsyncSession, course_id: int, data: CourseScheduleCreate
+    ) -> CourseScheduleResponse:
+        """新增排课记录。"""
+        # 确认课程存在
+        course_result = await db.execute(select(Course).where(Course.id == course_id))
+        if not course_result.scalar_one_or_none():
+            raise ValueError("课程不存在")
+
+        schedule = CourseSchedule(
+            course_id=course_id,
+            teacher_id=data.teacher_id,
+            start_date=date.fromisoformat(data.start_date) if data.start_date else None,
+            time_slots=data.time_slots,
+            price=data.price,
+            custom_price=data.custom_price,
+            full_package_price=data.full_package_price,
+            full_custom_price=data.full_custom_price,
+        )
+        db.add(schedule)
+        await db.flush()
+        return CourseScheduleResponse(
+            id=schedule.id,
+            course_id=schedule.course_id,
+            teacher_id=schedule.teacher_id,
+            start_date=str(schedule.start_date) if schedule.start_date else None,
+            time_slots=schedule.time_slots,
+            price=float(schedule.price),
+            custom_price=float(schedule.custom_price),
+            full_package_price=float(schedule.full_package_price) if schedule.full_package_price else None,
+            full_custom_price=float(schedule.full_custom_price) if schedule.full_custom_price else None,
+        )
+
+    async def update_schedule(
+        self, db: AsyncSession, schedule_id: int, data: CourseScheduleUpdate
+    ) -> CourseScheduleResponse | None:
+        """更新排课记录。"""
+        result = await db.execute(
+            select(CourseSchedule).where(CourseSchedule.id == schedule_id)
+        )
+        schedule = result.scalar_one_or_none()
+        if not schedule:
+            return None
+
+        if data.teacher_id is not None:
+            schedule.teacher_id = data.teacher_id
+        if data.start_date is not None:
+            schedule.start_date = date.fromisoformat(data.start_date) if data.start_date else None
+        if data.time_slots is not None:
+            schedule.time_slots = data.time_slots
+        if data.price is not None:
+            schedule.price = data.price
+        if data.custom_price is not None:
+            schedule.custom_price = data.custom_price
+        if data.full_package_price is not None:
+            schedule.full_package_price = data.full_package_price
+        if data.full_custom_price is not None:
+            schedule.full_custom_price = data.full_custom_price
+
+        await db.flush()
+        return CourseScheduleResponse(
+            id=schedule.id,
+            course_id=schedule.course_id,
+            teacher_id=schedule.teacher_id,
+            start_date=str(schedule.start_date) if schedule.start_date else None,
+            time_slots=schedule.time_slots,
+            price=float(schedule.price),
+            custom_price=float(schedule.custom_price),
+            full_package_price=float(schedule.full_package_price) if schedule.full_package_price else None,
+            full_custom_price=float(schedule.full_custom_price) if schedule.full_custom_price else None,
+        )
+
+    async def delete_schedule(self, db: AsyncSession, schedule_id: int) -> bool:
+        """删除排课记录。"""
+        result = await db.execute(
+            select(CourseSchedule).where(CourseSchedule.id == schedule_id)
+        )
+        schedule = result.scalar_one_or_none()
+        if not schedule:
+            return False
+        await db.delete(schedule)
         await db.flush()
         return True

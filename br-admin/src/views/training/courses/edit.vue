@@ -307,38 +307,35 @@
   const lessons = ref<LessonDraft[]>([]);
 
   onMounted(async () => {
-    // 移除课程列表 tab，实现原 tab 内跳转到编辑页的效果
-    removeListTab();
+    // 进入编辑页时移除列表 tab，让编辑页接管标签位置
+    removeTab((t) => t.name === 'training_courses');
     await loadRooms();
     if (courseId.value) {
       await loadCourse(courseId.value);
     }
   });
 
-  // 移除课程列表标签页
-  function removeListTab() {
-    const idx = tabsViewStore.tabsList.findIndex((t) => t.name === 'training_courses');
-    if (idx > -1) {
-      tabsViewStore.tabsList.splice(idx, 1);
+  // 安全移除匹配的标签页（仅 splice，不影响导航主流程）
+  function removeTab(matcher: (t: any) => boolean) {
+    try {
+      const idx = tabsViewStore.tabsList.findIndex(matcher);
+      if (idx > -1) {
+        tabsViewStore.tabsList.splice(idx, 1);
+      }
+    } catch {
+      // 标签清理失败不阻断页面逻辑
     }
   }
 
-  // 返回列表页：将当前编辑页 tab 原地替换为列表 tab，保持标签位置不变
+  // 返回列表页（参考座位管理 router.back 实现）
   function backToList() {
-    const listTab = {
-      fullPath: '/training/courses',
-      path: '/training/courses',
-      name: 'training_courses',
-      hash: '',
-      meta: { title: '培训课程' },
-      params: {},
-      query: {},
-    };
-    const idx = tabsViewStore.tabsList.findIndex((t) => t.fullPath === route.fullPath);
-    if (idx > -1) {
-      tabsViewStore.tabsList[idx] = listTab as any;
+    // 关闭当前编辑页 tab，返回后标签栏恢复为列表页
+    removeTab((t) => t.fullPath === route.fullPath);
+    if (window.history.state && window.history.state.back) {
+      router.back();
+    } else {
+      router.push({ name: 'training_courses' });
     }
-    router.push({ name: 'training_courses' });
   }
 
   async function loadRooms() {
@@ -516,6 +513,7 @@
     }
 
     saving.value = true;
+    let saved = false;
     try {
       const payload = {
         name: formValues.name,
@@ -532,16 +530,20 @@
       if (courseId.value) {
         await updateCourse(courseId.value, payload);
         window['$message']?.success('课程更新成功');
+        saved = true;
       } else {
         await createCourse(payload);
         window['$message']?.success('课程创建成功');
+        saved = true;
       }
-      // 保存成功后返回列表页（原 tab 内跳转）
-      backToList();
     } catch {
       window['$message']?.error('保存失败');
     } finally {
       saving.value = false;
+    }
+    // 保存成功后返回列表页
+    if (saved) {
+      backToList();
     }
   }
 

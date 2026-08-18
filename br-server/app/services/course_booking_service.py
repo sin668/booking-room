@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
 from app.models.coupon import Coupon, UserCoupon
 from app.models.user import User
 from app.models.wallet import WalletTransaction
@@ -54,10 +55,7 @@ class CourseBookingService:
     async def get_course_with_lessons(
         self, course_id: int, db: AsyncSession
     ) -> dict | None:
-        """查询课程详情 + 课时列表。
-
-        返回 {course, lessons, total_lessons_count}，课程不存在返回 None。
-        """
+        """查询课程详情 + 课时列表 + 排课信息。"""
         course_result = await db.execute(
             select(Course).where(Course.id == course_id)
         )
@@ -72,50 +70,68 @@ class CourseBookingService:
         )
         lessons = list(lessons_result.scalars().all())
 
+        # 获取排课信息
+        schedule_result = await db.execute(
+            select(CourseSchedule)
+            .where(CourseSchedule.course_id == course_id)
+            .order_by(CourseSchedule.created_at)
+            .limit(1)
+        )
+        schedule = schedule_result.scalar_one_or_none()
+
         return {
             "course": course,
             "lessons": lessons,
             "total_lessons_count": len(lessons),
+            "schedule": schedule,
         }
 
     def calculate_price(
         self,
         course: Course,
+        schedule: CourseSchedule | None,
         booking_type: str,
         lesson_ids: list[int],
         total_lessons: int,
     ) -> dict:
         """价格计算。
 
-        - fixed: len(lesson_ids) × course.price
-        - custom: len(lesson_ids) × course.custom_price
-        - full_package: 当 len(lesson_ids) == total_lessons 且 full_package_price 存在
-          original_price = full_package_price
-          discount_amount = total_lessons × price - full_package_price
+        从排课表获取价格信息：
+        - fixed: len(lesson_ids) × schedule.price
+        - custom: len(lesson_ids) × schedule.custom_price
+        - full_package: 当 len(lesson_ids) == total_lessons 且 schedule.full_package_price 存在
 
         返回 {original_price, discount_amount, unit_price, total_price}
         """
         lesson_count = len(lesson_ids)
 
+        # 从排课表获取价格，如果没有排课记录则使用 0
+        price = Decimal(str(schedule.price)) if schedule else Decimal("0")
+        custom_price = Decimal(str(schedule.custom_price)) if schedule else Decimal("0")
+        full_package_price = (
+            Decimal(str(schedule.full_package_price))
+            if schedule and schedule.full_package_price is not None
+            else None
+        )
+
         # 检查是否满足全包条件
         if (
             lesson_count == total_lessons
-            and course.full_package_price is not None
-            and Decimal(str(course.full_package_price)) > Decimal("0")
+            and full_package_price is not None
+            and full_package_price > Decimal("0")
         ):
-            full_package_price = Decimal(str(course.full_package_price))
-            standard_total = Decimal(str(course.price)) * lesson_count
+            standard_total = price * lesson_count
             original_price = full_package_price
             discount_amount = standard_total - full_package_price
             if discount_amount < Decimal("0"):
                 discount_amount = Decimal("0")
             unit_price = full_package_price / lesson_count if lesson_count > 0 else Decimal("0")
         elif booking_type == "fixed":
-            unit_price = Decimal(str(course.price))
+            unit_price = price
             original_price = unit_price * lesson_count
             discount_amount = Decimal("0")
         else:  # custom
-            unit_price = Decimal(str(course.custom_price))
+            unit_price = custom_price
             original_price = unit_price * lesson_count
             discount_amount = Decimal("0")
 
@@ -208,6 +224,7 @@ class CourseBookingService:
         course = course_data["course"]
         lessons = course_data["lessons"]
         total_lessons = course_data["total_lessons_count"]
+        schedule = course_data.get("schedule")
 
         if course.status != "active":
             raise CourseBookingError("课程不可预约")
@@ -228,7 +245,7 @@ class CourseBookingService:
 
         # 3. 计算价格
         price_info = self.calculate_price(
-            course, data.booking_type, data.lesson_ids, total_lessons
+            course, schedule, data.booking_type, data.lesson_ids, total_lessons
         )
         original_price = price_info["original_price"]
         discount_amount = price_info["discount_amount"]
@@ -288,6 +305,10 @@ class CourseBookingService:
         )
         db.add(booking)
         await db.flush()
+
+        # 6.5. 如果是自定义预约，保存用户选择的时间到排课表
+        if data.schedule_type == "custom" and (data.start_date or data.time_slot):
+            await self._save_custom_schedule(db, course.id, data.start_date, data.time_slot)
 
         # 7. 余额扣款
         payment_params = None
@@ -452,3 +473,62 @@ class CourseBookingService:
             "status": "cancelled",
             "refund_amount": float(refund_amount),
         }
+
+    async def _save_custom_schedule(
+        self, db: AsyncSession, course_id: int, start_date: str | None, time_slot: str | None
+    ) -> None:
+        """保存自定义预约的时间到排课表。
+        
+        如果该课程已有排课记录，则更新；否则创建新记录。
+        """
+        from datetime import date as date_type
+        from app.models.course_schedule import CourseSchedule
+        
+        # 查询该课程的现有排课记录
+        schedule_result = await db.execute(
+            select(CourseSchedule)
+            .where(CourseSchedule.course_id == course_id)
+            .order_by(CourseSchedule.created_at)
+            .limit(1)
+        )
+        schedule = schedule_result.scalar_one_or_none()
+        
+        if schedule:
+            # 更新现有排课记录
+            if start_date:
+                try:
+                    schedule.start_date = date_type.fromisoformat(start_date)
+                except (ValueError, TypeError):
+                    pass  # 日期格式无效，忽略
+            
+            if time_slot:
+                # 将时间段添加到 time_slots 中（JSON 数组）
+                import json
+                existing_slots = []
+                if schedule.time_slots:
+                    try:
+                        existing_slots = json.loads(schedule.time_slots)
+                    except (json.JSONDecodeError, TypeError):
+                        existing_slots = []
+                
+                # 检查是否已存在相同的时间段
+                if time_slot not in existing_slots:
+                    existing_slots.append(time_slot)
+                    schedule.time_slots = json.dumps(existing_slots, ensure_ascii=False)
+        else:
+            # 创建新的排课记录
+            new_schedule = CourseSchedule(
+                course_id=course_id,
+                teacher_id=None,  # 自定义预约暂时不指定老师
+            )
+            
+            if start_date:
+                try:
+                    new_schedule.start_date = date_type.fromisoformat(start_date)
+                except (ValueError, TypeError):
+                    pass
+            
+            if time_slot:
+                new_schedule.time_slots = json.dumps([time_slot], ensure_ascii=False)
+            
+            db.add(new_schedule)

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.city import City
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.schemas.course import (
@@ -27,6 +28,25 @@ MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
 
 
+async def _get_first_schedule_for_courses(
+    db: AsyncSession, course_ids: list[int]
+) -> dict[int, CourseSchedule | None]:
+    """批量获取课程的第一条排课记录（按 created_at ASC 取最早的一条）。"""
+    if not course_ids:
+        return {}
+    result = await db.execute(
+        select(CourseSchedule)
+        .where(CourseSchedule.course_id.in_(course_ids))
+        .order_by(CourseSchedule.course_id, CourseSchedule.created_at)
+    )
+    schedules = result.scalars().all()
+    schedule_map: dict[int, CourseSchedule | None] = {}
+    for s in schedules:
+        if s.course_id not in schedule_map:
+            schedule_map[s.course_id] = s
+    return schedule_map
+
+
 async def list_training_rooms(
     db: AsyncSession,
     page: int = 1,
@@ -37,7 +57,7 @@ async def list_training_rooms(
 
     两步查询：
     Step1: 查询培训室（分页）
-    Step2: 批量查询热门课程（JOIN teachers），Python 分组限制每间 3 门
+    Step2: 批量查询热门课程（JOIN teachers + course_schedules），Python 分组限制每间 3 门
     """
     page_size = min(page_size, MAX_PAGE_SIZE)
     offset = (page - 1) * page_size
@@ -70,12 +90,13 @@ async def list_training_rooms(
             items=[], total=total, page=page, page_size=page_size
         )
 
-    # Step2: 批量查询热门课程（JOIN teachers），按 room_id 分组限制 3 门
+    # Step2: 批量查询热门课程
     room_ids = [room.id for room, _ in rooms]
 
     hot_result = await db.execute(
-        select(Course, Teacher)
-        .outerjoin(Teacher, Course.teacher_id == Teacher.id)
+        select(Course, CourseSchedule, Teacher)
+        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+        .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
         .where(
             Course.room_id.in_(room_ids),
             Course.is_hot == True,  # noqa: E712
@@ -87,7 +108,7 @@ async def list_training_rooms(
 
     # Python 分组，每间房最多 3 门热门课程
     hot_by_room: dict[int, list[HotCourseItem]] = {}
-    for course, teacher in hot_rows:
+    for course, schedule, teacher in hot_rows:
         if course.room_id not in hot_by_room:
             hot_by_room[course.room_id] = []
         if len(hot_by_room[course.room_id]) < 3:
@@ -97,9 +118,9 @@ async def list_training_rooms(
                     name=course.name,
                     cover_image=course.cover_image,
                     teacher=TeacherResponse.model_validate(teacher) if teacher else None,
-                    price=course.price,
+                    price=schedule.price if schedule else 0,
                     enrollment_count=course.enrollment_count,
-                    schedule=course.schedule,
+                    schedule=schedule.time_slots if schedule else None,
                     tags=course.tags or [],
                 )
             )
@@ -135,10 +156,11 @@ async def get_training_room_detail(
     if not room_obj:
         return None
 
-    # Step 2: 查询该房间下 status=active 的课程，LEFT JOIN teachers
+    # Step 2: 查询该房间下 status=active 的课程，LEFT JOIN course_schedules + teachers
     courses_result = await db.execute(
-        select(Course, Teacher)
-        .outerjoin(Teacher, Course.teacher_id == Teacher.id)
+        select(Course, CourseSchedule, Teacher)
+        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+        .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
         .where(Course.room_id == room_id, Course.status == "active")
         .order_by(Course.sort_order)
     )
@@ -149,7 +171,7 @@ async def get_training_room_detail(
     teachers_map: dict[int, TeacherBrief] = {}
     total_students = 0
 
-    for course, teacher in rows:
+    for course, schedule, teacher in rows:
         teacher_brief = None
         if teacher:
             if teacher.id not in teachers_map:
@@ -165,6 +187,10 @@ async def get_training_room_detail(
         course_dict = {c.name: getattr(course, c.name) for c in course.__table__.columns}
         course_dict["room_name"] = room_obj.name
         course_dict["teacher"] = teacher_brief
+        course_dict["price"] = schedule.price if schedule else 0
+        course_dict["custom_price"] = schedule.custom_price if schedule else 0
+        course_dict["full_package_price"] = schedule.full_package_price if schedule else None
+        course_dict["schedule"] = schedule.time_slots if schedule else None
         courses_data.append(CourseResponse(**course_dict))
         total_students += course.enrollment_count
 
@@ -204,7 +230,7 @@ async def list_courses(
 ) -> CourseListResponse:
     """返回分页课程列表，附带教室名和教师信息。
 
-    单条查询：JOIN StudyRoom + Teacher。
+    单条查询：JOIN StudyRoom + CourseSchedule + Teacher。
     """
     page_size = min(page_size, MAX_PAGE_SIZE)
     offset = (page - 1) * page_size
@@ -219,9 +245,10 @@ async def list_courses(
     total = count_result.scalar_one()
 
     result = await db.execute(
-        select(Course, StudyRoom.name.label("room_name"), Teacher)
+        select(Course, StudyRoom.name.label("room_name"), CourseSchedule, Teacher)
         .join(StudyRoom, Course.room_id == StudyRoom.id)
-        .outerjoin(Teacher, Course.teacher_id == Teacher.id)
+        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+        .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
         .where(*filters)
         .order_by(Course.sort_order.asc(), Course.id.asc())
         .offset(offset)
@@ -230,10 +257,14 @@ async def list_courses(
     rows = result.all()
 
     items = []
-    for course, room_name, teacher in rows:
+    for course, room_name, schedule, teacher in rows:
         course_data = {c.name: getattr(course, c.name) for c in course.__table__.columns}
         course_data["room_name"] = room_name
         course_data["teacher"] = TeacherResponse.model_validate(teacher) if teacher else None
+        course_data["price"] = schedule.price if schedule else 0
+        course_data["custom_price"] = schedule.custom_price if schedule else 0
+        course_data["full_package_price"] = schedule.full_package_price if schedule else None
+        course_data["schedule"] = schedule.time_slots if schedule else None
         items.append(CourseResponse(**course_data))
 
     return CourseListResponse(
@@ -247,21 +278,22 @@ async def get_course_detail(
     """返回课程详情，含教师、教室、课时和相关课程。
 
     3 步查询，避免 N+1：
-    Step 1: courses + LEFT JOIN teachers + JOIN study_rooms
+    Step 1: courses + LEFT JOIN course_schedules + LEFT JOIN teachers + JOIN study_rooms
     Step 2: course_lessons WHERE course_id ORDER BY sort_order
     Step 3: 同分类其他活跃课程 LIMIT 6
     """
-    # Step 1: 课程基本信息 + 教师 + 教室
+    # Step 1: 课程基本信息 + 排课 + 教师 + 教室
     result = await db.execute(
-        select(Course, Teacher, StudyRoom)
-        .outerjoin(Teacher, Course.teacher_id == Teacher.id)
+        select(Course, CourseSchedule, Teacher, StudyRoom)
+        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+        .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
         .outerjoin(StudyRoom, Course.room_id == StudyRoom.id)
         .where(Course.id == course_id, Course.status == "active")
     )
     row = result.one_or_none()
     if row is None:
         return None
-    course, teacher, study_room = row
+    course, schedule, teacher, study_room = row
 
     # Step 2: 课时列表
     lessons_result = await db.execute(
@@ -307,12 +339,12 @@ async def get_course_detail(
         name=course.name,
         cover_image=course.cover_image,
         category=course.category,
-        price=course.price,
-        custom_price=course.custom_price,
-        full_package_price=course.full_package_price,
+        price=schedule.price if schedule else 0,
+        custom_price=schedule.custom_price if schedule else 0,
+        full_package_price=schedule.full_package_price if schedule else None,
         rating=course.rating,
         enrollment_count=course.enrollment_count,
-        schedule=course.schedule,
+        schedule=schedule.time_slots if schedule else None,
         tags=course.tags or [],
         status=course.status,
         is_hot=course.is_hot,

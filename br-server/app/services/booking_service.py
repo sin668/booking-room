@@ -365,11 +365,24 @@ async def list_bookings(
             courses_list = list(courses_result.scalars().all())
             for c in courses_list:
                 course_map[c.id] = c.name
-                course_schedule_map[c.id] = c.schedule
-                course_teacher_map[c.id] = c.teacher_id
+            
+            # 查询排课信息（从 course_schedules 表获取 schedule 和 teacher_id）
+            from app.models.course_schedule import CourseSchedule
+            schedules_result = await db.execute(
+                select(CourseSchedule).where(CourseSchedule.course_id.in_(course_ids))
+                .order_by(CourseSchedule.course_id, CourseSchedule.created_at)
+            )
+            schedule_list = list(schedules_result.scalars().all())
+            schedule_by_course: dict[int, CourseSchedule] = {}
+            for s in schedule_list:
+                if s.course_id not in schedule_by_course:
+                    schedule_by_course[s.course_id] = s
+            for cid, sched in schedule_by_course.items():
+                course_schedule_map[cid] = sched.time_slots
+                course_teacher_map[cid] = sched.teacher_id
             
             # 查询教师信息
-            teacher_ids = {c.teacher_id for c in courses_list if c.teacher_id is not None}
+            teacher_ids = {s.teacher_id for s in schedule_list if s.teacher_id is not None}
             if teacher_ids:
                 teachers_result = await db.execute(select(Teacher).where(Teacher.id.in_(teacher_ids)))
                 teacher_map = {t.id: {"name": t.name, "avatar": t.avatar} for t in teachers_result.scalars().all()}

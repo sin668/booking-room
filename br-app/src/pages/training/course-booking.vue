@@ -173,6 +173,17 @@
             <text class="section-title">选择上课时间</text>
           </view>
 
+          <!-- Course start date picker -->
+          <view class="date-picker-section">
+            <view class="date-picker-label">课程开始日期</view>
+            <picker mode="date" :value="selectedStartDate" :start="minStartDate" @change="onDateChange">
+              <view class="date-picker-input">
+                <text class="date-picker-value">{{ selectedStartDate || '请选择日期' }}</text>
+                <text class="date-picker-arrow">›</text>
+              </view>
+            </picker>
+          </view>
+
           <!-- Weekday selector -->
           <scroll-view class="weekday-scroll" scroll-x :show-scrollbar="false">
             <view class="weekday-list">
@@ -410,6 +421,7 @@ export default {
       lessonsExpanded: false,
 
       // Custom schedule time picker
+      selectedStartDate: '',
       selectedWeekday: 1,
       selectedTimeSlot: '',
 
@@ -500,6 +512,15 @@ export default {
       ]
     },
 
+    minStartDate() {
+      // 最小可选日期为今天
+      const today = new Date()
+      const year = today.getFullYear()
+      const month = String(today.getMonth() + 1).padStart(2, '0')
+      const day = String(today.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    },
+
     visibleLessons() {
       if (this.lessonsExpanded || this.isFullPackage) {
         return this.lessons
@@ -576,6 +597,12 @@ export default {
         const res = await getCourseLessons(this.courseId)
         this.courseInfo = res.course || res
         this.lessons = res.lessons || []
+        
+        // 从排课表获取教师信息
+        if (res.schedule && res.schedule.teacher_id) {
+          // 如果有排课信息，更新课程的老师信息
+          this.courseInfo.teacher = res.schedule.teacher || this.courseInfo.teacher
+        }
 
         await Promise.all([
           this.loadWalletBalance(),
@@ -614,6 +641,10 @@ export default {
 
     onSelectWeekday(day) {
       this.selectedWeekday = day.value
+    },
+
+    onDateChange(e) {
+      this.selectedStartDate = e.detail.value
     },
 
     onSelectTimeSlot(slot) {
@@ -684,14 +715,22 @@ export default {
 
       this.submitting = true
       try {
-        const res = await createCourseBooking({
+        const bookingData = {
           course_id: this.courseId,
           booking_type: this.bookingType,
           lesson_ids: this.selectedLessonIds,
           schedule_type: this.scheduleType,
           payment_method: this.paymentMethod,
           coupon_id: this.coupon?.id || null,
-        })
+        }
+        
+        // 如果是自定义预约，添加日期和时间段信息
+        if (this.scheduleType === 'custom') {
+          bookingData.start_date = this.selectedStartDate || null
+          bookingData.time_slot = this.selectedTimeSlot || null
+        }
+        
+        const res = await createCourseBooking(bookingData)
 
         if (this.paymentMethod === 'wechat' && res.payment_params) {
           await this.requestWechatPayment(res.payment_params)
@@ -1298,6 +1337,43 @@ function money(value) {
 }
 
 /* Custom schedule time picker */
+.date-picker-section {
+  margin-bottom: 20rpx;
+}
+
+.date-picker-label {
+  font-size: 24rpx;
+  color: $text-secondary;
+  margin-bottom: 12rpx;
+}
+
+.date-picker-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 24rpx;
+  background: $surface-soft;
+  border: 2rpx solid $border-soft;
+  border-radius: 16rpx;
+  transition: all 0.2s;
+}
+
+.date-picker-input:active {
+  border-color: $primary;
+  background: $primary-soft;
+}
+
+.date-picker-value {
+  font-size: 28rpx;
+  color: $text-primary;
+}
+
+.date-picker-arrow {
+  font-size: 32rpx;
+  color: $text-muted;
+  transform: rotate(90deg);
+}
+
 .weekday-scroll {
   margin-bottom: 16rpx;
 }

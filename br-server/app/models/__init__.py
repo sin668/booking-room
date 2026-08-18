@@ -11,6 +11,7 @@ from app.models.room_follow import RoomFollow
 from app.models.seat import Seat
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.models.user import User
@@ -27,6 +28,7 @@ __all__ = [
     "City",
     "Course",
     "CourseLesson",
+    "CourseSchedule",
     "Coupon",
     "Notification",
     "NotificationPreference",

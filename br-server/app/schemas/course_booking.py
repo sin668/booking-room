@@ -25,6 +25,9 @@ class CourseBookingCreate(BaseModel):
     schedule_type: str = Field(..., pattern="^(fixed|custom)$")
     payment_method: str = Field(..., pattern="^(balance|wechat)$")
     coupon_id: int | None = None
+    # 自定义预约的时间信息
+    start_date: str | None = Field(None, description="课程开始日期，格式 YYYY-MM-DD")
+    time_slot: str | None = Field(None, description="上课时间段，如 '09:00-11:00'")
 
 
 class CourseBookingResponse(BaseModel):

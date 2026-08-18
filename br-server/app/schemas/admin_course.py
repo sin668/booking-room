@@ -1,0 +1,97 @@
+"""Admin course management schemas."""
+
+from decimal import Decimal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class CourseScheduleItem(BaseModel):
+    """排课记录项"""
+    id: int | None = None
+    teacher_id: int | None = None
+    start_date: str | None = None
+    time_slots: str | None = None
+    price: Decimal
+    custom_price: Decimal = Decimal("0")
+    full_package_price: Decimal | None = None
+    full_custom_price: Decimal | None = None
+
+
+class AdminCourseItem(BaseModel):
+    """Admin 课程列表项"""
+    id: int
+    name: str
+    cover_image: str | None = None
+    category: str
+    rating: Decimal
+    enrollment_count: int
+    tags: list[str] = []
+    status: str
+    is_hot: bool = False
+    sort_order: int
+    room_id: int
+    room_name: str | None = None
+    schedules: list[CourseScheduleItem] = []
+    created_at: str
+    updated_at: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @staticmethod
+    def parse_tags(v):
+        if v is None or v == "":
+            return []
+        if isinstance(v, list):
+            return v
+        return [tag.strip() for tag in v.split(",") if tag.strip()]
+
+
+class AdminCourseListResponse(BaseModel):
+    items: list[AdminCourseItem]
+    total: int
+    page: int
+    page_size: int
+
+
+class AdminCourseCreate(BaseModel):
+    """创建课程请求"""
+    name: str = Field(..., min_length=1, max_length=100)
+    cover_image: str | None = None
+    category: str = Field(..., max_length=30)
+    room_id: int
+    tags: str | None = None
+    description: str | None = None
+    is_hot: bool = False
+    sort_order: int = 0
+    status: str = "active"
+    schedules: list[CourseScheduleItem] = Field(default_factory=list)
+
+
+class AdminCourseUpdate(BaseModel):
+    """更新课程请求"""
+    name: str | None = None
+    cover_image: str | None = None
+    category: str | None = None
+    room_id: int | None = None
+    tags: str | None = None
+    description: str | None = None
+    is_hot: bool | None = None
+    sort_order: int | None = None
+    status: str | None = None
+    schedules: list[CourseScheduleItem] | None = None
+
+
+class AdminTeacherBrief(BaseModel):
+    """Admin 教师简要信息"""
+    id: int
+    name: str
+    avatar: str | None = None
+    title: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminCourseDetailResponse(AdminCourseItem):
+    """Admin 课程详情响应"""
+    teacher: AdminTeacherBrief | None = None
+    description: str | None = None

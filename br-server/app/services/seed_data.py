@@ -16,6 +16,8 @@ from app.models.activity import Activity
 from app.models.banner import Banner
 from app.models.coupon import Coupon, UserCoupon
 from app.models.course import Course
+from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
 from app.models.notification import Notification, NotificationPreference
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
@@ -525,21 +527,32 @@ async def seed_all() -> None:
             if existing.scalar_one_or_none() is not None:
                 continue
             teacher_id = teacher_map[cd["teacher_name"]].id if cd["teacher_name"] else None
-            session.add(Course(
+            course = Course(
                 room_id=training_room_map[cd["room_name"]].id,
-                teacher_id=teacher_id,
                 name=cd["name"],
                 cover_image=cd.get("cover_image"),
                 category=cd["category"],
-                price=cd["price"],
                 rating=cd["rating"],
                 enrollment_count=cd["enrollment_count"],
-                schedule=cd["schedule"],
                 tags=cd["tags"],
                 status="active",
                 is_hot=cd["is_hot"],
                 sort_order=cd["sort_order"],
-            ))
+            )
+            session.add(course)
+            await session.flush()
+            
+            # 创建排课记录
+            schedule = CourseSchedule(
+                course_id=course.id,
+                teacher_id=teacher_id,
+                price=cd["price"],
+                custom_price=cd.get("custom_price", cd["price"]),
+                full_package_price=cd.get("full_package_price"),
+                full_custom_price=cd.get("full_custom_price"),
+                time_slots=cd.get("schedule"),
+            )
+            session.add(schedule)
             print(f"  + Course: {cd['name']}")
 
         await seed_coupons(session)

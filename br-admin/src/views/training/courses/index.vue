@@ -66,7 +66,7 @@
           },
           {
             label: '删除',
-            color: 'error',
+            type: 'error',
             onClick: () => handleDelete(record),
           },
         ],

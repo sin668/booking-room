@@ -305,7 +305,8 @@ async def get_course_detail(
 
     # Step 3: 相关课程（同分类，排除当前课程，最多 6 门）
     related_result = await db.execute(
-        select(Course)
+        select(Course, CourseSchedule)
+        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
         .where(
             Course.category == course.category,
             Course.id != course_id,
@@ -314,10 +315,16 @@ async def get_course_detail(
         .order_by(Course.sort_order.asc())
         .limit(6)
     )
-    related_courses = [
-        RelatedCourseItem(id=c.id, name=c.name, cover_image=c.cover_image, price=c.price)
-        for c in related_result.scalars().all()
-    ]
+    related_courses = []
+    for c, sched in related_result.all():
+        related_courses.append(
+            RelatedCourseItem(
+                id=c.id,
+                name=c.name,
+                cover_image=c.cover_image,
+                price=sched.price if sched else 0,
+            )
+        )
 
     # 组装响应
     teacher_brief = None

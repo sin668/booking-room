@@ -217,12 +217,19 @@ async def list_available_coupons_for_booking(
     # 课程预约场景
     elif course_id is not None:
         from app.models.course import Course
-        course_result = await db.execute(select(Course).where(Course.id == course_id))
-        course = course_result.scalar_one_or_none()
-        if course is None:
+        from app.models.course_schedule import CourseSchedule
+        
+        result = await db.execute(
+            select(Course, CourseSchedule)
+            .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+            .where(Course.id == course_id)
+        )
+        row = result.one_or_none()
+        if row is None:
             raise CouponNotFoundError("课程不存在")
+        course, schedule = row
         # 课程价格作为原价（单课时价格，前端会根据选择课时数计算总价）
-        original_price = Decimal(str(course.price))
+        original_price = Decimal(str(schedule.price)) if schedule else Decimal("0")
         seat = None  # 课程预约无座位
     else:
         raise CouponError("缺少必要参数：seat_id 或 course_id")

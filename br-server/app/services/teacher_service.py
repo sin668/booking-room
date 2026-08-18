@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.schemas.teacher import TeacherCourseItem, TeacherDetailResponse
@@ -24,16 +25,18 @@ async def get_teacher_detail(
     query = (
         select(
             Course,
+            CourseSchedule,
             StudyRoom.name.label("room_name"),
             func.count(CourseLesson.id).label("lesson_count"),
         )
+        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
         .outerjoin(StudyRoom, Course.room_id == StudyRoom.id)
         .outerjoin(CourseLesson, Course.id == CourseLesson.course_id)
         .where(
-            Course.teacher_id == teacher_id,
+            CourseSchedule.teacher_id == teacher_id,
             Course.status == "active",
         )
-        .group_by(Course.id, StudyRoom.name)
+        .group_by(Course.id, CourseSchedule.id, StudyRoom.name)
         .order_by(Course.sort_order, Course.id)
     )
     result = await db.execute(query)
@@ -42,6 +45,7 @@ async def get_teacher_detail(
     courses = []
     for row in rows:
         course = row[0]
+        schedule = row[1]
         room_name = row.room_name or ""
         lesson_count = row.lesson_count or 0
 
@@ -60,10 +64,10 @@ async def get_teacher_detail(
                 name=course.name,
                 cover_image=course.cover_image,
                 category=course.category,
-                price=course.price,
+                price=schedule.price if schedule else 0,
                 rating=course.rating,
                 enrollment_count=course.enrollment_count,
-                schedule=course.schedule,
+                schedule=schedule.time_slots if schedule else None,
                 tags=tags_list,
                 status=course.status,
                 room_id=course.room_id,

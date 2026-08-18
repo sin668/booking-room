@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.city import City
 from app.models.course import Course
+from app.models.course_schedule import CourseSchedule
 from app.models.room_follow import RoomFollow
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
@@ -95,8 +96,9 @@ async def list_followed_rooms(
         ).scalar_one()
 
         result = await db.execute(
-            select(RoomFollow, Course)
+            select(RoomFollow, Course, CourseSchedule)
             .join(Course, RoomFollow.room_id == Course.id)
+            .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
             .where(
                 RoomFollow.user_id == user_id,
                 RoomFollow.follow_type == "course",
@@ -115,10 +117,10 @@ async def list_followed_rooms(
                 city_name=None,
                 business_hours=None,
                 status=course.status,
-                min_price=course.price,
+                min_price=schedule.price if schedule else 0,
                 followed_at=follow.created_at,
             )
-            for follow, course in result.all()
+            for follow, course, schedule in result.all()
         ]
         return FollowedRoomListResponse(items=items, total=count)
 
@@ -196,11 +198,14 @@ async def follow_room(
         # Validate against courses table
         row = (
             await db.execute(
-                select(Course).where(Course.id == room_id, Course.status == "active")
+                select(Course, CourseSchedule)
+                .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+                .where(Course.id == room_id, Course.status == "active")
             )
-        ).scalar_one_or_none()
+        ).one_or_none()
         if row is None:
             raise ValueError(f"Course {room_id} not found")
+        course, schedule = row
         # For course type, create follow record and return basic response
         follow = (
             await db.execute(
@@ -219,13 +224,13 @@ async def follow_room(
         await db.commit()
         await db.refresh(follow)
         return FollowedRoomResponse(
-            id=row.id,
-            name=row.name,
-            description=row.description,
-            cover_image=row.cover_image,
+            id=course.id,
+            name=course.name,
+            description=course.description,
+            cover_image=course.cover_image,
             address="",
-            status=row.status,
-            min_price=row.price,
+            status=course.status,
+            min_price=schedule.price if schedule else 0,
             followed_at=follow.created_at,
         ), created
 

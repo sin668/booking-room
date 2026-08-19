@@ -17,9 +17,10 @@ from app.schemas.upload import UploadResponse
 
 logger = logging.getLogger(__name__)
 MB = 1024 * 1024
-UPLOAD_SCOPES = {"avatar", "activity-cover", "room-cover", "room-environment", "common"}
+UPLOAD_SCOPES = {"avatar", "teacher-avatar", "activity-cover", "room-cover", "room-environment", "common"}
 SCOPE_SIZE_LIMITS = {
     "avatar": 2 * MB,
+    "teacher-avatar": 2 * MB,
     "activity-cover": 5 * MB,
     "room-cover": 5 * MB,
     "room-environment": 5 * MB,

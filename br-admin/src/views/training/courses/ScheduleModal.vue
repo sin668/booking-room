@@ -194,6 +194,7 @@
   const listLoading = ref(false);
   const teacherLoading = ref(false);
   const saving = ref(false);
+  const deleting = ref(false);
   const scheduleList = ref<ScheduleRecord[]>([]);
   const tableKey = ref(0);
   const teacherOptions = ref<Array<{ label: string; value: number }>>([]);
@@ -210,6 +211,12 @@
   const selectedSlots = ref<Set<string>>(new Set());
 
   const formRules: FormRules = {
+    teacher_id: {
+      required: true,
+      type: 'number',
+      message: '请选择授课老师',
+      trigger: ['blur', 'change'],
+    },
     price: { required: true, type: 'number', message: '请输入每课时价格', trigger: 'blur' },
   };
 
@@ -497,14 +504,24 @@
       positiveText: '确定',
       negativeText: '取消',
       onPositiveClick: async () => {
+        // 防重复触发：删除进行中时忽略后续点击
+        if (deleting.value) return;
+        deleting.value = true;
         try {
           await deleteCourseSchedule(props.courseId!, row.id);
           window['$message']?.success('删除成功');
-          await loadSchedules();
-          emit('success');
-        } catch {
-          window['$message']?.error('删除失败');
+        } catch (err) {
+          // 404 表示记录已被删除（重复触发场景），静默刷新列表，不弹重复错误提示
+          const msg = String((err as Error)?.message || '');
+          if (!msg.includes('不存在')) {
+            window['$message']?.error('删除失败');
+            return;
+          }
+        } finally {
+          deleting.value = false;
         }
+        await loadSchedules();
+        emit('success');
       },
     });
   }

@@ -18,7 +18,7 @@
             <template #icon>
               <n-icon><PlusOutlined /></n-icon>
             </template>
-            新建自习室
+            新建学习室
           </n-button>
         </template>
       </BasicTable>
@@ -106,7 +106,7 @@
             label: '管理座位',
             onClick: handleManageSeats.bind(null, record),
             auth: ['seat:view'],
-            // 仅自习室和综合室支持管理座位
+            // 仅学习室和综合室支持管理座位
             ifShow: ['study', 'comprehensive'].includes(record.room_type),
           },
         ],
@@ -135,7 +135,7 @@
   function handleDelete(record: RoomItem) {
     window['$dialog'].warning({
       title: '确认删除',
-      content: `确定要删除自习室「${record.name}」吗？`,
+      content: `确定要删除学习室「${record.name}」吗？`,
       positiveText: '确认删除',
       negativeText: '取消',
       onPositiveClick: async () => {
@@ -154,7 +154,7 @@
     const newStatus = record.status === 'open' ? 'closed' : 'open';
     window['$dialog'].warning({
       title: '确认操作',
-      content: `确定要${newStatus === 'open' ? '上架' : '下架'}自习室「${record.name}」吗？`,
+      content: `确定要${newStatus === 'open' ? '上架' : '下架'}学习室「${record.name}」吗？`,
       positiveText: '确认',
       negativeText: '取消',
       onPositiveClick: async () => {

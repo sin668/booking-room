@@ -29,7 +29,7 @@ export function createRoomSelectSchema(options: BusinessOption<number>[]): FormS
   return {
     field: 'room_id',
     component: 'NSelect',
-    label: '自习室',
+    label: '学习室',
     componentProps: {
       placeholder: '全部',
       options,

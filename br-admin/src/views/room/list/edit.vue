@@ -7,13 +7,13 @@
           <n-button text @click="goBack">
             <template #icon><n-icon><ArrowLeftOutlined /></n-icon></template>
           </n-button>
-          <h2 class="text-lg font-semibold m-0">{{ isEdit ? '编辑自习室' : '新建自习室' }}</h2>
+          <h2 class="text-lg font-semibold m-0">{{ isEdit ? '编辑学习室' : '新建学习室' }}</h2>
         </div>
         <n-space>
           <n-button @click="goBack">取消</n-button>
           <n-button type="primary" :loading="saving" @click="handleSave">
             <template #icon><n-icon><SaveOutlined /></n-icon></template>
-            保存自习室
+            保存学习室
           </n-button>
         </n-space>
       </div>
@@ -34,7 +34,7 @@
               <n-form-item-gi :span="2" label="名称" path="name">
                 <n-input
                   v-model:value="formValues.name"
-                  placeholder="请输入自习室名称"
+                  placeholder="请输入学习室名称"
                   :maxlength="100"
                   show-count
                 />
@@ -175,7 +175,7 @@
           <n-input
             v-model:value="formValues.description"
             type="textarea"
-            placeholder="请输入自习室简介"
+            placeholder="请输入学习室简介"
             :maxlength="1000"
             show-count
             :rows="4"
@@ -252,7 +252,7 @@
 
   const cityOptions = ref<{ label: string; value: number }[]>([]);
   const roomTypeOptions = [
-    { label: '自习室', value: 'study' },
+    { label: '学习室', value: 'study' },
     { label: '培训室', value: 'training' },
     { label: '综合室', value: 'comprehensive' },
   ];
@@ -331,7 +331,7 @@
       environmentImages.value = [...(detail.environment_images ?? [])];
       isPublished.value = detail.status === 'open';
     } catch (error) {
-      window['$message']?.error(getReadableError(error, '自习室详情加载失败，请稍后重试'));
+      window['$message']?.error(getReadableError(error, '学习室详情加载失败，请稍后重试'));
     } finally {
       loading.value = false;
     }
@@ -398,7 +398,7 @@
     isPublished.value = value;
   }
 
-  // 保存自习室
+  // 保存学习室
   async function handleSave() {
     try {
       await formRef.value?.validate();
@@ -424,11 +424,11 @@
       };
       if (roomId.value) {
         await updateRoom(roomId.value, payload);
-        window['$message']?.success('自习室更新成功');
+        window['$message']?.success('学习室更新成功');
         saved = true;
       } else {
         await createRoom(payload);
-        window['$message']?.success('自习室创建成功');
+        window['$message']?.success('学习室创建成功');
         saved = true;
       }
     } catch (error) {

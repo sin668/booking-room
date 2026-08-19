@@ -207,7 +207,7 @@ async def delete_room(db: AsyncSession, room_id: int) -> None:
     ).scalar_one()
 
     if active_count > 0:
-        raise ValueError("该自习室存在活跃预约，无法删除")
+        raise ValueError("该学习室存在活跃预约，无法删除")
 
     await db.delete(room)
     await db.commit()

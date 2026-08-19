@@ -27,7 +27,7 @@ const routes: Array<RouteRecordRaw> = [
         path: 'list/edit/:id?',
         name: 'room_edit',
         meta: {
-          title: '编辑自习室',
+          title: '编辑学习室',
           hideInMenu: true,
           activeMenu: 'room_list',
         },

@@ -278,11 +278,14 @@
                 </view>
                 <text class="teacher-name-sm">{{ course.teacher.name }}</text>
               </view>
+              <view v-if="startDateText(course)" class="course-start-date">
+                <view class="icon icon-book course-start-icon" />
+                <text class="start-date-text">{{ startDateText(course) }}</text>
+              </view>
               <view class="course-schedule">
                 <view class="icon icon-clock course-clock-icon" />
-                <view class="schedule-wrap" @longpress="onScheduleLongPress(course)">
-                  <text class="schedule-text">{{ scheduleText(course) }}</text>
-                  <view v-if="isScheduleTruncated(course)" class="schedule-tooltip">{{ scheduleText(course) }}</view>
+                <view class="schedule-wrap" @tap.stop="toggleSchedule(course)">
+                  <text :class="['schedule-text', { expanded: isScheduleExpanded(course) }]">{{ scheduleText(course) }}</text>
                 </view>
                 <text class="schedule-dot">·</text>
                 <text class="schedule-status">可预约</text>
@@ -340,7 +343,7 @@ import { getSeatStats } from '@/api/seats'
 import { getTrainingRoomDetail } from '@/api/training'
 import { followRoom, isRoomFollowed, unfollowRoom } from '@/services/followedRooms'
 import { fetchBookingRoom } from '@/services/bookingPageService'
-import { formatCourseSchedule } from '@/utils/formatters'
+import { formatCourseSchedule, formatCourseStartDate } from '@/utils/formatters'
 
 const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
@@ -361,6 +364,7 @@ export default {
       trainingData: null,
       roomType: '',
       loading: true,
+      expandedScheduleIds: {},
       isFav: false,
       reviewCount: 0,
     }
@@ -599,10 +603,17 @@ export default {
       return Boolean(text && text.length > SCHEDULE_TRUNCATE_THRESHOLD)
     },
 
-    onScheduleLongPress(course) {
-      const text = formatCourseSchedule(course?.schedule)
-      if (!text) return
-      uni.showToast({ title: text, icon: 'none', duration: 2500 })
+    startDateText(course) {
+      return formatCourseStartDate(course?.start_date)
+    },
+
+    isScheduleExpanded(course) {
+      return Boolean(this.expandedScheduleIds[course?.id])
+    },
+
+    toggleSchedule(course) {
+      if (!this.isScheduleTruncated(course)) return
+      this.expandedScheduleIds[course.id] = !this.expandedScheduleIds[course.id]
     },
   },
 }
@@ -1700,26 +1711,27 @@ export default {
   white-space: nowrap;
 }
 
-.schedule-tooltip {
-  display: none;
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 10rpx);
-  z-index: 30;
-  background: rgba(24, 31, 54, 0.92);
-  border-radius: 12rpx;
-  padding: 12rpx 18rpx;
-  font-size: 22rpx;
-  line-height: 1.5;
-  color: #fff;
+.schedule-text.expanded {
   white-space: normal;
-  width: max-content;
-  max-width: 480rpx;
-  box-shadow: $shadow-card;
+  overflow: visible;
 }
 
-.schedule-wrap:hover .schedule-tooltip {
-  display: block;
+.course-start-date {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-top: 6rpx;
+}
+
+.course-start-icon {
+  font-size: 18rpx;
+  color: $text-muted;
+  flex-shrink: 0;
+}
+
+.start-date-text {
+  font-size: 22rpx;
+  color: $text-muted;
 }
 
 .schedule-dot {

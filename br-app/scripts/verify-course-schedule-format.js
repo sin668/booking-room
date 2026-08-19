@@ -55,7 +55,7 @@ function loadModule(relativePath, injected = {}, cache = {}) {
 }
 
 function main() {
-  const { formatCourseSchedule } = loadModule('src/utils/formatters.js')
+  const { formatCourseSchedule, formatCourseStartDate } = loadModule('src/utils/formatters.js')
 
   // 空值返回空字符串
   assert.equal(formatCourseSchedule(null), '')
@@ -117,6 +117,18 @@ function main() {
     formatCourseSchedule('[{"weekday":9,"time_slot":"14:00-16:00"}]'),
     '[{"weekday":9,"time_slot":"14:00-16:00"}]',
   )
+
+  // 开课时间：标准日期
+  assert.equal(formatCourseStartDate('2026-08-18'), '于 2026-08-18日 后开课')
+
+  // 开课时间：兼容 datetime 格式，只取日期部分
+  assert.equal(formatCourseStartDate('2026-08-18T09:00:00'), '于 2026-08-18日 后开课')
+
+  // 开课时间：空值返回空字符串
+  assert.equal(formatCourseStartDate(null), '')
+  assert.equal(formatCourseStartDate(undefined), '')
+  assert.equal(formatCourseStartDate(''), '')
+  assert.equal(formatCourseStartDate('   '), '')
 
   console.log('verify-course-schedule-format: all assertions passed')
 }

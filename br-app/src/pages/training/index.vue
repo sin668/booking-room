@@ -176,9 +176,13 @@
                     </view>
                     <text class="hot-course-teacher">{{ course.teacher ? course.teacher.name : '未知讲师' }}</text>
                   </view>
+                  <view v-if="startDateText(course)" class="hot-course-start-row">
+                    <view class="icon icon-book hot-start-icon" />
+                    <text class="hot-course-start">{{ startDateText(course) }}</text>
+                  </view>
                   <view class="hot-course-schedule-row">
                     <view class="icon icon-clock hot-schedule-icon" />
-                    <text class="hot-course-schedule">{{ course.schedule || '排课待定' }}</text>
+                    <text :class="['hot-course-schedule', { expanded: isScheduleExpanded(course) }]" @tap.stop="toggleSchedule(course)">{{ scheduleText(course) || '排课待定' }}</text>
                     <text class="hot-schedule-dot">·</text>
                     <text class="hot-course-status">可预约</text>
                   </view>
@@ -236,9 +240,13 @@
                   </view>
                   <text class="teacher-name">{{ course.teacher ? course.teacher.name + ' 老师' : '待分配老师' }}</text>
                 </view>
-                <view v-if="course.schedule" class="course-schedule-row">
+                <view v-if="startDateText(course)" class="course-start-row">
+                  <view class="icon icon-book course-start-icon" />
+                  <text class="course-start-text">{{ startDateText(course) }}</text>
+                </view>
+                <view v-if="scheduleText(course)" class="course-schedule-row">
                   <view class="icon icon-clock schedule-icon" />
-                  <text class="course-schedule">{{ course.schedule }}</text>
+                  <text :class="['course-schedule', { expanded: isScheduleExpanded(course) }]" @tap.stop="toggleSchedule(course)">{{ scheduleText(course) }}</text>
                 </view>
                 <view class="course-room-row">
                   <view class="icon icon-location course-location-icon" />
@@ -277,6 +285,29 @@ import { ref, watch } from 'vue'
 import { onMounted } from 'vue'
 import { onReachBottom } from '@dcloudio/uni-app'
 import { getTrainingRooms, getTrainingCourses } from '@/api/training'
+import { formatCourseSchedule, formatCourseStartDate } from '@/utils/formatters'
+
+const SCHEDULE_TRUNCATE_THRESHOLD = 12
+
+const expandedScheduleIds = ref({})
+
+function scheduleText(course) {
+  return formatCourseSchedule(course?.schedule)
+}
+
+function startDateText(course) {
+  return formatCourseStartDate(course?.start_date)
+}
+
+function isScheduleExpanded(course) {
+  return Boolean(expandedScheduleIds.value[course?.id])
+}
+
+function toggleSchedule(course) {
+  const text = formatCourseSchedule(course?.schedule)
+  if (!text || text.length <= SCHEDULE_TRUNCATE_THRESHOLD) return
+  expandedScheduleIds.value[course.id] = !expandedScheduleIds.value[course.id]
+}
 
 const REAL_ROOM_COVERS = [
   'https://images.unsplash.com/photo-1580582932705-ff3c3993141f?w=400&h=500&fit=crop&q=85',
@@ -1042,10 +1073,27 @@ onReachBottom(() => {
   color: $text-secondary;
 }
 
+.hot-course-start-row {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.hot-start-icon {
+  font-size: 18rpx;
+  color: $text-muted;
+}
+
+.hot-course-start {
+  font-size: 20rpx;
+  color: $text-muted;
+}
+
 .hot-course-schedule-row {
   display: flex;
   align-items: center;
   gap: 4rpx;
+  min-width: 0;
 }
 
 .hot-schedule-icon {
@@ -1056,6 +1104,15 @@ onReachBottom(() => {
 .hot-course-schedule {
   font-size: 20rpx;
   color: $text-muted;
+  max-width: 300rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hot-course-schedule.expanded {
+  white-space: normal;
+  overflow: visible;
 }
 
 .hot-schedule-dot {
@@ -1255,10 +1312,27 @@ onReachBottom(() => {
   color: $text-secondary;
 }
 
+.course-start-row {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.course-start-icon {
+  font-size: 18rpx;
+  color: $text-muted;
+}
+
+.course-start-text {
+  font-size: 21rpx;
+  color: $text-muted;
+}
+
 .course-schedule-row {
   display: flex;
   align-items: center;
   gap: 6rpx;
+  min-width: 0;
 }
 
 .schedule-icon {
@@ -1269,6 +1343,15 @@ onReachBottom(() => {
 .course-schedule {
   font-size: 21rpx;
   color: $text-muted;
+  max-width: 360rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-schedule.expanded {
+  white-space: normal;
+  overflow: visible;
 }
 
 .course-dot {

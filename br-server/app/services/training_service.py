@@ -121,6 +121,7 @@ async def list_training_rooms(
                     price=schedule.price if schedule else 0,
                     enrollment_count=course.enrollment_count,
                     schedule=schedule.time_slots if schedule else None,
+                    start_date=schedule.start_date.isoformat() if schedule and schedule.start_date else None,
                     tags=course.tags or [],
                 )
             )
@@ -191,6 +192,7 @@ async def get_training_room_detail(
         course_dict["custom_price"] = schedule.custom_price if schedule else 0
         course_dict["full_package_price"] = schedule.full_package_price if schedule else None
         course_dict["schedule"] = schedule.time_slots if schedule else None
+        course_dict["start_date"] = schedule.start_date.isoformat() if schedule and schedule.start_date else None
         courses_data.append(CourseResponse(**course_dict))
         total_students += course.enrollment_count
 
@@ -265,6 +267,7 @@ async def list_courses(
         course_data["custom_price"] = schedule.custom_price if schedule else 0
         course_data["full_package_price"] = schedule.full_package_price if schedule else None
         course_data["schedule"] = schedule.time_slots if schedule else None
+        course_data["start_date"] = schedule.start_date.isoformat() if schedule and schedule.start_date else None
         items.append(CourseResponse(**course_data))
 
     return CourseListResponse(
@@ -352,6 +355,7 @@ async def get_course_detail(
         rating=course.rating,
         enrollment_count=course.enrollment_count,
         schedule=schedule.time_slots if schedule else None,
+        start_date=schedule.start_date.isoformat() if schedule and schedule.start_date else None,
         tags=course.tags or [],
         status=course.status,
         is_hot=course.is_hot,

@@ -132,3 +132,17 @@ export function formatCourseSchedule(timeSlots) {
   const parts = normalized.map((slot) => `${COURSE_WEEKDAY_NAMES[slot.weekday]} ${slot.start}`)
   return `每${parts.join('，')}上课`
 }
+
+/**
+ * 将 course_schedules.start_date 处理为开课时间文案，如 "于 2026-08-18日 后开课"
+ * @param {string|null|undefined} startDate - 开课日期（YYYY-MM-DD，兼容带时间部分）
+ * @returns {string} 开课时间文案，无有效日期时返回空字符串
+ */
+export function formatCourseStartDate(startDate) {
+  if (startDate === null || startDate === undefined) return ''
+  const text = String(startDate).trim()
+  if (!text) return ''
+  const datePart = text.includes('T') ? text.slice(0, text.indexOf('T')) : text.slice(0, 10)
+  if (!datePart) return ''
+  return `于 ${datePart} 后开课`
+}

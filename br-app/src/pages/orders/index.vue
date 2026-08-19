@@ -106,13 +106,20 @@
               </view>
               <text class="info-text">{{ order.teacher_name ? order.teacher_name + ' 老师' : '待分配老师' }}</text>
             </view>
+            <!-- Start date row -->
+            <view v-if="startDateText(order)" class="card-info-row">
+              <view class="info-icon start-icon">
+                <view class="start-icon-dot" />
+              </view>
+              <text class="info-text">{{ startDateText(order) }}</text>
+            </view>
             <!-- Schedule row -->
-            <view v-if="order.schedule" class="card-info-row">
+            <view v-if="scheduleText(order)" class="card-info-row">
               <view class="info-icon clock-icon">
                 <view class="clock-icon-circle" />
                 <view class="clock-icon-hand" />
               </view>
-              <text class="info-text">{{ order.schedule }}</text>
+              <text :class="['info-text', 'schedule-text', { expanded: isScheduleExpanded(order) }]" @tap.stop="toggleSchedule(order)">{{ scheduleText(order) }}</text>
             </view>
             <!-- Room row -->
             <view class="card-info-row">
@@ -214,7 +221,7 @@
 import { cancelBookingOrder, fetchBookingsPage } from '@/services/bookingPageService'
 import { cancelCourseBooking } from '@/api/courseBooking'
 import { BOOKING_TABS, SEAT_ZONE_LABELS } from '@/constants/booking'
-import { formatBookingStatus, formatHourCount, formatMoney } from '@/utils/formatters'
+import { formatBookingStatus, formatCourseSchedule, formatCourseStartDate, formatHourCount, formatMoney } from '@/utils/formatters'
 
 const TABS = [
   { label: '全部', value: 'all' },
@@ -237,6 +244,7 @@ const ZONE_MAP = {
 }
 
 const PAGE_SIZE = 20
+const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
 export default {
   data() {
@@ -250,6 +258,7 @@ export default {
       refreshing: false,
       hasMore: true,
       cancellingOrderId: null,
+      expandedScheduleIds: {},
     }
   },
 
@@ -258,6 +267,24 @@ export default {
   },
 
   methods: {
+    scheduleText(order) {
+      return formatCourseSchedule(order?.schedule)
+    },
+
+    startDateText(order) {
+      return formatCourseStartDate(order?.start_date)
+    },
+
+    isScheduleExpanded(order) {
+      return Boolean(this.expandedScheduleIds[order?.id])
+    },
+
+    toggleSchedule(order) {
+      const text = formatCourseSchedule(order?.schedule)
+      if (!text || text.length <= SCHEDULE_TRUNCATE_THRESHOLD) return
+      this.expandedScheduleIds[order.id] = !this.expandedScheduleIds[order.id]
+    },
+
     async resetAndLoad() {
       this.page = 1
       this.orders = []
@@ -864,6 +891,25 @@ export default {
 .info-text {
   font-size: 26rpx;
   color: $text-secondary;
+}
+
+.schedule-text {
+  max-width: 420rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-text.expanded {
+  white-space: normal;
+  overflow: visible;
+}
+
+.start-icon-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 3rpx;
+  background: $text-muted;
 }
 
 /* Bottom row: duration + price */

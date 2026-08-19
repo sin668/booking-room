@@ -355,6 +355,7 @@ async def list_bookings(
     course_booking_ids = {b.id for b in bookings if getattr(b, "booking_type", None) == "course"}
     course_map: dict[int, str] = {}  # course_id -> course_name
     course_schedule_map: dict[int, str] = {}  # course_id -> schedule
+    course_start_date_map: dict[int, str] = {}  # course_id -> start_date
     course_teacher_map: dict[int, int | None] = {}  # course_id -> teacher_id
     teacher_map: dict[int, dict] = {}  # teacher_id -> {name, avatar}
     lesson_map: dict[int, list[str]] = {}  # booking_id -> lesson_titles
@@ -380,6 +381,8 @@ async def list_bookings(
             for cid, sched in schedule_by_course.items():
                 course_schedule_map[cid] = sched.time_slots
                 course_teacher_map[cid] = sched.teacher_id
+                if sched.start_date is not None:
+                    course_start_date_map[cid] = sched.start_date.isoformat()
             
             # 查询教师信息
             teacher_ids = {s.teacher_id for s in schedule_list if s.teacher_id is not None}
@@ -406,6 +409,7 @@ async def list_bookings(
             resp.course_name = course_map.get(b.course_id) if b.course_id else None
             resp.lesson_titles = lesson_map.get(b.id)
             resp.schedule = course_schedule_map.get(b.course_id) if b.course_id else None
+            resp.start_date = course_start_date_map.get(b.course_id) if b.course_id else None
             # 设置教师信息
             if b.course_id and b.course_id in course_teacher_map:
                 teacher_id = course_teacher_map[b.course_id]

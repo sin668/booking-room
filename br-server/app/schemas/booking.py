@@ -80,6 +80,7 @@ class BookingResponse(BaseModel):
     teacher_name: str | None = None
     teacher_avatar: str | None = None
     schedule: str | None = None
+    start_date: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -25,6 +25,7 @@ class HotCourseItem(BaseModel):
     price: Decimal
     enrollment_count: int
     schedule: str | None = None
+    start_date: str | None = None
     tags: list[str] = []
 
     @field_validator("tags", mode="before")
@@ -76,6 +77,7 @@ class CourseResponse(BaseModel):
     rating: Decimal
     enrollment_count: int
     schedule: str | None = None
+    start_date: str | None = None
     tags: list[str] = []
     status: str
     is_hot: bool = False
@@ -175,6 +177,7 @@ class CourseDetailResponse(BaseModel):
     rating: Decimal
     enrollment_count: int
     schedule: str | None = None
+    start_date: str | None = None
     tags: list[str] = []
     status: str
     is_hot: bool = False

@@ -160,7 +160,8 @@
               <text class="schedule-cal-icon">☑</text>
             </view>
             <view class="schedule-info">
-              <text class="schedule-time-text">{{ scheduleDesc || '按课表上课' }}</text>
+              <text v-if="startDateDesc" class="schedule-start-text">{{ startDateDesc }}</text>
+              <text :class="['schedule-time-text', { expanded: scheduleExpanded }]" @tap="toggleSchedule">{{ scheduleDesc || '按课表上课' }}</text>
               <text class="schedule-desc">固定班课，按课表上课</text>
             </view>
           </view>
@@ -401,12 +402,14 @@
 import { getCourseLessons, createCourseBooking } from '@/api/courseBooking'
 import { getBalance } from '@/api/wallet'
 import { getAvailableCouponsForBooking } from '@/api/coupons'
-import { formatMoney } from '@/utils/formatters'
+import { formatMoney, formatCourseSchedule, formatCourseStartDate } from '@/utils/formatters'
 import {
   PAYMENT_POLL_INTERVAL,
   PAYMENT_POLL_MAX_ATTEMPTS,
 } from '@/constants/wallet'
 import { pollPaymentStatus } from '@/services/paymentPolling'
+
+const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
 export default {
   data() {
@@ -417,6 +420,7 @@ export default {
       selectedLessonIds: [],
       bookingType: 'fixed',
       scheduleType: 'fixed',
+      scheduleExpanded: false,
       isFullPackage: false,
       lessonsExpanded: false,
 
@@ -463,9 +467,13 @@ export default {
 
     scheduleDesc() {
       if (this.courseInfo.schedule) {
-        return this.courseInfo.schedule
+        return formatCourseSchedule(this.courseInfo.schedule)
       }
       return ''
+    },
+
+    startDateDesc() {
+      return formatCourseStartDate(this.courseInfo.start_date)
     },
 
     fullPackageSaveAmount() {
@@ -672,6 +680,12 @@ export default {
       this.bookingType = type
       this.scheduleType = type
       this.loadAvailableCoupons()
+    },
+
+    toggleSchedule() {
+      const text = this.scheduleDesc
+      if (!text || text.length <= SCHEDULE_TRUNCATE_THRESHOLD) return
+      this.scheduleExpanded = !this.scheduleExpanded
     },
 
     selectPaymentMethod(method) {
@@ -1325,10 +1339,23 @@ function money(value) {
   gap: 6rpx;
 }
 
+.schedule-start-text {
+  font-size: 24rpx;
+  color: $text-secondary;
+}
+
 .schedule-time-text {
   font-size: 26rpx;
   font-weight: 600;
   color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-time-text.expanded {
+  white-space: normal;
+  overflow: visible;
 }
 
 .schedule-desc {

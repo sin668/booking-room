@@ -23,6 +23,16 @@ const routes: Array<RouteRecordRaw> = [
         },
         component: () => import('@/views/activity/list/index.vue'),
       },
+      {
+        path: 'list/edit/:id?',
+        name: 'activity_edit',
+        meta: {
+          title: '编辑活动',
+          hideInMenu: true,
+          activeMenu: 'activity_list',
+        },
+        component: () => import('@/views/activity/list/edit.vue'),
+      },
     ],
   },
 ];

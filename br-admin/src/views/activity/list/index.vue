@@ -22,14 +22,13 @@
           </n-button>
         </template>
       </BasicTable>
-
-      <ActivityEditModal v-model:show="showModal" :editData="editData" @success="handleSuccess" />
     </n-card>
   </n-flex>
 </template>
 
 <script lang="ts" setup>
   import { h, reactive, ref } from 'vue';
+  import { useRouter } from 'vue-router';
   import { PlusOutlined } from '@vicons/antd';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, useForm } from '@/components/Form/index';
@@ -41,11 +40,9 @@
   } from '@/api/activity';
   import { toBasicTableResult } from '@/api/contracts/admin';
   import { buildActivitySearchSchemas, buildActivityTableColumns } from './builders';
-  import ActivityEditModal from './ActivityEditModal.vue';
 
+  const router = useRouter();
   const actionRef = ref();
-  const showModal = ref(false);
-  const editData = ref<ActivityItem | null>(null);
   const columns = buildActivityTableColumns();
 
   const [register, { getFieldsValue }] = useForm({
@@ -106,13 +103,11 @@
   });
 
   function addTable() {
-    editData.value = null;
-    showModal.value = true;
+    router.push({ name: 'activity_edit' });
   }
 
   function handleEdit(record: ActivityItem) {
-    editData.value = record;
-    showModal.value = true;
+    router.push({ name: 'activity_edit', params: { id: record.id } });
   }
 
   function handleDelete(record: ActivityItem) {
@@ -171,11 +166,6 @@
       return error.message;
     }
     return fallback;
-  }
-
-  function handleSuccess() {
-    showModal.value = false;
-    reloadTable();
   }
 
   function handleSubmit() {

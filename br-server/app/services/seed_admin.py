@@ -48,6 +48,7 @@ MENU_SEEDS = [
     MenuSeed("room.seats", "menu", "座位管理", "seat:view", "list/:id/seats", "RoomSeats", "/room/seats/index", None, "AppstoreOutlined", 42, hidden=True, parent="room"),
     MenuSeed("activity", "directory", "活动管理", "activity:manage", "activity", "Activity", "LAYOUT", "/activity", "GiftOutlined", 50),
     MenuSeed("activity.list", "menu", "活动列表", "activity:view", "list", "ActivityList", "/activity/list/index", None, "GiftOutlined", 51, parent="activity"),
+    MenuSeed("activity.edit", "menu", "编辑活动", "activity:update", "list/edit/:id?", "ActivityEdit", "/activity/list/edit", None, "GiftOutlined", 52, hidden=True, parent="activity"),
     MenuSeed("coupon", "directory", "卡券管理", "coupon:manage", "coupon", "Coupon", "LAYOUT", "/coupon", "GiftOutlined", 55),
     MenuSeed("coupon.list", "menu", "卡券列表", "coupon:view", "list", "CouponList", "/coupon/list/index", None, "GiftOutlined", 56, parent="coupon"),
     MenuSeed("booking", "directory", "预约管理", "booking:manage", "booking", "Booking", "LAYOUT", "/booking", "CalendarOutlined", 60),

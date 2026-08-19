@@ -29,6 +29,7 @@ COMPONENT_WHITELIST = {
     "/room/list/index",
     "/room/seats/index",
     "/activity/list/index",
+    "/activity/list/edit",
     "/coupon/list/index",
     "/booking/list/index",
     "/wallet/transactions",

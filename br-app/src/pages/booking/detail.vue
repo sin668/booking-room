@@ -231,7 +231,7 @@
         </view>
         <scroll-view v-else scroll-x :show-scrollbar="false" class="teacher-scroll">
           <view class="teacher-list">
-            <view v-for="teacher in teachers" :key="teacher.id" class="teacher-card">
+            <view v-for="teacher in teachers" :key="teacher.id" class="teacher-card" @click="onTeacherTap(teacher)">
               <image class="teacher-avatar" :src="teacher.avatar || ''" mode="aspectFill" />
               <text class="teacher-name">{{ teacher.name }}</text>
               <text class="teacher-title">{{ teacher.title || '' }}</text>
@@ -502,6 +502,13 @@ export default {
       } catch {
         this.trainingData = null
       }
+    },
+
+    onTeacherTap(teacher) {
+      if (!teacher || !teacher.id) return
+      uni.navigateTo({
+        url: `/pages/teacher/profile?teacher_id=${teacher.id}`,
+      })
     },
 
     async loadRoom() {

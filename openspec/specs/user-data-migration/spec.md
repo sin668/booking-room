@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Alembic migration for schema expansion
 系统 SHALL 提供 Alembic 迁移脚本，在不破坏现有 `users` 表数据的前提下，新增 `username`、`email`、`mobile`、`avatar`、`user_type`、`is_super_admin` 等字段。

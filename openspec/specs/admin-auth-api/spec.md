@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## Requirements
 
 ### Requirement: Admin login API
 系统 SHALL 提供 `POST /api/v1/admin/auth/login` 接口，允许用户使用手机号或用户名 + 密码登录管理后台。用户数据从统一的 `users` 表中查询，不再按 `user_type` 过滤。请求体中 `phone` 和 `username` 至少提供一个。

@@ -2,7 +2,7 @@
 
 培训室详情 API 提供按房间 ID 查询单个培训室详情的接口，返回培训室基本信息、关联教师列表和课程列表，支撑 br-app 培训室概况页面的数据展示。
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Get training room detail API
 

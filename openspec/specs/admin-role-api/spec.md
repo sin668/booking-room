@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Admin role list API
 系统 SHALL 提供 `GET /api/v1/admin/roles` 接口，返回分页角色列表。

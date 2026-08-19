@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Booking list page
 br-admin SHALL 提供订单列表页面（路由 `/booking/list`），展示所有用户的预约订单。页面包含搜索区域（按状态筛选、按自习室筛选、按日期范围筛选）和数据表格。表格列包含：订单 ID、用户 ID、自习室名称、座位编号、预约日期、时段、金额、状态（带颜色标签）、创建时间、操作（查看详情/取消）。

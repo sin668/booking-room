@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: List banners API
 系统 SHALL 提供 `GET /api/v1/banners/` 接口，返回当前生效的轮播图列表。仅返回 `is_active=true` 的轮播图，按 `sort_order` 升序排列。无需分页（轮播图数量有限，全量返回）。

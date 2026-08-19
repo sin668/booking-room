@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: System settings read API
 系统 SHALL 提供 `GET /api/v1/admin/settings` 接口，返回系统基础设置和邮件设置。

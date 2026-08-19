@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: 管理员查询交易流水
 系统 SHALL 提供 `GET /api/v1/admin/wallet/transactions` 接口，允许管理员查询所有用户的交易流水。支持以下筛选参数：`page`、`page_size`、`type`（recharge/consume/refund）、`status`（pending/completed/failed/cancelled）、`user_id`、`date_start`、`date_end`。该接口需要 `wallet:view` 权限。

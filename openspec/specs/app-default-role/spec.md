@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: App register user default role
 系统 SHALL 在角色种子数据中创建 `app_register_user` 角色，作为 app 注册用户的默认角色。

@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: City database model
 系统 SHALL 创建 `cities` 表，包含字段：`id`（主键，自增）、`name`（VARCHAR(50)，非空，城市名如"茂名市"）、`province`（VARCHAR(50)，非空，省份如"广东省"）、`sort_order`（INTEGER，默认 0，排序权重，值越小越靠前）、`status`（VARCHAR(20)，默认 "active"，枚举值 "active"/"inactive"）、`created_at`、`updated_at`。

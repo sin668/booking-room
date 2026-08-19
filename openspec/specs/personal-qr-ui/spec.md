@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Personal QR page route
 The system SHALL provide a mobile page route for users to view their personal dynamic booking verification QR code.

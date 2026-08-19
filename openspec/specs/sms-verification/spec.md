@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Captcha verification before SMS
 系统 SHALL 在发送短信验证码前要求用户完成图形验证码（阿里云验证码 2.0 滑块验证），防止自动化脚本恶意调用。

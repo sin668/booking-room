@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: List bookings admin API
 系统 SHALL 提供 `GET /api/v1/admin/bookings/` 接口，返回所有用户的预约订单分页列表。支持查询参数 `page`（默认 1）、`page_size`（默认 10，最大 50）、`status`（可选，筛选订单状态）、`room_id`（可选，筛选自习室）、`date_start`（可选，起始日期）、`date_end`（可选，结束日期）。响应包含订单详情及关联的座位和自习室信息。

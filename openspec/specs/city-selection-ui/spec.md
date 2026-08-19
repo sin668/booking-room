@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: City selection page
 系统 SHALL 提供城市选择页面（`pages/city-select/index.vue`）。页面包含：搜索框（顶部固定）、热门城市网格、全部城市列表（按省份分组）。搜索框输入时实时过滤城市列表（匹配城市名或省份名）。热门城市由后端 `sort_order` 决定（前 N 个城市作为热门城市）。

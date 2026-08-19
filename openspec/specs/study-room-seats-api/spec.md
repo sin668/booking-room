@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Seat response schema
 座位列表响应 SHALL 包含以下字段：`id`（整数）、`room_id`（整数）、`seat_number`（字符串，如 "A-01"）、`zone`（枚举字符串 "quiet"/"keyboard"/"vip"）、`position`（字符串，如 "靠窗"）、`floor`（整数）、`price_per_hour`（数字，单位元）、`status`（枚举字符串 "available"/"maintenance"）、`row`（整数）、`col`（整数）。当带时间参数查询时额外返回 `is_available`（布尔值）。

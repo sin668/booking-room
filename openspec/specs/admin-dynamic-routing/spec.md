@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Backend-driven dynamic routing
 br-admin SHALL 使用 br-server 返回的动态路由树生成左侧导航和可访问路由。

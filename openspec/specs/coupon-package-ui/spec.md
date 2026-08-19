@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: 卡券包页面路由
 应用 SHALL 提供 `/pages/coupon/index` 卡券包页面，页面导航标题为“卡券包”。

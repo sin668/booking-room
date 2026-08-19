@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Notification center page
 br-app SHALL provide a message notification center page reachable from the home page notification bell. The page SHALL display user messages for four notification categories: booking reminders, activity notifications, study reports, and arrival reminders.

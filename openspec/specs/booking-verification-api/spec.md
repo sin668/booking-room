@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Issue booking verification token
 The system SHALL issue a short-lived backend-signed token for the current user's verifiable booking.

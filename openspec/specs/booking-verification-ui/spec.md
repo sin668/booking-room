@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Staff verification page route
 The system SHALL provide an H5-compatible verification page that can be opened from a WeChat-scanned verification URL.

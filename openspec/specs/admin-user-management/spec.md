@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## Requirements
 
 ### Requirement: Create user API
 系统 SHALL 提供 `POST /api/v1/admin/users` 接口，支持创建 app 或 admin 类型用户。手机号和用户名唯一性校验为全局校验（不再按 `user_type` 隔离）。

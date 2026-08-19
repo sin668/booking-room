@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Admin menu data model
 系统 SHALL 支持后台菜单权限树，节点类型包含 `directory`、`menu`、`button`。

@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Notification data ownership
 br-server SHALL store user notifications with current-user ownership and four supported notification types: `booking`, `activity`, `report`, and `arrival`.

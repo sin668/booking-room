@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Recharge page displays user balance
 充值页面 SHALL 在顶部展示用户当前账户余额和累计充值金额，样式参考 `prototype/recharge.html` 的渐变余额卡片。

@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: br-admin real admin login
 br-admin SHALL 使用 br-server 管理员认证接口完成登录，不再依赖 mock 登录接口。

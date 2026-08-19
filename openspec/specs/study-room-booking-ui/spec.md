@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Booking tab page
 系统 SHALL 将 br-app"预约"tab 页改造为预约主页面，参照 `prototype/booking.html`。页面包含：顶部城市选择器（显示当前城市名，点击跳转城市选择页）、日期选择器（横向滚动，显示近 7 天）、时段选择网格（2 小时一档，可选/已满/已选三种状态）、区域筛选标签（全部/静音区/键盘区/VIP区）、座位平面图（按 row/col 布局，可选/已占/已选/VIP 四种样式）、底部座位信息栏（座位号、区域、位置、时段、费用）及"立即预约"按钮。城市选择器 SHALL 动态显示 store 中的当前城市名，不再硬编码。点击"立即预约"跳转到确认页。

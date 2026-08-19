@@ -148,6 +148,7 @@ async def create_teacher(db: AsyncSession, data: AdminTeacherCreate) -> Teacher:
         bio=data.bio,
         teaching_tags=_tags_to_db(data.teaching_tags),
         qualifications=[q.model_dump() for q in data.qualifications] or None,
+        status=data.status,
     )
     db.add(teacher)
     await db.flush()

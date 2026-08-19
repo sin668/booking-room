@@ -313,6 +313,66 @@ class TestAdminTeacherApi:
         assert resp.status_code == 404
 
     @pytest.mark.asyncio
+    async def test_create_and_update_status(self, client: AsyncClient, admin_headers):
+        """发布设置：新增时可指定 status，编辑时可通过 PUT 修改 status。"""
+        payload = _payload(status="inactive")
+        resp = await client.post(
+            "/api/v1/admin/teachers", json=payload, headers=admin_headers
+        )
+        assert resp.status_code == 201
+        teacher_id = resp.json()["id"]
+        assert resp.json()["status"] == "inactive"
+
+        update_resp = await client.put(
+            f"/api/v1/admin/teachers/{teacher_id}",
+            json={"status": "active"},
+            headers=admin_headers,
+        )
+        assert update_resp.status_code == 200
+        assert update_resp.json()["status"] == "active"
+
+        invalid_resp = await client.put(
+            f"/api/v1/admin/teachers/{teacher_id}",
+            json={"status": "bogus"},
+            headers=admin_headers,
+        )
+        assert invalid_resp.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_training_room_detail_filters_inactive_teachers(
+        self, client: AsyncClient, admin_headers, db_session: AsyncSession, seed_rooms
+    ):
+        """C 端培训室详情的教师团队与课程讲师过滤未激活老师。"""
+        active_resp = await client.post(
+            "/api/v1/admin/teachers", json=_payload(name="激活老师"), headers=admin_headers
+        )
+        inactive_resp = await client.post(
+            "/api/v1/admin/teachers",
+            json=_payload(name="未激活老师", status="inactive"),
+            headers=admin_headers,
+        )
+        active_id = active_resp.json()["id"]
+        inactive_id = inactive_resp.json()["id"]
+
+        room = seed_rooms["training"]
+        course_active = Course(name="激活班", room_id=room.id, category="english", status="active")
+        course_inactive = Course(name="未激活班", room_id=room.id, category="english", status="active")
+        db_session.add_all([course_active, course_inactive])
+        await db_session.flush()
+        db_session.add(CourseSchedule(course_id=course_active.id, teacher_id=active_id, price=60))
+        db_session.add(CourseSchedule(course_id=course_inactive.id, teacher_id=inactive_id, price=60))
+        await db_session.commit()
+
+        resp = await client.get(f"/api/v1/training/rooms/{room.id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert [t["name"] for t in data["teachers"]] == ["激活老师"]
+        assert data["teacher_count"] == 1
+        course_by_name = {c["name"]: c for c in data["courses"]}
+        assert course_by_name["激活班"]["teacher"]["id"] == active_id
+        assert course_by_name["未激活班"]["teacher"] is None
+
+    @pytest.mark.asyncio
     async def test_missing_permission_returns_403(self, client: AsyncClient):
         from app.main import app
 

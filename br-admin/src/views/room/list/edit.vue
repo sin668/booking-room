@@ -47,7 +47,7 @@
                   show-count
                 />
               </n-form-item-gi>
-              <n-form-item-gi label="所在城市" path="city_id" :show-feedback="false">
+              <n-form-item-gi label="所在城市" path="city_id">
                 <n-select
                   v-model:value="formValues.city_id"
                   :options="cityOptions"
@@ -55,7 +55,7 @@
                   clearable
                 />
               </n-form-item-gi>
-              <n-form-item-gi label="类型" path="room_type" :show-feedback="false">
+              <n-form-item-gi label="类型" path="room_type">
                 <n-select v-model:value="formValues.room_type" :options="roomTypeOptions" />
               </n-form-item-gi>
               <n-form-item-gi label="营业时间" path="business_hours" :show-feedback="false">

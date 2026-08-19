@@ -58,6 +58,7 @@ export interface AdminTeacherCreateParams {
   teaching_tags?: string[];
   qualifications?: QualificationItem[];
   room_ids?: number[];
+  status?: 'active' | 'inactive';
 }
 
 export type AdminTeacherUpdateParams = Partial<AdminTeacherCreateParams>;

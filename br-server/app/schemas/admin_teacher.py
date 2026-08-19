@@ -26,6 +26,7 @@ class AdminTeacherCreate(BaseModel):
     teaching_tags: list[str] = []
     qualifications: list[QualificationItem] = []
     room_ids: list[int] = []
+    status: str = Field("active", pattern="^(active|inactive)$")
 
 
 class AdminTeacherUpdate(BaseModel):
@@ -40,6 +41,7 @@ class AdminTeacherUpdate(BaseModel):
     teaching_tags: list[str] | None = None
     qualifications: list[QualificationItem] | None = None
     room_ids: list[int] | None = None
+    status: str | None = Field(None, pattern="^(active|inactive)$")
 
 
 class AdminTeacherStatusUpdate(BaseModel):

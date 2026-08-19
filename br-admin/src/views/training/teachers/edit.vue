@@ -189,6 +189,23 @@
             </n-button>
           </div>
         </n-card>
+
+        <!-- 发布设置 -->
+        <n-card :bordered="false" class="shadow-sm">
+          <template #header>
+            <div class="flex items-center gap-2">
+              <n-icon color="#4F6EF7"><SettingOutlined /></n-icon>
+              <span class="text-sm font-bold">发布设置</span>
+            </div>
+          </template>
+          <n-radio-group v-model:value="formValues.status">
+            <n-space>
+              <n-radio value="active">激活</n-radio>
+              <n-radio value="inactive">未激活</n-radio>
+            </n-space>
+          </n-radio-group>
+          <n-text depth="3" class="text-xs mt-2 block">未激活的老师不会在 App 端老师列表中展示</n-text>
+        </n-card>
       </div>
     </n-spin>
   </n-flex>
@@ -207,6 +224,7 @@
     PlusOutlined,
     DeleteOutlined,
     SafetyCertificateOutlined,
+    SettingOutlined,
   } from '@vicons/antd';
   import {
     getAdminTeacherById,
@@ -247,6 +265,7 @@
     avatar: '',
     bio: '',
     room_ids: [] as number[],
+    status: 'active',
   });
 
   const rules: FormRules = {
@@ -326,6 +345,7 @@
       formValues.avatar = detail.avatar || '';
       formValues.bio = detail.bio || '';
       formValues.room_ids = detail.room_ids || [];
+      formValues.status = detail.status === 'inactive' ? 'inactive' : 'active';
 
       tagList.value = detail.teaching_tags || [];
       qualifications.value = (detail.qualifications || []).map((q: QualificationItem) => ({
@@ -411,6 +431,7 @@
       teaching_tags: tagList.value,
       qualifications: validQualifications,
       room_ids: formValues.room_ids,
+      status: formValues.status,
     };
 
     saving.value = true;

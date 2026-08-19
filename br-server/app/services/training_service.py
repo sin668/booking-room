@@ -117,7 +117,9 @@ async def list_training_rooms(
                     id=course.id,
                     name=course.name,
                     cover_image=course.cover_image,
-                    teacher=TeacherResponse.model_validate(teacher) if teacher else None,
+                    teacher=TeacherResponse.model_validate(teacher)
+                    if teacher and teacher.status != "inactive"
+                    else None,
                     price=schedule.price if schedule else 0,
                     enrollment_count=course.enrollment_count,
                     schedule=schedule.time_slots if schedule else None,
@@ -175,7 +177,8 @@ async def get_training_room_detail(
 
     for course, schedule, teacher in rows:
         teacher_brief = None
-        if teacher:
+        # 未激活（inactive）的老师对 C 端不可见，不计入教师团队与统计
+        if teacher and teacher.status != "inactive":
             if teacher.id not in teachers_map:
                 teachers_map[teacher.id] = TeacherBrief(
                     id=teacher.id,

@@ -10,16 +10,29 @@ from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
-from app.schemas.teacher import TeacherCourseItem, TeacherDetailResponse
+from app.models.teacher_room import TeacherRoom
+from app.schemas.teacher import TeacherCourseItem, TeacherDetailResponse, TeacherRoomItem
 
 
 async def get_teacher_detail(
     db: AsyncSession, teacher_id: int
 ) -> TeacherDetailResponse | None:
-    """获取教师详情，包含关联课程列表和课时计数"""
+    """获取教师详情，包含关联课程列表和课时计数；停用教师对 C 端不可见"""
     teacher = await db.get(Teacher, teacher_id)
-    if teacher is None:
+    if teacher is None or teacher.status == "inactive":
         return None
+
+    # 查询所属培训室/综合室
+    room_result = await db.execute(
+        select(StudyRoom)
+        .join(TeacherRoom, TeacherRoom.room_id == StudyRoom.id)
+        .where(TeacherRoom.teacher_id == teacher_id)
+        .order_by(TeacherRoom.id)
+    )
+    rooms = [
+        TeacherRoomItem(id=r.id, name=r.name, room_type=r.room_type)
+        for r in room_result.scalars().all()
+    ]
 
     # 一次查询获取关联课程 + 课时计数，避免 N+1
     query = (
@@ -84,5 +97,13 @@ async def get_teacher_detail(
         rating=teacher.rating,
         bio=teacher.bio,
         student_count=teacher.student_count,
+        specialty=teacher.specialty,
+        teaching_years=teacher.teaching_years,
+        education=teacher.education,
+        school=teacher.school,
+        status=teacher.status,
+        teaching_tags=teacher.teaching_tags,
+        qualifications=teacher.qualifications or [],
+        rooms=rooms,
         courses=courses,
     )

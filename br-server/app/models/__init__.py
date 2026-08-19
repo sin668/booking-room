@@ -14,6 +14,7 @@ from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
+from app.models.teacher_room import TeacherRoom
 from app.models.user import User
 from app.models.user_identity_verification import UserIdentityVerification
 from app.models.wallet import WalletTransaction
@@ -38,6 +39,7 @@ __all__ = [
     "StudyRoom",
     "SystemSetting",
     "Teacher",
+    "TeacherRoom",
     "User",
     "UserIdentityVerification",
     "UserCoupon",

@@ -59,6 +59,8 @@ MENU_SEEDS = [
     MenuSeed("training", "directory", "培训管理", "training:manage", "training", "Training", "LAYOUT", "/training", "SchoolOutline", 45),
     MenuSeed("training.courses", "menu", "培训课程", "training:courses:view", "courses", "TrainingCourses", "/training/courses/index", None, "SchoolOutline", 46, parent="training"),
     MenuSeed("training.course_edit", "menu", "编辑课程", "training:courses:edit", "courses/edit/:id?", "TrainingCourseEdit", "/training/courses/edit/index", None, "SchoolOutline", 47, hidden=True, parent="training"),
+    MenuSeed("training.teachers", "menu", "老师管理", "training:teachers:view", "teachers", "TrainingTeachers", "/training/teachers/index", None, "TeamOutlined", 48, parent="training"),
+    MenuSeed("training.teacher_edit", "menu", "编辑老师", "training:teachers:edit", "teachers/edit/:id?", "TrainingTeacherEdit", "/training/teachers/edit/index", None, "TeamOutlined", 49, hidden=True, parent="training"),
 ]
 
 BUTTON_SEEDS = [
@@ -102,6 +104,11 @@ BUTTON_SEEDS = [
     ("training.courses", "training:courses:delete", "培训课程-删除"),
     ("training.courses", "training:courses:status", "培训课程-状态"),
     ("training.courses", "training:courses:schedule", "培训课程-排课"),
+    ("training.teachers", "teacher:view", "老师-查看"),
+    ("training.teachers", "teacher:create", "老师-新增"),
+    ("training.teachers", "teacher:update", "老师-编辑"),
+    ("training.teachers", "teacher:delete", "老师-删除"),
+    ("training.teachers", "teacher:status", "老师-状态"),
 ]
 
 BASIC_SETTING_DEFAULTS = {

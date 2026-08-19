@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -41,6 +42,13 @@ class TeacherCourseItem(BaseModel):
         return [tag.strip() for tag in v.split(",") if tag.strip()]
 
 
+class TeacherRoomItem(BaseModel):
+    """教师所属培训室/综合室简要信息"""
+    id: int
+    name: str
+    room_type: str
+
+
 class TeacherDetailResponse(BaseModel):
     """教师详情响应"""
     id: int
@@ -50,6 +58,23 @@ class TeacherDetailResponse(BaseModel):
     rating: Decimal
     bio: str | None = None
     student_count: int = 0
+    specialty: str | None = None
+    teaching_years: int = 0
+    education: str | None = None
+    school: str | None = None
+    status: str = "active"
+    teaching_tags: list[str] = []
+    qualifications: list[dict[str, Any]] = []
+    rooms: list[TeacherRoomItem] = []
     courses: list[TeacherCourseItem] = []
+
+    @field_validator("teaching_tags", mode="before")
+    @classmethod
+    def parse_teaching_tags(cls, v):
+        if v is None or v == "":
+            return []
+        if isinstance(v, list):
+            return v
+        return [tag.strip() for tag in v.split(",") if tag.strip()]
 
     model_config = ConfigDict(from_attributes=True)

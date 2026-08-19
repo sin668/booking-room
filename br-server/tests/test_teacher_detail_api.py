@@ -1,6 +1,6 @@
 """教师详情 API 测试。
 
-覆盖：有课程、无课程、不存在教师、bio 为 null、tags 解析。
+覆盖：有课程、无课程、不存在教师、bio 为 null、tags 解析、扩展字段与所属房间、停用教师 404。
 """
 
 import uuid
@@ -11,8 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
+from app.models.teacher_room import TeacherRoom
 from app.models.user import User
 
 
@@ -29,6 +31,12 @@ async def seed_teacher_data(db_session: AsyncSession) -> dict:
         rating=4.9,
         bio="毕业于中国人民大学，专注考研政治辅导8年。",
         student_count=328,
+        specialty="考研政治",
+        teaching_years=8,
+        education="硕士",
+        school="中国人民大学",
+        teaching_tags="逻辑清晰,押题精准",
+        qualifications=[{"name": "教师资格证", "sub": "高等教育"}],
     )
     db_session.add(teacher)
     await db_session.flush()
@@ -46,16 +54,18 @@ async def seed_teacher_data(db_session: AsyncSession) -> dict:
         address="测试路 1 号",
         status="open",
         min_price=10,
+        room_type="training",
     )
     db_session.add(room)
     await db_session.flush()
 
+    # 老师所属房间
+    db_session.add(TeacherRoom(teacher_id=teacher.id, room_id=room.id))
+
     course1 = Course(
         name="考研政治冲刺班",
         room_id=room.id,
-        teacher_id=teacher.id,
         category="postgraduate",
-        price=80.0,
         rating=4.9,
         enrollment_count=328,
         status="active",
@@ -64,19 +74,24 @@ async def seed_teacher_data(db_session: AsyncSession) -> dict:
     )
     db_session.add(course1)
     await db_session.flush()
+    db_session.add(
+        CourseSchedule(course_id=course1.id, teacher_id=teacher.id, price=80.0)
+    )
 
     course2 = Course(
         name="考研政治基础强化",
         room_id=room.id,
-        teacher_id=teacher.id,
         category="postgraduate",
-        price=60.0,
         rating=4.8,
         enrollment_count=256,
         status="active",
         sort_order=2,
     )
     db_session.add(course2)
+    await db_session.flush()
+    db_session.add(
+        CourseSchedule(course_id=course2.id, teacher_id=teacher.id, price=60.0)
+    )
     await db_session.flush()
 
     # Add lessons for course1
@@ -117,6 +132,18 @@ async def test_teacher_detail_with_courses(
     assert body["bio"] is not None
     assert body["student_count"] == 328
     assert len(body["courses"]) == 2
+
+    # 扩展字段
+    assert body["specialty"] == "考研政治"
+    assert body["teaching_years"] == 8
+    assert body["education"] == "硕士"
+    assert body["school"] == "中国人民大学"
+    assert body["qualifications"] == [{"name": "教师资格证", "sub": "高等教育"}]
+
+    # 所属房间
+    assert len(body["rooms"]) == 1
+    assert body["rooms"][0]["name"] == "测试教室"
+    assert body["rooms"][0]["room_type"] == "training"
 
     # Check lesson_count for course1
     course1_data = next(c for c in body["courses"] if c["id"] == data["course1"].id)
@@ -183,3 +210,23 @@ async def test_teacher_detail_bio_null(
     body = response.json()
     assert body["bio"] is None
     assert body["student_count"] == 0
+    assert body["rooms"] == []
+    assert body["qualifications"] == []
+
+
+# ---------------------------------------------------------------------------
+# 停用教师 C 端不可见
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_inactive_teacher_returns_404(
+    client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    teacher = Teacher(name="停用讲师", status="inactive")
+    db_session.add(teacher)
+    await db_session.flush()
+
+    response = await client.get(f"/api/v1/teachers/{teacher.id}")
+    assert response.status_code == 404

@@ -16,10 +16,10 @@ plan: null
 verify_result: pass
 verify_failures: 0
 verification_report: openspec/changes/course-booking-custom-schedule/verification-report.md
-branch_status: pending
+branch_status: handled
 created_at: 2026-08-17
 verified_at: 2026-08-17
-archive_confirmation: pending
+archive_confirmation: confirmed
 archived: false
 bound_branch: main
 direct_override: null

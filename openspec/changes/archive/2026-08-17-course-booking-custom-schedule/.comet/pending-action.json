@@ -1,0 +1,6 @@
+{
+  "id": "classic-archive:course-booking-custom-schedule",
+  "stepId": "tweak.archive.execute",
+  "type": "checkpoint",
+  "ref": "course-booking-custom-schedule"
+}

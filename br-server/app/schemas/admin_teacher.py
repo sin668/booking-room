@@ -108,3 +108,13 @@ class AdminTeacherDetail(BaseModel):
         if isinstance(v, list):
             return v
         return [tag.strip() for tag in v.split(",") if tag.strip()]
+
+    @field_validator("qualifications", mode="before")
+    @classmethod
+    def parse_qualifications(cls, v):
+        # 库表 qualifications 为 NULL 时容忍为空列表，避免 model_validate 报错
+        if v is None:
+            return []
+        if isinstance(v, list):
+            return v
+        return []

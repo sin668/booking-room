@@ -92,6 +92,28 @@ class TestAdminTeacherApi:
         assert detail_resp.json()["name"] == "李明华"
 
     @pytest.mark.asyncio
+    async def test_detail_with_empty_qualifications(
+        self, client: AsyncClient, admin_headers
+    ):
+        """qualifications/teaching_tags 为空时入库为 NULL，详情接口应返回 200 且容忍为空列表。"""
+        payload = _payload(teaching_tags=[], qualifications=[])
+        resp = await client.post(
+            "/api/v1/admin/teachers", json=payload, headers=admin_headers
+        )
+        assert resp.status_code == 201
+        body = resp.json()
+        assert body["qualifications"] == []
+        assert body["teaching_tags"] == []
+
+        detail_resp = await client.get(
+            f"/api/v1/admin/teachers/{body['id']}", headers=admin_headers
+        )
+        assert detail_resp.status_code == 200
+        detail = detail_resp.json()
+        assert detail["qualifications"] == []
+        assert detail["teaching_tags"] == []
+
+    @pytest.mark.asyncio
     async def test_create_with_study_room_returns_400(
         self, client: AsyncClient, admin_headers, seed_rooms
     ):

@@ -4,11 +4,18 @@ from unittest.mock import AsyncMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import ARRAY, JSON
 
 from app.api.dependencies import get_current_admin
 from app.core.database import Base, get_db
 from app.core.redis import get_redis
 from app.main import app
+
+# SQLite 不支持 PostgreSQL 的 ARRAY 类型，测试建表前统一替换为 JSON
+for _table in Base.metadata.tables.values():
+    for _column in _table.columns:
+        if isinstance(_column.type, ARRAY):
+            _column.type = JSON()
 
 
 @pytest.fixture(scope="session")

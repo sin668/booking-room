@@ -107,6 +107,40 @@ class TestAdminListBookings:
         assert data["total"] == 1
         assert data["items"][0]["status"] == "confirmed"
 
+    @pytest.mark.asyncio
+    async def test_list_with_null_seat_course_booking(
+        self, client: AsyncClient, seed_data, db_session: AsyncSession
+    ):
+        """课程预约 seat_id 为 None，列表不应报 500。"""
+        from datetime import time
+
+        course_booking = Booking(
+            id=3,
+            seat_id=None,
+            user_id="11111111-1111-1111-1111-111111111111",
+            room_id=1,
+            date=date.today(),
+            start_time=time(10, 0),
+            end_time=time(12, 0),
+            status="confirmed",
+            total_price=Decimal("100.00"),
+            booking_type="course",
+        )
+        db_session.add(course_booking)
+        await db_session.flush()
+
+        resp = await client.get("/api/v1/admin/bookings")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 3
+        course_items = [item for item in data["items"] if item["id"] == 3]
+        assert course_items[0]["seat"] is None
+        assert course_items[0]["seat_id"] is None
+
+        detail = await client.get("/api/v1/admin/bookings/3")
+        assert detail.status_code == 200
+        assert detail.json()["seat"] is None
+
 
 class TestAdminGetBooking:
     @pytest.mark.asyncio

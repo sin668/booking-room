@@ -119,7 +119,7 @@ class BookingAdminResponse(BaseModel):
     id: int
     user_id: str
     room_id: int
-    seat_id: int
+    seat_id: int | None = None
     date: date
     start_time: time
     end_time: time
@@ -138,8 +138,8 @@ class BookingAdminResponse(BaseModel):
     cancel_policy: str | None = None
     created_at: datetime
     updated_at: datetime
-    seat: SeatBrief
-    room: RoomBrief
+    seat: SeatBrief | None = None
+    room: RoomBrief | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

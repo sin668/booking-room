@@ -625,7 +625,9 @@ async def pay_pending_booking(
     return response
 
 
-def _build_admin_booking_response(booking: Booking, seat: Seat, room: StudyRoom) -> BookingAdminResponse:
+def _build_admin_booking_response(
+    booking: Booking, seat: Seat | None, room: StudyRoom | None
+) -> BookingAdminResponse:
     return BookingAdminResponse(
         id=booking.id,
         user_id=booking.user_id,
@@ -649,8 +651,8 @@ def _build_admin_booking_response(booking: Booking, seat: Seat, room: StudyRoom)
         cancel_policy=booking.cancel_policy,
         created_at=booking.created_at,
         updated_at=booking.updated_at,
-        seat=SeatBrief.model_validate(seat),
-        room=RoomBrief.model_validate(room),
+        seat=SeatBrief.model_validate(seat) if seat is not None else None,
+        room=RoomBrief.model_validate(room) if room is not None else None,
     )
 
 
@@ -693,7 +695,7 @@ async def admin_list_bookings(
     )
     bookings = result.scalars().all()
 
-    seat_ids = {b.seat_id for b in bookings}
+    seat_ids = {b.seat_id for b in bookings if b.seat_id is not None}
     room_ids = {b.room_id for b in bookings}
 
     seats_result = await db.execute(select(Seat).where(Seat.id.in_(seat_ids))) if seat_ids else None
@@ -703,7 +705,11 @@ async def admin_list_bookings(
 
     items: list[BookingAdminResponse] = []
     for b in bookings:
-        items.append(_build_admin_booking_response(b, seat_map[b.seat_id], room_map[b.room_id]))
+        items.append(
+            _build_admin_booking_response(
+                b, seat_map.get(b.seat_id), room_map.get(b.room_id)
+            )
+        )
 
     return BookingAdminListResponse(
         items=items,
@@ -721,8 +727,8 @@ async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminRe
     if booking is None:
         raise BookingNotFoundError("预约不存在")
 
-    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
-    room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
+    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
+    room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one_or_none()
 
     return _build_admin_booking_response(booking, seat, room)
 
@@ -741,7 +747,7 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
     await cancel_booking(db, booking.id, uuid.UUID(booking.user_id))
     await db.refresh(booking)
 
-    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
-    room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
+    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
+    room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one_or_none()
 
     return _build_admin_booking_response(booking, seat, room)

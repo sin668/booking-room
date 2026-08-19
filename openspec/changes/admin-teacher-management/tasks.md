@@ -34,4 +34,4 @@
 ## 7. 验证与提交
 - [x] 7.1 br-admin build、br-app build（H5）
 - [x] 7.2 后端 seed 执行 + 接口冒烟（老师 CRUD、C 端详情）
-- [ ] 7.3 提交并推送 GitHub（main）
+- [x] 7.3 提交并推送 GitHub（main）

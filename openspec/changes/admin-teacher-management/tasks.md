@@ -21,17 +21,17 @@
 - [x] 4.3 全量回归 pytest
 
 ## 5. br-admin 老师管理
-- [ ] 5.1 src/api/teacher/index.ts 类型与 CRUD 封装（GET force: true）
-- [ ] 5.2 router/modules/training.ts 增加 teachers 列表与 teachers/edit 隐藏路由（hideInMenu）
-- [ ] 5.3 views/training/teachers/index.vue 列表页（搜索表单 + 表格 + 操作列，复用 tableBuilders/TableAction）
-- [ ] 5.4 views/training/teachers/edit.vue 新增/编辑页（基本信息/头像/简介/资质认证/教学特色/多选所属房间），页面跳转模式保存返回
-- [ ] 5.5 核对 naive.ts 组件注册（BUG-23）与构建通过
+- [x] 5.1 src/api/teacher/index.ts 类型与 CRUD 封装（GET force: true）
+- [x] 5.2 router/modules/training.ts 增加 teachers 列表与 teachers/edit 隐藏路由（hideInMenu）
+- [x] 5.3 views/training/teachers/index.vue 列表页（搜索表单 + 表格 + 操作列，复用 tableBuilders/TableAction）
+- [x] 5.4 views/training/teachers/edit.vue 新增/编辑页（基本信息/头像/简介/资质认证/教学特色/多选所属房间），页面跳转模式保存返回
+- [x] 5.5 核对 naive.ts 组件注册（BUG-23）与构建通过
 
 ## 6. br-app 教师简介页
-- [ ] 6.1 profile.vue 副标题改为 专业方向·教龄·学历 拼接
-- [ ] 6.2 资质认证/教学特色改读接口数据，空则隐藏区块
+- [x] 6.1 profile.vue 副标题改为 专业方向·教龄·学历 拼接
+- [x] 6.2 资质认证/教学特色改读接口数据，空则隐藏区块
 
 ## 7. 验证与提交
-- [ ] 7.1 br-admin build、br-app build（H5）
-- [ ] 7.2 后端 seed 执行 + 接口冒烟（老师 CRUD、C 端详情）
+- [x] 7.1 br-admin build、br-app build（H5）
+- [x] 7.2 后端 seed 执行 + 接口冒烟（老师 CRUD、C 端详情）
 - [ ] 7.3 提交并推送 GitHub（main）

@@ -47,7 +47,7 @@
                   <text class="hero-tag-text">认证讲师</text>
                 </view>
               </view>
-              <text class="hero-sub">{{ teacher.title || '讲师' }}</text>
+              <text class="hero-sub">{{ heroSub }}</text>
             </view>
           </view>
         </view>
@@ -80,29 +80,31 @@
         <text class="bio-text">{{ teacher.bio }}</text>
       </view>
 
-      <!-- 资质认证（静态数据） -->
-      <view class="section animate-in delay-2">
+      <!-- 资质认证（读接口数据，空则隐藏） -->
+      <view v-if="qualifications.length" class="section animate-in delay-2">
         <view class="section-header">
           <view class="section-bar" />
           <text class="section-title">资质认证</text>
         </view>
         <view class="qual-list">
-          <view v-for="(q, idx) in qualifications" :key="idx" class="qual-item">
-            <view :class="['qual-icon-wrap', `qual-bg-${q.color}`]">
-              <text :class="['qual-icon', `qual-icon-${q.color}`]">{{ q.icon }}</text>
+          <template v-for="(q, idx) in qualifications" :key="idx">
+            <view v-if="idx > 0" class="qual-divider" />
+            <view class="qual-item">
+              <view :class="['qual-icon-wrap', `qual-bg-${q.color}`]">
+                <text :class="['qual-icon', `qual-icon-${q.color}`]">{{ q.icon }}</text>
+              </view>
+              <view class="qual-body">
+                <text class="qual-name">{{ q.name }}</text>
+                <text v-if="q.sub" class="qual-sub">{{ q.sub }}</text>
+              </view>
+              <text class="qual-check">✓</text>
             </view>
-            <view class="qual-body">
-              <text class="qual-name">{{ q.name }}</text>
-              <text class="qual-sub">{{ q.sub }}</text>
-            </view>
-            <text class="qual-check">✓</text>
-          </view>
-          <view v-if="idx < qualifications.length - 1" :key="'div'+idx" class="qual-divider" />
+          </template>
         </view>
       </view>
 
-      <!-- 教学特色（静态数据） -->
-      <view class="section animate-in delay-3">
+      <!-- 教学特色（读接口数据，空则隐藏） -->
+      <view v-if="teachingTags.length" class="section animate-in delay-3">
         <view class="section-header">
           <view class="section-bar" />
           <text class="section-title">教学特色</text>
@@ -225,18 +227,8 @@ export default {
           time: '2周前',
         },
       ],
-      qualifications: [
-        { icon: '◆', name: '高级中学教师资格证', sub: '专业认证', color: 'primary' },
-        { icon: '★', name: '高级讲师', sub: '教育机构认证', color: 'orange' },
-        { icon: '✦', name: '硕士学历', sub: '重点院校', color: 'green' },
-      ],
-      teachingTags: [
-        { label: '案例教学', color: 'primary' },
-        { label: '精准押题', color: 'orange' },
-        { label: '互动课堂', color: 'green' },
-        { label: '知识梳理', color: 'purple' },
-        { label: '耐心答疑', color: 'red' },
-      ],
+      qualifications: [],
+      teachingTags: [],
     }
   },
 
@@ -249,6 +241,14 @@ export default {
       const r = this.teacher.rating
       if (r === undefined || r === null) return '0.0'
       return Number(r).toFixed(1)
+    },
+    heroSub() {
+      const t = this.teacher
+      const parts = []
+      if (t.specialty) parts.push(t.specialty)
+      if (t.teaching_years) parts.push(`${t.teaching_years}年教龄`)
+      if (t.education) parts.push(t.education)
+      return parts.length ? parts.join(' · ') : t.title || '讲师'
     },
   },
 
@@ -270,12 +270,39 @@ export default {
         const data = await getTeacherDetail(this.teacherId)
         this.teacher = data || {}
         this.courses = data.courses || []
+        this.qualifications = this.buildQualifications(data.qualifications)
+        this.teachingTags = this.buildTeachingTags(data.teaching_tags)
         this.isFav = isTeacherFollowed(this.teacherId)
       } catch {
         uni.showToast({ title: '加载失败', icon: 'none' })
       } finally {
         this.loading = false
       }
+    },
+
+    // 资质认证：接口返回 [{name, sub}]，循环分配图标与配色保持原型风格
+    buildQualifications(list) {
+      const icons = ['◆', '★', '✦']
+      const colors = ['primary', 'orange', 'green']
+      return (list || [])
+        .filter((q) => q && q.name)
+        .map((q, idx) => ({
+          name: q.name,
+          sub: q.sub || '',
+          icon: icons[idx % icons.length],
+          color: colors[idx % colors.length],
+        }))
+    },
+
+    // 教学特色：接口返回标签字符串数组，循环分配配色
+    buildTeachingTags(list) {
+      const colors = ['primary', 'orange', 'green', 'purple', 'red']
+      return (list || [])
+        .filter((t) => t)
+        .map((label, idx) => ({
+          label,
+          color: colors[idx % colors.length],
+        }))
     },
 
     onBack() {

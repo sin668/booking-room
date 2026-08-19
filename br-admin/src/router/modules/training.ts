@@ -33,6 +33,24 @@ const routes: Array<RouteRecordRaw> = [
         },
         component: () => import('@/views/training/courses/edit.vue'),
       },
+      {
+        path: 'teachers',
+        name: 'training_teachers',
+        meta: {
+          title: '老师管理',
+        },
+        component: () => import('@/views/training/teachers/index.vue'),
+      },
+      {
+        path: 'teachers/edit/:id?',
+        name: 'training_teacher_edit',
+        meta: {
+          title: '编辑老师',
+          hideInMenu: true,
+          activeMenu: 'training_teachers',
+        },
+        component: () => import('@/views/training/teachers/edit.vue'),
+      },
     ],
   },
 ];

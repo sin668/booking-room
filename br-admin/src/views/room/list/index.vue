@@ -22,33 +22,49 @@
           </n-button>
         </template>
       </BasicTable>
-
-      <RoomEditModal v-model:show="showModal" :editData="editData" @success="handleSuccess" />
     </n-card>
   </n-flex>
 </template>
 
 <script lang="ts" setup>
-  import { h, reactive, ref } from 'vue';
+  import { h, onMounted, reactive, ref } from 'vue';
   import { useRouter } from 'vue-router';
   import { PlusOutlined } from '@vicons/antd';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, useForm } from '@/components/Form/index';
-  import { deleteRoom, getRoomList, toggleRoomStatus, type RoomItem } from '@/api/room';
+  import {
+    deleteRoom,
+    getCityList,
+    getRoomList,
+    toggleRoomStatus,
+    type RoomItem,
+  } from '@/api/room';
   import { toBasicTableResult } from '@/api/contracts/admin';
+  import type { BusinessOption } from '../../business/shared/options';
   import { buildRoomSearchSchemas, buildRoomTableColumns } from './builders';
-  import RoomEditModal from './RoomEditModal.vue';
 
   const router = useRouter();
   const actionRef = ref();
-  const showModal = ref(false);
-  const editData = ref<RoomItem | null>(null);
   const columns = buildRoomTableColumns();
 
-  const [register, { getFieldsValue }] = useForm({
+  const [register, { getFieldsValue, setProps }] = useForm({
     gridProps: { cols: '1 s:1 m:2 l:3 xl:4 2xl:4' },
     labelWidth: 80,
-    schemas: buildRoomSearchSchemas(),
+    schemas: buildRoomSearchSchemas([]),
+  });
+
+  onMounted(async () => {
+    // 加载城市选项后刷新搜索表单
+    try {
+      const cities = await getCityList();
+      const cityOptions: BusinessOption<number>[] = cities.map((city) => ({
+        label: city.name,
+        value: city.id,
+      }));
+      await setProps({ schemas: buildRoomSearchSchemas(cityOptions) });
+    } catch {
+      // 城市加载失败不阻断列表展示
+    }
   });
 
   const loadDataTable = async (res: any) => {
@@ -59,6 +75,9 @@
     delete queryParams.pageSize;
 
     if (!queryParams.status) delete queryParams.status;
+    if (!queryParams.room_type) delete queryParams.room_type;
+    if (!queryParams.city_id) delete queryParams.city_id;
+    if (!queryParams.keyword) delete queryParams.keyword;
 
     const result = await getRoomList(queryParams);
     return toBasicTableResult(result);
@@ -87,6 +106,8 @@
             label: '管理座位',
             onClick: handleManageSeats.bind(null, record),
             auth: ['seat:view'],
+            // 仅自习室和综合室支持管理座位
+            ifShow: ['study', 'comprehensive'].includes(record.room_type),
           },
         ],
         dropDownActions: [
@@ -104,13 +125,11 @@
   });
 
   function addTable() {
-    editData.value = null;
-    showModal.value = true;
+    router.push({ name: 'room_edit' });
   }
 
   function handleEdit(record: RoomItem) {
-    editData.value = record;
-    showModal.value = true;
+    router.push({ name: 'room_edit', params: { id: record.id } });
   }
 
   function handleDelete(record: RoomItem) {
@@ -152,11 +171,6 @@
 
   function handleManageSeats(record: RoomItem) {
     router.push(`/room/list/${record.id}/seats`);
-  }
-
-  function handleSuccess() {
-    showModal.value = false;
-    reloadTable();
   }
 
   function handleSubmit() {

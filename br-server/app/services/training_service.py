@@ -146,10 +146,11 @@ async def get_training_room_detail(
 
     仅 room_type 为 training 或 comprehensive 的房间有效。
     """
-    # Step 1: 查询房间，验证 room_type
+    # Step 1: 查询房间，验证 room_type，过滤已下架房间
     room_result = await db.execute(
         select(StudyRoom).where(
             StudyRoom.id == room_id,
+            StudyRoom.status == "open",
             StudyRoom.room_type.in_(["training", "comprehensive"]),
         )
     )

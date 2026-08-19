@@ -24,6 +24,16 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/room/list/index.vue'),
       },
       {
+        path: 'list/edit/:id?',
+        name: 'room_edit',
+        meta: {
+          title: '编辑自习室',
+          hideInMenu: true,
+          activeMenu: 'room_list',
+        },
+        component: () => import('@/views/room/list/edit.vue'),
+      },
+      {
         path: 'list/:id/seats',
         name: 'room_seats',
         meta: {

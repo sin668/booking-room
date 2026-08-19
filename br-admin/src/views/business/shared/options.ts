@@ -12,9 +12,22 @@ export interface BusinessTagConfig {
 
 export const ROOM_STATUS_OPTIONS: BusinessOption[] = [
   { label: '全部', value: '' },
-  { label: '营业中', value: 'open' },
-  { label: '已关闭', value: 'closed' },
+  { label: '已上架', value: 'open' },
+  { label: '已下架', value: 'closed' },
 ];
+
+export const ROOM_TYPE_OPTIONS: BusinessOption[] = [
+  { label: '全部', value: '' },
+  { label: '自习室', value: 'study' },
+  { label: '培训室', value: 'training' },
+  { label: '综合室', value: 'comprehensive' },
+];
+
+export const ROOM_TYPE_LABELS: Record<string, string> = {
+  study: '自习室',
+  training: '培训室',
+  comprehensive: '综合室',
+};
 
 export const ACTIVITY_STATUS_OPTIONS: BusinessOption[] = [
   { label: '全部', value: '' },
@@ -42,8 +55,14 @@ export const BOOKING_STATUS_TAGS: Record<string, BusinessTagConfig> = {
 };
 
 export const ROOM_STATUS_TAGS: Record<string, BusinessTagConfig> = {
-  open: { label: '营业中', type: 'success' },
-  closed: { label: '已关闭', type: 'error' },
+  open: { label: '已上架', type: 'success' },
+  closed: { label: '已下架', type: 'default' },
+};
+
+export const ROOM_TYPE_TAGS: Record<string, BusinessTagConfig> = {
+  study: { label: '自习室', type: 'info' },
+  training: { label: '培训室', type: 'warning' },
+  comprehensive: { label: '综合室', type: 'success' },
 };
 
 export const ACTIVITY_STATUS_TAGS: Record<string, BusinessTagConfig> = {

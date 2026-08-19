@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import require_admin_permission
@@ -23,9 +23,13 @@ async def list_rooms(
     page: int = 1,
     page_size: int = 10,
     status: str | None = None,
+    room_type: str | None = Query(None, pattern="^(study|training|comprehensive)$"),
+    city_id: int | None = Query(None, ge=1),
     db: AsyncSession = Depends(get_db),
 ) -> RoomAdminListResponse:
-    return await study_room_service.admin_list_rooms(db, page=page, page_size=page_size, status=status)
+    return await study_room_service.admin_list_rooms(
+        db, page=page, page_size=page_size, status=status, room_type=room_type, city_id=city_id
+    )
 
 
 @router.post(

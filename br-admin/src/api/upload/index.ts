@@ -1,6 +1,11 @@
 import { Alova } from '@/utils/http/alova/index';
 
-export type UploadScope = 'avatar' | 'activity-cover' | 'room-cover' | 'common';
+export type UploadScope =
+  | 'avatar'
+  | 'activity-cover'
+  | 'room-cover'
+  | 'room-environment'
+  | 'common';
 
 export interface UploadResult {
   url: string;

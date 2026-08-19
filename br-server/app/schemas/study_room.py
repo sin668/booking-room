@@ -9,6 +9,7 @@ class StudyRoomResponse(BaseModel):
     name: str
     description: str | None
     cover_image: str | None
+    environment_images: list[str] | None = None
     address: str
     city_id: int | None = None
     city_name: str | None = None
@@ -32,9 +33,12 @@ class RoomCreate(BaseModel):
     address: str = Field(..., max_length=255)
     description: str | None = Field(None, max_length=1000)
     cover_image: str | None = Field(None, max_length=512)
+    environment_images: list[str] = Field(default_factory=list, max_length=5)
     business_hours: str | None = Field(None, max_length=50)
+    city_id: int | None = None
     room_type: str = Field("study", pattern="^(study|training|comprehensive)$")
     min_price: Decimal = Field(default=Decimal("0"), ge=0)
+    status: str = Field("open", pattern="^(open|closed)$")
 
 
 class RoomUpdate(BaseModel):
@@ -42,9 +46,12 @@ class RoomUpdate(BaseModel):
     address: str | None = Field(None, max_length=255)
     description: str | None = Field(None, max_length=1000)
     cover_image: str | None = Field(None, max_length=512)
+    environment_images: list[str] | None = Field(None, max_length=5)
     business_hours: str | None = Field(None, max_length=50)
+    city_id: int | None = None
     room_type: str | None = Field(None, pattern="^(study|training|comprehensive)$")
     min_price: Decimal | None = Field(None, ge=0)
+    status: str | None = Field(None, pattern="^(open|closed)$")
 
 
 class RoomStatusUpdate(BaseModel):
@@ -56,7 +63,10 @@ class RoomAdminResponse(BaseModel):
     name: str
     description: str | None
     cover_image: str | None
+    environment_images: list[str] | None = None
     address: str
+    city_id: int | None = None
+    city_name: str | None = None
     business_hours: str | None
     status: str
     room_type: str

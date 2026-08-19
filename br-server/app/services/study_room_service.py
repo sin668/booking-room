@@ -82,26 +82,41 @@ async def admin_list_rooms(
     page_size: int = DEFAULT_PAGE_SIZE,
     status: str | None = None,
     room_type: str | None = None,
+    city_id: int | None = None,
 ) -> RoomAdminListResponse:
-    """Return paginated list of all rooms, optionally filtered by status."""
+    """Return paginated list of all rooms, optionally filtered by status/type/city."""
     page_size = min(page_size, MAX_PAGE_SIZE)
     offset = (page - 1) * page_size
 
-    query = select(StudyRoom)
-    count_query = select(func.count()).select_from(StudyRoom)
+    filters = []
     if status is not None:
-        query = query.where(StudyRoom.status == status)
-        count_query = count_query.where(StudyRoom.status == status)
+        filters.append(StudyRoom.status == status)
     if room_type is not None:
-        query = query.where(StudyRoom.room_type == room_type)
-        count_query = count_query.where(StudyRoom.room_type == room_type)
+        filters.append(StudyRoom.room_type == room_type)
+    if city_id is not None:
+        filters.append(StudyRoom.city_id == city_id)
 
+    count_query = select(func.count()).select_from(StudyRoom)
+    if filters:
+        count_query = count_query.where(*filters)
     total = (await db.execute(count_query)).scalar_one()
 
-    result = await db.execute(
-        query.order_by(StudyRoom.id.asc()).offset(offset).limit(page_size)
+    query = (
+        select(StudyRoom, City.name.label("city_name"))
+        .outerjoin(City, StudyRoom.city_id == City.id)
+        .order_by(StudyRoom.id.asc())
+        .offset(offset)
+        .limit(page_size)
     )
-    items = [RoomAdminResponse.model_validate(room) for room in result.scalars().all()]
+    if filters:
+        query = query.where(*filters)
+
+    result = await db.execute(query)
+    items = []
+    for room, city_name in result.all():
+        item = RoomAdminResponse.model_validate(room)
+        item.city_name = city_name
+        items.append(item)
 
     return RoomAdminListResponse(
         items=items,
@@ -114,11 +129,14 @@ async def admin_list_rooms(
 async def admin_get_room(db: AsyncSession, room_id: int) -> RoomAdminResponse:
     """Get room by ID with seat counts."""
     result = await db.execute(
-        select(StudyRoom).where(StudyRoom.id == room_id)
+        select(StudyRoom, City.name.label("city_name"))
+        .outerjoin(City, StudyRoom.city_id == City.id)
+        .where(StudyRoom.id == room_id)
     )
-    room = result.scalar_one_or_none()
-    if room is None:
+    row = result.one_or_none()
+    if row is None:
         raise ValueError(f"Room {room_id} not found")
+    room, city_name = row
 
     seat_count = (
         await db.execute(
@@ -136,6 +154,7 @@ async def admin_get_room(db: AsyncSession, room_id: int) -> RoomAdminResponse:
 
     return RoomAdminResponse(
         **{c.name: getattr(room, c.name) for c in room.__table__.columns},
+        city_name=city_name,
         seat_count=seat_count,
         available_seat_count=available_seat_count,
     )

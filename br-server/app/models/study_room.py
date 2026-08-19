@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -17,6 +17,9 @@ class StudyRoom(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     cover_image: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    environment_images: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="环境图片 URL 列表，最多 5 张"
+    )
     address: Mapped[str] = mapped_column(String(255), nullable=False)
     city_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("cities.id"), nullable=True

@@ -2,14 +2,20 @@ import { Alova } from '@/utils/http/alova/index';
 import { ADMIN_NATIVE_META } from '@/api/contracts/admin';
 
 // --- Types ---
+export type RoomType = 'study' | 'training' | 'comprehensive';
+
 export interface RoomItem {
   id: number;
   name: string;
   description: string | null;
   cover_image: string | null;
+  environment_images: string[] | null;
   address: string;
+  city_id: number | null;
+  city_name: string | null;
   business_hours: string | null;
   status: 'open' | 'closed';
+  room_type: RoomType;
   min_price: number;
   created_at: string;
   updated_at: string;
@@ -29,8 +35,12 @@ export interface RoomFormParams {
   address: string;
   description?: string | null;
   cover_image?: string | null;
+  environment_images?: string[];
   business_hours?: string | null;
+  city_id?: number | null;
+  room_type?: RoomType;
   min_price?: number;
+  status?: 'open' | 'closed';
 }
 
 export interface RoomUpdateParams {
@@ -38,8 +48,12 @@ export interface RoomUpdateParams {
   address?: string;
   description?: string | null;
   cover_image?: string | null;
+  environment_images?: string[];
   business_hours?: string | null;
+  city_id?: number | null;
+  room_type?: RoomType;
   min_price?: number;
+  status?: 'open' | 'closed';
 }
 
 export interface RoomStatusParams {
@@ -50,6 +64,14 @@ export interface RoomListParams {
   page?: number;
   page_size?: number;
   status?: 'open' | 'closed';
+  room_type?: RoomType;
+  city_id?: number;
+}
+
+export interface CityItem {
+  id: number;
+  name: string;
+  province: string;
 }
 
 // --- Common meta for admin API calls ---
@@ -75,4 +97,7 @@ export function toggleRoomStatus(id: number, status: 'open' | 'closed') {
     { status },
     { meta: ADMIN_NATIVE_META }
   );
+}
+export function getCityList() {
+  return Alova.Get<CityItem[]>('/v1/cities', { meta: ADMIN_NATIVE_META });
 }

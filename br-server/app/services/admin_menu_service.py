@@ -27,6 +27,7 @@ COMPONENT_WHITELIST = {
     "/setting/account/account",
     "/setting/system/system",
     "/room/list/index",
+    "/room/list/edit",
     "/room/seats/index",
     "/activity/list/index",
     "/activity/list/edit",

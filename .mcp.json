@@ -6,8 +6,16 @@
         "code-review-graph",
         "serve"
       ],
-      "cwd": "/Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room",
       "type": "stdio"
+    },
+    "graphify": {
+      "command": "graphify",
+      "args": [
+        "--mcp",
+        "."
+      ],
+      "type": "stdio",
+      "disabled": true
     }
   }
 }

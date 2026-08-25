@@ -253,7 +253,7 @@ class CourseBookingService:
         total_lessons = course_data["total_lessons_count"]
         schedule = course_data.get("schedule")
 
-        if course.status != "active":
+        if course["status"] != "active":
             raise CourseBookingError("课程不可预约")
 
         # 2. 验证 lesson_ids
@@ -310,7 +310,7 @@ class CourseBookingService:
         # 6. 创建 Booking 记录
         booking = Booking(
             user_id=str(user_id),
-            room_id=course.room_id,
+            room_id=course["room_id"],
             seat_id=None,  # 课程预约不需要座位
             date=datetime.now(CHINA_TIMEZONE).date(),
             start_time=datetime.now(CHINA_TIMEZONE).time(),
@@ -326,7 +326,7 @@ class CourseBookingService:
             payment_check_count=0,
             next_payment_check_at=None if balance_payment else _now_naive() + timedelta(minutes=1),
             booking_type="course",
-            course_id=course.id,
+            course_id=course["id"],
             lesson_ids=data.lesson_ids,
             schedule_type=data.schedule_type,
         )
@@ -335,7 +335,7 @@ class CourseBookingService:
 
         # 6.5. 如果是自定义预约，保存用户选择的时间到排课表
         if data.schedule_type == "custom" and (data.start_date or data.time_slot):
-            await self._save_custom_schedule(db, course.id, data.start_date, data.time_slot)
+            await self._save_custom_schedule(db, course["id"], data.start_date, data.time_slot)
 
         # 7. 余额扣款
         payment_params = None
@@ -388,7 +388,7 @@ class CourseBookingService:
 
         return CourseBookingResponse(
             booking_id=booking.id,
-            course_name=course.name,
+            course_name=course["name"],
             lesson_count=len(data.lesson_ids),
             lesson_titles=lesson_titles,
             original_price=float(original_price),

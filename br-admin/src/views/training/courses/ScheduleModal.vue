@@ -135,6 +135,31 @@
               </n-tag>
             </n-flex>
           </n-form-item>
+
+          <!-- 课程目录 -->
+          <n-divider title-placement="start" style="margin-top: 12px; margin-bottom: 8px;">
+            课程目录
+          </n-divider>
+          <n-list v-if="computedLessonSchedule.length > 0" bordered>
+            <n-list-item v-for="(item, index) in computedLessonSchedule" :key="item.lessonId">
+              <n-flex align="center" justify="space-between">
+                <n-flex align="center" :size="12">
+                  <n-text>第 {{ index + 1 }} 讲：{{ item.title }}</n-text>
+                  <n-text depth="3">于 {{ item.dateDisplay }} {{ item.timeSlotStart }} 上课</n-text>
+                </n-flex>
+                <n-button
+                  v-if="item.canPostpone && editingSchedule"
+                  text
+                  type="warning"
+                  @click="handlePostpone(item)"
+                >
+                  <template #icon><n-icon><TimeOutline /></n-icon></template>
+                  延期
+                </n-button>
+              </n-flex>
+            </n-list-item>
+          </n-list>
+          <n-empty v-else description="请先选择开始日期和上课时间段" />
         </n-form>
         <template #footer>
           <n-flex justify="end" :size="12">
@@ -153,14 +178,18 @@
   import { computed, h, ref, watch } from 'vue';
   import type { FormInst, FormRules } from 'naive-ui';
   import { NButton, NTag } from 'naive-ui';
+  import { TimeOutline } from '@vicons/ionicons5';
   import {
     getTeacherList,
     getCourseSchedules,
     createCourseSchedule,
     updateCourseSchedule,
     deleteCourseSchedule,
+    getCourseLessons,
+    postponeCourseLessonSchedule,
     type TeacherItem,
     type ScheduleRecord,
+    type LessonItem,
   } from '@/api/course';
 
   const props = defineProps<{
@@ -199,6 +228,8 @@
   const tableKey = ref(0);
   const teacherOptions = ref<Array<{ label: string; value: number }>>([]);
   const editingId = ref<number | null>(null);
+  const lessons = ref<LessonItem[]>([]);
+  const editingSchedule = ref<ScheduleRecord | null>(null);
 
   const formValues = ref({
     teacher_id: null as number | null,
@@ -254,6 +285,82 @@
     });
     return list.sort((a, b) => a.key.localeCompare(b.key));
   });
+
+  // 课程目录计算
+  const computedLessonSchedule = computed(() => {
+    if (!formValues.value.start_date || selectedSlots.value.size === 0 || !lessons.value.length) return [];
+
+    // 如果正在编辑且有 lesson_schedule，使用后端数据
+    if (editingSchedule.value?.lesson_schedule) {
+      try {
+        const schedule = JSON.parse(editingSchedule.value.lesson_schedule);
+        if (Array.isArray(schedule)) {
+          return schedule.map((item: any) => ({
+            lessonId: item.lesson_id,
+            title: item.title,
+            dateDisplay: item.scheduled_date,
+            timeSlotStart: item.time_slot.split('-')[0],
+            timeSlot: item.time_slot,
+            canPostpone: isFutureDate(item.scheduled_date),
+          }));
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // 生成所有可用的 (date, timeSlot) 组合，按时间排序
+    const availableSlots: { dateStr: string; weekday: number; timeSlot: string }[] = [];
+    for (const wd of weekDates.value) {
+      for (const slot of selectedSlotList.value) {
+        if (slot.weekday === wd.weekday) {
+          availableSlots.push({
+            dateStr: wd.dateStr,
+            weekday: wd.weekday,
+            timeSlot: slot.label.split(' ').pop() || '',
+          });
+        }
+      }
+    }
+    availableSlots.sort((a, b) => {
+      const dateCompare = a.dateStr.localeCompare(b.dateStr);
+      if (dateCompare !== 0) return dateCompare;
+      return a.timeSlot.localeCompare(b.timeSlot);
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return lessons.value
+      .map((lesson, index) => {
+        if (index >= availableSlots.length) return null;
+        const slot = availableSlots[index];
+        const lessonDate = new Date(slot.dateStr);
+        const canPostpone = lessonDate > today;
+        return {
+          lessonId: lesson.id,
+          title: lesson.title || `第${index + 1}讲`,
+          dateDisplay: slot.dateStr.replace(/-/g, '/'),
+          timeSlotStart: slot.timeSlot.split('-')[0],
+          timeSlot: slot.timeSlot,
+          canPostpone,
+        };
+      })
+      .filter(Boolean) as {
+        lessonId: number;
+        title: string;
+        dateDisplay: string;
+        timeSlotStart: string;
+        timeSlot: string;
+        canPostpone: boolean;
+      }[];
+  });
+
+  function isFutureDate(dateStr: string): boolean {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(dateStr) > today;
+  }
 
   // 表格列定义
   const tableColumns = [
@@ -345,7 +452,7 @@
   );
 
   async function loadData() {
-    await Promise.all([loadTeachers(), loadSchedules()]);
+    await Promise.all([loadTeachers(), loadSchedules(), loadLessons()]);
   }
 
   async function loadTeachers() {
@@ -360,6 +467,16 @@
       window['$message']?.error('加载教师列表失败');
     } finally {
       teacherLoading.value = false;
+    }
+  }
+
+  async function loadLessons() {
+    if (!props.courseId) return;
+    try {
+      const data = await getCourseLessons(props.courseId);
+      lessons.value = data.sort((a, b) => a.sort_order - b.sort_order);
+    } catch {
+      // 静默失败，课时列表非关键数据
     }
   }
 
@@ -407,6 +524,7 @@
 
   function handleEdit(row: ScheduleRecord) {
     editingId.value = row.id;
+    editingSchedule.value = row;
     formValues.value.teacher_id = row.teacher_id;
     formValues.value.start_date = row.start_date;
     formValues.value.price = row.price;
@@ -437,6 +555,7 @@
 
   function cancelEdit() {
     editingId.value = null;
+    editingSchedule.value = null;
     resetForm();
   }
 
@@ -449,6 +568,30 @@
       full_package_price: null,
     };
     selectedSlots.value = new Set();
+    editingSchedule.value = null;
+  }
+
+  function handlePostpone(item: { lessonId: number; title: string }) {
+    if (!props.courseId || !editingSchedule.value) return;
+    window['$dialog']?.warning({
+      title: '确认延期',
+      content: `是否确定延期课时“${item.title}”？`,
+      positiveText: '确定',
+      negativeText: '取消',
+      onPositiveClick: async () => {
+        try {
+          await postponeCourseLessonSchedule(
+            props.courseId!,
+            editingSchedule.value!.id,
+            item.lessonId
+          );
+          window['$message']?.success('延期成功');
+          await loadSchedules();
+        } catch {
+          window['$message']?.error('延期失败');
+        }
+      },
+    });
   }
 
   async function handleSave() {

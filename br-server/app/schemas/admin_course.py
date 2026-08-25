@@ -135,7 +135,9 @@ class CourseScheduleCreate(BaseModel):
     """创建排课记录"""
     teacher_id: int | None = None
     start_date: str | None = None
+    end_date: str | None = None
     time_slots: str | None = None
+    lesson_schedule: str | None = None
     price: float = 0
     custom_price: float = 0
     full_package_price: float | None = None
@@ -146,7 +148,9 @@ class CourseScheduleUpdate(BaseModel):
     """更新排课记录"""
     teacher_id: int | None = None
     start_date: str | None = None
+    end_date: str | None = None
     time_slots: str | None = None
+    lesson_schedule: str | None = None
     price: float | None = None
     custom_price: float | None = None
     full_package_price: float | None = None
@@ -159,7 +163,9 @@ class CourseScheduleResponse(BaseModel):
     course_id: int
     teacher_id: int | None = None
     start_date: str | None = None
+    end_date: str | None = None
     time_slots: str | None = None
+    lesson_schedule: str | None = None
     price: float
     custom_price: float
     full_package_price: float | None = None

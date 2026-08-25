@@ -19,8 +19,8 @@ verification_report: openspec/changes/fix-course-booking-dict-access/verificatio
 branch_status: pending
 created_at: 2026-08-25
 verified_at: 2026-08-25
-archive_confirmation: pending
-archived: false
+archive_confirmation: confirmed
+archived: true
 bound_branch: agent/engineer/1d98070d
 direct_override: null
 handoff_context: null

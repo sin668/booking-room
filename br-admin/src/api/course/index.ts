@@ -212,6 +212,7 @@ export interface ScheduleRecord {
   teacher_id?: number | null;
   start_date?: string | null;
   time_slots?: string | null;
+  lesson_schedule?: string | null;
   price: number;
   custom_price: number;
   full_package_price?: number | null;
@@ -254,4 +255,14 @@ export function deleteCourseSchedule(courseId: number, scheduleId: number) {
   return Alova.Delete(`/v1/admin/courses/${courseId}/schedules/${scheduleId}`, {
     meta: ADMIN_NATIVE_META,
   });
+}
+
+// --- Schedule Lesson Postpone ---
+
+export function postponeCourseLessonSchedule(courseId: number, scheduleId: number, lessonId: number) {
+  return Alova.Post(
+    `/v1/admin/courses/${courseId}/schedules/${scheduleId}/postpone-lesson`,
+    { lesson_id: lessonId },
+    { meta: ADMIN_NATIVE_META }
+  );
 }

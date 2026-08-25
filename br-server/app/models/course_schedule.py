@@ -24,9 +24,14 @@ class CourseSchedule(Base):
         Integer, ForeignKey("teachers.id"), nullable=True
     )
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="课程结束日期")
     time_slots: Mapped[str | None] = mapped_column(
         Text, nullable=True,
         comment="上课时间段，JSON 数组格式，如 [{\"weekday\":1,\"start\":\"09:00\",\"end\":\"11:00\"}]",
+    )
+    lesson_schedule: Mapped[str | None] = mapped_column(
+        Text, nullable=True,
+        comment="课时安排JSON，存储每个课时的实际上课日期时间",
     )
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     custom_price: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)

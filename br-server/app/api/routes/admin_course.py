@@ -248,3 +248,26 @@ async def delete_schedule(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="排课记录不存在")
     await db.commit()
     return {"message": "删除成功"}
+
+
+@router.post("/{course_id}/schedules/{schedule_id}/postpone-lesson", response_model=CourseScheduleResponse)
+async def postpone_lesson(
+    course_id: int,
+    schedule_id: int,
+    data: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """延期某一课时及其后续所有课时。"""
+    lesson_id = data.get("lesson_id")
+    if not lesson_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="lesson_id is required")
+    service = AdminCourseService()
+    try:
+        result = await service.postpone_lesson(db, schedule_id, lesson_id)
+        await db.commit()
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

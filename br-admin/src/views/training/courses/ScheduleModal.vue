@@ -137,29 +137,30 @@
           </n-form-item>
 
           <!-- 课程目录 -->
-          <n-divider title-placement="start" style="margin-top: 12px; margin-bottom: 8px;">
-            课程目录
-          </n-divider>
-          <n-list v-if="computedLessonSchedule.length > 0" bordered>
-            <n-list-item v-for="(item, index) in computedLessonSchedule" :key="item.lessonId">
-              <n-flex align="center" justify="space-between">
-                <n-flex align="center" :size="12">
-                  <n-text>第 {{ index + 1 }} 讲：{{ item.title }}</n-text>
-                  <n-text depth="3">于 {{ item.dateDisplay }} {{ item.timeSlotStart }} 上课</n-text>
-                </n-flex>
-                <n-button
-                  v-if="item.canPostpone && editingSchedule"
-                  text
-                  type="warning"
-                  @click="handlePostpone(item)"
-                >
-                  <template #icon><n-icon><TimeOutline /></n-icon></template>
-                  延期
-                </n-button>
-              </n-flex>
-            </n-list-item>
-          </n-list>
-          <n-empty v-else description="请先选择开始日期和上课时间段" />
+          <n-form-item label="课程目录">
+            <div style="width: 100%">
+              <n-list v-if="computedLessonSchedule.length > 0" bordered>
+                <n-list-item v-for="(item, index) in computedLessonSchedule" :key="item.lessonId">
+                  <n-flex align="center" justify="space-between">
+                    <n-flex align="center" :size="12">
+                      <n-text>第 {{ index + 1 }} 讲：{{ item.title }}</n-text>
+                      <n-text depth="3">于 {{ item.dateDisplay }} {{ item.timeSlotStart }} 上课</n-text>
+                    </n-flex>
+                    <n-button
+                      v-if="item.canPostpone && editingSchedule"
+                      text
+                      type="warning"
+                      @click="handlePostpone(item)"
+                    >
+                      <template #icon><n-icon><TimeOutline /></n-icon></template>
+                      延期
+                    </n-button>
+                  </n-flex>
+                </n-list-item>
+              </n-list>
+              <n-empty v-else description="请先选择开始日期和上课时间段" />
+            </div>
+          </n-form-item>
         </n-form>
         <template #footer>
           <n-flex justify="end" :size="12">
@@ -286,9 +287,18 @@
     return list.sort((a, b) => a.key.localeCompare(b.key));
   });
 
+  // 当前课时列表：优先使用排课记录中的 course_lessons，否则用 API 加载的 lessons
+  const currentLessons = computed<LessonItem[]>(() => {
+    if (editingSchedule.value?.course_lessons?.length) {
+      return editingSchedule.value.course_lessons.sort((a, b) => a.sort_order - b.sort_order);
+    }
+    return lessons.value;
+  });
+
   // 课程目录计算
   const computedLessonSchedule = computed(() => {
-    if (!formValues.value.start_date || selectedSlots.value.size === 0 || !lessons.value.length) return [];
+    const lessonList = currentLessons.value;
+    if (!formValues.value.start_date || selectedSlots.value.size === 0 || !lessonList.length) return [];
 
     // 如果正在编辑且有 lesson_schedule，使用后端数据
     if (editingSchedule.value?.lesson_schedule) {
@@ -328,32 +338,28 @@
       return a.timeSlot.localeCompare(b.timeSlot);
     });
 
+    if (availableSlots.length === 0) return [];
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return lessons.value
-      .map((lesson, index) => {
-        if (index >= availableSlots.length) return null;
-        const slot = availableSlots[index];
-        const lessonDate = new Date(slot.dateStr);
-        const canPostpone = lessonDate > today;
-        return {
-          lessonId: lesson.id,
-          title: lesson.title || `第${index + 1}讲`,
-          dateDisplay: slot.dateStr.replace(/-/g, '/'),
-          timeSlotStart: slot.timeSlot.split('-')[0],
-          timeSlot: slot.timeSlot,
-          canPostpone,
-        };
-      })
-      .filter(Boolean) as {
-        lessonId: number;
-        title: string;
-        dateDisplay: string;
-        timeSlotStart: string;
-        timeSlot: string;
-        canPostpone: boolean;
-      }[];
+    // 遍历所有课时，可用槽位循环使用（取模方式）
+    return lessonList.map((lesson, index) => {
+      const slot = availableSlots[index % availableSlots.length];
+      // 计算实际日期：基础日期 + (第几轮 × 7天)
+      const weekOffset = Math.floor(index / availableSlots.length) * 7;
+      const lessonDate = new Date(slot.dateStr);
+      lessonDate.setDate(lessonDate.getDate() + weekOffset);
+      const canPostpone = lessonDate > today;
+      return {
+        lessonId: lesson.id,
+        title: lesson.title || `第${index + 1}讲`,
+        dateDisplay: formatDate(lessonDate).replace(/-/g, '/'),
+        timeSlotStart: slot.timeSlot.split('-')[0],
+        timeSlot: slot.timeSlot,
+        canPostpone,
+      };
+    });
   });
 
   function isFutureDate(dateStr: string): boolean {

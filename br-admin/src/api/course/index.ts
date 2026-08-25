@@ -213,6 +213,7 @@ export interface ScheduleRecord {
   start_date?: string | null;
   time_slots?: string | null;
   lesson_schedule?: string | null;
+  course_lessons?: LessonItem[] | null;
   price: number;
   custom_price: number;
   full_package_price?: number | null;

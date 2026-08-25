@@ -53,4 +53,8 @@ swarm-*
 .superpowers/
 .qoder/
 .code-review-graph/
-.graphify/
+
+# graphify
+.graphify/cache/
+graphify-out/*.log
+*.tmp.graphify

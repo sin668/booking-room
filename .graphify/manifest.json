@@ -1,0 +1,4054 @@
+{
+  "br-admin/components.d.ts": {
+    "mtime": 1780043303232.9036,
+    "hash": "8c44d919b27772bbd3bde4002851d60a"
+  },
+  "br-admin/mock/_util.ts": {
+    "mtime": 1776990443264.0454,
+    "hash": "74a5af13e8c0e0f260698d0ca4769f53"
+  },
+  "br-admin/mock/dashboard/console.ts": {
+    "mtime": 1776990443264.1235,
+    "hash": "41144e320a4ec74e4bbe0d88e45631aa"
+  },
+  "br-admin/mock/system/menu.ts": {
+    "mtime": 1776990443264.277,
+    "hash": "d599e1d4f73654e30ed22f02707f69ad"
+  },
+  "br-admin/mock/system/role.ts": {
+    "mtime": 1776990443264.361,
+    "hash": "2f3e2f60409a9ffb84f1d30b6008f646"
+  },
+  "br-admin/mock/table/list.ts": {
+    "mtime": 1776990443264.4844,
+    "hash": "c999394961e581d522a6f10b5d733d02"
+  },
+  "br-admin/mock/user/index.ts": {
+    "mtime": 1776990443264.5593,
+    "hash": "ad7df783e242a6fd3d93f14c5c03f0b8"
+  },
+  "br-admin/mock/user/menus.ts": {
+    "mtime": 1776990443264.6199,
+    "hash": "a79d0297cab80e434b1242aa460be65c"
+  },
+  "br-admin/postcss.config.js": {
+    "mtime": 1776990443267.519,
+    "hash": "8640f9b2e6475cc3f5b1ff4548925765"
+  },
+  "br-admin/prettier.config.js": {
+    "mtime": 1776990443267.572,
+    "hash": "3e55cd20f6c3989c3288daec5283b476"
+  },
+  "br-admin/scripts/test-admin-business-refactor.ts": {
+    "mtime": 1780880454120.3323,
+    "hash": "02472f32e5ba44cc1188a3fd13741d45"
+  },
+  "br-admin/src/App.vue": {
+    "mtime": 1776990443267.752,
+    "hash": "54c69ad4a49a5b4b6368fa22b0938d9f"
+  },
+  "br-admin/src/api/activity/index.ts": {
+    "mtime": 1780880454120.5237,
+    "hash": "844392c98fb6c6661f788d12f127a680"
+  },
+  "br-admin/src/api/booking/index.ts": {
+    "mtime": 1780274852369.1418,
+    "hash": "1cf465296561979fe9c85c306ffd2b9d"
+  },
+  "br-admin/src/api/contracts/admin.ts": {
+    "mtime": 1780274852369.2102,
+    "hash": "eba68ae07a74aaa5e899fcf67cc460e1"
+  },
+  "br-admin/src/api/coupon/index.ts": {
+    "mtime": 1781056303515.6987,
+    "hash": "2f247e102c4e5a248797999734b81605"
+  },
+  "br-admin/src/api/course/index.ts": {
+    "mtime": 1787044201486.9746,
+    "hash": "6b45a47b96ecd96d89e88e1be33fa93d"
+  },
+  "br-admin/src/api/dashboard/console.ts": {
+    "mtime": 1776990443267.854,
+    "hash": "373d84c1086e630123bcf8f0541ce09f"
+  },
+  "br-admin/src/api/room/index.ts": {
+    "mtime": 1787105016716.4148,
+    "hash": "0fb4f36a9565384ae69efdc5f853e61d"
+  },
+  "br-admin/src/api/seat/index.ts": {
+    "mtime": 1780274852369.3887,
+    "hash": "9e305d683f8751742f9a0e0ec3296798"
+  },
+  "br-admin/src/api/system/menu.ts": {
+    "mtime": 1779102594396.0022,
+    "hash": "4e2bae879400d7672f482553f9771ec6"
+  },
+  "br-admin/src/api/system/role.ts": {
+    "mtime": 1779102594396.1243,
+    "hash": "31dc0f02114c5145d667186c6d0a5623"
+  },
+  "br-admin/src/api/system/setting.ts": {
+    "mtime": 1779102594396.1938,
+    "hash": "8cf6c237f413a63182cec41dc1fdaf8d"
+  },
+  "br-admin/src/api/system/user.ts": {
+    "mtime": 1780274852369.6099,
+    "hash": "b2f71e6e9615795c4cdae0f5f9e5a578"
+  },
+  "br-admin/src/api/table/list.ts": {
+    "mtime": 1776990443268.2063,
+    "hash": "fd4452e1425925f98485a9d6acf6f7b7"
+  },
+  "br-admin/src/api/teacher/index.ts": {
+    "mtime": 1787120015246.3691,
+    "hash": "d1495dff3ea781127433cccd275ec578"
+  },
+  "br-admin/src/api/upload/index.ts": {
+    "mtime": 1787105318432.3547,
+    "hash": "2824ad48c1e10ff35408d6a1aebeb506"
+  },
+  "br-admin/src/api/wallet/index.ts": {
+    "mtime": 1780274852369.916,
+    "hash": "b033a12aa62eccc9e3f4bad0beec2d81"
+  },
+  "br-admin/src/components/Application/Application.vue": {
+    "mtime": 1776990443271.7317,
+    "hash": "b199c2a1aa4f01c8153ec04740406c6b"
+  },
+  "br-admin/src/components/Application/index.ts": {
+    "mtime": 1776990443271.7761,
+    "hash": "2d7a857fb258346dec1f55b25bf37cce"
+  },
+  "br-admin/src/components/CountTo/CountTo.vue": {
+    "mtime": 1776990443271.8716,
+    "hash": "1837493c1878d3856ec7f10e40bd2644"
+  },
+  "br-admin/src/components/CountTo/index.ts": {
+    "mtime": 1776990443271.9937,
+    "hash": "b8b2775284f90f9e33c20a554b510fdc"
+  },
+  "br-admin/src/components/Form/index.ts": {
+    "mtime": 1776990443272.0627,
+    "hash": "aed8173959e2f2ca9df41d69b2a72482"
+  },
+  "br-admin/src/components/Form/src/BasicForm.vue": {
+    "mtime": 1776990443272.1719,
+    "hash": "3b58f4421401b53d5603db5149678666"
+  },
+  "br-admin/src/components/Form/src/helper.ts": {
+    "mtime": 1776990443272.3254,
+    "hash": "8eab422a700dfda27ff6a8998ad7afd6"
+  },
+  "br-admin/src/components/Form/src/hooks/useForm.ts": {
+    "mtime": 1776990443272.4019,
+    "hash": "8a15b3873f0b5ed7e4db325b50aaa311"
+  },
+  "br-admin/src/components/Form/src/hooks/useFormContext.ts": {
+    "mtime": 1776990443272.4502,
+    "hash": "94c3a5e3d617f451217156b442969e93"
+  },
+  "br-admin/src/components/Form/src/hooks/useFormEvents.ts": {
+    "mtime": 1776990443272.4998,
+    "hash": "2b346b0190ba26abaa31938a5cc49d01"
+  },
+  "br-admin/src/components/Form/src/hooks/useFormValues.ts": {
+    "mtime": 1776990443272.5476,
+    "hash": "209c8d1ba7b21d9e67b473f1ee496a82"
+  },
+  "br-admin/src/components/Form/src/props.ts": {
+    "mtime": 1776990443272.5933,
+    "hash": "032bfd57d2367e5011b58b85d541e2f8"
+  },
+  "br-admin/src/components/Form/src/types/form.ts": {
+    "mtime": 1776990443272.7427,
+    "hash": "c16e2c842d938ce6e6ca71e667780efa"
+  },
+  "br-admin/src/components/Form/src/types/index.ts": {
+    "mtime": 1776990443272.7927,
+    "hash": "6479ecd966bb9188bda5be2e5e15633b"
+  },
+  "br-admin/src/components/Lockscreen/Lockscreen.vue": {
+    "mtime": 1776990443272.9153,
+    "hash": "d8868543e89f30efc34f90f95b52b03f"
+  },
+  "br-admin/src/components/Lockscreen/Recharge.vue": {
+    "mtime": 1776990443272.9805,
+    "hash": "0b6f87aa43f073f438fdbfe3fa8b9fff"
+  },
+  "br-admin/src/components/Lockscreen/index.ts": {
+    "mtime": 1776990443273.0178,
+    "hash": "e7069d0c4f88ab953be6346fbe10c0c6"
+  },
+  "br-admin/src/components/Modal/index.ts": {
+    "mtime": 1776990443273.0789,
+    "hash": "d6e36de54a159493c0a996d279f79ff8"
+  },
+  "br-admin/src/components/Modal/src/basicModal.vue": {
+    "mtime": 1776990443273.2034,
+    "hash": "42d1db0be76e82d4c55a0d44a6c79148"
+  },
+  "br-admin/src/components/Modal/src/hooks/useModal.ts": {
+    "mtime": 1779153579961.9202,
+    "hash": "3400025ef9ff1b8ecc04799fe3f7ba2a"
+  },
+  "br-admin/src/components/Modal/src/props.ts": {
+    "mtime": 1776990443273.3372,
+    "hash": "89c4142fcd24bbde446e3814a8dda38f"
+  },
+  "br-admin/src/components/Modal/src/type/index.ts": {
+    "mtime": 1776990443273.5076,
+    "hash": "b92cc0ba05377af060a568caa768796c"
+  },
+  "br-admin/src/components/Table/index.ts": {
+    "mtime": 1776990443273.5764,
+    "hash": "5b2fa2a6a564dc867a115a38bd2d227a"
+  },
+  "br-admin/src/components/Table/src/Table.vue": {
+    "mtime": 1776990443273.769,
+    "hash": "dc3f38fb734c33e1f8bf280e981cc048"
+  },
+  "br-admin/src/components/Table/src/componentMap.ts": {
+    "mtime": 1776990443273.8152,
+    "hash": "2f3a7958830635486f7ac7b1fb6fed88"
+  },
+  "br-admin/src/components/Table/src/components/TableAction.vue": {
+    "mtime": 1776990443273.9604,
+    "hash": "242cdda3d95a740428fb4e82caca6620"
+  },
+  "br-admin/src/components/Table/src/components/editable/CellComponent.ts": {
+    "mtime": 1776990443274.0317,
+    "hash": "9476ff9a4d8636ac1d87e76aa9f9bbfb"
+  },
+  "br-admin/src/components/Table/src/components/editable/EditableCell.vue": {
+    "mtime": 1776990443274.2576,
+    "hash": "8678422be8a3d6605b35f5b5e26b40fb"
+  },
+  "br-admin/src/components/Table/src/components/editable/helper.ts": {
+    "mtime": 1776990443274.3193,
+    "hash": "eba27eb8837984df5557427f083ade46"
+  },
+  "br-admin/src/components/Table/src/components/editable/index.ts": {
+    "mtime": 1776990443274.3696,
+    "hash": "3bb45d986b26a2075ba2e5396b5efcf3"
+  },
+  "br-admin/src/components/Table/src/components/settings/ColumnSetting.vue": {
+    "mtime": 1776990443274.5178,
+    "hash": "4c37eb0085347744db2d8ee5169ac6f6"
+  },
+  "br-admin/src/components/Table/src/const.ts": {
+    "mtime": 1776990443274.5635,
+    "hash": "1e7bbbd18210b48525f6dff732c70b13"
+  },
+  "br-admin/src/components/Table/src/hooks/useColumns.ts": {
+    "mtime": 1776990443274.657,
+    "hash": "9e67ada4597da8a5094dbffab2e631ec"
+  },
+  "br-admin/src/components/Table/src/hooks/useDataSource.ts": {
+    "mtime": 1776990443274.8035,
+    "hash": "862a7ece9b3a2b0b9140b40ec2057941"
+  },
+  "br-admin/src/components/Table/src/hooks/useLoading.ts": {
+    "mtime": 1776990443274.8494,
+    "hash": "88305f72a0c8b04d53f55246fc2abad7"
+  },
+  "br-admin/src/components/Table/src/hooks/usePagination.ts": {
+    "mtime": 1776990443274.8945,
+    "hash": "f8bfb71cf2595ad79918dc601e96958e"
+  },
+  "br-admin/src/components/Table/src/hooks/useTableContext.ts": {
+    "mtime": 1776990443274.938,
+    "hash": "a92425a95c962d09f09b32ffbee878d0"
+  },
+  "br-admin/src/components/Table/src/props.ts": {
+    "mtime": 1776990443274.9905,
+    "hash": "cd321d9f48c6d7b418e3e526f8c8d167"
+  },
+  "br-admin/src/components/Table/src/types/componentType.ts": {
+    "mtime": 1776990443275.0977,
+    "hash": "4fad5b345756bc3be1391857f6134e20"
+  },
+  "br-admin/src/components/Table/src/types/pagination.ts": {
+    "mtime": 1776990443275.2202,
+    "hash": "ef0573174a2063344ef2b7ab90e078d5"
+  },
+  "br-admin/src/components/Table/src/types/table.ts": {
+    "mtime": 1776990443275.2717,
+    "hash": "3d5921f61df10b1f28cf6a42f1328981"
+  },
+  "br-admin/src/components/Table/src/types/tableAction.ts": {
+    "mtime": 1776990443275.3967,
+    "hash": "e92d0f99ae4a645fe05f0e7fd14e91e4"
+  },
+  "br-admin/src/components/Upload/index.ts": {
+    "mtime": 1776990443275.469,
+    "hash": "4a0381e60b837a4d58ac01d2447b9025"
+  },
+  "br-admin/src/components/Upload/src/BasicUpload.vue": {
+    "mtime": 1776990443275.592,
+    "hash": "bd65c79355d7f44626b238bbcd083aa4"
+  },
+  "br-admin/src/components/Upload/src/props.ts": {
+    "mtime": 1776990443275.6455,
+    "hash": "d7e5c5bbf821f364b6859f718102a6e5"
+  },
+  "br-admin/src/components/Upload/src/type/index.ts": {
+    "mtime": 1776990443275.709,
+    "hash": "97af392f4f80af36a17c573983866e4c"
+  },
+  "br-admin/src/config/website.config.ts": {
+    "mtime": 1786504291490.06,
+    "hash": "50c951529903cd108e897a0aa9cb7836"
+  },
+  "br-admin/src/directives/clickOutside.ts": {
+    "mtime": 1776990443275.8486,
+    "hash": "ba2e53012a023dcb6ff4bd018ed0513e"
+  },
+  "br-admin/src/directives/copy.ts": {
+    "mtime": 1776990443275.973,
+    "hash": "92e958cdb0a772dd842fcea5fad57097"
+  },
+  "br-admin/src/directives/debounce.ts": {
+    "mtime": 1776990443276.0269,
+    "hash": "e0a480ee539dc4a28b74f8cdcd0222fc"
+  },
+  "br-admin/src/directives/draggable.ts": {
+    "mtime": 1776990443276.152,
+    "hash": "b967364958382a9851c4215f48195f15"
+  },
+  "br-admin/src/directives/longpress.ts": {
+    "mtime": 1776990443276.198,
+    "hash": "be74eb76c9cee78bca612d366caa3d4f"
+  },
+  "br-admin/src/directives/permission.ts": {
+    "mtime": 1776990443276.3423,
+    "hash": "01f43f8ff61db61faabfd653ac286da3"
+  },
+  "br-admin/src/directives/throttle.ts": {
+    "mtime": 1776990443276.384,
+    "hash": "a438f993b3f96eb3e3a163db4f1857d6"
+  },
+  "br-admin/src/enums/breakpointEnum.ts": {
+    "mtime": 1776990443276.4534,
+    "hash": "90a49d9aa9b338debacbe1e21171fa54"
+  },
+  "br-admin/src/enums/cacheEnum.ts": {
+    "mtime": 1776990443276.5034,
+    "hash": "6e10040eb08a4d11ce9db29130bce1ed"
+  },
+  "br-admin/src/enums/httpEnum.ts": {
+    "mtime": 1776990443276.55,
+    "hash": "0b546b4aa8668adb1c83a2b28db9a785"
+  },
+  "br-admin/src/enums/pageEnum.ts": {
+    "mtime": 1776990443276.59,
+    "hash": "c623b04b3d95389fbac3bf92b11a06ae"
+  },
+  "br-admin/src/enums/permissionsEnum.ts": {
+    "mtime": 1776990443276.628,
+    "hash": "fb4af7d10673ac9a0e7e401b128fa242"
+  },
+  "br-admin/src/enums/roleEnum.ts": {
+    "mtime": 1776990443276.6646,
+    "hash": "9fed19b027f7ea91e933d52a572ffcae"
+  },
+  "br-admin/src/hooks/core/useTimeout.ts": {
+    "mtime": 1776990443276.7512,
+    "hash": "5a994644913262ea1af73913cdc26cc5"
+  },
+  "br-admin/src/hooks/event/useBreakpoint.ts": {
+    "mtime": 1776990443276.8157,
+    "hash": "da32676d8f942e2517af2ba782e374ca"
+  },
+  "br-admin/src/hooks/event/useEventListener.ts": {
+    "mtime": 1776990443276.867,
+    "hash": "427734199596c2cb81c3c33d3bee57e5"
+  },
+  "br-admin/src/hooks/event/useWindowSizeFn.ts": {
+    "mtime": 1776990443276.909,
+    "hash": "cf56eff7321de13d13e883c1c2ed0e64"
+  },
+  "br-admin/src/hooks/index.ts": {
+    "mtime": 1776990443276.9453,
+    "hash": "d77812d06b3b914912525ed71ca3c049"
+  },
+  "br-admin/src/hooks/setting/index.ts": {
+    "mtime": 1776990443277.2874,
+    "hash": "34d7588680efc7d163cf3e54a4832404"
+  },
+  "br-admin/src/hooks/setting/useDesignSetting.ts": {
+    "mtime": 1776990443277.3494,
+    "hash": "da10a7b5f0eece63da0a37d5091cdafb"
+  },
+  "br-admin/src/hooks/setting/useProjectSetting.ts": {
+    "mtime": 1776990443277.4014,
+    "hash": "ab012ddae5582b184c18523ea081bff8"
+  },
+  "br-admin/src/hooks/useAsync.ts": {
+    "mtime": 1776990443277.4507,
+    "hash": "337ba2df66ac96f6ebf6ade7fbce810e"
+  },
+  "br-admin/src/hooks/useBattery.ts": {
+    "mtime": 1776990443277.5452,
+    "hash": "23cb1c06e060984004905ba679eadf57"
+  },
+  "br-admin/src/hooks/useDomWidth.ts": {
+    "mtime": 1776990443277.667,
+    "hash": "35956ee93d2e5c53e918d68fe40e8393"
+  },
+  "br-admin/src/hooks/useOnline.ts": {
+    "mtime": 1776990443277.7346,
+    "hash": "4ca06637b69b7726c8683cfde7e4639c"
+  },
+  "br-admin/src/hooks/useTime.ts": {
+    "mtime": 1776990443277.7925,
+    "hash": "4e06617b26e73ac4a77cbebbaf086e5c"
+  },
+  "br-admin/src/hooks/web/useECharts.ts": {
+    "mtime": 1776990443277.8794,
+    "hash": "610d906207dfba5c850783d5212e7b04"
+  },
+  "br-admin/src/hooks/web/usePage.ts": {
+    "mtime": 1776990443277.9275,
+    "hash": "df42aa92fed4a4d8fd5f626402bf8540"
+  },
+  "br-admin/src/hooks/web/usePermission.ts": {
+    "mtime": 1776990443277.985,
+    "hash": "35a75d871931132cd4b164d8739ff4a3"
+  },
+  "br-admin/src/layout/components/Footer/index.ts": {
+    "mtime": 1776990443278.1025,
+    "hash": "8904478a3534c0636d88892c664285f0"
+  },
+  "br-admin/src/layout/components/Footer/index.vue": {
+    "mtime": 1776990443278.2573,
+    "hash": "41155788313606fc57fdf1e77bba7db0"
+  },
+  "br-admin/src/layout/components/Header/ProjectSetting.vue": {
+    "mtime": 1776990443278.3645,
+    "hash": "203fa922a3042210597b6aa692466b64"
+  },
+  "br-admin/src/layout/components/Header/components.ts": {
+    "mtime": 1776990443278.416,
+    "hash": "9a4c41ab3920e204a256bb23f186489b"
+  },
+  "br-admin/src/layout/components/Header/index.ts": {
+    "mtime": 1776990443278.5347,
+    "hash": "4afd59b7d6853081bfd0821f5b7de162"
+  },
+  "br-admin/src/layout/components/Header/index.vue": {
+    "mtime": 1776990443278.6555,
+    "hash": "bd08f7ee3efe12e8f1e4332831a75540"
+  },
+  "br-admin/src/layout/components/Logo/index.ts": {
+    "mtime": 1776990443279.4768,
+    "hash": "a76b31d0a705a3a3013329f191b0c9af"
+  },
+  "br-admin/src/layout/components/Logo/index.vue": {
+    "mtime": 1776990443279.5425,
+    "hash": "b70218cc6da1fa553a8da7b313d89f3e"
+  },
+  "br-admin/src/layout/components/Main/index.ts": {
+    "mtime": 1776990443279.9631,
+    "hash": "5ceb5444ccb503cea14b42a004824464"
+  },
+  "br-admin/src/layout/components/Main/index.vue": {
+    "mtime": 1776990443280.0203,
+    "hash": "bc615dd7dbf7dab5b2577896e9f118f1"
+  },
+  "br-admin/src/layout/components/Menu/index.ts": {
+    "mtime": 1776990443280.0967,
+    "hash": "f8238e778b65f210b1dd40454caa6c29"
+  },
+  "br-admin/src/layout/components/Menu/index.vue": {
+    "mtime": 1776990443280.3962,
+    "hash": "a6736bc8087f5d62f5136ecc65964741"
+  },
+  "br-admin/src/layout/components/TagsView/index.ts": {
+    "mtime": 1776990443280.491,
+    "hash": "fda2f681cf4488ea44ec0a9049cc657c"
+  },
+  "br-admin/src/layout/components/TagsView/index.vue": {
+    "mtime": 1776990443280.7344,
+    "hash": "ca3f37f3822cd6e6a9c46290cd5e38f7"
+  },
+  "br-admin/src/layout/index.vue": {
+    "mtime": 1776990443280.8467,
+    "hash": "943b484ea9b26400183696ddace8ca23"
+  },
+  "br-admin/src/layout/parentLayout.vue": {
+    "mtime": 1776990443280.8916,
+    "hash": "8af37b4ca96906787c0ad30c2195a7e1"
+  },
+  "br-admin/src/main.ts": {
+    "mtime": 1776990443280.9438,
+    "hash": "286ad8262ea0e5813ec4ebd162f42e00"
+  },
+  "br-admin/src/plugins/customComponents.ts": {
+    "mtime": 1776990443281.02,
+    "hash": "122f57e817f2d6167776dc4aff8dff35"
+  },
+  "br-admin/src/plugins/directives.ts": {
+    "mtime": 1776990443281.1404,
+    "hash": "4a5d7beb6cbaf6d2f42257658529268b"
+  },
+  "br-admin/src/plugins/globalMethods.ts": {
+    "mtime": 1776990443281.1992,
+    "hash": "177da8361095f1904e841c2d552b5ed2"
+  },
+  "br-admin/src/plugins/index.ts": {
+    "mtime": 1776990443281.2551,
+    "hash": "bbd38f3ea95b5f5f760012dec5725f97"
+  },
+  "br-admin/src/plugins/naive.ts": {
+    "mtime": 1787037111723.2908,
+    "hash": "00807ae9b98443dec9c77853f7444a36"
+  },
+  "br-admin/src/plugins/naiveDiscreteApi.ts": {
+    "mtime": 1776990443282.1943,
+    "hash": "1d33bcf28f13aad1c2abaa898f6ecdda"
+  },
+  "br-admin/src/router/base.ts": {
+    "mtime": 1776990443282.3748,
+    "hash": "9085a5ae2007a81a80c0563a6856f875"
+  },
+  "br-admin/src/router/constant.ts": {
+    "mtime": 1776990443282.483,
+    "hash": "9ee939b7707f797fbf6858623b98f044"
+  },
+  "br-admin/src/router/generator.ts": {
+    "mtime": 1779102594396.407,
+    "hash": "0bb6e2ef33504bd83a47608481b4d8e8"
+  },
+  "br-admin/src/router/guards.ts": {
+    "mtime": 1780039593660.8555,
+    "hash": "2168fb33f627793732c6e0a83146b3a5"
+  },
+  "br-admin/src/router/icons.ts": {
+    "mtime": 1787033876879.083,
+    "hash": "6ac1a42e83d4a9c1a9d945f6c9b4dc00"
+  },
+  "br-admin/src/router/index.ts": {
+    "mtime": 1780039579150.5737,
+    "hash": "9d717cbda57e4eeb7e507c6b1cf7e41b"
+  },
+  "br-admin/src/router/modules/about.ts": {
+    "mtime": 1776990443282.808,
+    "hash": "d035f0ff4ee71bb7511d9f7c63e8c90e"
+  },
+  "br-admin/src/router/modules/activity.ts": {
+    "mtime": 1787100906657.5615,
+    "hash": "de468301e37a6372639069a6e00e896b"
+  },
+  "br-admin/src/router/modules/booking.ts": {
+    "mtime": 1780274852370.504,
+    "hash": "41739a0612b353edb0c82277cd57a9ca"
+  },
+  "br-admin/src/router/modules/comp.ts": {
+    "mtime": 1776990443282.866,
+    "hash": "5f58321ee810a090d7283c6afd6aa6d0"
+  },
+  "br-admin/src/router/modules/coupon.ts": {
+    "mtime": 1780912471233.7925,
+    "hash": "8a2134559cffaf89bc06e9c96a7ea7e0"
+  },
+  "br-admin/src/router/modules/dashboard.ts": {
+    "mtime": 1776990443282.9187,
+    "hash": "3cf1733cb46288655509c13c7d5ba145"
+  },
+  "br-admin/src/router/modules/directive.ts": {
+    "mtime": 1776990443282.9639,
+    "hash": "5b3b0defe1a683a0545b7b7994634414"
+  },
+  "br-admin/src/router/modules/docs.ts": {
+    "mtime": 1776990443283.0042,
+    "hash": "96d5f4ed12095b6cb177480284563770"
+  },
+  "br-admin/src/router/modules/exception.ts": {
+    "mtime": 1776990443283.1301,
+    "hash": "ab2ff440ed20b2ec1c9e7fd6207af701"
+  },
+  "br-admin/src/router/modules/form.ts": {
+    "mtime": 1776990443283.1794,
+    "hash": "f3bb8b00fa15c0a9fc9a3bfd7067ba9a"
+  },
+  "br-admin/src/router/modules/frame.ts": {
+    "mtime": 1776990443283.2312,
+    "hash": "2f26e96c2d0c6f21311960074db47572"
+  },
+  "br-admin/src/router/modules/list.ts": {
+    "mtime": 1776990443283.2703,
+    "hash": "89a040b18d6b66c79417c713fc93a968"
+  },
+  "br-admin/src/router/modules/newVersion.ts": {
+    "mtime": 1776990443283.332,
+    "hash": "836d813ce235b522625d23c5458fb1f8"
+  },
+  "br-admin/src/router/modules/result.ts": {
+    "mtime": 1776990443283.4077,
+    "hash": "09f136d492ff305162eba8646af8ccc9"
+  },
+  "br-admin/src/router/modules/room.ts": {
+    "mtime": 1787107242255.6191,
+    "hash": "262739928bd37a733c0d7c9b0da9270f"
+  },
+  "br-admin/src/router/modules/setting.ts": {
+    "mtime": 1776990443283.4644,
+    "hash": "f9bb386bbde15471e0394a2426d0ce44"
+  },
+  "br-admin/src/router/modules/system.ts": {
+    "mtime": 1776990443283.5134,
+    "hash": "e83cab32bbafdcec5ca35cf99c2ba667"
+  },
+  "br-admin/src/router/modules/training.ts": {
+    "mtime": 1787110202610.741,
+    "hash": "b84d6e08241834d451a01340dbdb5ffe"
+  },
+  "br-admin/src/router/modules/wallet.ts": {
+    "mtime": 1779703352925.1475,
+    "hash": "6c3facc514e663a953710c669172b02a"
+  },
+  "br-admin/src/router/types.ts": {
+    "mtime": 1776990443283.5664,
+    "hash": "4b6fe096acdf0f8bee6cbdc2a6ce5fbf"
+  },
+  "br-admin/src/settings/animateSetting.ts": {
+    "mtime": 1776990443283.6343,
+    "hash": "3420d13029afffbd8f0112a92827074b"
+  },
+  "br-admin/src/settings/componentSetting.ts": {
+    "mtime": 1776990443283.6836,
+    "hash": "da5b37b40bb631b4f266710718cfdf14"
+  },
+  "br-admin/src/settings/designSetting.ts": {
+    "mtime": 1776990443283.726,
+    "hash": "ef7783522412be8e8b79b00dafe392c7"
+  },
+  "br-admin/src/settings/projectSetting.ts": {
+    "mtime": 1779102594396.5088,
+    "hash": "955f594de81617889ceeb92d13e6544f"
+  },
+  "br-admin/src/store/index.ts": {
+    "mtime": 1776990443283.843,
+    "hash": "7f3e931e724ae8f96a67a9c1d8403f3e"
+  },
+  "br-admin/src/store/modules/adminBusiness.ts": {
+    "mtime": 1780274852370.5789,
+    "hash": "cb5de2953a28d9a2d3e64effda7214c2"
+  },
+  "br-admin/src/store/modules/asyncRoute.ts": {
+    "mtime": 1779409565111.3132,
+    "hash": "808f76f21dd99e50e7ecd9361f78bb1c"
+  },
+  "br-admin/src/store/modules/designSetting.ts": {
+    "mtime": 1776990443283.9846,
+    "hash": "d38fcf7340437e1fbcdd39091ebefc9c"
+  },
+  "br-admin/src/store/modules/projectSetting.ts": {
+    "mtime": 1776990443284.1367,
+    "hash": "040db49cbd9e4d01e94ee2347f270203"
+  },
+  "br-admin/src/store/modules/screenLock.ts": {
+    "mtime": 1776990443284.197,
+    "hash": "3bf6edb2e394c60fc852cdb383763e82"
+  },
+  "br-admin/src/store/modules/tabsView.ts": {
+    "mtime": 1776990443284.2627,
+    "hash": "e59cbc77eb620403ad79b1899f79f93a"
+  },
+  "br-admin/src/store/modules/user.ts": {
+    "mtime": 1779102594396.713,
+    "hash": "29597336f707190f501facc9bfa97a7b"
+  },
+  "br-admin/src/store/mutation-types.ts": {
+    "mtime": 1776990443284.3901,
+    "hash": "f2fab3e655413b6df9fd11f02f2d4856"
+  },
+  "br-admin/src/store/types.ts": {
+    "mtime": 1776990443284.4387,
+    "hash": "ad2e69974da1883fdc6c7a51e96243f3"
+  },
+  "br-admin/src/utils/Drag.ts": {
+    "mtime": 1776990443284.9436,
+    "hash": "180b7006690b9f4fc80390ed810b3a94"
+  },
+  "br-admin/src/utils/Storage.ts": {
+    "mtime": 1776990443285.0098,
+    "hash": "6709551872b0177c6d6f58d1d6c87bbf"
+  },
+  "br-admin/src/utils/browser-type.ts": {
+    "mtime": 1776990443285.0735,
+    "hash": "a643cb2e348920270b3af4d8cd115972"
+  },
+  "br-admin/src/utils/dateUtil.ts": {
+    "mtime": 1776990443285.1199,
+    "hash": "821104e17158e604c57ef4a23b61bae1"
+  },
+  "br-admin/src/utils/domUtils.ts": {
+    "mtime": 1776990443285.1833,
+    "hash": "6ea7cb86a62c5437a0cc4132b584b62a"
+  },
+  "br-admin/src/utils/downloadFile.ts": {
+    "mtime": 1776990443285.2366,
+    "hash": "afb9c4118b78647d34ece469312176b8"
+  },
+  "br-admin/src/utils/env.ts": {
+    "mtime": 1776990443285.2913,
+    "hash": "2af41d4ddf720406e4731ad5bee8a7d7"
+  },
+  "br-admin/src/utils/http/alova/index.ts": {
+    "mtime": 1787040696999.5725,
+    "hash": "a462d150f8e8f5bb097e69d97dda8f1b"
+  },
+  "br-admin/src/utils/http/alova/mocks.ts": {
+    "mtime": 1776990443285.4539,
+    "hash": "c31952051468e7ec7814c424fea11dca"
+  },
+  "br-admin/src/utils/index.ts": {
+    "mtime": 1776990443285.6438,
+    "hash": "4f464867d9c74a211b815714d035cdad"
+  },
+  "br-admin/src/utils/is/index.ts": {
+    "mtime": 1776990443285.7395,
+    "hash": "1ebc1b9285168359e729dce3d68d8e29"
+  },
+  "br-admin/src/utils/lib/echarts.ts": {
+    "mtime": 1776990443285.81,
+    "hash": "3344923f390caa291820b3532eb81182"
+  },
+  "br-admin/src/utils/lodashChunk.ts": {
+    "mtime": 1776990443285.8606,
+    "hash": "0c5339a1156ebd304da1f909ba896071"
+  },
+  "br-admin/src/utils/log.ts": {
+    "mtime": 1776990443285.9119,
+    "hash": "dbc856715635a902ba99aa1856c958be"
+  },
+  "br-admin/src/utils/propTypes.ts": {
+    "mtime": 1776990443285.962,
+    "hash": "2891d4b685bffcb12a33ca8a1e8f68f0"
+  },
+  "br-admin/src/utils/urlUtils.ts": {
+    "mtime": 1776990443286.0132,
+    "hash": "0877f95fddc4f68c2552d88e3ea580d1"
+  },
+  "br-admin/src/views/about/index.vue": {
+    "mtime": 1776990443286.1213,
+    "hash": "b0fb86d3416f50faa9fad2b248e53700"
+  },
+  "br-admin/src/views/activity/list/ActivityCouponConfig.vue": {
+    "mtime": 1781058446261.4614,
+    "hash": "a4d50e7ad61934e5cad5293c4b9e4701"
+  },
+  "br-admin/src/views/activity/list/builders.ts": {
+    "mtime": 1780912471234.689,
+    "hash": "c883dfd328968cab60482bdea45bf093"
+  },
+  "br-admin/src/views/activity/list/columns.ts": {
+    "mtime": 1780274852371.078,
+    "hash": "f74c22b207deb01752b33ca85d5fb07d"
+  },
+  "br-admin/src/views/activity/list/edit.vue": {
+    "mtime": 1787100895908.3416,
+    "hash": "7cda24ea6767196bb3d7a8b0b6768502"
+  },
+  "br-admin/src/views/activity/list/index.vue": {
+    "mtime": 1787100920625.472,
+    "hash": "d0fd1b1d916dae85a2567f5f2915a0fd"
+  },
+  "br-admin/src/views/booking/list/builders.ts": {
+    "mtime": 1780274852371.4202,
+    "hash": "3ebe7608f68a65b0f39d12dd034522d1"
+  },
+  "br-admin/src/views/booking/list/index.vue": {
+    "mtime": 1780274852371.682,
+    "hash": "70275a9c7f384d890dace37a4d83d2c4"
+  },
+  "br-admin/src/views/business/shared/formSchemaBuilders.ts": {
+    "mtime": 1787107242547.7302,
+    "hash": "3d935adabde19af41e32c365e3067da3"
+  },
+  "br-admin/src/views/business/shared/formatters.ts": {
+    "mtime": 1780274852371.8315,
+    "hash": "e134be1ac0c5c7ff6b07a4901cb801f5"
+  },
+  "br-admin/src/views/business/shared/options.ts": {
+    "mtime": 1787107242315.4558,
+    "hash": "76f2288dcde011c4e432d5e9e7196b78"
+  },
+  "br-admin/src/views/business/shared/tableBuilders.ts": {
+    "mtime": 1780274852371.9316,
+    "hash": "72b9b1836cfdd627f2c3b96702dc7cec"
+  },
+  "br-admin/src/views/comp/drag/index.vue": {
+    "mtime": 1776990443286.2463,
+    "hash": "2383597621f01b01db4b4323dc673274"
+  },
+  "br-admin/src/views/comp/form/basic.vue": {
+    "mtime": 1776990443286.4055,
+    "hash": "2d702ed63b7bbe8af08b3617ac4d57ac"
+  },
+  "br-admin/src/views/comp/form/useForm.vue": {
+    "mtime": 1776990443286.4727,
+    "hash": "c234317140d87ff6f17270a6a487414d"
+  },
+  "br-admin/src/views/comp/modal/index.vue": {
+    "mtime": 1776990443286.5598,
+    "hash": "57ff99c967daece34fb17879ff169b71"
+  },
+  "br-admin/src/views/comp/richtext/vue-quill.vue": {
+    "mtime": 1786503983896.975,
+    "hash": "1643e38456646e50b394528c9fe0dd83"
+  },
+  "br-admin/src/views/comp/table/CellColumns.ts": {
+    "mtime": 1776990443286.7078,
+    "hash": "e365cb5d2d0026552b0ecc0b74cb7271"
+  },
+  "br-admin/src/views/comp/table/basic.vue": {
+    "mtime": 1776990443286.7805,
+    "hash": "c051e016bf2b20774490fd79c7d78b0b"
+  },
+  "br-admin/src/views/comp/table/basicColumns.ts": {
+    "mtime": 1776990443286.824,
+    "hash": "649e4e94276671d29b603c11ca9204e7"
+  },
+  "br-admin/src/views/comp/table/editCell.vue": {
+    "mtime": 1776990443286.881,
+    "hash": "ea8b497bd844b5cd87b31d4268e1ecdb"
+  },
+  "br-admin/src/views/comp/table/editRow.vue": {
+    "mtime": 1776990443286.9226,
+    "hash": "584a4fb92bc774633334579fdecbdb51"
+  },
+  "br-admin/src/views/comp/table/rowColumns.ts": {
+    "mtime": 1776990443286.9617,
+    "hash": "ab52f21a3868d9eeb95c4a84785decb5"
+  },
+  "br-admin/src/views/comp/upload/index.vue": {
+    "mtime": 1776990443287.0513,
+    "hash": "f49c995dcebbfd9eae17400638fd56d3"
+  },
+  "br-admin/src/views/coupon/list/CouponEditModal.vue": {
+    "mtime": 1787019020094.9045,
+    "hash": "311d72957e234e9403efa757f3fa0a45"
+  },
+  "br-admin/src/views/coupon/list/columns.ts": {
+    "mtime": 1787018987562.1995,
+    "hash": "c09bd5936985639c28ceb2cf3a707913"
+  },
+  "br-admin/src/views/coupon/list/index.vue": {
+    "mtime": 1787019003510.6833,
+    "hash": "9cb17c212fa693e5e7b8e67f08edaa86"
+  },
+  "br-admin/src/views/dashboard/console/components/FluxTrend.vue": {
+    "mtime": 1776990443287.1895,
+    "hash": "6233247a28758c28a67e02dfa3123b0d"
+  },
+  "br-admin/src/views/dashboard/console/components/Icons.ts": {
+    "mtime": 1776990443287.234,
+    "hash": "6c4569ed625a86258fdf423a81b5ca60"
+  },
+  "br-admin/src/views/dashboard/console/components/VisiTab.vue": {
+    "mtime": 1776990443287.281,
+    "hash": "793a68708c6512d1e0dd559557e7dcf0"
+  },
+  "br-admin/src/views/dashboard/console/components/VisitAmount.vue": {
+    "mtime": 1776990443287.3328,
+    "hash": "9503abc9d0b965ab110528ccc577858a"
+  },
+  "br-admin/src/views/dashboard/console/components/props.ts": {
+    "mtime": 1776990443287.3733,
+    "hash": "c1066bd4387f7c1f0545bb4abe19b354"
+  },
+  "br-admin/src/views/dashboard/console/console.vue": {
+    "mtime": 1776990443287.597,
+    "hash": "f5f37f8529a176a3f35bc9934e268c6e"
+  },
+  "br-admin/src/views/dashboard/monitor/monitor.vue": {
+    "mtime": 1776990443287.6702,
+    "hash": "bdd8611159a0fe198ad2312ea7fbdcfe"
+  },
+  "br-admin/src/views/dashboard/workplace/workplace.vue": {
+    "mtime": 1776990443287.779,
+    "hash": "6d7d8b193f71ecda01baa5ae08a9ff5d"
+  },
+  "br-admin/src/views/directive/index.vue": {
+    "mtime": 1776990443287.857,
+    "hash": "91e99da8dcffe1d3223075d46ae78498"
+  },
+  "br-admin/src/views/exception/403.vue": {
+    "mtime": 1776990443287.9346,
+    "hash": "0f7e99822728e0612e7e56dfad6206c1"
+  },
+  "br-admin/src/views/exception/404.vue": {
+    "mtime": 1776990443287.9797,
+    "hash": "31d180b2052e5f9b220f3aed32b0db3d"
+  },
+  "br-admin/src/views/exception/500.vue": {
+    "mtime": 1776990443288.021,
+    "hash": "b2a19eaba4e061fb4a90cb8d6d4468b1"
+  },
+  "br-admin/src/views/form/basicForm/index.vue": {
+    "mtime": 1776990443288.121,
+    "hash": "4c748516b12045b81cf5fff0bf20ef70"
+  },
+  "br-admin/src/views/form/detail/index.vue": {
+    "mtime": 1786503983897.4668,
+    "hash": "36905851d35f4694bba8b5e78d3f1eb0"
+  },
+  "br-admin/src/views/form/stepForm/Step1.vue": {
+    "mtime": 1786503983897.715,
+    "hash": "1cd9110fe182b168f8f3ea4c2f247c9a"
+  },
+  "br-admin/src/views/form/stepForm/Step2.vue": {
+    "mtime": 1786503983897.911,
+    "hash": "8d4b684f3d6ed80dbc82f8753dd92de5"
+  },
+  "br-admin/src/views/form/stepForm/Step3.vue": {
+    "mtime": 1786503983898.1218,
+    "hash": "fe3237ffe58fe0f7881772ef61ead43c"
+  },
+  "br-admin/src/views/form/stepForm/stepForm.vue": {
+    "mtime": 1776990443288.4392,
+    "hash": "d60d0d06a1147489d443d11db988c940"
+  },
+  "br-admin/src/views/frame/docs.vue": {
+    "mtime": 1776990443288.5034,
+    "hash": "5facfe0cf10e61981638e835d57e07ff"
+  },
+  "br-admin/src/views/iframe/index.vue": {
+    "mtime": 1776990443288.5823,
+    "hash": "800f112c2fab89487eae8bcc5745c95a"
+  },
+  "br-admin/src/views/list/basicList/columns.ts": {
+    "mtime": 1776990443288.6787,
+    "hash": "649e4e94276671d29b603c11ca9204e7"
+  },
+  "br-admin/src/views/list/basicList/index.vue": {
+    "mtime": 1776990443288.7776,
+    "hash": "9b63b5c950d181a57277bebfd3672fe0"
+  },
+  "br-admin/src/views/list/basicList/info.vue": {
+    "mtime": 1786503983898.339,
+    "hash": "25437e4e85a2b7021e0a0e6f1b47f3de"
+  },
+  "br-admin/src/views/login/index.vue": {
+    "mtime": 1780274852372.2769,
+    "hash": "3488103e6251c821e676a29103123e38"
+  },
+  "br-admin/src/views/redirect/index.vue": {
+    "mtime": 1776990443289.1262,
+    "hash": "26542a1ea0becc7208af4eed4c07066a"
+  },
+  "br-admin/src/views/result/fail.vue": {
+    "mtime": 1776990443289.223,
+    "hash": "17f36e01ab9808fdec849bf4b77724bc"
+  },
+  "br-admin/src/views/result/info.vue": {
+    "mtime": 1776990443289.2761,
+    "hash": "b81305970c40a3bcdf1475dec762e067"
+  },
+  "br-admin/src/views/result/success.vue": {
+    "mtime": 1776990443289.3284,
+    "hash": "05ef085210b89ef4957205999e588f94"
+  },
+  "br-admin/src/views/room/list/builders.ts": {
+    "mtime": 1787105091414.7437,
+    "hash": "b6ffd2a2559a32caa9c0edfa3fd1ff10"
+  },
+  "br-admin/src/views/room/list/columns.ts": {
+    "mtime": 1780274852372.6821,
+    "hash": "ec23dbd9d43230cabdf6315e6fdeeeb8"
+  },
+  "br-admin/src/views/room/list/edit.vue": {
+    "mtime": 1787120028421.9463,
+    "hash": "afcd4b0079cf91abd8d3c4f1e10fb68a"
+  },
+  "br-admin/src/views/room/list/index.vue": {
+    "mtime": 1787107178030.49,
+    "hash": "6ba5513b64fb12b3020b03d5bd02ba5d"
+  },
+  "br-admin/src/views/room/seats/components/SeatBulkCreateModal.vue": {
+    "mtime": 1780274852373.2273,
+    "hash": "034156976d48ff9eab5b81565cb29c7d"
+  },
+  "br-admin/src/views/room/seats/components/SeatEditModal.vue": {
+    "mtime": 1780274852373.3486,
+    "hash": "1918c7e7b6fa946df6474507f379c643"
+  },
+  "br-admin/src/views/room/seats/index.vue": {
+    "mtime": 1779672316982.1455,
+    "hash": "fb5f5d99117c33c68924a78258c7440f"
+  },
+  "br-admin/src/views/setting/account/BasicSetting.vue": {
+    "mtime": 1780274852373.524,
+    "hash": "af80a4ef11aa0df91a0c9ac7d038fb85"
+  },
+  "br-admin/src/views/setting/account/SafetySetting.vue": {
+    "mtime": 1779102594397.5325,
+    "hash": "4d542054e27dba957e37d11a3ab63ff5"
+  },
+  "br-admin/src/views/setting/account/account.vue": {
+    "mtime": 1779102594397.6301,
+    "hash": "2a491ced469284be49a7659e78ca2bb2"
+  },
+  "br-admin/src/views/setting/system/BasicSetting.vue": {
+    "mtime": 1779102594397.7307,
+    "hash": "ad057c9547088b7129256af9993fbd71"
+  },
+  "br-admin/src/views/setting/system/EmailSetting.vue": {
+    "mtime": 1779102594397.8384,
+    "hash": "2f4eeb8d76a6409db824be7ba610c6d3"
+  },
+  "br-admin/src/views/setting/system/RevealSetting.vue": {
+    "mtime": 1776990443289.9734,
+    "hash": "aaa37efcf6717b43992966d3354c9cd9"
+  },
+  "br-admin/src/views/setting/system/system.vue": {
+    "mtime": 1779102594397.9329,
+    "hash": "6f96305c46c77ddc655f00b3a376d9f7"
+  },
+  "br-admin/src/views/system/menu/CreateDrawer.vue": {
+    "mtime": 1779102594398.0447,
+    "hash": "c4a78be41020d6eb44fb7e853c3c6fa5"
+  },
+  "br-admin/src/views/system/menu/menu.vue": {
+    "mtime": 1779102594398.1667,
+    "hash": "fb5f3e9bc0e794ba9e966570dcd8b550"
+  },
+  "br-admin/src/views/system/role/CreateModal.vue": {
+    "mtime": 1779102594398.2695,
+    "hash": "2e09d426b2d1d64ea93ec66f77adbff1"
+  },
+  "br-admin/src/views/system/role/EditModal.vue": {
+    "mtime": 1779102594398.363,
+    "hash": "914fb3020744ca3cce6a2656994f7a3e"
+  },
+  "br-admin/src/views/system/role/columns.ts": {
+    "mtime": 1779102594398.4602,
+    "hash": "3c5720327db3c9aa2fd9746fd0ecf135"
+  },
+  "br-admin/src/views/system/role/role.vue": {
+    "mtime": 1779102594398.585,
+    "hash": "9ffa54c11f48ed2950425abf1816fe15"
+  },
+  "br-admin/src/views/system/user/CreateModal.vue": {
+    "mtime": 1779332993245.7974,
+    "hash": "153df17c55d3098e215ab6911a4d2cd3"
+  },
+  "br-admin/src/views/system/user/EditModal.vue": {
+    "mtime": 1780274852373.634,
+    "hash": "58c42431e645f68d26c79573eaa358c5"
+  },
+  "br-admin/src/views/system/user/RoleModal.vue": {
+    "mtime": 1779332994991.481,
+    "hash": "cf0f752ccb00787d276cb9427a118331"
+  },
+  "br-admin/src/views/system/user/columns.ts": {
+    "mtime": 1780274852373.8826,
+    "hash": "725e53b6636e12f59b650fb20052116a"
+  },
+  "br-admin/src/views/system/user/index.vue": {
+    "mtime": 1780274852374.1128,
+    "hash": "19e6614300a0195631bd4df320b5056b"
+  },
+  "br-admin/src/views/training/courses/ScheduleModal.vue": {
+    "mtime": 1787101568728.0571,
+    "hash": "bcc53c982f007b1a9e388a988ee551f4"
+  },
+  "br-admin/src/views/training/courses/edit.vue": {
+    "mtime": 1787047514575.0073,
+    "hash": "60543b14b5913267825e03deec54a229"
+  },
+  "br-admin/src/views/training/courses/index.vue": {
+    "mtime": 1787044093448.8047,
+    "hash": "849db9f1754c36eba0f0fc69761b5900"
+  },
+  "br-admin/src/views/training/courses/options.ts": {
+    "mtime": 1787044048019.196,
+    "hash": "778224fe6e57b1a01e63a6ab3d99b1d5"
+  },
+  "br-admin/src/views/training/teachers/edit.vue": {
+    "mtime": 1787120015253.8772,
+    "hash": "32c623216e51f4710dfee8e1f0350a23"
+  },
+  "br-admin/src/views/training/teachers/index.vue": {
+    "mtime": 1787110272699.5947,
+    "hash": "1ce9b18953cde545aff3fb09c2b18a51"
+  },
+  "br-admin/src/views/training/teachers/options.ts": {
+    "mtime": 1787110236354.9946,
+    "hash": "b65804d36b0ce050503726827728c0a6"
+  },
+  "br-admin/src/views/wallet/transactions.builders.ts": {
+    "mtime": 1780274852374.175,
+    "hash": "a93bcae187a7c3095dfaf0369ae19a21"
+  },
+  "br-admin/src/views/wallet/transactions.vue": {
+    "mtime": 1780274852374.3633,
+    "hash": "6a4bf7972f3e79026c46a9525c20cb4c"
+  },
+  "br-admin/stylelint.config.js": {
+    "mtime": 1776990443290.753,
+    "hash": "c8b3f6ba8f13e2d31a2031667d25bb9e"
+  },
+  "br-admin/tailwind.config.js": {
+    "mtime": 1776990443290.7976,
+    "hash": "80a977cf80c0329b7a3bf505eafb5b3f"
+  },
+  "br-admin/types/config.d.ts": {
+    "mtime": 1776990443290.93,
+    "hash": "201f9792cf754fbbd91e937ed70850c1"
+  },
+  "br-admin/types/global.d.ts": {
+    "mtime": 1776990443290.9827,
+    "hash": "bfab894cb579deed463eafa22cf129ba"
+  },
+  "br-admin/types/images.d.ts": {
+    "mtime": 1776990443291.0232,
+    "hash": "f1df2eedfd32495c06fa61fa3b3053d9"
+  },
+  "br-admin/types/index.d.ts": {
+    "mtime": 1776990443291.068,
+    "hash": "db043e76ec41b8cf7ed9895fad1eda55"
+  },
+  "br-admin/types/modules.d.ts": {
+    "mtime": 1776990443291.1084,
+    "hash": "9bfbbf6abf67b9900689fbd5c4c93471"
+  },
+  "br-admin/types/utils.d.ts": {
+    "mtime": 1776990443291.19,
+    "hash": "f29b1f9c08d2ddebd2adf1948d3e7572"
+  },
+  "br-admin/vite.config.ts": {
+    "mtime": 1776990443291.2573,
+    "hash": "abad3e6390ca1d7f21485dc0aeac505b"
+  },
+  "br-app/scripts/apply-wechat-appid.js": {
+    "mtime": 1779841314831.1116,
+    "hash": "e5fe2986537c66bf04986b66d1fad214"
+  },
+  "br-app/scripts/test-apply-wechat-appid.js": {
+    "mtime": 1786440160768.3242,
+    "hash": "6880e9cb13f48c2c36084fa7c6c11bd5"
+  },
+  "br-app/scripts/test-refactored-page-logic.js": {
+    "mtime": 1780389451466.0667,
+    "hash": "5feec67cfb716c5ea036cf4305e7e3d8"
+  },
+  "br-app/scripts/verify-activity-coupon-campaign.js": {
+    "mtime": 1780880454121.557,
+    "hash": "54ecdf289909e4764969903ccc9c5e73"
+  },
+  "br-app/scripts/verify-course-schedule-format.js": {
+    "mtime": 1787048993579.326,
+    "hash": "b901e04b4057cf5f619a0b5ddeae82a6"
+  },
+  "br-app/scripts/verify-profile-stat-links.js": {
+    "mtime": 1779066006870.7317,
+    "hash": "6e5f56dce4982cfe7ee9e3e0b626101b"
+  },
+  "br-app/scripts/verify-training-api.js": {
+    "mtime": 1786696623998.7888,
+    "hash": "1eb8b6662340a0180fa3d55b5759d78d"
+  },
+  "br-app/src/App.vue": {
+    "mtime": 1786441185590.9255,
+    "hash": "9bc7c2c07463d15d075dc4a52a3a6534"
+  },
+  "br-app/src/api/accountSecurity.js": {
+    "mtime": 1780389451466.4702,
+    "hash": "6eb1ada754916bd60dc5e01b4327119d"
+  },
+  "br-app/src/api/activities.js": {
+    "mtime": 1780880454121.873,
+    "hash": "18fa1052417b2fe19d88a83383909b71"
+  },
+  "br-app/src/api/auth.js": {
+    "mtime": 1779789104553.8037,
+    "hash": "7d9f43e2af535d19b9bbb5ce75ec6045"
+  },
+  "br-app/src/api/banners.js": {
+    "mtime": 1776668921773.278,
+    "hash": "c8f7640316c14feb69a4dce46a95521a"
+  },
+  "br-app/src/api/bookingVerifications.js": {
+    "mtime": 1779870563627.7852,
+    "hash": "75b89a1778ced3cee95de0a74d93548c"
+  },
+  "br-app/src/api/bookings.js": {
+    "mtime": 1786584190069.531,
+    "hash": "973dd5f92b757c001c172307ed1839f3"
+  },
+  "br-app/src/api/cities.js": {
+    "mtime": 1778837890952.9922,
+    "hash": "0f8fc5765ce41ca0871a046c48510967"
+  },
+  "br-app/src/api/coupons.js": {
+    "mtime": 1778725474801.1616,
+    "hash": "23e8ab8c16c03b9eddf651f1a70ea90d"
+  },
+  "br-app/src/api/courseBooking.js": {
+    "mtime": 1786948046541.1367,
+    "hash": "be44deb02fd8ef13fb02b55a7cc2bb94"
+  },
+  "br-app/src/api/notifications.js": {
+    "mtime": 1779937996279.126,
+    "hash": "087560e1a5c63abc3bdb74f78834a2ba"
+  },
+  "br-app/src/api/roomFollows.js": {
+    "mtime": 1786936566199.677,
+    "hash": "9d2d4d18c9a6d5e474cae2861dd079c4"
+  },
+  "br-app/src/api/rooms.js": {
+    "mtime": 1778837890953.2976,
+    "hash": "25340bdc574444e78936f73f87e4eece"
+  },
+  "br-app/src/api/seats.js": {
+    "mtime": 1779065317910.432,
+    "hash": "3f9773a9d1fb8fd972d945d433233f05"
+  },
+  "br-app/src/api/studyRecords.js": {
+    "mtime": 1778306656628.463,
+    "hash": "1d602deddfc5b4766cd62d9ec821ae07"
+  },
+  "br-app/src/api/teacher.js": {
+    "mtime": 1786944922400.9705,
+    "hash": "b8fecf8a16e5803a438eb172d48809d2"
+  },
+  "br-app/src/api/training.js": {
+    "mtime": 1786936566199.9468,
+    "hash": "a7f0b8b4032eca06d92fc96f3cce01cc"
+  },
+  "br-app/src/api/upload.js": {
+    "mtime": 1780024644772.3816,
+    "hash": "7987c47a1dcf15b0890c31527259c484"
+  },
+  "br-app/src/api/userProfile.js": {
+    "mtime": 1779768685707.647,
+    "hash": "90e8d2db4d155ed6ec450186a4c49bb3"
+  },
+  "br-app/src/api/wallet.js": {
+    "mtime": 1779065317910.538,
+    "hash": "f55328f06406ae9f1899d9648ca98371"
+  },
+  "br-app/src/constants/booking.js": {
+    "mtime": 1780274852375.1587,
+    "hash": "4ec7810371d4662f28f9e40bc82b083e"
+  },
+  "br-app/src/constants/wallet.js": {
+    "mtime": 1780274852375.1985,
+    "hash": "5454a9ed777cb1e3285f93fba88f0e4e"
+  },
+  "br-app/src/main.js": {
+    "mtime": 1776386002863.3918,
+    "hash": "9d573aca0f56533aeb4459377025cc77"
+  },
+  "br-app/src/pages/activity/detail.vue": {
+    "mtime": 1780912471236.4583,
+    "hash": "c71a233f84e61042fb72b67886af02c0"
+  },
+  "br-app/src/pages/booking/confirm.vue": {
+    "mtime": 1786584319475.821,
+    "hash": "f4f81993d80c57acd9240b67b8a442e8"
+  },
+  "br-app/src/pages/booking/detail.vue": {
+    "mtime": 1787122728834.9895,
+    "hash": "d93a56180f574e34ae98c5e0fe1c8245"
+  },
+  "br-app/src/pages/booking/index.vue": {
+    "mtime": 1780274852376.4128,
+    "hash": "cf72f806ca1b810d489d71d09f6eb911"
+  },
+  "br-app/src/pages/booking/seat-select.vue": {
+    "mtime": 1780274852376.7568,
+    "hash": "5b6c5d6ed766b850c231e7a661d55672"
+  },
+  "br-app/src/pages/city-select/index.vue": {
+    "mtime": 1778837890954.9268,
+    "hash": "cf99e55d0c3c0692c647375ccdc1a292"
+  },
+  "br-app/src/pages/coupon/index.vue": {
+    "mtime": 1780912471237.3228,
+    "hash": "00550ebc305b3210c615823c19b2669c"
+  },
+  "br-app/src/pages/index/index.vue": {
+    "mtime": 1780880454123.6272,
+    "hash": "3dc34cb4accf168d6be963354613795c"
+  },
+  "br-app/src/pages/login/login.vue": {
+    "mtime": 1786440258556.229,
+    "hash": "d35880003c28502f9a34d376e0ef41f6"
+  },
+  "br-app/src/pages/membership/index.vue": {
+    "mtime": 1780912471237.465,
+    "hash": "83457326d983a43255a1d57387241887"
+  },
+  "br-app/src/pages/notifications/index.vue": {
+    "mtime": 1779937996280.477,
+    "hash": "1149d1379e8012e9633b940ad50515da"
+  },
+  "br-app/src/pages/orders/index.vue": {
+    "mtime": 1787100242367.2317,
+    "hash": "a9b8123ffc88f72c5d9f5e7f8dad4975"
+  },
+  "br-app/src/pages/profile/index.vue": {
+    "mtime": 1786440671504.1387,
+    "hash": "85bd5763b378a7f747717c8661d5a961"
+  },
+  "br-app/src/pages/qrcode/index.vue": {
+    "mtime": 1779870765302.7712,
+    "hash": "82525c2c910defa2647c25e659048e5f"
+  },
+  "br-app/src/pages/recharge/index.vue": {
+    "mtime": 1780912471239.6877,
+    "hash": "3c70f8c04b743e1b24015a69aa6b6bd5"
+  },
+  "br-app/src/pages/settings/index.vue": {
+    "mtime": 1786440160784.6404,
+    "hash": "8bdbb27308cc6e352a8f5804301a684a"
+  },
+  "br-app/src/pages/study-record/index.vue": {
+    "mtime": 1780274852380.5498,
+    "hash": "e4568a19fa3db1e69b2f97da25b76d16"
+  },
+  "br-app/src/pages/teacher/profile.vue": {
+    "mtime": 1787110522280.3772,
+    "hash": "0b67d51c9d2f7513ca480d6636384bf5"
+  },
+  "br-app/src/pages/training/course-booking.vue": {
+    "mtime": 1787100228997.9004,
+    "hash": "15d24ba570a30bfb193418eb9d302e6f"
+  },
+  "br-app/src/pages/training/course-detail.vue": {
+    "mtime": 1786948046542.828,
+    "hash": "aaf65670d37a790c36c59e059427c56d"
+  },
+  "br-app/src/pages/training/index.vue": {
+    "mtime": 1787100217250.7761,
+    "hash": "dcf6faa181c39fc48561ac7cc995d0ee"
+  },
+  "br-app/src/pages/verify-booking/index.vue": {
+    "mtime": 1778553634273.6963,
+    "hash": "779febb1abe3272a2960e03588c6e307"
+  },
+  "br-app/src/pages/wallet/transactions.vue": {
+    "mtime": 1780274852380.7446,
+    "hash": "0cfbcc8a6899cde6933c2a57762af00d"
+  },
+  "br-app/src/services/bookingPageService.js": {
+    "mtime": 1786584199766.068,
+    "hash": "7870361e6e8f3744d9ff85f8f8f9aee5"
+  },
+  "br-app/src/services/followedCourses.js": {
+    "mtime": 1786936566201.2202,
+    "hash": "4e0b0a10bdf9d7b10fb46e11a9a86db5"
+  },
+  "br-app/src/services/followedRooms.js": {
+    "mtime": 1780368652913.4426,
+    "hash": "1eadc43dfd77814df11e8530df0e4ba1"
+  },
+  "br-app/src/services/followedTeachers.js": {
+    "mtime": 1786944922402.9067,
+    "hash": "445ee9c2431523473859155609a5614f"
+  },
+  "br-app/src/services/paymentPolling.js": {
+    "mtime": 1780274852380.9092,
+    "hash": "42e6cc51ae9bb78da84992f88af4e923"
+  },
+  "br-app/src/services/walletPageService.js": {
+    "mtime": 1780274852380.9497,
+    "hash": "a1326f5a3a5bf9e2ee20b258a66bf2e8"
+  },
+  "br-app/src/store/index.js": {
+    "mtime": 1776386140361.4355,
+    "hash": "b057f33777a48db1d70877b7addcdc0f"
+  },
+  "br-app/src/store/modules/city.js": {
+    "mtime": 1778837890955.4165,
+    "hash": "2b5df95143a9dd91350d2fab40b77c87"
+  },
+  "br-app/src/store/modules/user.js": {
+    "mtime": 1780912471239.8552,
+    "hash": "ae2955da858a65e176d30cd7af509775"
+  },
+  "br-app/src/utils/accountSecurity.js": {
+    "mtime": 1780389451467.9546,
+    "hash": "00e9e272f84372390693a613d2ec26b6"
+  },
+  "br-app/src/utils/followedRooms.js": {
+    "mtime": 1780274852381.4695,
+    "hash": "da1607b5e3e59c9c0488d55a780da092"
+  },
+  "br-app/src/utils/formatters.js": {
+    "mtime": 1787101612778.2598,
+    "hash": "0467b3725f3722b32d3e9a3b69ea8fa2"
+  },
+  "br-app/src/utils/notificationTypes.js": {
+    "mtime": 1779937996281.1687,
+    "hash": "68b34e8e310e03096da2232b555444ec"
+  },
+  "br-app/src/utils/qrcode.js": {
+    "mtime": 1778566219380.4111,
+    "hash": "98fb3bac6b5bb1e2bb35d9aef5af07d8"
+  },
+  "br-app/src/utils/request.js": {
+    "mtime": 1780368573734.729,
+    "hash": "7b89448100849e62e3101abf7b5f6799"
+  },
+  "br-app/vite.config.js": {
+    "mtime": 1776389726764.6746,
+    "hash": "48d1039398696bc6766347d26ec0f5ad"
+  },
+  "br-server/alembic/env.py": {
+    "mtime": 1786936566201.4475,
+    "hash": "64e3e49238bf787d18fe111184275621"
+  },
+  "br-server/alembic/versions/2026_04_17_0957-0a2b2652445d_create_users_table.py": {
+    "mtime": 1776404435024.606,
+    "hash": "6353c82c5f37a2d4fd9c23e341ca84ea"
+  },
+  "br-server/alembic/versions/2026_04_17_1343-1dfa25667f22_create_users_table.py": {
+    "mtime": 1776404612560.1946,
+    "hash": "7649ae575065cea9131d26546cdcf395"
+  },
+  "br-server/alembic/versions/2026_04_20_1030-ba64420678cf_create_activities_table.py": {
+    "mtime": 1776668921778.156,
+    "hash": "81471ecda37de39f60cabb531c1883ba"
+  },
+  "br-server/alembic/versions/2026_04_28_0830-de5e1f080747_create_seats_and_bookings.py": {
+    "mtime": 1777992305933.2402,
+    "hash": "026bf919fee3ff7f55e1b2f4b49bd25f"
+  },
+  "br-server/alembic/versions/2026_05_06_0857-2c56c35e7075_booking_seat_table.py": {
+    "mtime": 1778233197294.518,
+    "hash": "db53cc19a7c6a78e0c7f73afc2372eb7"
+  },
+  "br-server/alembic/versions/2026_05_08_0912-985785a787d8_create_booking_order_table.py": {
+    "mtime": 1778233197294.5808,
+    "hash": "05ffa4cfa4b226934ddbe99466815390"
+  },
+  "br-server/alembic/versions/2026_05_13_0900-b3a7c9d2e4f1_add_coupon_models.py": {
+    "mtime": 1778725474803.1448,
+    "hash": "8daafe877a66dea18440bf3dc781e992"
+  },
+  "br-server/alembic/versions/2026_05_14_1552-28a1f4af90df_create_wallet_table.py": {
+    "mtime": 1778748683916.3406,
+    "hash": "807492edc0ada441939d70086dc13b46"
+  },
+  "br-server/alembic/versions/2026_05_14_1558-f836feddafc6_update_users_table.py": {
+    "mtime": 1778748683916.551,
+    "hash": "49f8ff990ccdc30b154b6e42c592b208"
+  },
+  "br-server/alembic/versions/2026_05_15_1715-7c9d2e4f6a1b_add_cities_table_and_room_city_id.py": {
+    "mtime": 1778837890955.591,
+    "hash": "f237eccd2e21a5a49f835f8c3a265aa9"
+  },
+  "br-server/alembic/versions/2026_05_16_1000-a8c3f1b2d4e5_add_wechat_payment_fields.py": {
+    "mtime": 1779065317912.0334,
+    "hash": "a5ae662b1bad9c59b69cf8d5d7873ec0"
+  },
+  "br-server/alembic/versions/2026_05_18_1830-b7e4a9c1d2f3_add_admin_rbac_tables.py": {
+    "mtime": 1779102594398.856,
+    "hash": "233c028b2ad500ea9443ca89615c8594"
+  },
+  "br-server/alembic/versions/2026_05_21_1100-a1b2c3d4e5f6_merge_users_phase1_extend.py": {
+    "mtime": 1779334932214.9375,
+    "hash": "4531f739005e27ac26e4034d10341529"
+  },
+  "br-server/alembic/versions/2026_05_21_1101-b2c3d4e5f6a1_merge_users_phase2_data.py": {
+    "mtime": 1779335027785.5862,
+    "hash": "f2d85a8202b7ec442eb7268e89f08a6b"
+  },
+  "br-server/alembic/versions/2026_05_21_1102-c3d4e5f6a1b2_merge_users_phase3_drop.py": {
+    "mtime": 1779331662928.4053,
+    "hash": "65cf2785a42b9b889bdcf08ea2882cab"
+  },
+  "br-server/alembic/versions/2026_05_26_1050-d4e5f6a1b2c3_add_username_updated_at.py": {
+    "mtime": 1779768685709.6628,
+    "hash": "81adc3849ca25e6cd5426785b51d7ab6"
+  },
+  "br-server/alembic/versions/2026_05_27_0000-e5f6a1b2c3d4_add_booking_payment_fields.py": {
+    "mtime": 1779849758362.351,
+    "hash": "2eb0a9dc8c0b893c275df736b330874d"
+  },
+  "br-server/alembic/versions/2026_05_27_0100-f6a1b2c3d4e5_add_booking_payment_query_schedule.py": {
+    "mtime": 1779862097471.008,
+    "hash": "986fdf827bf9d4b7c253fcb1947ec93f"
+  },
+  "br-server/alembic/versions/2026_05_28_1000-a7b8c9d0e1f2_add_notification_tables.py": {
+    "mtime": 1779937996281.3967,
+    "hash": "42d3a20e1348b01872cd88f68734c9d2"
+  },
+  "br-server/alembic/versions/2026_05_28_1430-b8c9d0e1f2a3_add_booking_cancellation.py": {
+    "mtime": 1779962556700.9949,
+    "hash": "9379a7177811ea975247cb16681f1fed"
+  },
+  "br-server/alembic/versions/2026_06_02_1000-c9d0e1f2a3b4_add_room_follows.py": {
+    "mtime": 1780368460914.8635,
+    "hash": "46f8661d1297d3eaf57363af08c70e1a"
+  },
+  "br-server/alembic/versions/2026_06_02_1600-d0e1f2a3b4c5_add_account_security.py": {
+    "mtime": 1780389451468.8418,
+    "hash": "bf2d4068d0833f8989e2c86eb4ee2b78"
+  },
+  "br-server/alembic/versions/2026_06_06_1000-f1a2b3c4d5e6_add_activity_coupon_campaign.py": {
+    "mtime": 1780880454123.745,
+    "hash": "faa61632d777f3333e7eb0b44b45324a"
+  },
+  "br-server/alembic/versions/2026_06_08_1106-df6ae550899a_add_membership_level.py": {
+    "mtime": 1780912471240.0112,
+    "hash": "ffa8667be89c9ea2d507b0ad332a8544"
+  },
+  "br-server/alembic/versions/2026_06_08_1200-a2b3c4d5e6f7_add_wallet_membership_result.py": {
+    "mtime": 1780912471240.1267,
+    "hash": "afd7401b26c639da3da0ffffb1e7da51"
+  },
+  "br-server/alembic/versions/2026_08_14_1000-add_room_type_teachers_courses.py": {
+    "mtime": 1786689186523.4873,
+    "hash": "23031570516d647c60e59872eeac2eb7"
+  },
+  "br-server/alembic/versions/2026_08_14_1355-f61f3ab400f5_create_training_table.py": {
+    "mtime": 1786689186524.7756,
+    "hash": "784bd0b970225ed79d4e51f4062ab76a"
+  },
+  "br-server/alembic/versions/2026_08_14_1400-add_rating_to_study_rooms.py": {
+    "mtime": 1786696623999.8755,
+    "hash": "78eadf135496b4dee6d178d5a849dcbf"
+  },
+  "br-server/alembic/versions/2026_08_14_1718-fccf087f0f34_create_schedule_hotcourseitem.py": {
+    "mtime": 1786699090496.0303,
+    "hash": "47b528a64fb827f77908afbf0656bc2a"
+  },
+  "br-server/alembic/versions/2026_08_17_1000-c4d5e6f7a8b9_add_course_description_and_room_follow_type.py": {
+    "mtime": 1786936566201.694,
+    "hash": "ff0bd499b3bb2cb7275a076e7b04ebb5"
+  },
+  "br-server/alembic/versions/2026_08_17_1123-c84abd1322d4_create_course_table.py": {
+    "mtime": 1786936995131.9626,
+    "hash": "0b85d406780f8ca68680acd7a2fcc4d0"
+  },
+  "br-server/alembic/versions/2026_08_17_1230-e7f8a9b0c1d2_add_teacher_bio_student_count.py": {
+    "mtime": 1786945573772.136,
+    "hash": "d6d317cd41160865a22b68f7b89bb5a5"
+  },
+  "br-server/alembic/versions/2026_08_17_1500-a1b2c3d4e5f7_add_course_booking_fields.py": {
+    "mtime": 1786948046543.2024,
+    "hash": "fbd1593229e035a2ef81878e7f8999ef"
+  },
+  "br-server/alembic/versions/2026_08_17_1735-5d8e53290b12_add_full_custom_price_to_courses.py": {
+    "mtime": 1786959327099.0723,
+    "hash": "a45528c29631f6516d43ec5573f32d87"
+  },
+  "br-server/alembic/versions/2026_08_18_1000-c1d2e3f4a5b6_create_course_schedules_table.py": {
+    "mtime": 1787021961960.9739,
+    "hash": "0e821df9a0dd72db904762d89a2ac90e"
+  },
+  "br-server/alembic/versions/2026_08_19_1000-c2d3e4f5a6b7_add_room_environment_images.py": {
+    "mtime": 1787104544758.686,
+    "hash": "0b79cc7ebbb05bcb7fa2293ee67d84e0"
+  },
+  "br-server/alembic/versions/2026_08_19_1500-d3e4f5a6b7c8_extend_teachers_create_teacher_rooms.py": {
+    "mtime": 1787109923844.185,
+    "hash": "f47158f4ef85b648b71d3a0122d30ea8"
+  },
+  "br-server/app/__init__.py": {
+    "mtime": 1776324614674.4167,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "br-server/app/api/__init__.py": {
+    "mtime": 1776324614821.784,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "br-server/app/api/dependencies.py": {
+    "mtime": 1780880454124.107,
+    "hash": "70ca39a39776a7511f093eaed28a4f20"
+  },
+  "br-server/app/api/routes/__init__.py": {
+    "mtime": 1776324614969.3752,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "br-server/app/api/routes/activity.py": {
+    "mtime": 1786417328265.5122,
+    "hash": "d4671a5bdf80fccc4d55e2cbd290b261"
+  },
+  "br-server/app/api/routes/admin_activity.py": {
+    "mtime": 1780880454124.5083,
+    "hash": "cb5502a1e2a3512db810bb3d4b3084b4"
+  },
+  "br-server/app/api/routes/admin_auth.py": {
+    "mtime": 1779427810528.5476,
+    "hash": "350f7a3ba55d1c7772d6f07cf0145c7f"
+  },
+  "br-server/app/api/routes/admin_booking.py": {
+    "mtime": 1779962556701.4841,
+    "hash": "65730d7f3d665e23b683f7fed6315c53"
+  },
+  "br-server/app/api/routes/admin_coupon.py": {
+    "mtime": 1781056284556.4897,
+    "hash": "674f6da92c6893d439074da68cac4149"
+  },
+  "br-server/app/api/routes/admin_course.py": {
+    "mtime": 1787036041256.918,
+    "hash": "2a23f283c054234799824a7adc00d98d"
+  },
+  "br-server/app/api/routes/admin_menu.py": {
+    "mtime": 1779102594399.3074,
+    "hash": "5e93568639bce23812fb4cf91cefec2d"
+  },
+  "br-server/app/api/routes/admin_role.py": {
+    "mtime": 1779102594399.381,
+    "hash": "f88d8d1eebb1c3d819ac2b533034b177"
+  },
+  "br-server/app/api/routes/admin_seat.py": {
+    "mtime": 1786417330817.3538,
+    "hash": "2e1c4aee4c776e4705fdd5ba7abf65f1"
+  },
+  "br-server/app/api/routes/admin_setting.py": {
+    "mtime": 1779102594399.5613,
+    "hash": "d0ad1edf7bb2a9c5c50e3336fff2467f"
+  },
+  "br-server/app/api/routes/admin_study_room.py": {
+    "mtime": 1787104765458.3018,
+    "hash": "c8792fd72fce80b2769ce220cac8286a"
+  },
+  "br-server/app/api/routes/admin_teacher.py": {
+    "mtime": 1787109923819.1855,
+    "hash": "12ea8a0dcf386ee783cad7a086deac78"
+  },
+  "br-server/app/api/routes/admin_user.py": {
+    "mtime": 1779330974797.459,
+    "hash": "fdd570f501a99fbcc48b30adf97aa611"
+  },
+  "br-server/app/api/routes/admin_wallet.py": {
+    "mtime": 1780041321136.158,
+    "hash": "74ffc9b8bb5bf0288846b4e3acaf2984"
+  },
+  "br-server/app/api/routes/auth.py": {
+    "mtime": 1779789104557.261,
+    "hash": "1e5dfd9bd2369e7d696a1db9ee1fe137"
+  },
+  "br-server/app/api/routes/banner.py": {
+    "mtime": 1776668921778.5105,
+    "hash": "165cac812677436f04234c1faa12d0af"
+  },
+  "br-server/app/api/routes/booking.py": {
+    "mtime": 1786584383400.236,
+    "hash": "8fb50249de51672a27c98cf51c535ba3"
+  },
+  "br-server/app/api/routes/booking_verification.py": {
+    "mtime": 1779870485294.0657,
+    "hash": "ec7c0228bb89f56e6ef2ea0bea25d2a0"
+  },
+  "br-server/app/api/routes/cities.py": {
+    "mtime": 1786417156552.0854,
+    "hash": "c28dec05d9e5b68bdd1ca621945dbe78"
+  },
+  "br-server/app/api/routes/coupon.py": {
+    "mtime": 1786950478363.722,
+    "hash": "5518fbbf21e6a6a5825b99ff69e04196"
+  },
+  "br-server/app/api/routes/course_booking.py": {
+    "mtime": 1786948046543.4937,
+    "hash": "315aff6e551001785a848bc0d53c8c24"
+  },
+  "br-server/app/api/routes/notification.py": {
+    "mtime": 1779937996281.7834,
+    "hash": "ae54481d49167ad33f3bb46c4c3b6183"
+  },
+  "br-server/app/api/routes/room_follow.py": {
+    "mtime": 1786944922403.4014,
+    "hash": "8f9f4ecc65c9f933df447f5a00d7f4a1"
+  },
+  "br-server/app/api/routes/seat.py": {
+    "mtime": 1786417330817.1526,
+    "hash": "7c2f755b3570e85af35f519d120aed79"
+  },
+  "br-server/app/api/routes/study_record.py": {
+    "mtime": 1778291296670.8574,
+    "hash": "55b418eba96ee4402d0fe1f16e234084"
+  },
+  "br-server/app/api/routes/study_room.py": {
+    "mtime": 1786689186525.5735,
+    "hash": "a6cf5435c9369177ccf5b934aeb2ce78"
+  },
+  "br-server/app/api/routes/teacher.py": {
+    "mtime": 1786944922403.5115,
+    "hash": "e6d8ed54ba84254fc9b0e16160d4c9bc"
+  },
+  "br-server/app/api/routes/training.py": {
+    "mtime": 1786936566202.0854,
+    "hash": "b16f92460e2833fe32c36beb374691ba"
+  },
+  "br-server/app/api/routes/upload.py": {
+    "mtime": 1780024644774.2036,
+    "hash": "396effcb8f3d5312d57960476ab76d32"
+  },
+  "br-server/app/api/routes/user.py": {
+    "mtime": 1780389451469.2974,
+    "hash": "86fa1ebf5a52c67d7f7bdf9387c776c3"
+  },
+  "br-server/app/api/routes/wallet.py": {
+    "mtime": 1779065317912.5366,
+    "hash": "0de0fa56b52c6e14706c4d1af1f80311"
+  },
+  "br-server/app/application/__init__.py": {
+    "mtime": 1780274852381.5896,
+    "hash": "32d437dc5f9a7ecf810ef54fd34e9076"
+  },
+  "br-server/app/application/booking_use_cases.py": {
+    "mtime": 1780274852381.6365,
+    "hash": "354c79788136441cc6fcb8c1b4f0521f"
+  },
+  "br-server/app/core/__init__.py": {
+    "mtime": 1776324606787.0312,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "br-server/app/core/config.py": {
+    "mtime": 1780024644774.6206,
+    "hash": "3952c18f6bb6644eb7fa864cb2b7dc64"
+  },
+  "br-server/app/core/database.py": {
+    "mtime": 1776324762660.4163,
+    "hash": "3731281b70ed5db03973f43aca46c2c9"
+  },
+  "br-server/app/core/redis.py": {
+    "mtime": 1776324762769.9993,
+    "hash": "a53a3dfa002d17be819d4eca451aac51"
+  },
+  "br-server/app/domain/__init__.py": {
+    "mtime": 1780274852381.8193,
+    "hash": "1e5f6c0f9f48dba0e5dd6e6d6040a11d"
+  },
+  "br-server/app/domain/booking_rules.py": {
+    "mtime": 1780274852381.8662,
+    "hash": "a551e44363cf961172ba0389d32fd472"
+  },
+  "br-server/app/domain/payment_rules.py": {
+    "mtime": 1780274852381.9143,
+    "hash": "3488bb7bf0a3a9cc99ff6acdfb943aa7"
+  },
+  "br-server/app/domain/verification_rules.py": {
+    "mtime": 1780274852381.9604,
+    "hash": "7474163cfdbe53445fb129f7efd817a8"
+  },
+  "br-server/app/domain/wallet_rules.py": {
+    "mtime": 1780274852382.007,
+    "hash": "40e4b92d6e2de15a53ad9f558ad107b3"
+  },
+  "br-server/app/main.py": {
+    "mtime": 1787035992241.5605,
+    "hash": "821512eb6cbfabadf52b6314deece359"
+  },
+  "br-server/app/models/__init__.py": {
+    "mtime": 1787109923819.4673,
+    "hash": "25dc0eb36cec46400c8a4315279d70f6"
+  },
+  "br-server/app/models/activity.py": {
+    "mtime": 1780880454124.942,
+    "hash": "08118e0beb2b4fd75b77de0e61d6ee6f"
+  },
+  "br-server/app/models/admin_menu.py": {
+    "mtime": 1779102594400.2092,
+    "hash": "f5552c76efc52fcf36497422d6a1f5b7"
+  },
+  "br-server/app/models/admin_role.py": {
+    "mtime": 1779332033477.8303,
+    "hash": "91a7ba3ea462e38035249e0d88cadd70"
+  },
+  "br-server/app/models/admin_setting.py": {
+    "mtime": 1779102594400.342,
+    "hash": "1e1682f52533d3da7d8d2103dbc08325"
+  },
+  "br-server/app/models/banner.py": {
+    "mtime": 1776668921779.8835,
+    "hash": "3d00a809d53afb02e8cee0516a5c3c7a"
+  },
+  "br-server/app/models/booking.py": {
+    "mtime": 1786948046545.1187,
+    "hash": "4ab0efbe359eb8b586e64dcc36ed5154"
+  },
+  "br-server/app/models/city.py": {
+    "mtime": 1778837890956.878,
+    "hash": "ea6c8877d341b58325d2996864629a40"
+  },
+  "br-server/app/models/coupon.py": {
+    "mtime": 1780880454125.125,
+    "hash": "8fddf922760b2412058fde92f1b3a028"
+  },
+  "br-server/app/models/course.py": {
+    "mtime": 1787021649839.985,
+    "hash": "164211da2ca72e6d17ced6d79be8445a"
+  },
+  "br-server/app/models/course_lesson.py": {
+    "mtime": 1786936566202.6755,
+    "hash": "65ed60d45ef2db3523a83c7c670e62e1"
+  },
+  "br-server/app/models/course_schedule.py": {
+    "mtime": 1787021636464.3967,
+    "hash": "6baa3c399ee7c6004c5702490c79093f"
+  },
+  "br-server/app/models/notification.py": {
+    "mtime": 1779937996282.8442,
+    "hash": "cb79c39041d54114cb45e9eae82db967"
+  },
+  "br-server/app/models/room_follow.py": {
+    "mtime": 1786936566202.8743,
+    "hash": "05c38349d905ea70674c85c8a451b0b0"
+  },
+  "br-server/app/models/seat.py": {
+    "mtime": 1777992305935.5342,
+    "hash": "3907c4141813cfb4d2747bd7f010cb2c"
+  },
+  "br-server/app/models/study_room.py": {
+    "mtime": 1787104765458.4536,
+    "hash": "768bed139796fa7520b2e0796fe07d01"
+  },
+  "br-server/app/models/teacher.py": {
+    "mtime": 1787109923820.817,
+    "hash": "e6c8f392aa13054a4c702e713cb4dc73"
+  },
+  "br-server/app/models/teacher_room.py": {
+    "mtime": 1787109923845.0156,
+    "hash": "a11aa24115adad496e75024c4420d8cd"
+  },
+  "br-server/app/models/user.py": {
+    "mtime": 1780912471240.502,
+    "hash": "df9ce91d09dfeb91f46f7aeb6a685090"
+  },
+  "br-server/app/models/user_identity_verification.py": {
+    "mtime": 1780389451470.7756,
+    "hash": "5e3af2fc19044530080b51c616b526a7"
+  },
+  "br-server/app/models/wallet.py": {
+    "mtime": 1780912471240.718,
+    "hash": "479ef348c6ecc2db8d77fd518e623beb"
+  },
+  "br-server/app/repositories/__init__.py": {
+    "mtime": 1780274852382.07,
+    "hash": "2cbf577ecc8a3cad12642b4460a31122"
+  },
+  "br-server/app/repositories/booking_repository.py": {
+    "mtime": 1780274852382.1128,
+    "hash": "e666242a532294a560941aed369d63ae"
+  },
+  "br-server/app/repositories/wallet_repository.py": {
+    "mtime": 1780274852382.1628,
+    "hash": "fbf4887ded3e10439302c3f784738749"
+  },
+  "br-server/app/schemas/__init__.py": {
+    "mtime": 1776324615344.507,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "br-server/app/schemas/activity.py": {
+    "mtime": 1780880454125.3318,
+    "hash": "e07f287de9e3f7ce5e5dc3d2751559cf"
+  },
+  "br-server/app/schemas/admin_auth.py": {
+    "mtime": 1779427810529.207,
+    "hash": "fc0dc96031f6916e4f5b15d276003c80"
+  },
+  "br-server/app/schemas/admin_course.py": {
+    "mtime": 1787035992241.4995,
+    "hash": "a10389d6ee6b2cc4ae7dd2f02370df91"
+  },
+  "br-server/app/schemas/admin_menu.py": {
+    "mtime": 1779102594400.559,
+    "hash": "624433df787430309a47d551b2073679"
+  },
+  "br-server/app/schemas/admin_role.py": {
+    "mtime": 1779102594400.6272,
+    "hash": "12e11e711f8438e53e18b9f1c88d5b3e"
+  },
+  "br-server/app/schemas/admin_setting.py": {
+    "mtime": 1779102594400.6987,
+    "hash": "338b632ab89496ba220a9edbf6155d23"
+  },
+  "br-server/app/schemas/admin_teacher.py": {
+    "mtime": 1787119980135.5598,
+    "hash": "a6cb839bae345b17ce7b793db54e8f57"
+  },
+  "br-server/app/schemas/admin_user_management.py": {
+    "mtime": 1779427810529.6943,
+    "hash": "3527f72d6820b3c68f848f2c4be0161a"
+  },
+  "br-server/app/schemas/banner.py": {
+    "mtime": 1776668921780.4648,
+    "hash": "5d0f76d931992b54eb2e74c6bf82077a"
+  },
+  "br-server/app/schemas/booking.py": {
+    "mtime": 1787104765458.9004,
+    "hash": "ceaee595be597032c6897683ece64e14"
+  },
+  "br-server/app/schemas/booking_verification.py": {
+    "mtime": 1779870377437.901,
+    "hash": "5768ce91d707b690c460ef3329b8b245"
+  },
+  "br-server/app/schemas/city.py": {
+    "mtime": 1778837890957.53,
+    "hash": "b23c847cf358ea00b9664d2bf8463b4b"
+  },
+  "br-server/app/schemas/coupon.py": {
+    "mtime": 1780912471240.8962,
+    "hash": "b3750ac6727490d9ebdd4a6424c2d4d0"
+  },
+  "br-server/app/schemas/coupon_admin.py": {
+    "mtime": 1780912471241.5789,
+    "hash": "47011757a580a4aed7f2ea3d7ef4d305"
+  },
+  "br-server/app/schemas/course.py": {
+    "mtime": 1787048993586.057,
+    "hash": "49301fcfe9f81b852a854e670e06e7d2"
+  },
+  "br-server/app/schemas/course_booking.py": {
+    "mtime": 1787022286169.3088,
+    "hash": "1ca0fbb0fb975d7c014d6f068c0c7a68"
+  },
+  "br-server/app/schemas/notification.py": {
+    "mtime": 1779937996282.957,
+    "hash": "ec56c5f7dab7c7e90efcc666bb77e5e4"
+  },
+  "br-server/app/schemas/room_follow.py": {
+    "mtime": 1780368460596.7139,
+    "hash": "9ff7ae298eb8b5795040bc4890e55a28"
+  },
+  "br-server/app/schemas/seat.py": {
+    "mtime": 1779065317912.966,
+    "hash": "88823d153eef4f283258ffbd443368c6"
+  },
+  "br-server/app/schemas/study_record.py": {
+    "mtime": 1778291362429.5396,
+    "hash": "f6f02133889f3b27b6a0cf3798ca05d4"
+  },
+  "br-server/app/schemas/study_room.py": {
+    "mtime": 1787105004778.8342,
+    "hash": "d2dc7c5ba35647d0ad6b340277bd7c2b"
+  },
+  "br-server/app/schemas/teacher.py": {
+    "mtime": 1787119056834.655,
+    "hash": "58e7bd31758675b14db910f2ff8d873a"
+  },
+  "br-server/app/schemas/upload.py": {
+    "mtime": 1780024644775.1592,
+    "hash": "8dfe876948b8d16fc4db1b36f1bdf741"
+  },
+  "br-server/app/schemas/user.py": {
+    "mtime": 1780912471241.7375,
+    "hash": "f992e8d1c84479026a80504d30da58f0"
+  },
+  "br-server/app/schemas/wallet.py": {
+    "mtime": 1780912471241.8496,
+    "hash": "d9c6f6bc281a777973c552d851a1e377"
+  },
+  "br-server/app/services/__init__.py": {
+    "mtime": 1776325294227.5786,
+    "hash": "18bbe81d89afaff8abf0016a6ae8d87b"
+  },
+  "br-server/app/services/activity_service.py": {
+    "mtime": 1780880454125.836,
+    "hash": "d7079743cb59db56a69c2e37d173723d"
+  },
+  "br-server/app/services/admin_auth_service.py": {
+    "mtime": 1779427810530.4995,
+    "hash": "9633796bc9bf65d78cab6e19a8a53d58"
+  },
+  "br-server/app/services/admin_coupon_service.py": {
+    "mtime": 1787018976073.5405,
+    "hash": "fb71a2df9d768df1f1129aa718e47c86"
+  },
+  "br-server/app/services/admin_course_service.py": {
+    "mtime": 1787036022059.0244,
+    "hash": "e073716a6484fcd1ee097dd2a74fb55c"
+  },
+  "br-server/app/services/admin_menu_service.py": {
+    "mtime": 1787104765460.2695,
+    "hash": "5d68866d43903a52dafaf116b093bee7"
+  },
+  "br-server/app/services/admin_role_service.py": {
+    "mtime": 1779102594400.9524,
+    "hash": "afb43fd883b26e5a60bc327c89cc3fc7"
+  },
+  "br-server/app/services/admin_setting_service.py": {
+    "mtime": 1779102594401.0334,
+    "hash": "9d8937aa9d40402202aa704d0864d16e"
+  },
+  "br-server/app/services/admin_teacher_service.py": {
+    "mtime": 1787119980019.6772,
+    "hash": "74e3842b184437f76a50b4b515dfff0f"
+  },
+  "br-server/app/services/admin_user_service.py": {
+    "mtime": 1779768685713.5022,
+    "hash": "8663436707d934dfd3969479a4a2b378"
+  },
+  "br-server/app/services/auth_service.py": {
+    "mtime": 1780389451471.6301,
+    "hash": "d11d8d34d7cd1169c8de0137ec895ed1"
+  },
+  "br-server/app/services/banner_service.py": {
+    "mtime": 1776668921781.5334,
+    "hash": "c3f82ba6e705d948bc6cd053a2e1cba7"
+  },
+  "br-server/app/services/booking_cancellation_policy.py": {
+    "mtime": 1779962556703.3264,
+    "hash": "a4bb643e31adcb31c121c51e927e269a"
+  },
+  "br-server/app/services/booking_cleanup_service.py": {
+    "mtime": 1779860626669.9666,
+    "hash": "ac6b324e6e4e5fc3e23d7104697011fa"
+  },
+  "br-server/app/services/booking_payment_service.py": {
+    "mtime": 1780274852382.5464,
+    "hash": "cf8f0148f1159927f030a17cb7d8926e"
+  },
+  "br-server/app/services/booking_service.py": {
+    "mtime": 1787104765461.3103,
+    "hash": "c1ebe77974feba12cd26a9c342c203b0"
+  },
+  "br-server/app/services/booking_verification_service.py": {
+    "mtime": 1780274852382.901,
+    "hash": "56f22283e7ece5896186bf84427a7722"
+  },
+  "br-server/app/services/captcha_service.py": {
+    "mtime": 1776325841702.628,
+    "hash": "63c593e2c0e07dd50a84f167a8cef5f7"
+  },
+  "br-server/app/services/city_service.py": {
+    "mtime": 1778837890958.0076,
+    "hash": "0b7a2ab66359b164ad56dc478b6dc8b2"
+  },
+  "br-server/app/services/coupon_service.py": {
+    "mtime": 1787023652006.659,
+    "hash": "332fc1e9f639e958551fa41f757eae5f"
+  },
+  "br-server/app/services/course_booking_service.py": {
+    "mtime": 1787126542287.37,
+    "hash": "e2cfa8475270ec14a9503b666a41c07a"
+  },
+  "br-server/app/services/jwt_service.py": {
+    "mtime": 1780389451472.2483,
+    "hash": "ab080058fce2f9f1435792ae2283c0ec"
+  },
+  "br-server/app/services/notification_service.py": {
+    "mtime": 1779937996283.0913,
+    "hash": "d07c7176dda6e922524641888b694080"
+  },
+  "br-server/app/services/room_follow_service.py": {
+    "mtime": 1787023721103.3608,
+    "hash": "bfea3e82772f6be6e1ec43bec686b38d"
+  },
+  "br-server/app/services/seat_service.py": {
+    "mtime": 1779065317913.3801,
+    "hash": "bb2629d1ef5ac77bae5cc5e0d1096483"
+  },
+  "br-server/app/services/seed_admin.py": {
+    "mtime": 1787109923821.3103,
+    "hash": "a0ca946b9c16f17fdd12d2fff0dbe5d3"
+  },
+  "br-server/app/services/seed_data.py": {
+    "mtime": 1787021877484.7605,
+    "hash": "30fe2a0c06c0429f6c3fdfb20bc5f132"
+  },
+  "br-server/app/services/seed_seats.py": {
+    "mtime": 1777992305936.5945,
+    "hash": "e77d8af989d79117d67a7171bc99dd23"
+  },
+  "br-server/app/services/sms_service.py": {
+    "mtime": 1776403942865.0142,
+    "hash": "9164096ab8ce2a349dc3d5a7210a5046"
+  },
+  "br-server/app/services/study_record_service.py": {
+    "mtime": 1778291296671.7317,
+    "hash": "40088d8d14bc3daa8a139b6fdb966e9a"
+  },
+  "br-server/app/services/study_room_service.py": {
+    "mtime": 1787107258681.4773,
+    "hash": "4823c3a2913e70075713ac7a289ff3bc"
+  },
+  "br-server/app/services/teacher_service.py": {
+    "mtime": 1787109923821.9468,
+    "hash": "2594c96fdf2c8dce7519a83e8351c6d8"
+  },
+  "br-server/app/services/training_service.py": {
+    "mtime": 1787119991505.1836,
+    "hash": "ab22b21413471b7ac34028866c8dee0e"
+  },
+  "br-server/app/services/upload_service.py": {
+    "mtime": 1787121050187.993,
+    "hash": "55b284a147f2aeb6199ef1831f6b915c"
+  },
+  "br-server/app/services/user_profile_service.py": {
+    "mtime": 1779768685714.1458,
+    "hash": "c9da79205e6191218f6a5a14e874228f"
+  },
+  "br-server/app/services/user_security_service.py": {
+    "mtime": 1780389451472.707,
+    "hash": "79d6f76201bf4bb6831a78b2396c8e8d"
+  },
+  "br-server/app/services/username_service.py": {
+    "mtime": 1779768685714.2966,
+    "hash": "1a397dd27ca8f5250b870653985dd8c4"
+  },
+  "br-server/app/services/wallet_service.py": {
+    "mtime": 1780912471243.0366,
+    "hash": "ca25c0b929dac0cb08f4ec6d96013f3c"
+  },
+  "br-server/app/services/wechat_auth_client.py": {
+    "mtime": 1779789104558.8513,
+    "hash": "b81fc8ce54c9ff8117a37e5fdb2f6039"
+  },
+  "br-server/app/services/wechat_auth_service.py": {
+    "mtime": 1780389451473.0867,
+    "hash": "69e89b103f7aeed7bab768957183b87a"
+  },
+  "br-server/app/services/wechat_pay_client.py": {
+    "mtime": 1779065317913.575,
+    "hash": "d00f19be73a37deb9d073b8dcb4f8027"
+  },
+  "br-server/scripts/check_user_uniqueness.sql": {
+    "mtime": 1779427810532.8252,
+    "hash": "cc2ba5a98323f36af5d85733287a0945"
+  },
+  "br-server/scripts/seed_course_lessons.py": {
+    "mtime": 1787048993586.7786,
+    "hash": "e52b7ecd2c7d9288ca79c1a05d915522"
+  },
+  "br-server/tests/__init__.py": {
+    "mtime": 1776324615450.5996,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "br-server/tests/conftest.py": {
+    "mtime": 1787104801110.597,
+    "hash": "eac634b866c6f260c950943c227605f3"
+  },
+  "br-server/tests/test_activity_coupon_campaign.py": {
+    "mtime": 1780880454126.369,
+    "hash": "29971d1ad8832d99f6b5e88ce3aea091"
+  },
+  "br-server/tests/test_activity_service.py": {
+    "mtime": 1778233197294.857,
+    "hash": "aa63ca80bacf2a76bdbf56bbea762a48"
+  },
+  "br-server/tests/test_admin_auth_api.py": {
+    "mtime": 1779427810533.218,
+    "hash": "312bc6fd4aa415e0a66d89952c2879a1"
+  },
+  "br-server/tests/test_admin_booking_api.py": {
+    "mtime": 1787104765463.9597,
+    "hash": "a747288e1454ea4141f1a4106c1ebf80"
+  },
+  "br-server/tests/test_admin_booking_service.py": {
+    "mtime": 1780274852383.5703,
+    "hash": "2664808a0aac9756e300750fce124a40"
+  },
+  "br-server/tests/test_admin_coupon_service.py": {
+    "mtime": 1780912471243.283,
+    "hash": "65dcc65eaba017f4e15d7e99e823c181"
+  },
+  "br-server/tests/test_admin_menu_api.py": {
+    "mtime": 1779102594401.276,
+    "hash": "8e643ddcd32b5c4e6dae820574e315d8"
+  },
+  "br-server/tests/test_admin_models.py": {
+    "mtime": 1779332033479.0833,
+    "hash": "ae6082f31d507c2255f9181e78a484de"
+  },
+  "br-server/tests/test_admin_permissions.py": {
+    "mtime": 1779332033479.2158,
+    "hash": "5dad5a8cca04af9ee70863cbc02fa2f6"
+  },
+  "br-server/tests/test_admin_role_api.py": {
+    "mtime": 1779332033479.328,
+    "hash": "c9846c5f83c67c79853e61ea69ebd297"
+  },
+  "br-server/tests/test_admin_room_routes.py": {
+    "mtime": 1778048862154.0847,
+    "hash": "14d274ed7e889dbbc237af124bfcb6d1"
+  },
+  "br-server/tests/test_admin_seat_routes.py": {
+    "mtime": 1778048862155.3213,
+    "hash": "429fd58512767819022e7ac36a0327b3"
+  },
+  "br-server/tests/test_admin_settings_api.py": {
+    "mtime": 1779102594401.5562,
+    "hash": "17d90b90bb4693c80df27165def11d61"
+  },
+  "br-server/tests/test_admin_user_management.py": {
+    "mtime": 1779332639505.9932,
+    "hash": "f7c42bb5806d56954540cb70649dcf9d"
+  },
+  "br-server/tests/test_admin_wallet_api.py": {
+    "mtime": 1779703352928.771,
+    "hash": "36c9de2c7f00fd8a9548d41888ff3627"
+  },
+  "br-server/tests/test_api_admin_activity.py": {
+    "mtime": 1776989803587.0479,
+    "hash": "0f7b3064d958ff30f6a34e9f6d6093e2"
+  },
+  "br-server/tests/test_api_admin_coupon.py": {
+    "mtime": 1781056421335.4368,
+    "hash": "e6da70e65d1c1b19756c260b0af091e5"
+  },
+  "br-server/tests/test_api_admin_teacher.py": {
+    "mtime": 1787120100358.5144,
+    "hash": "0a917ee117c9524ef912da5bde5a327c"
+  },
+  "br-server/tests/test_api_auth.py": {
+    "mtime": 1779427810533.9507,
+    "hash": "f549b05f7da745a7d8ede3635aa7f2d6"
+  },
+  "br-server/tests/test_api_booking.py": {
+    "mtime": 1780274852383.8477,
+    "hash": "d8f971af67f443a7e96d8288c3e391df"
+  },
+  "br-server/tests/test_api_booking_verification.py": {
+    "mtime": 1779870313803.973,
+    "hash": "b663cafb2cbc685a4a5baf8d302a0dd1"
+  },
+  "br-server/tests/test_api_coupon.py": {
+    "mtime": 1780912471243.5767,
+    "hash": "37146ad728ae1f2f9dbde31728219423"
+  },
+  "br-server/tests/test_api_course_booking.py": {
+    "mtime": 1786948046549.3293,
+    "hash": "202dac82b975308299dec043cffc6937"
+  },
+  "br-server/tests/test_api_homepage.py": {
+    "mtime": 1786689186539.5288,
+    "hash": "764be7f4333f09e99c8a3aea111729a7"
+  },
+  "br-server/tests/test_api_notifications.py": {
+    "mtime": 1779937996284.4583,
+    "hash": "ef1bedc4d45f6c99deb5979cb0def428"
+  },
+  "br-server/tests/test_api_room_follows.py": {
+    "mtime": 1786936566204.4065,
+    "hash": "82f9edbb64d85219668396a08bddfccd"
+  },
+  "br-server/tests/test_api_seat.py": {
+    "mtime": 1779065317914.2864,
+    "hash": "98f10b23d9962439b690a46fdcf33805"
+  },
+  "br-server/tests/test_api_study_record.py": {
+    "mtime": 1778292070711.6865,
+    "hash": "22f839ad046ad594828d0471b8c307a8"
+  },
+  "br-server/tests/test_api_upload.py": {
+    "mtime": 1780024644775.7715,
+    "hash": "59df3d357e2553f4c7ed13ad12d43f3a"
+  },
+  "br-server/tests/test_api_user_profile.py": {
+    "mtime": 1779768685714.768,
+    "hash": "aadef2c24219cd7ecec3612504803cab"
+  },
+  "br-server/tests/test_api_user_security.py": {
+    "mtime": 1780389451473.561,
+    "hash": "f4efde388bf9a09f0384de84689cc5be"
+  },
+  "br-server/tests/test_api_wallet.py": {
+    "mtime": 1779962556705.65,
+    "hash": "bfec4206c3104b0f24688bceca061b02"
+  },
+  "br-server/tests/test_app_default_role.py": {
+    "mtime": 1779332179502.8738,
+    "hash": "ecf551ee4d95bc05c77ab5683bef4f56"
+  },
+  "br-server/tests/test_auth_service.py": {
+    "mtime": 1780389451473.8367,
+    "hash": "5eca76fd0b6789a26765e061f34aede9"
+  },
+  "br-server/tests/test_banner_service.py": {
+    "mtime": 1778233197294.9875,
+    "hash": "60ed94d5329fdaf127a28af344f17f60"
+  },
+  "br-server/tests/test_booking_cancellation_policy.py": {
+    "mtime": 1779962556705.9084,
+    "hash": "3b8993d9897383bc06c10762d2e83d6b"
+  },
+  "br-server/tests/test_booking_cleanup.py": {
+    "mtime": 1779860635638.5164,
+    "hash": "978f33f9116e8a13d00fe48c7b16fc51"
+  },
+  "br-server/tests/test_booking_model.py": {
+    "mtime": 1777992305937.0964,
+    "hash": "e85a24b822d61513732d2a2012b04cd4"
+  },
+  "br-server/tests/test_booking_payment_service.py": {
+    "mtime": 1779863820971.634,
+    "hash": "220eefcffdbf8fb7bf91034b887809e4"
+  },
+  "br-server/tests/test_booking_repository.py": {
+    "mtime": 1780274852383.8967,
+    "hash": "3d5e00aa36689f62f28d7910a1d64f04"
+  },
+  "br-server/tests/test_booking_rules.py": {
+    "mtime": 1780274852383.942,
+    "hash": "2f69ac1f485aa31e24f7a130f09d7384"
+  },
+  "br-server/tests/test_booking_use_cases.py": {
+    "mtime": 1780274852383.985,
+    "hash": "bb1eca58f7101b29724b5ca19f9adaa7"
+  },
+  "br-server/tests/test_booking_verification_service.py": {
+    "mtime": 1778568361290.9282,
+    "hash": "5ef38160792585bfe13f2cf8fda41420"
+  },
+  "br-server/tests/test_captcha_service.py": {
+    "mtime": 1776325294454.719,
+    "hash": "2710e0f1d2bbd5b8c8f73701766ef9c3"
+  },
+  "br-server/tests/test_city_api.py": {
+    "mtime": 1778837890958.4658,
+    "hash": "a9576fa0afb1eb92c0a23916b43b5eef"
+  },
+  "br-server/tests/test_city_model.py": {
+    "mtime": 1778837890958.8872,
+    "hash": "5cc90bee8972c2c4f624fcd42a60d5b0"
+  },
+  "br-server/tests/test_coupon_service.py": {
+    "mtime": 1778728862134.2817,
+    "hash": "a3d6c3c8857367832ac5c6b05da27428"
+  },
+  "br-server/tests/test_course_booking_service.py": {
+    "mtime": 1786948046549.501,
+    "hash": "914061e268bf1524693ae5f4506138c9"
+  },
+  "br-server/tests/test_course_detail.py": {
+    "mtime": 1786936566204.61,
+    "hash": "f3a11e74eb0e2130acd3d152e61474fc"
+  },
+  "br-server/tests/test_course_follow.py": {
+    "mtime": 1786936566204.781,
+    "hash": "29937e48bb7022fdbcb2677fa4e31113"
+  },
+  "br-server/tests/test_dependencies.py": {
+    "mtime": 1778233197295.0479,
+    "hash": "9ad080e2f8e9370415a20cfa2e2314e8"
+  },
+  "br-server/tests/test_jwt_service.py": {
+    "mtime": 1776385507568.2075,
+    "hash": "688f882a71135cbe963e37d4bf8db47e"
+  },
+  "br-server/tests/test_models_import.py": {
+    "mtime": 1786689186542.6716,
+    "hash": "4a734ebb114db54a2d1cd1fb4158a19b"
+  },
+  "br-server/tests/test_notification_service.py": {
+    "mtime": 1779937996284.7505,
+    "hash": "8b1deefb76452ba26c009050e2944af5"
+  },
+  "br-server/tests/test_payment_rules.py": {
+    "mtime": 1780274852384.029,
+    "hash": "083ef3b09578f4fc37b104dfa65eda8d"
+  },
+  "br-server/tests/test_room_follow_service.py": {
+    "mtime": 1786936566204.944,
+    "hash": "4d2df0c39f48b33eadac7b2e9ac427fd"
+  },
+  "br-server/tests/test_schemas_import.py": {
+    "mtime": 1786936566205.2517,
+    "hash": "192307185fe4cc51eb6349a31d826bef"
+  },
+  "br-server/tests/test_seat_admin_service.py": {
+    "mtime": 1778048862155.421,
+    "hash": "0c3e4860c5f4a5cad12d079aeef2fe46"
+  },
+  "br-server/tests/test_seat_model.py": {
+    "mtime": 1777992305937.2317,
+    "hash": "54b70c726ddcf4739c97d2dca1d4613e"
+  },
+  "br-server/tests/test_sms_service.py": {
+    "mtime": 1778202257132.7944,
+    "hash": "252a261a49d141f69fa11da6c9fc489c"
+  },
+  "br-server/tests/test_study_record_service.py": {
+    "mtime": 1778292070711.9001,
+    "hash": "275bbbd0a3612067a7bb1341ed3aafa0"
+  },
+  "br-server/tests/test_study_room_admin_service.py": {
+    "mtime": 1778048862155.5125,
+    "hash": "fb6bd1f09662615f5efb16673ad94d04"
+  },
+  "br-server/tests/test_study_room_model.py": {
+    "mtime": 1786696624001.6294,
+    "hash": "110f29089cd9e4a7b5cc83cffae0a9cf"
+  },
+  "br-server/tests/test_study_room_service.py": {
+    "mtime": 1778233197295.1262,
+    "hash": "cdff1855baa8240f997f0477edf5bc6c"
+  },
+  "br-server/tests/test_teacher_detail_api.py": {
+    "mtime": 1787109923822.2834,
+    "hash": "f6e67b3ed2d1e6032b5f42675e06b95a"
+  },
+  "br-server/tests/test_teacher_follow.py": {
+    "mtime": 1786944922405.7996,
+    "hash": "a0d8d4d320dc3269c990bc0c025e9131"
+  },
+  "br-server/tests/test_training_api.py": {
+    "mtime": 1786689186544.5657,
+    "hash": "8ff079ee9455d9f913ab796a4a857488"
+  },
+  "br-server/tests/test_training_route_detail.py": {
+    "mtime": 1786696624001.9158,
+    "hash": "1970f7f865a78393f5b6c91be8d1adc9"
+  },
+  "br-server/tests/test_training_routes.py": {
+    "mtime": 1786689186546.1138,
+    "hash": "749b340e4ead048c9b0d68d5df45729f"
+  },
+  "br-server/tests/test_training_schema.py": {
+    "mtime": 1786696624002.129,
+    "hash": "e91746e53cb4820cf46d49beeaf13f6e"
+  },
+  "br-server/tests/test_training_service.py": {
+    "mtime": 1786689186546.5925,
+    "hash": "2e44b6406d7db18ab90df84de3294e46"
+  },
+  "br-server/tests/test_training_service_detail.py": {
+    "mtime": 1786696624002.487,
+    "hash": "29c6cb98c24dad7330f0913046cb3028"
+  },
+  "br-server/tests/test_unified_user_model.py": {
+    "mtime": 1779768685715.8926,
+    "hash": "b10194c7275e01bb825f333e28c6333a"
+  },
+  "br-server/tests/test_upload.py": {
+    "mtime": 1780024644776.0815,
+    "hash": "961b31d7d7206e223eb8078d0c8124a6"
+  },
+  "br-server/tests/test_username_service.py": {
+    "mtime": 1779768685715.9841,
+    "hash": "d4f9399b88d0ad4860c4b4af9bda2ad2"
+  },
+  "br-server/tests/test_verification_rules.py": {
+    "mtime": 1780274852384.072,
+    "hash": "6b183bc40e79f6a5e1dcc68c9616b6f2"
+  },
+  "br-server/tests/test_vip_membership.py": {
+    "mtime": 1780912471243.7295,
+    "hash": "eca4d47f72f97280e7dc17c9de78e4c7"
+  },
+  "br-server/tests/test_wallet_repository.py": {
+    "mtime": 1780274852384.1135,
+    "hash": "43abd20ebad15bb85daf4d4db4210ecd"
+  },
+  "br-server/tests/test_wallet_rules.py": {
+    "mtime": 1780274852384.1553,
+    "hash": "d5bbf0db16a55f1b24d1d3407346bd4d"
+  },
+  "br-server/tests/test_wallet_service.py": {
+    "mtime": 1780912471244.0425,
+    "hash": "f2e2b44c2baf4bb6f5d85e8e29bf2f13"
+  },
+  "br-server/tests/test_wechat_auth_client.py": {
+    "mtime": 1779789104559.1143,
+    "hash": "7120d370da49c1c664b5aad16c054ae3"
+  },
+  "br-server/tests/test_wechat_auth_service_login.py": {
+    "mtime": 1780389451474.2266,
+    "hash": "63f9b53237a13e29fff4a3f6b787aea3"
+  },
+  "br-server/tests/test_wechat_pay_client.py": {
+    "mtime": 1779065317914.6072,
+    "hash": "119ea186b83cfe8857a5dc93e590f719"
+  },
+  "br-server/tests/test_wechat_phone_binding.py": {
+    "mtime": 1779789104559.3923,
+    "hash": "c87d023665d05d7df1f9aedacff6f7f5"
+  },
+  "CLAUDE.local.md": {
+    "mtime": 1779768582613.6414,
+    "hash": "a9639e1dae9beda182ce26666fd38588"
+  },
+  "CLAUDE.md": {
+    "mtime": 1786504950205.666,
+    "hash": "f11a92ebfcdd611c1ada9682b055033b"
+  },
+  "DESIGN.md": {
+    "mtime": 1778233197294.122,
+    "hash": "3fc1ca8bf4c2495f5d375512ca550ad4"
+  },
+  "PRODUCT.md": {
+    "mtime": 1778233197294.176,
+    "hash": "5891ffd7fb794e79ef52b28ed98c4ab3"
+  },
+  "README.md": {
+    "mtime": 1779102594395.2126,
+    "hash": "184538da368591a83345b559e1c85c5e"
+  },
+  "br-admin/CHANGELOG.md": {
+    "mtime": 1776990443262.5032,
+    "hash": "ac9cca255ebf51f485e7d3823c549012"
+  },
+  "br-admin/README.md": {
+    "mtime": 1779102594395.4602,
+    "hash": "2ea6286f65b3bf5d4e105493cd4f5511"
+  },
+  "br-admin/index.html": {
+    "mtime": 1776990443263.9556,
+    "hash": "5a39b3b6b5bb42e4ae1d809249e095e4"
+  },
+  "br-admin/pnpm-lock.yaml": {
+    "mtime": 1778202257131.444,
+    "hash": "a50717e1017a58efc87c4ace04d3e118"
+  },
+  "br-admin/pnpm-workspace.yaml": {
+    "mtime": 1780274852368.684,
+    "hash": "f183555c66b7e5531f090cd29d1d83e2"
+  },
+  "br-app/index.html": {
+    "mtime": 1776386417544.6838,
+    "hash": "f32331172f0a4602b5b4aa3e5a6b9511"
+  },
+  "br-server/README.md": {
+    "mtime": 1779102594398.6675,
+    "hash": "0ac359e87a40b7a461d5bc85bf746e30"
+  },
+  "br-server/docs/api.md": {
+    "mtime": 1779427810532.4941,
+    "hash": "4a5d249e9963f5adedde96a032445e79"
+  },
+  "bug-fixed.md": {
+    "mtime": 1787041400055.437,
+    "hash": "e4c8c307e1d87de7a1efabe3498f03a5"
+  },
+  "deploy.md": {
+    "mtime": 1779102594401.6663,
+    "hash": "29b5a4d785951335320471a9c9cbb8fa"
+  },
+  "docs/api.md": {
+    "mtime": 1786696624003.1797,
+    "hash": "765a2ce81e12b132d797ea858cd6f25d"
+  },
+  "docs/refactor-summary-2026-05-30.md": {
+    "mtime": 1780274852384.2346,
+    "hash": "33a2455e755bd122370e81b4d3fe47a2"
+  },
+  "docs/superpowers/plans/2026-04-23-activity-admin-management.md": {
+    "mtime": 1778233197295.3704,
+    "hash": "6fbd2eb7193dfb82a54d2f62ce08a5cb"
+  },
+  "docs/superpowers/plans/2026-04-27-booking-study-room-frontend.md": {
+    "mtime": 1778233197295.4866,
+    "hash": "b8528fcdce912ff8296deb1d60282067"
+  },
+  "docs/superpowers/plans/2026-05-30-br-admin-business-refactor.md": {
+    "mtime": 1780274852384.357,
+    "hash": "7132568a17646c734a74e1805ba04152"
+  },
+  "docs/superpowers/plans/2026-05-30-br-app-page-logic-refactor.md": {
+    "mtime": 1780274852384.4375,
+    "hash": "9de6f0530104b40c8e7fff799102a902"
+  },
+  "docs/superpowers/plans/2026-05-30-br-server-clean-architecture-refactor.md": {
+    "mtime": 1780274852384.575,
+    "hash": "53770049a538cab9aed9185a99ab30be"
+  },
+  "docs/superpowers/plans/2026-06-08-vip-membership-coupon-admin.md": {
+    "mtime": 1780887710052.1533,
+    "hash": "2f3e276bca038e3d1ab6508ca07e9587"
+  },
+  "docs/superpowers/plans/2026-08-14-training-course-list.md": {
+    "mtime": 1786689186550.568,
+    "hash": "975855854fc3aa3589c7aa4d3965e79f"
+  },
+  "docs/superpowers/plans/2026-08-14-training-room-overview.md": {
+    "mtime": 1786695287462.0583,
+    "hash": "408611c35b0388566a7fcb32b4ba7f03"
+  },
+  "docs/superpowers/plans/2026-08-17-course-booking.md": {
+    "mtime": 1786945962065.053,
+    "hash": "6e4b4fe49e69cb067cccbd21eb2652dd"
+  },
+  "docs/superpowers/plans/2026-08-17-course-detail-page.md": {
+    "mtime": 1786936566205.3887,
+    "hash": "0b0c1cad85b1a2ddeacbc19e6f8488e4"
+  },
+  "docs/superpowers/plans/2026-08-17-teacher-profile-page.md": {
+    "mtime": 1786944922406.176,
+    "hash": "0b19de7f3470d0a0d1c80b3c656aacfe"
+  },
+  "docs/superpowers/reports/2026-08-13-hide-cancelled-order-actions-verify.md": {
+    "mtime": 1786610454701.4856,
+    "hash": "4296738a1ac587b1e6f083687703bae5"
+  },
+  "docs/superpowers/reports/2026-08-13-orders-payment-buttons-verify.md": {
+    "mtime": 1786584881636.3584,
+    "hash": "9bdbf727e385744642085e2e5cbc50c4"
+  },
+  "docs/superpowers/reports/2026-08-14-training-course-list-verify.md": {
+    "mtime": 1786689186551.3818,
+    "hash": "e597a17fef372af53ef42ce54fea5c5a"
+  },
+  "docs/superpowers/reports/2026-08-14-training-room-overview-verify.md": {
+    "mtime": 1786695447063.2275,
+    "hash": "5bf473d57de30dd98735350a79cfd2ef"
+  },
+  "docs/superpowers/reports/2026-08-17-course-detail-page-verify.md": {
+    "mtime": 1786936566205.5908,
+    "hash": "af2d6496d06bbb4dcd05cdeff280b1c0"
+  },
+  "docs/superpowers/reports/2026-08-18-course-schedule-time-display-verify.md": {
+    "mtime": 1787047624155.6116,
+    "hash": "537b38a733bfa7ab859222caf73a4ce2"
+  },
+  "docs/superpowers/reports/2026-08-19-admin-teacher-management-verify.md": {
+    "mtime": 1787117964878.837,
+    "hash": "9a46cf5ea59f1c203bb8ea444cbfea14"
+  },
+  "docs/superpowers/specs/2026-05-09-personal-booking-verification-qr-design.md": {
+    "mtime": 1778313717424.579,
+    "hash": "5b06abae8c0767fda3456a501146a120"
+  },
+  "docs/superpowers/specs/2026-05-26-wechat-quick-login-phone-binding-design.md": {
+    "mtime": 1779779119349.7917,
+    "hash": "e54ae877f59fd9259901823bb587fff5"
+  },
+  "docs/superpowers/specs/2026-05-27-order-confirm-ui-alignment-design.md": {
+    "mtime": 1779843012224.9158,
+    "hash": "8602abeb9e47fce309147ba8c05a4b1f"
+  },
+  "docs/superpowers/specs/2026-05-28-message-notification-frontend-backend-design.md": {
+    "mtime": 1779932297017.738,
+    "hash": "d1c288c40b0bc6850265e5311df1c931"
+  },
+  "docs/superpowers/specs/2026-05-30-br-server-clean-architecture-design.md": {
+    "mtime": 1780274852384.653,
+    "hash": "7425d5f387276b9f09ebc181b9190be0"
+  },
+  "docs/superpowers/specs/2026-06-08-vip-membership-design.md": {
+    "mtime": 1780886850038.9536,
+    "hash": "ad6af2f49ee4eaacb470d098ec21183f"
+  },
+  "docs/superpowers/specs/2026-08-14-training-course-list-design.md": {
+    "mtime": 1786678041850.3674,
+    "hash": "59f267fa7f9a0ac67503635ac32b0d5e"
+  },
+  "docs/superpowers/specs/2026-08-14-training-room-overview-design.md": {
+    "mtime": 1786688891849.9905,
+    "hash": "93d62b16886cdf80102ef462ae039086"
+  },
+  "docs/superpowers/specs/2026-08-17-course-booking-design.md": {
+    "mtime": 1786945915121.5105,
+    "hash": "968929a25b5910432cfce2f533100ee5"
+  },
+  "docs/superpowers/specs/2026-08-17-course-detail-page-design.md": {
+    "mtime": 1786936566205.68,
+    "hash": "e444bdb26f700156bc6b423d3c4aaf1b"
+  },
+  "docs/superpowers/specs/2026-08-17-teacher-profile-page-design.md": {
+    "mtime": 1786937436356.7676,
+    "hash": "029fe6ac8764fdabb167f2e3afd2d083"
+  },
+  "docs/superpowers/verification/br-server-baseline-2026-05-30.md": {
+    "mtime": 1780274852384.726,
+    "hash": "cd7f26e35d0792cb5543f921bc63437d"
+  },
+  "openspec/changes/archive/2026-04-17-user-registration/design.md": {
+    "mtime": 1776323601388.504,
+    "hash": "ca938c6d813b2ddaf05b0d981360c5f8"
+  },
+  "openspec/changes/archive/2026-04-17-user-registration/proposal.md": {
+    "mtime": 1776323670646.3423,
+    "hash": "ede6d8efe4dd8ddb0a4daefb4e74156b"
+  },
+  "openspec/changes/archive/2026-04-17-user-registration/specs/sms-verification/spec.md": {
+    "mtime": 1776323645642.0757,
+    "hash": "0f1de126c3df80e89414a0cf19f6e196"
+  },
+  "openspec/changes/archive/2026-04-17-user-registration/specs/user-auth/spec.md": {
+    "mtime": 1776321911312.7424,
+    "hash": "130263ad14aa804fcdaf1691b8783891"
+  },
+  "openspec/changes/archive/2026-04-17-user-registration/specs/user-registration/spec.md": {
+    "mtime": 1776323670806.056,
+    "hash": "9ce582144a8656273c227f17fc4fe1ae"
+  },
+  "openspec/changes/archive/2026-04-17-user-registration/tasks.md": {
+    "mtime": 1776387101820.316,
+    "hash": "23db572547b927cb1426d38664e9526a"
+  },
+  "openspec/changes/archive/2026-04-20-homepage-display/design.md": {
+    "mtime": 1778233197295.7166,
+    "hash": "c65a4c8ac0feea8eed371277e4110b11"
+  },
+  "openspec/changes/archive/2026-04-20-homepage-display/proposal.md": {
+    "mtime": 1778233197295.777,
+    "hash": "34baa35b3d5cf29b42ea8774f0688b25"
+  },
+  "openspec/changes/archive/2026-04-20-homepage-display/specs/activity-list/spec.md": {
+    "mtime": 1778233197295.885,
+    "hash": "c482aabd7c03920d4e6e65047b5d9fc2"
+  },
+  "openspec/changes/archive/2026-04-20-homepage-display/specs/banner-management/spec.md": {
+    "mtime": 1778233197295.9846,
+    "hash": "5025092343ad550519bb7fa7ccd38aec"
+  },
+  "openspec/changes/archive/2026-04-20-homepage-display/specs/homepage-ui/spec.md": {
+    "mtime": 1778233197296.0676,
+    "hash": "4ba87b35974581a7a99587de5f9734e6"
+  },
+  "openspec/changes/archive/2026-04-20-homepage-display/specs/study-room-list/spec.md": {
+    "mtime": 1778233197296.158,
+    "hash": "b26862fa397b51b8be88731d3a0e832c"
+  },
+  "openspec/changes/archive/2026-04-20-homepage-display/tasks.md": {
+    "mtime": 1778233197296.217,
+    "hash": "fe79778ca25ffdc66253f86ccd5f7bdf"
+  },
+  "openspec/changes/archive/2026-04-24-activity-admin-management/design.md": {
+    "mtime": 1778233197296.3752,
+    "hash": "a4a4f1cdf763bd7effaa97b3c00e7675"
+  },
+  "openspec/changes/archive/2026-04-24-activity-admin-management/proposal.md": {
+    "mtime": 1778233197296.4336,
+    "hash": "2a73d8b2db21abcd518e16126fc85a17"
+  },
+  "openspec/changes/archive/2026-04-24-activity-admin-management/specs/activity-admin-api/spec.md": {
+    "mtime": 1778233197296.5396,
+    "hash": "c3117287ee7a75d7aa1c01647f7fd2f5"
+  },
+  "openspec/changes/archive/2026-04-24-activity-admin-management/specs/activity-admin-ui/spec.md": {
+    "mtime": 1778233197296.6326,
+    "hash": "75ec8ad437e43e664f90067b5485b5a6"
+  },
+  "openspec/changes/archive/2026-04-24-activity-admin-management/specs/activity-list/spec.md": {
+    "mtime": 1778233197296.7366,
+    "hash": "a8186ee3ec6deb5423caae3e4f15fd07"
+  },
+  "openspec/changes/archive/2026-04-24-activity-admin-management/specs/file-upload/spec.md": {
+    "mtime": 1778233197296.8225,
+    "hash": "9caef9464f7f41efe49ee1671eaff4f4"
+  },
+  "openspec/changes/archive/2026-04-24-activity-admin-management/tasks.md": {
+    "mtime": 1778233197296.8774,
+    "hash": "870e016bc18a476750110c1b58ee12c1"
+  },
+  "openspec/changes/archive/2026-05-05-booking-study-room-frontend/design.md": {
+    "mtime": 1778233197297.022,
+    "hash": "6b79974f2bd71f85bcdb45bdab445cf3"
+  },
+  "openspec/changes/archive/2026-05-05-booking-study-room-frontend/proposal.md": {
+    "mtime": 1778233197297.0918,
+    "hash": "8839a37e4834e4a7a38335bae9316aa5"
+  },
+  "openspec/changes/archive/2026-05-05-booking-study-room-frontend/specs/study-room-booking-api/spec.md": {
+    "mtime": 1778233197297.2124,
+    "hash": "9d1353cdcaf4e4e43069bf7e96e1cd3a"
+  },
+  "openspec/changes/archive/2026-05-05-booking-study-room-frontend/specs/study-room-booking-ui/spec.md": {
+    "mtime": 1778233197297.3242,
+    "hash": "d5eb9e7a5e7ec0e66d4ee46d19272320"
+  },
+  "openspec/changes/archive/2026-05-05-booking-study-room-frontend/specs/study-room-seats-api/spec.md": {
+    "mtime": 1778233197297.4463,
+    "hash": "7080054fb3949ebc2338014ff5960d37"
+  },
+  "openspec/changes/archive/2026-05-05-booking-study-room-frontend/tasks.md": {
+    "mtime": 1778233197297.5166,
+    "hash": "47ed87ceb4028c2341d50d4437f40204"
+  },
+  "openspec/changes/archive/2026-05-07-study-room-and-seat-admin-management/design.md": {
+    "mtime": 1778233197297.69,
+    "hash": "740cc5a42857db5ed1275a29d165d3b9"
+  },
+  "openspec/changes/archive/2026-05-07-study-room-and-seat-admin-management/proposal.md": {
+    "mtime": 1778233197297.762,
+    "hash": "c901f38887c73b2970719e32a96a1400"
+  },
+  "openspec/changes/archive/2026-05-07-study-room-and-seat-admin-management/specs/seat-admin-api/spec.md": {
+    "mtime": 1778233197297.903,
+    "hash": "c9fc6222e8c54291bf5440f5ba73b07c"
+  },
+  "openspec/changes/archive/2026-05-07-study-room-and-seat-admin-management/specs/seat-admin-ui/spec.md": {
+    "mtime": 1778233197298.0195,
+    "hash": "d4fa891bf8eef41f8beb282423e84fb3"
+  },
+  "openspec/changes/archive/2026-05-07-study-room-and-seat-admin-management/specs/study-room-admin-api/spec.md": {
+    "mtime": 1778233197298.133,
+    "hash": "e73d7d38e63b25466d424f994645781e"
+  },
+  "openspec/changes/archive/2026-05-07-study-room-and-seat-admin-management/specs/study-room-admin-ui/spec.md": {
+    "mtime": 1778233197298.25,
+    "hash": "3b184858d61d9f88f7d69fac078f1b37"
+  },
+  "openspec/changes/archive/2026-05-07-study-room-and-seat-admin-management/tasks.md": {
+    "mtime": 1778233197298.3235,
+    "hash": "8a80085e62ddddc04e3f0c1a90d68e21"
+  },
+  "openspec/changes/archive/2026-05-08-order-admin-management/design.md": {
+    "mtime": 1778233197298.4973,
+    "hash": "65112a095f40b2ef727a4ba8011f3c2e"
+  },
+  "openspec/changes/archive/2026-05-08-order-admin-management/proposal.md": {
+    "mtime": 1778233197298.5696,
+    "hash": "f1fed5abdbd76a835254d4a77c44bee1"
+  },
+  "openspec/changes/archive/2026-05-08-order-admin-management/specs/booking-admin-api/spec.md": {
+    "mtime": 1778233197298.71,
+    "hash": "37f85b72cb0fda577a1f5f0b47b03b85"
+  },
+  "openspec/changes/archive/2026-05-08-order-admin-management/specs/booking-admin-ui/spec.md": {
+    "mtime": 1778233197298.8196,
+    "hash": "ea2e2c0b53f6d9148458983c782200b1"
+  },
+  "openspec/changes/archive/2026-05-08-order-admin-management/tasks.md": {
+    "mtime": 1778233197298.8818,
+    "hash": "720a38cb7e1f09fb4caca8a41259f4bb"
+  },
+  "openspec/changes/archive/2026-05-09-learning-record-frontend/design.md": {
+    "mtime": 1778288833435.4795,
+    "hash": "90ce2d5b1ba5f40aacb125abcfc3ab6a"
+  },
+  "openspec/changes/archive/2026-05-09-learning-record-frontend/proposal.md": {
+    "mtime": 1778288833435.5806,
+    "hash": "b075bf2e119c30d6e479e6755439caf4"
+  },
+  "openspec/changes/archive/2026-05-09-learning-record-frontend/specs/study-record-api/spec.md": {
+    "mtime": 1778288833435.7344,
+    "hash": "16bc448eef856363aa25330265324500"
+  },
+  "openspec/changes/archive/2026-05-09-learning-record-frontend/specs/study-record-ui/spec.md": {
+    "mtime": 1778288833435.855,
+    "hash": "67ec873d7e1c151d626187a4b20ebc2e"
+  },
+  "openspec/changes/archive/2026-05-09-learning-record-frontend/tasks.md": {
+    "mtime": 1778308542224.0134,
+    "hash": "d395356b7795ccd984ff27396a31db7d"
+  },
+  "openspec/changes/archive/2026-05-12-add-personal-qr-frontend/design.md": {
+    "mtime": 1778313615779.9648,
+    "hash": "fc5cc8325b6bac8edb7f7d7cc0ff329d"
+  },
+  "openspec/changes/archive/2026-05-12-add-personal-qr-frontend/proposal.md": {
+    "mtime": 1778313615722.1936,
+    "hash": "8d5e57f8507dc0eff5b497889fbb0478"
+  },
+  "openspec/changes/archive/2026-05-12-add-personal-qr-frontend/specs/booking-verification-api/spec.md": {
+    "mtime": 1778313688400.6611,
+    "hash": "3f848d33da93643cfeebcf70af37af76"
+  },
+  "openspec/changes/archive/2026-05-12-add-personal-qr-frontend/specs/booking-verification-ui/spec.md": {
+    "mtime": 1778313688452.1704,
+    "hash": "1b1452d762c7b2c91883164e6965a7d8"
+  },
+  "openspec/changes/archive/2026-05-12-add-personal-qr-frontend/specs/personal-qr-ui/spec.md": {
+    "mtime": 1778313688346.502,
+    "hash": "6ee09bc7b28952aa581c8212bc602159"
+  },
+  "openspec/changes/archive/2026-05-12-add-personal-qr-frontend/tasks.md": {
+    "mtime": 1778553634277.94,
+    "hash": "20439c24b91ed1d7965b907cb7d01a7c"
+  },
+  "openspec/changes/archive/2026-05-14-coupon-package-frontend/design.md": {
+    "mtime": 1778725474807.3914,
+    "hash": "ef1fab5bb239323353616a4048de834f"
+  },
+  "openspec/changes/archive/2026-05-14-coupon-package-frontend/proposal.md": {
+    "mtime": 1778725474807.519,
+    "hash": "71e13c85e9ffb0725669a557a8f6008f"
+  },
+  "openspec/changes/archive/2026-05-14-coupon-package-frontend/specs/coupon-api/spec.md": {
+    "mtime": 1778725474807.6763,
+    "hash": "641ce55b7c80f6f9877fa6579e334998"
+  },
+  "openspec/changes/archive/2026-05-14-coupon-package-frontend/specs/coupon-package-ui/spec.md": {
+    "mtime": 1778725474807.798,
+    "hash": "a43875465acb8164ee35f304f8262ca5"
+  },
+  "openspec/changes/archive/2026-05-14-coupon-package-frontend/specs/homepage-ui/spec.md": {
+    "mtime": 1778725474807.9204,
+    "hash": "cafe2b9bfa3598cf17c705b56be22429"
+  },
+  "openspec/changes/archive/2026-05-14-coupon-package-frontend/specs/study-room-booking-api/spec.md": {
+    "mtime": 1778725474808.0596,
+    "hash": "5cba37918a47e376903739b8ab146d42"
+  },
+  "openspec/changes/archive/2026-05-14-coupon-package-frontend/specs/study-room-booking-ui/spec.md": {
+    "mtime": 1778725474808.184,
+    "hash": "667d8f46aa6131b2c0a9b3c83bb1c11d"
+  },
+  "openspec/changes/archive/2026-05-14-coupon-package-frontend/tasks.md": {
+    "mtime": 1778725958392.885,
+    "hash": "9e2f57395fee905a566adea08bee87c0"
+  },
+  "openspec/changes/archive/2026-05-15-city-selection-frontend/design.md": {
+    "mtime": 1778837890959.5596,
+    "hash": "0777bcf7a848036d7bee893b464ea054"
+  },
+  "openspec/changes/archive/2026-05-15-city-selection-frontend/proposal.md": {
+    "mtime": 1778837890959.692,
+    "hash": "e69a4beb9091eb3c4c35bf9d2c0f9d2e"
+  },
+  "openspec/changes/archive/2026-05-15-city-selection-frontend/specs/city-selection-api/spec.md": {
+    "mtime": 1778837890960.2195,
+    "hash": "7675432fdd238992cb8cf69e5765a96e"
+  },
+  "openspec/changes/archive/2026-05-15-city-selection-frontend/specs/city-selection-ui/spec.md": {
+    "mtime": 1778837890960.3462,
+    "hash": "3082639d70089e3be4d0725bb1d11339"
+  },
+  "openspec/changes/archive/2026-05-15-city-selection-frontend/specs/study-room-booking-api/spec.md": {
+    "mtime": 1778837890960.4727,
+    "hash": "fb88716ed8db6eec4dedfbcf36fd85d9"
+  },
+  "openspec/changes/archive/2026-05-15-city-selection-frontend/specs/study-room-booking-ui/spec.md": {
+    "mtime": 1778837890960.5898,
+    "hash": "a4124e4b9b07775a90a2acb0312b89f7"
+  },
+  "openspec/changes/archive/2026-05-15-city-selection-frontend/specs/study-room-list/spec.md": {
+    "mtime": 1778837890960.7178,
+    "hash": "960521faa811723c39e66b08a0386365"
+  },
+  "openspec/changes/archive/2026-05-15-city-selection-frontend/tasks.md": {
+    "mtime": 1778837890960.8591,
+    "hash": "996738b460e989561ac2b2db2e98c793"
+  },
+  "openspec/changes/archive/2026-05-15-wallet-recharge-frontend/design.md": {
+    "mtime": 1778748683919.3347,
+    "hash": "8e55378745f3957f3cf4ef5f2a941000"
+  },
+  "openspec/changes/archive/2026-05-15-wallet-recharge-frontend/proposal.md": {
+    "mtime": 1778748683919.636,
+    "hash": "940a714ad5b743a830d9ef416c21a5bd"
+  },
+  "openspec/changes/archive/2026-05-15-wallet-recharge-frontend/specs/wallet-recharge-api/spec.md": {
+    "mtime": 1778748683919.9172,
+    "hash": "7068a33cd4600918c737fb510a18af72"
+  },
+  "openspec/changes/archive/2026-05-15-wallet-recharge-frontend/specs/wallet-recharge-ui/spec.md": {
+    "mtime": 1778748683920.1035,
+    "hash": "18d27b7310508854936b13a592e3760e"
+  },
+  "openspec/changes/archive/2026-05-15-wallet-recharge-frontend/tasks.md": {
+    "mtime": 1778749675114.957,
+    "hash": "f01c575e813721386bd63e6d080b234d"
+  },
+  "openspec/changes/archive/2026-05-17-wallet-transactions-frontend/design.md": {
+    "mtime": 1779065317915.3748,
+    "hash": "fd0f11fe150fee5649affdd4f9111cc1"
+  },
+  "openspec/changes/archive/2026-05-17-wallet-transactions-frontend/proposal.md": {
+    "mtime": 1779065317915.4277,
+    "hash": "128ae5228fdaf775aaf4289e7c6ca3ac"
+  },
+  "openspec/changes/archive/2026-05-17-wallet-transactions-frontend/specs/wallet-recharge-api/spec.md": {
+    "mtime": 1779065317915.5469,
+    "hash": "8e70d5642c36c835ae976901d8283fee"
+  },
+  "openspec/changes/archive/2026-05-17-wallet-transactions-frontend/specs/wallet-transactions-ui/spec.md": {
+    "mtime": 1779065317915.6426,
+    "hash": "bba996e530056fd1b677a92cd1f8c085"
+  },
+  "openspec/changes/archive/2026-05-17-wallet-transactions-frontend/tasks.md": {
+    "mtime": 1779065317915.7168,
+    "hash": "be3f664acae9679e74b73a220b53eeca"
+  },
+  "openspec/changes/archive/2026-05-17-wechat-payment-integration/design.md": {
+    "mtime": 1779065317915.9114,
+    "hash": "a3ede5f1070d6ce3ee692b825676f921"
+  },
+  "openspec/changes/archive/2026-05-17-wechat-payment-integration/proposal.md": {
+    "mtime": 1779065317915.9678,
+    "hash": "9095178e6c8130dd13395a09d97053ed"
+  },
+  "openspec/changes/archive/2026-05-17-wechat-payment-integration/specs/wechat-payment-api/spec.md": {
+    "mtime": 1779065317916.0803,
+    "hash": "8bf394f9b539be111dab96d82fad76e4"
+  },
+  "openspec/changes/archive/2026-05-17-wechat-payment-integration/specs/wechat-payment-ui/spec.md": {
+    "mtime": 1779065317916.1584,
+    "hash": "02d5c5e22bb095c4eb764709a8e871e3"
+  },
+  "openspec/changes/archive/2026-05-17-wechat-payment-integration/tasks.md": {
+    "mtime": 1779065317916.237,
+    "hash": "2feb40b58c59e3e7a5534f4411d1ac1f"
+  },
+  "openspec/changes/archive/2026-05-19-admin-rbac-dynamic-settings/design.md": {
+    "mtime": 1779102594401.805,
+    "hash": "e5aded3832ad43c59b59cdd67b7868d1"
+  },
+  "openspec/changes/archive/2026-05-19-admin-rbac-dynamic-settings/proposal.md": {
+    "mtime": 1779102594401.878,
+    "hash": "2bc2f834313ffe47e7d358c87e131dbe"
+  },
+  "openspec/changes/archive/2026-05-19-admin-rbac-dynamic-settings/specs/admin-auth-api/spec.md": {
+    "mtime": 1779102594402.0066,
+    "hash": "8e5ed77610d486ffdb24a053239798be"
+  },
+  "openspec/changes/archive/2026-05-19-admin-rbac-dynamic-settings/specs/admin-dynamic-routing/spec.md": {
+    "mtime": 1779102594402.1033,
+    "hash": "0ba14440328be08c5d6f1dbd4cc836d4"
+  },
+  "openspec/changes/archive/2026-05-19-admin-rbac-dynamic-settings/specs/admin-menu-api/spec.md": {
+    "mtime": 1779102594402.1982,
+    "hash": "96c604e450b310f6d063fefd1cae2404"
+  },
+  "openspec/changes/archive/2026-05-19-admin-rbac-dynamic-settings/specs/admin-rbac-ui/spec.md": {
+    "mtime": 1779102594402.2944,
+    "hash": "69db2f91dfa9fa0f4c54e31d78cd7562"
+  },
+  "openspec/changes/archive/2026-05-19-admin-rbac-dynamic-settings/specs/admin-role-api/spec.md": {
+    "mtime": 1779102594402.3916,
+    "hash": "55bcedd04372af83083cedefaa443d56"
+  },
+  "openspec/changes/archive/2026-05-19-admin-rbac-dynamic-settings/specs/admin-settings-api/spec.md": {
+    "mtime": 1779102594402.4846,
+    "hash": "e108e0647646837c96cc73c7551fabe4"
+  },
+  "openspec/changes/archive/2026-05-19-admin-rbac-dynamic-settings/tasks.md": {
+    "mtime": 1779102594402.6257,
+    "hash": "e82c59286156704f082c08e2f4ccc19e"
+  },
+  "openspec/changes/archive/2026-05-21-merge-users-admin-users/design.md": {
+    "mtime": 1779170201049.5527,
+    "hash": "f61fe5749ff01993cfe8397f107cae99"
+  },
+  "openspec/changes/archive/2026-05-21-merge-users-admin-users/proposal.md": {
+    "mtime": 1779170221752.1582,
+    "hash": "c3a5961dddf603f87876d4b1a3cca065"
+  },
+  "openspec/changes/archive/2026-05-21-merge-users-admin-users/specs/admin-auth-api/spec.md": {
+    "mtime": 1779155207246.6768,
+    "hash": "bedabbc5be59c03931ee94b62d452846"
+  },
+  "openspec/changes/archive/2026-05-21-merge-users-admin-users/specs/admin-user-management/spec.md": {
+    "mtime": 1779170253564.6047,
+    "hash": "9a74da39584c4b627d1957a29ff3163d"
+  },
+  "openspec/changes/archive/2026-05-21-merge-users-admin-users/specs/app-default-role/spec.md": {
+    "mtime": 1779170254953.1987,
+    "hash": "ed28f540aac520d84627020f4024e2db"
+  },
+  "openspec/changes/archive/2026-05-21-merge-users-admin-users/specs/unified-user-model/spec.md": {
+    "mtime": 1779155206034.5464,
+    "hash": "2355ccb40dbef76f07fd32d356aa5170"
+  },
+  "openspec/changes/archive/2026-05-21-merge-users-admin-users/specs/user-auth/spec.md": {
+    "mtime": 1779170261510.9119,
+    "hash": "d8b97e57361d7eaae4172194b5c48bf1"
+  },
+  "openspec/changes/archive/2026-05-21-merge-users-admin-users/specs/user-data-migration/spec.md": {
+    "mtime": 1779155206644.9014,
+    "hash": "0cdf5cfe4913ea25b0f3b99702790796"
+  },
+  "openspec/changes/archive/2026-05-21-merge-users-admin-users/tasks.md": {
+    "mtime": 1779334025887.8738,
+    "hash": "1d6f7d72c33224c19f150163867080ec"
+  },
+  "openspec/changes/archive/2026-05-22-unify-user-access/design.md": {
+    "mtime": 1779411528647.7656,
+    "hash": "685c99c49800c77163442c650697d73a"
+  },
+  "openspec/changes/archive/2026-05-22-unify-user-access/proposal.md": {
+    "mtime": 1779410256564.9998,
+    "hash": "e3aa664f9f40c309e2ea6d95258f46b9"
+  },
+  "openspec/changes/archive/2026-05-22-unify-user-access/specs/admin-auth-api/spec.md": {
+    "mtime": 1779411551983.549,
+    "hash": "d79edcdd034544b3252ba98efa8a6901"
+  },
+  "openspec/changes/archive/2026-05-22-unify-user-access/specs/admin-user-management/spec.md": {
+    "mtime": 1779411553752.1443,
+    "hash": "99e28342c0e9ea367e66709909cddbd4"
+  },
+  "openspec/changes/archive/2026-05-22-unify-user-access/specs/user-auth/spec.md": {
+    "mtime": 1779411552872.907,
+    "hash": "426fe1a222ce3e8b6e7de019515dc86c"
+  },
+  "openspec/changes/archive/2026-05-22-unify-user-access/tasks.md": {
+    "mtime": 1779427597201.4368,
+    "hash": "7d8126d312f3b1c2c34a902bcafaa9aa"
+  },
+  "openspec/changes/archive/2026-05-25-order-view-seat/design.md": {
+    "mtime": 1779430716774.2456,
+    "hash": "9696fe7aaf4bda0a0099c8eff3f1e7bc"
+  },
+  "openspec/changes/archive/2026-05-25-order-view-seat/proposal.md": {
+    "mtime": 1779430693270.5994,
+    "hash": "73c568d8bf8cdf7338188ec7adf79f62"
+  },
+  "openspec/changes/archive/2026-05-25-order-view-seat/specs/study-room-booking-ui/spec.md": {
+    "mtime": 1779430728304.249,
+    "hash": "e24ad58dfbbef70609fa33dd83893a00"
+  },
+  "openspec/changes/archive/2026-05-25-order-view-seat/tasks.md": {
+    "mtime": 1779669438631.7114,
+    "hash": "862c1830fca9a4b4fd40eb0e35ee3011"
+  },
+  "openspec/changes/archive/2026-05-26-add-username-profile-settings/design.md": {
+    "mtime": 1779768685718.4502,
+    "hash": "0c13716dd4e78fdbbcd7eec6c4dc4f07"
+  },
+  "openspec/changes/archive/2026-05-26-add-username-profile-settings/proposal.md": {
+    "mtime": 1779768685718.6755,
+    "hash": "0651706e4243288caf1d8d16b556e243"
+  },
+  "openspec/changes/archive/2026-05-26-add-username-profile-settings/specs/profile-settings-ui/spec.md": {
+    "mtime": 1779768685718.9421,
+    "hash": "d8f4beedfa2815819faaf750b89ef555"
+  },
+  "openspec/changes/archive/2026-05-26-add-username-profile-settings/specs/unified-user-model/spec.md": {
+    "mtime": 1779768685719.1895,
+    "hash": "7f6198826f23a3fe9a154f84be4de621"
+  },
+  "openspec/changes/archive/2026-05-26-add-username-profile-settings/specs/user-auth/spec.md": {
+    "mtime": 1779768685719.3997,
+    "hash": "11da5ed9b46564beead5857f509cc082"
+  },
+  "openspec/changes/archive/2026-05-26-add-username-profile-settings/specs/user-profile-api/spec.md": {
+    "mtime": 1779768685719.6152,
+    "hash": "293891053240158e310dd4d598b4ee09"
+  },
+  "openspec/changes/archive/2026-05-26-add-username-profile-settings/specs/user-registration/spec.md": {
+    "mtime": 1779768685720.0347,
+    "hash": "bca147175908f04df199a591ab698af1"
+  },
+  "openspec/changes/archive/2026-05-26-add-username-profile-settings/tasks.md": {
+    "mtime": 1779775603966.235,
+    "hash": "b3bdc1b48926892384311d91e8032715"
+  },
+  "openspec/changes/archive/2026-05-26-admin-wallet-finance/design.md": {
+    "mtime": 1779703352932.5466,
+    "hash": "595a5d423b23bc2c27a7bf9241138d23"
+  },
+  "openspec/changes/archive/2026-05-26-admin-wallet-finance/proposal.md": {
+    "mtime": 1779703352932.73,
+    "hash": "39098dcd89e99dd8080a8b54443aa21e"
+  },
+  "openspec/changes/archive/2026-05-26-admin-wallet-finance/specs/wallet-admin-api/spec.md": {
+    "mtime": 1779703352933.205,
+    "hash": "a5a78ec477ead0d3904b0f89b01f428f"
+  },
+  "openspec/changes/archive/2026-05-26-admin-wallet-finance/specs/wallet-admin-ui/spec.md": {
+    "mtime": 1779703352933.3926,
+    "hash": "dd1707d1bd86f0fb9ab40e6c272d943a"
+  },
+  "openspec/changes/archive/2026-05-26-admin-wallet-finance/tasks.md": {
+    "mtime": 1779754815417.6191,
+    "hash": "34547ac7eb471bf34fc378541e3a99fe"
+  },
+  "openspec/changes/archive/2026-05-27-add-wechat-quick-login-frontend/design.md": {
+    "mtime": 1779789104560.238,
+    "hash": "1dce06fa44b6faab9af20a186ab49244"
+  },
+  "openspec/changes/archive/2026-05-27-add-wechat-quick-login-frontend/proposal.md": {
+    "mtime": 1779779119414.5696,
+    "hash": "c1ffe9d468088871b1f4483719a467df"
+  },
+  "openspec/changes/archive/2026-05-27-add-wechat-quick-login-frontend/specs/user-auth/spec.md": {
+    "mtime": 1779779119534.5376,
+    "hash": "c817491dae2b1fbc1a2b0e8b74f5d5b2"
+  },
+  "openspec/changes/archive/2026-05-27-add-wechat-quick-login-frontend/specs/user-profile-api/spec.md": {
+    "mtime": 1779779181649.88,
+    "hash": "27a30c31273f51f6d78ca20e1f5e5194"
+  },
+  "openspec/changes/archive/2026-05-27-add-wechat-quick-login-frontend/specs/wechat-phone-binding/spec.md": {
+    "mtime": 1779789104560.6995,
+    "hash": "ae47eb55321aa4f0538ca6678c38e9d4"
+  },
+  "openspec/changes/archive/2026-05-27-add-wechat-quick-login-frontend/specs/wechat-quick-login-ui/spec.md": {
+    "mtime": 1779779119649.434,
+    "hash": "e201c15953417807f7e2b8ab47b0501a"
+  },
+  "openspec/changes/archive/2026-05-27-add-wechat-quick-login-frontend/tasks.md": {
+    "mtime": 1779789823405.2197,
+    "hash": "1fbfb3de84a364133336c573246511b7"
+  },
+  "openspec/changes/archive/2026-05-27-update-order-payment-wechat/design.md": {
+    "mtime": 1779849758368.365,
+    "hash": "4ce122a837e549aea27c27a6b71c124b"
+  },
+  "openspec/changes/archive/2026-05-27-update-order-payment-wechat/proposal.md": {
+    "mtime": 1779849758368.637,
+    "hash": "d248b25fd5b01a1f44c5647a5b23986c"
+  },
+  "openspec/changes/archive/2026-05-27-update-order-payment-wechat/specs/booking-payment/spec.md": {
+    "mtime": 1779849758368.9666,
+    "hash": "93a5442ca4aed53f97560468d12e00a9"
+  },
+  "openspec/changes/archive/2026-05-27-update-order-payment-wechat/specs/study-room-booking-api/spec.md": {
+    "mtime": 1779849758369.2456,
+    "hash": "85ebe91792c0ac3ca58e291b4d4bf2d3"
+  },
+  "openspec/changes/archive/2026-05-27-update-order-payment-wechat/specs/study-room-booking-ui/spec.md": {
+    "mtime": 1779849758369.6938,
+    "hash": "0d3ba84dd28e91961f7086acc9ff82d3"
+  },
+  "openspec/changes/archive/2026-05-27-update-order-payment-wechat/specs/wechat-payment-api/spec.md": {
+    "mtime": 1779849758370.0664,
+    "hash": "b32bcc5165c7645db96c58df582219fe"
+  },
+  "openspec/changes/archive/2026-05-27-update-order-payment-wechat/tasks.md": {
+    "mtime": 1779852592106.3293,
+    "hash": "f8b9158c2253e12dcf935b36f4ee5528"
+  },
+  "openspec/changes/archive/2026-05-28-add-booking-cancellation/design.md": {
+    "mtime": 1779962556707.2805,
+    "hash": "35a22e307b6769485609f60b433823a1"
+  },
+  "openspec/changes/archive/2026-05-28-add-booking-cancellation/proposal.md": {
+    "mtime": 1779962556707.3828,
+    "hash": "df4335e4bf7de53dee3346d9abf01bca"
+  },
+  "openspec/changes/archive/2026-05-28-add-booking-cancellation/specs/booking-payment/spec.md": {
+    "mtime": 1779962556707.5479,
+    "hash": "e34ad935fd103b60936b4fa08752fc11"
+  },
+  "openspec/changes/archive/2026-05-28-add-booking-cancellation/specs/study-room-booking-api/spec.md": {
+    "mtime": 1779962556707.7085,
+    "hash": "6725fbef4ba359075075a15bc25db958"
+  },
+  "openspec/changes/archive/2026-05-28-add-booking-cancellation/specs/study-room-booking-ui/spec.md": {
+    "mtime": 1779962556707.841,
+    "hash": "fa6462a887250a4f1915f8ed3920a428"
+  },
+  "openspec/changes/archive/2026-05-28-add-booking-cancellation/specs/wallet-recharge-api/spec.md": {
+    "mtime": 1779962556707.968,
+    "hash": "3ba5d17a235d2066a47794998a8a42ed"
+  },
+  "openspec/changes/archive/2026-05-28-add-booking-cancellation/tasks.md": {
+    "mtime": 1779962556708.0913,
+    "hash": "469a253caae5a6a702c0cb13b6195e5d"
+  },
+  "openspec/changes/archive/2026-05-28-add-message-notification-frontend/design.md": {
+    "mtime": 1779932352955.8835,
+    "hash": "68ea84c6501ff981c11f6525b03056aa"
+  },
+  "openspec/changes/archive/2026-05-28-add-message-notification-frontend/proposal.md": {
+    "mtime": 1779932296634.008,
+    "hash": "cccaa65aa609f7074176aecbac47eb57"
+  },
+  "openspec/changes/archive/2026-05-28-add-message-notification-frontend/specs/homepage-ui/spec.md": {
+    "mtime": 1779932296850.6946,
+    "hash": "c59e9ee3125aac46c70d3c3c60feee48"
+  },
+  "openspec/changes/archive/2026-05-28-add-message-notification-frontend/specs/message-notification-api/spec.md": {
+    "mtime": 1779932296957.673,
+    "hash": "50d073a5969117b191d132848887f110"
+  },
+  "openspec/changes/archive/2026-05-28-add-message-notification-frontend/specs/message-notification-ui/spec.md": {
+    "mtime": 1779932324912.2122,
+    "hash": "4b86b50e07bfa0d1f3b2588ae7754a66"
+  },
+  "openspec/changes/archive/2026-05-28-add-message-notification-frontend/specs/profile-settings-ui/spec.md": {
+    "mtime": 1779932296797.046,
+    "hash": "f7bd9d43088095373e93f5528e03ea64"
+  },
+  "openspec/changes/archive/2026-05-28-add-message-notification-frontend/tasks.md": {
+    "mtime": 1779937996286.4785,
+    "hash": "53dadcc9034a61be264ac6c3a9a3dbf3"
+  },
+  "openspec/changes/archive/2026-05-29-add-aliyun-oss-image-upload/design.md": {
+    "mtime": 1780024644777.0208,
+    "hash": "b514b702d63e0db4cea61425c7489279"
+  },
+  "openspec/changes/archive/2026-05-29-add-aliyun-oss-image-upload/proposal.md": {
+    "mtime": 1780024644777.1157,
+    "hash": "e5ff8026e5aab7ac3d83e251f744e014"
+  },
+  "openspec/changes/archive/2026-05-29-add-aliyun-oss-image-upload/specs/activity-admin-ui/spec.md": {
+    "mtime": 1780024644777.266,
+    "hash": "33ce2ded9730b143934644b8e9eaa44b"
+  },
+  "openspec/changes/archive/2026-05-29-add-aliyun-oss-image-upload/specs/file-upload/spec.md": {
+    "mtime": 1780024644777.4082,
+    "hash": "bfc826c89d596185e9bed72970e711d1"
+  },
+  "openspec/changes/archive/2026-05-29-add-aliyun-oss-image-upload/specs/profile-settings-ui/spec.md": {
+    "mtime": 1780024644777.5278,
+    "hash": "ce44805cf15765358ba117c16e41efbe"
+  },
+  "openspec/changes/archive/2026-05-29-add-aliyun-oss-image-upload/specs/study-room-admin-ui/spec.md": {
+    "mtime": 1780024644777.6472,
+    "hash": "0d2d5066c1e3051c20a3c3a9ca339de8"
+  },
+  "openspec/changes/archive/2026-05-29-add-aliyun-oss-image-upload/tasks.md": {
+    "mtime": 1780026107271.7786,
+    "hash": "67cce31a88d816a773d5cae86558cddf"
+  },
+  "openspec/changes/archive/2026-06-02-account-security-settings/design.md": {
+    "mtime": 1780389451475.9995,
+    "hash": "0707eea75ee30315e8d38047854c11bd"
+  },
+  "openspec/changes/archive/2026-06-02-account-security-settings/proposal.md": {
+    "mtime": 1780389451476.2,
+    "hash": "a39a7873a552a6b6721288f478977c21"
+  },
+  "openspec/changes/archive/2026-06-02-account-security-settings/specs/profile-settings-ui/spec.md": {
+    "mtime": 1780389451476.5205,
+    "hash": "d6e87c9f550cf3d332f2c8e626e6c243"
+  },
+  "openspec/changes/archive/2026-06-02-account-security-settings/specs/user-auth/spec.md": {
+    "mtime": 1780389451477.0823,
+    "hash": "8925f44c592639ee86ead202f74ade8c"
+  },
+  "openspec/changes/archive/2026-06-02-account-security-settings/specs/user-profile-api/spec.md": {
+    "mtime": 1780389451477.2397,
+    "hash": "774d18823ba203190188f321bdb7bbf1"
+  },
+  "openspec/changes/archive/2026-06-02-account-security-settings/specs/wechat-phone-binding/spec.md": {
+    "mtime": 1780389451477.385,
+    "hash": "c969899a51a986dbe363af4019915d29"
+  },
+  "openspec/changes/archive/2026-06-02-account-security-settings/tasks.md": {
+    "mtime": 1780389451477.698,
+    "hash": "d4212e8f22c63b22013610783915c159"
+  },
+  "openspec/changes/archive/2026-06-06-activity-coupon-campaign/design.md": {
+    "mtime": 1780880454127.2678,
+    "hash": "2a2e18b475e2a9bee4e37268d6f39ce2"
+  },
+  "openspec/changes/archive/2026-06-06-activity-coupon-campaign/proposal.md": {
+    "mtime": 1780880454127.3442,
+    "hash": "8b31e27afe64938e2803678f6aae40aa"
+  },
+  "openspec/changes/archive/2026-06-06-activity-coupon-campaign/specs/activity-admin-api/spec.md": {
+    "mtime": 1780880454127.6428,
+    "hash": "18ed078485fb7be5207bb66cb904c1d3"
+  },
+  "openspec/changes/archive/2026-06-06-activity-coupon-campaign/specs/activity-admin-ui/spec.md": {
+    "mtime": 1780880454127.751,
+    "hash": "361a6f65b16d15ca4a9c74908575b368"
+  },
+  "openspec/changes/archive/2026-06-06-activity-coupon-campaign/specs/activity-coupon-campaign/spec.md": {
+    "mtime": 1780880454127.8545,
+    "hash": "13faaa274c5173118e899aeeb92eb2b3"
+  },
+  "openspec/changes/archive/2026-06-06-activity-coupon-campaign/specs/activity-list/spec.md": {
+    "mtime": 1780880454127.9502,
+    "hash": "755d7245cda3ba693670a455e5c0dccc"
+  },
+  "openspec/changes/archive/2026-06-06-activity-coupon-campaign/specs/coupon-api/spec.md": {
+    "mtime": 1780880454128.2102,
+    "hash": "2a3415409d61d663f288a0d3b1e39f7c"
+  },
+  "openspec/changes/archive/2026-06-06-activity-coupon-campaign/specs/homepage-ui/spec.md": {
+    "mtime": 1780880454128.3167,
+    "hash": "bec7f10db0d1bd06c6def4cdd50a5fec"
+  },
+  "openspec/changes/archive/2026-06-06-activity-coupon-campaign/tasks.md": {
+    "mtime": 1780880454128.425,
+    "hash": "ac45bae16a367481db64000a4b686127"
+  },
+  "openspec/changes/archive/2026-06-08-coupon-management-admin/design.md": {
+    "mtime": 1780912471245.304,
+    "hash": "a9effe3b0cc3796cf582e34e753d88c1"
+  },
+  "openspec/changes/archive/2026-06-08-coupon-management-admin/proposal.md": {
+    "mtime": 1780912471245.8027,
+    "hash": "24ebd6f2009d7d470b4d94efb8bef7f2"
+  },
+  "openspec/changes/archive/2026-06-08-coupon-management-admin/specs/activity-admin-ui/spec.md": {
+    "mtime": 1780912471246.0244,
+    "hash": "66be5fbee0cf95a6b2380d2098d1fa1c"
+  },
+  "openspec/changes/archive/2026-06-08-coupon-management-admin/specs/coupon-admin-api/spec.md": {
+    "mtime": 1780912471246.1611,
+    "hash": "7fa20bc5990eb75c4913fe392fa8fec9"
+  },
+  "openspec/changes/archive/2026-06-08-coupon-management-admin/specs/coupon-admin-ui/spec.md": {
+    "mtime": 1780912471246.2917,
+    "hash": "8d9ae31037697a44a0e6cf539b951d05"
+  },
+  "openspec/changes/archive/2026-06-08-coupon-management-admin/specs/coupon-api/spec.md": {
+    "mtime": 1780912471246.4883,
+    "hash": "069ab8c7e2dc2171b1a6ce14ed8fd16c"
+  },
+  "openspec/changes/archive/2026-06-08-coupon-management-admin/specs/vip-membership/spec.md": {
+    "mtime": 1780912471246.64,
+    "hash": "36c6fe00271d23566b5726dcba694f8f"
+  },
+  "openspec/changes/archive/2026-06-08-coupon-management-admin/tasks.md": {
+    "mtime": 1780912471246.7417,
+    "hash": "2f570b92c0925c61befdf06c54ee653a"
+  },
+  "openspec/changes/archive/2026-08-13-hide-cancelled-order-actions/design.md": {
+    "mtime": 1786610171962.05,
+    "hash": "f834e87f16ca8dfa09752f67fe85cd4f"
+  },
+  "openspec/changes/archive/2026-08-13-hide-cancelled-order-actions/proposal.md": {
+    "mtime": 1786610158501.3853,
+    "hash": "097901b336b6e2fe536923152fd463f7"
+  },
+  "openspec/changes/archive/2026-08-13-hide-cancelled-order-actions/tasks.md": {
+    "mtime": 1786610281444.9802,
+    "hash": "53df81d767fa41da35c194e0cc341945"
+  },
+  "openspec/changes/archive/2026-08-13-orders-payment-buttons/design.md": {
+    "mtime": 1786583580343.2805,
+    "hash": "49c5cfcb8028a8f871baaa41626f439a"
+  },
+  "openspec/changes/archive/2026-08-13-orders-payment-buttons/proposal.md": {
+    "mtime": 1786583562010.7363,
+    "hash": "a6dce30f777a750cbccc5c0210503585"
+  },
+  "openspec/changes/archive/2026-08-13-orders-payment-buttons/tasks.md": {
+    "mtime": 1786584345586.1367,
+    "hash": "d3bb3c140a4b44c5c691ad0da06be9ad"
+  },
+  "openspec/changes/archive/2026-08-14-training-course-list/design.md": {
+    "mtime": 1786689186568.066,
+    "hash": "19911480626b370a5d081cc103d45d89"
+  },
+  "openspec/changes/archive/2026-08-14-training-course-list/proposal.md": {
+    "mtime": 1786689186568.5078,
+    "hash": "457962fdf0a64ff029bc9e9574d45363"
+  },
+  "openspec/changes/archive/2026-08-14-training-course-list/specs/study-room-booking-api/spec.md": {
+    "mtime": 1786689186568.8213,
+    "hash": "240ff6b982d727a900bad183244bc2f5"
+  },
+  "openspec/changes/archive/2026-08-14-training-course-list/specs/training-course-list-api/spec.md": {
+    "mtime": 1786689186569.4756,
+    "hash": "6271d69cfcae49d9ef0135aa871b1be0"
+  },
+  "openspec/changes/archive/2026-08-14-training-course-list/specs/training-course-list-ui/spec.md": {
+    "mtime": 1786689186573.5945,
+    "hash": "7ed8560dda4ba25b64e3021486e0da7b"
+  },
+  "openspec/changes/archive/2026-08-14-training-course-list/tasks.md": {
+    "mtime": 1786689186574.45,
+    "hash": "e009ba6b0810fa2cc1b4e5491f2ff188"
+  },
+  "openspec/changes/archive/2026-08-14-training-room-overview/design.md": {
+    "mtime": 1786688387743.004,
+    "hash": "0ccafce810e68ed2daccbf4e0dd16b72"
+  },
+  "openspec/changes/archive/2026-08-14-training-room-overview/proposal.md": {
+    "mtime": 1786688047933.369,
+    "hash": "e4525dff7fa6cbd07fdeda01992f2ba4"
+  },
+  "openspec/changes/archive/2026-08-14-training-room-overview/specs/study-room-booking-ui/spec.md": {
+    "mtime": 1786688131334.0298,
+    "hash": "f07eaa029d90933f4c2fb8718fd8f98a"
+  },
+  "openspec/changes/archive/2026-08-14-training-room-overview/specs/training-room-detail-api/spec.md": {
+    "mtime": 1786688131327.491,
+    "hash": "6e744841743ee3201acf7a6ea9ae98ae"
+  },
+  "openspec/changes/archive/2026-08-14-training-room-overview/tasks.md": {
+    "mtime": 1786695311009.6567,
+    "hash": "0dda1d0284bca14b9e84e7c377b37cad"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking-custom-schedule/design.md": {
+    "mtime": 1786959269465.2058,
+    "hash": "94d9cea07fedc698984e903fc322b369"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking-custom-schedule/proposal.md": {
+    "mtime": 1786959254084.5627,
+    "hash": "2c53e087384eeaff984955ed275388e2"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking-custom-schedule/tasks.md": {
+    "mtime": 1786959656719.6726,
+    "hash": "4bd5f80bc359639b76af4a6c9f4c7bcf"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking-custom-schedule/verification-report.md": {
+    "mtime": 1786959731615.1514,
+    "hash": "29af8e06e9f7bd19e4cdca72a0e51b3a"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking/design.md": {
+    "mtime": 1786945442694.601,
+    "hash": "37a098718a043bd809d3bff75c5f1e02"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking/proposal.md": {
+    "mtime": 1786945340165.6143,
+    "hash": "9e08373f7676e241a3795ceaafbe75f8"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking/specs/booking-payment/spec.md": {
+    "mtime": 1786947685600.6675,
+    "hash": "4a5e73b81b2a92c171a9074a1dd1c768"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking/specs/course-booking-api/spec.md": {
+    "mtime": 1786945421023.7861,
+    "hash": "0652afa541e85ae97e0d950ed52e2215"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking/specs/course-booking-ui/spec.md": {
+    "mtime": 1786945421124.2192,
+    "hash": "2a52266321f3324f12e1689c31137983"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking/tasks.md": {
+    "mtime": 1786947366067.379,
+    "hash": "ae89bf764f15ba979ec7e6b313e7c073"
+  },
+  "openspec/changes/archive/2026-08-17-course-booking/verification-report.md": {
+    "mtime": 1786947439613.9446,
+    "hash": "90d5ce6290d6094e8753664aaa2c5e45"
+  },
+  "openspec/changes/archive/2026-08-17-course-detail-page/design.md": {
+    "mtime": 1786936566208.7607,
+    "hash": "53b8576b3815ecb5ecbf5db40d82a694"
+  },
+  "openspec/changes/archive/2026-08-17-course-detail-page/proposal.md": {
+    "mtime": 1786936566208.9043,
+    "hash": "a74b80910f58a524b48a7f710afae069"
+  },
+  "openspec/changes/archive/2026-08-17-course-detail-page/specs/course-detail-api/spec.md": {
+    "mtime": 1786936566209.0974,
+    "hash": "0fb6d3de5d83e8dc850f974cb5d89116"
+  },
+  "openspec/changes/archive/2026-08-17-course-detail-page/specs/course-detail-ui/spec.md": {
+    "mtime": 1786936566209.2812,
+    "hash": "09f2419fcaea5a96018d8f33324fa188"
+  },
+  "openspec/changes/archive/2026-08-17-course-detail-page/specs/course-follow/spec.md": {
+    "mtime": 1786929313110.0034,
+    "hash": "30ff4a1481dcac8399389d88fd348f63"
+  },
+  "openspec/changes/archive/2026-08-17-course-detail-page/specs/course-lessons/spec.md": {
+    "mtime": 1786936566209.4062,
+    "hash": "0b6aca4bb37fa2a0233e003992690189"
+  },
+  "openspec/changes/archive/2026-08-17-course-detail-page/tasks.md": {
+    "mtime": 1786936566209.5562,
+    "hash": "56b35e5a8508e4e4c532d0bd3b76f1bf"
+  },
+  "openspec/changes/archive/2026-08-17-teacher-profile-page/design.md": {
+    "mtime": 1786944922409.737,
+    "hash": "73f1f61743d13ac4f296b0d193ee4634"
+  },
+  "openspec/changes/archive/2026-08-17-teacher-profile-page/proposal.md": {
+    "mtime": 1786944922409.8352,
+    "hash": "4ae5e2b4f8a8afcde0ba0d37b0308d2f"
+  },
+  "openspec/changes/archive/2026-08-17-teacher-profile-page/specs/teacher-follow/spec.md": {
+    "mtime": 1786944922409.9805,
+    "hash": "f6d4443f8b298f8fb1014f3ff4e10238"
+  },
+  "openspec/changes/archive/2026-08-17-teacher-profile-page/specs/teacher-profile-api/spec.md": {
+    "mtime": 1786944922410.096,
+    "hash": "fecbad86cfed987a7ba5e12f036a64fb"
+  },
+  "openspec/changes/archive/2026-08-17-teacher-profile-page/specs/teacher-profile-ui/spec.md": {
+    "mtime": 1786944922410.2083,
+    "hash": "0d85c8c761f9c14a7262cc2ca52655a3"
+  },
+  "openspec/changes/archive/2026-08-17-teacher-profile-page/specs/training-room-detail-api/spec.md": {
+    "mtime": 1786944922410.3674,
+    "hash": "92ca69eb8fde4cc496dafc690aa7ef98"
+  },
+  "openspec/changes/archive/2026-08-17-teacher-profile-page/tasks.md": {
+    "mtime": 1786944922410.5752,
+    "hash": "29757610e8ee10b90f9c1057bc1d1274"
+  },
+  "openspec/changes/archive/2026-08-18-course-schedule-time-display/design.md": {
+    "mtime": 1787046493379.7856,
+    "hash": "0f51f895aae811d9afa1b53a6437bdb0"
+  },
+  "openspec/changes/archive/2026-08-18-course-schedule-time-display/proposal.md": {
+    "mtime": 1787046453017.768,
+    "hash": "9e2f99da061182b5c48693e42f07eb01"
+  },
+  "openspec/changes/archive/2026-08-18-course-schedule-time-display/specs/course-schedule-time-ui/spec.md": {
+    "mtime": 1787046539502.652,
+    "hash": "8e56995e6926c3c17e8cbc5bfe6041c2"
+  },
+  "openspec/changes/archive/2026-08-18-course-schedule-time-display/tasks.md": {
+    "mtime": 1787047082777.683,
+    "hash": "36ef1ebbf89ba89cede77be624fc2608"
+  },
+  "openspec/changes/archive/2026-08-19-admin-teacher-management/design.md": {
+    "mtime": 1787109923854.157,
+    "hash": "39539ba31193a8db566c9081dabc11ac"
+  },
+  "openspec/changes/archive/2026-08-19-admin-teacher-management/proposal.md": {
+    "mtime": 1787109923856.0364,
+    "hash": "bcf9a17fb0523454ce5f25346f4bcce3"
+  },
+  "openspec/changes/archive/2026-08-19-admin-teacher-management/specs/admin-teacher-management/spec.md": {
+    "mtime": 1787109923856.5396,
+    "hash": "1161713db4363ef221a835f3518bc890"
+  },
+  "openspec/changes/archive/2026-08-19-admin-teacher-management/tasks.md": {
+    "mtime": 1787117688742.6987,
+    "hash": "c105f7cb24ed65595ebc81b3df4f4754"
+  },
+  "openspec/config.yaml": {
+    "mtime": 1778233197298.939,
+    "hash": "64d6bba31b19c40edd1f52908f827a50"
+  },
+  "openspec/specs/activity-admin-api/spec.md": {
+    "mtime": 1780880454128.6606,
+    "hash": "a9cb5abe2035f6aa89821284a32382de"
+  },
+  "openspec/specs/activity-admin-ui/spec.md": {
+    "mtime": 1780912863623.1233,
+    "hash": "9cf2b62502bfb9b1adb306e1091e8f2c"
+  },
+  "openspec/specs/activity-coupon-campaign/spec.md": {
+    "mtime": 1780880454128.946,
+    "hash": "8b6a8c912654624d9cda7287bfd0a926"
+  },
+  "openspec/specs/activity-list/spec.md": {
+    "mtime": 1780880454129.0437,
+    "hash": "accf7f7a21e38b7aa5379f11923f1c66"
+  },
+  "openspec/specs/admin-auth-api/spec.md": {
+    "mtime": 1787118292812.054,
+    "hash": "29649ab4dd997346ef49c244c8c2a438"
+  },
+  "openspec/specs/admin-dynamic-routing/spec.md": {
+    "mtime": 1787118292804.4434,
+    "hash": "9684aba5a88670f587f97d2543029ed9"
+  },
+  "openspec/specs/admin-menu-api/spec.md": {
+    "mtime": 1787118292757.2256,
+    "hash": "d16dbbb3891b7492927d0e1456227850"
+  },
+  "openspec/specs/admin-rbac-ui/spec.md": {
+    "mtime": 1787118292773.8057,
+    "hash": "06a111116baca6a21b0d2eaa83a7e7f3"
+  },
+  "openspec/specs/admin-role-api/spec.md": {
+    "mtime": 1787118292792.801,
+    "hash": "80d72cd2492ad38e50f79e4284f3a3f6"
+  },
+  "openspec/specs/admin-settings-api/spec.md": {
+    "mtime": 1787118292767.7563,
+    "hash": "f7af6abf78ea9584118163ac00fa6070"
+  },
+  "openspec/specs/admin-teacher-management/spec.md": {
+    "mtime": 1787118094484.0486,
+    "hash": "b805b9982d82100528be984659936e26"
+  },
+  "openspec/specs/admin-user-management/spec.md": {
+    "mtime": 1787118292751.1074,
+    "hash": "f6c5939fbe31b779dec7c91acd25b544"
+  },
+  "openspec/specs/app-default-role/spec.md": {
+    "mtime": 1787118292789.6387,
+    "hash": "068514285599a872427d15e7b1b9dbf9"
+  },
+  "openspec/specs/banner-management/spec.md": {
+    "mtime": 1787118292777.8494,
+    "hash": "68cf41d3a8ea40cfadb85a74dd387d52"
+  },
+  "openspec/specs/booking-admin-api/spec.md": {
+    "mtime": 1787118292746.004,
+    "hash": "3246a6bcf3bfe8172c4506b86e70655f"
+  },
+  "openspec/specs/booking-admin-ui/spec.md": {
+    "mtime": 1787118292787.4917,
+    "hash": "00ae227152dd5355df764f7c0fdac898"
+  },
+  "openspec/specs/booking-payment/spec.md": {
+    "mtime": 1786947701494.6824,
+    "hash": "909bfef74423d44777809e977742b4cb"
+  },
+  "openspec/specs/booking-verification-api/spec.md": {
+    "mtime": 1787118292738.7002,
+    "hash": "4e8c2862105d8856e355185b4fb5bf1a"
+  },
+  "openspec/specs/booking-verification-ui/spec.md": {
+    "mtime": 1787118292801.5713,
+    "hash": "0e7ba711967c8b570ad2ce8a07c3974f"
+  },
+  "openspec/specs/city-selection-api/spec.md": {
+    "mtime": 1787118292810.486,
+    "hash": "1dd902cbcbf5d328e99bf55a431754fa"
+  },
+  "openspec/specs/city-selection-ui/spec.md": {
+    "mtime": 1787118292728.143,
+    "hash": "f749f1dd97eb6d59de368e1905401478"
+  },
+  "openspec/specs/coupon-admin-api/spec.md": {
+    "mtime": 1780912863623.505,
+    "hash": "73c002329465bc66ca0c1d13eab67acc"
+  },
+  "openspec/specs/coupon-admin-ui/spec.md": {
+    "mtime": 1780912863623.8015,
+    "hash": "c32a9f9e7ef57460adad654bd6190ac5"
+  },
+  "openspec/specs/coupon-api/spec.md": {
+    "mtime": 1780912863624.2385,
+    "hash": "c1301c283cd133388a732cac28f35d3f"
+  },
+  "openspec/specs/coupon-package-ui/spec.md": {
+    "mtime": 1787118292780.4138,
+    "hash": "0c777ae0f7b4bd7208d257645c6bd203"
+  },
+  "openspec/specs/course-booking-api/spec.md": {
+    "mtime": 1786947701498.2222,
+    "hash": "7365cce5d975075a93dbaefa2ea577ef"
+  },
+  "openspec/specs/course-booking-ui/spec.md": {
+    "mtime": 1786947701503.485,
+    "hash": "3e9ac698a87cba87edfd7405e26dd2fa"
+  },
+  "openspec/specs/course-schedule-time-ui/spec.md": {
+    "mtime": 1787047709544.3428,
+    "hash": "77e3f05ad2e613a76f7869116ee2e7c5"
+  },
+  "openspec/specs/file-upload/spec.md": {
+    "mtime": 1780025948687.1492,
+    "hash": "f99b5a54c81062f8af0da102bfa8bf98"
+  },
+  "openspec/specs/homepage-ui/spec.md": {
+    "mtime": 1780880454129.35,
+    "hash": "fe6a5b3114eed754aa6c33a94c912927"
+  },
+  "openspec/specs/message-notification-api/spec.md": {
+    "mtime": 1787118292724.9495,
+    "hash": "180c22e2a7a9fc32d6b1fb74fd257194"
+  },
+  "openspec/specs/message-notification-ui/spec.md": {
+    "mtime": 1787118292771.1914,
+    "hash": "a219f5335c91583d1a4b81d95475be1b"
+  },
+  "openspec/specs/personal-qr-ui/spec.md": {
+    "mtime": 1787118292730.663,
+    "hash": "5f4795b7f4a533e1527b095bbb1d2407"
+  },
+  "openspec/specs/profile-settings-ui/spec.md": {
+    "mtime": 1780390316755.65,
+    "hash": "bc8cfc43447e5a2ec97521c79295c9fe"
+  },
+  "openspec/specs/seat-admin-ui/spec.md": {
+    "mtime": 1778233197299.8953,
+    "hash": "818f19c0eac7475c2a6adc1d989f160c"
+  },
+  "openspec/specs/sms-verification/spec.md": {
+    "mtime": 1787118292816.9248,
+    "hash": "17d1f7c60261dece3d361cda517f8fd5"
+  },
+  "openspec/specs/study-record-api/spec.md": {
+    "mtime": 1787118292775.6885,
+    "hash": "b17fdb3fbb2e02f6da7d889b283574ac"
+  },
+  "openspec/specs/study-record-ui/spec.md": {
+    "mtime": 1787118292795.5352,
+    "hash": "0be0ff4f5a9bf4551c23f200c42b3d59"
+  },
+  "openspec/specs/study-room-admin-api/spec.md": {
+    "mtime": 1778233197300.0034,
+    "hash": "afd6222820eba021e9761a5f075d4437"
+  },
+  "openspec/specs/study-room-admin-ui/spec.md": {
+    "mtime": 1780026076101.1985,
+    "hash": "f684c0b286ebc10efa04b084bf2e6882"
+  },
+  "openspec/specs/study-room-booking-api/spec.md": {
+    "mtime": 1786689186577.0396,
+    "hash": "dc89da1a9bf379b24c2aaa19504ddcae"
+  },
+  "openspec/specs/study-room-booking-ui/spec.md": {
+    "mtime": 1787118292784.1,
+    "hash": "78eeb3e4da1801b2bb0855bd69da81cf"
+  },
+  "openspec/specs/study-room-list/spec.md": {
+    "mtime": 1787118292815.256,
+    "hash": "a85994eda2a550f9f26def8a972e8671"
+  },
+  "openspec/specs/study-room-seats-api/spec.md": {
+    "mtime": 1787118292798.5952,
+    "hash": "5ff43ed230315c1ad1bfcf37d7b12b42"
+  },
+  "openspec/specs/training-course-list-api/spec.md": {
+    "mtime": 1786689186578.026,
+    "hash": "b6b652b7d75408fd6d0c8e19a3e6dbd0"
+  },
+  "openspec/specs/training-course-list-ui/spec.md": {
+    "mtime": 1786689186579.2468,
+    "hash": "20ba85ca58dbd095bf948df39be94a1f"
+  },
+  "openspec/specs/training-room-detail-api/spec.md": {
+    "mtime": 1787118292748.3743,
+    "hash": "f349950fd1fbc28b4fc2060a3b3c6406"
+  },
+  "openspec/specs/unified-user-model/spec.md": {
+    "mtime": 1779775890352.2244,
+    "hash": "8f6aabff9ed153380967b8c223da8267"
+  },
+  "openspec/specs/user-auth/spec.md": {
+    "mtime": 1780390316756.1382,
+    "hash": "56dd655a230b31d3ad23a3606e37bae8"
+  },
+  "openspec/specs/user-data-migration/spec.md": {
+    "mtime": 1787118292808.5088,
+    "hash": "eced50eb6dcccabdc0fb87c1f67f8f27"
+  },
+  "openspec/specs/user-profile-api/spec.md": {
+    "mtime": 1780390316756.4966,
+    "hash": "15e20ba030b6802fa4b04acfd15724ae"
+  },
+  "openspec/specs/user-registration/spec.md": {
+    "mtime": 1779775890315.548,
+    "hash": "efca032c6443a5ca6caf9414c2b50237"
+  },
+  "openspec/specs/vip-membership/spec.md": {
+    "mtime": 1780912863624.473,
+    "hash": "a70ef28db0139253e9aac8b3b3ee0b41"
+  },
+  "openspec/specs/wallet-admin-api/spec.md": {
+    "mtime": 1787118292813.6467,
+    "hash": "8201156f629edc1e4cc92f88666391f4"
+  },
+  "openspec/specs/wallet-admin-ui/spec.md": {
+    "mtime": 1787118292806.4065,
+    "hash": "ab3e5538d12f2f9a1a7ac51a7c22de20"
+  },
+  "openspec/specs/wallet-recharge-api/spec.md": {
+    "mtime": 1779963465983.3433,
+    "hash": "b8951de1b5d9d0edcd48445948813c9e"
+  },
+  "openspec/specs/wallet-recharge-ui/spec.md": {
+    "mtime": 1787118292764.4343,
+    "hash": "2c537bebae7711540f07d3771722eb7c"
+  },
+  "openspec/specs/wallet-transactions-ui/spec.md": {
+    "mtime": 1779963485381.1936,
+    "hash": "6eac49bc1b052b778fa619de6e50c681"
+  },
+  "openspec/specs/wechat-payment-api/spec.md": {
+    "mtime": 1779853499664.4448,
+    "hash": "57e407c4c179e8eef5169d849c8cf522"
+  },
+  "openspec/specs/wechat-payment-ui/spec.md": {
+    "mtime": 1779065317916.7004,
+    "hash": "70afae6abed2ca655b094cd79b87d1ee"
+  },
+  "openspec/specs/wechat-phone-binding/spec.md": {
+    "mtime": 1780390316756.8787,
+    "hash": "e8251f4874cfcad530dc18e37edf92ce"
+  },
+  "openspec/specs/wechat-quick-login-ui/spec.md": {
+    "mtime": 1779841830754.566,
+    "hash": "35b6121b6a14251f5413656068af2927"
+  },
+  "project.md": {
+    "mtime": 1776993798731.2278,
+    "hash": "9e4db48f4f8e7e8049078674e34beb8c"
+  },
+  "prototype/admin-course-edit.html": {
+    "mtime": 1786668923408.3906,
+    "hash": "8ffa86711b2a90b2ffc040a13fcfb336"
+  },
+  "prototype/admin-courses.html": {
+    "mtime": 1786668872962.5261,
+    "hash": "94e67a7ee421cb85cd269ea6a38bf48c"
+  },
+  "prototype/admin-teachers.html": {
+    "mtime": 1786668982174.2168,
+    "hash": "9c539d5e9b8bdf0887443b149b6c7212"
+  },
+  "prototype/admin-training-orders.html": {
+    "mtime": 1786669040654.103,
+    "hash": "b814dab69a8359a1a5c8d387628a748f"
+  },
+  "prototype/booking.html": {
+    "mtime": 1776306376263.4084,
+    "hash": "b65890ebb8a17c4755fe7f7b47728e13"
+  },
+  "prototype/coupon.html": {
+    "mtime": 1776306957211.903,
+    "hash": "dc1a97ca307a6d9e3f82331480569cc3"
+  },
+  "prototype/course-booking.html": {
+    "mtime": 1786671379813.3987,
+    "hash": "dbeb62070e5e48a0e6fb246d127c743f"
+  },
+  "prototype/course-detail.html": {
+    "mtime": 1786668738872.0032,
+    "hash": "c09bfa7264b9e0112bf3ffaa50d84103"
+  },
+  "prototype/feedback.html": {
+    "mtime": 1776307265924.3345,
+    "hash": "3ec5be526b2576ba96dd521609f7fe8d"
+  },
+  "prototype/home.html": {
+    "mtime": 1776306369984.624,
+    "hash": "ec89fab1b020ecab019d4517cefff9cb"
+  },
+  "prototype/index.html": {
+    "mtime": 1786669149263.153,
+    "hash": "5684873c308b1264985aa18524777b65"
+  },
+  "prototype/login.html": {
+    "mtime": 1776309046744.6792,
+    "hash": "847b9c51f24314b26fa7488cee4996b6"
+  },
+  "prototype/order-confirm.html": {
+    "mtime": 1776306584777.5784,
+    "hash": "20eaff20b104df627a613319fd29251f"
+  },
+  "prototype/orders.html": {
+    "mtime": 1776306519607.4998,
+    "hash": "57071678c0de87ce6b40499b1ced8258"
+  },
+  "prototype/profile.html": {
+    "mtime": 1776306327271.694,
+    "hash": "1ab6a37b3d6820a75733cfef31639a2d"
+  },
+  "prototype/qrcode.html": {
+    "mtime": 1776307219758.645,
+    "hash": "f8af409dd044e6b0908faf05917164b0"
+  },
+  "prototype/ranking.html": {
+    "mtime": 1776307075354.3472,
+    "hash": "2972b39c15526787647fc809516c2f2a"
+  },
+  "prototype/recharge.html": {
+    "mtime": 1776307005702.522,
+    "hash": "65600435cd067c0d5b46c19d60105699"
+  },
+  "prototype/seat-select.html": {
+    "mtime": 1776306500339.2344,
+    "hash": "1a995bfcf1435734560ea80f4da183db"
+  },
+  "prototype/settings.html": {
+    "mtime": 1776310123959.4136,
+    "hash": "76d740fc75ce592ae83a95e7cdb9cbda"
+  },
+  "prototype/store-detail.html": {
+    "mtime": 1776306351163.3708,
+    "hash": "9261d5f76303c6d88bc5c9a51dda4d26"
+  },
+  "prototype/study-record.html": {
+    "mtime": 1776307150644.1255,
+    "hash": "7f3d0dcfed40afd7e04ba9211bdea7c0"
+  },
+  "prototype/teacher-profile.html": {
+    "mtime": 1786668677266.0256,
+    "hash": "d9672a828c08c22c756b2dcf6f3636fa"
+  },
+  "prototype/training-room.html": {
+    "mtime": 1786671171303.2512,
+    "hash": "c0205842bc6a2fbb3fa7825c01a2ca70"
+  },
+  "prototype/training.html": {
+    "mtime": 1786672626642.8064,
+    "hash": "81658b762a6aa63dda67e9ca8f1b8f9f"
+  },
+  "br-admin/src/assets/icons/login.svg": {
+    "mtime": 1776990443268.3752,
+    "hash": "e558dd7b11bc11e216c6702727dc59f5"
+  },
+  "br-admin/src/assets/icons/logo.svg": {
+    "mtime": 1776990443268.5637,
+    "hash": "f0ec3bf9aba40178ddc0a3ec8115884f"
+  },
+  "br-admin/src/assets/images/Business.svg": {
+    "mtime": 1776990443268.8362,
+    "hash": "c2cdbc0c81709e51e182cb2c1028fff5"
+  },
+  "br-admin/src/assets/images/Error.svg": {
+    "mtime": 1776990443268.9338,
+    "hash": "02a4d2e63510ffc598a993f35776a2c4"
+  },
+  "br-admin/src/assets/images/account-logo.png": {
+    "mtime": 1786501895761.056,
+    "hash": "ebd9a77a7c82907108fb2245e5e00571"
+  },
+  "br-admin/src/assets/images/account-logo2.png": {
+    "mtime": 1776990443269.0454,
+    "hash": "136789c3f4b69d13f9a8239fcb484dae"
+  },
+  "br-admin/src/assets/images/analysis.svg": {
+    "mtime": 1776990443269.1255,
+    "hash": "e55736e3ef6f538e492706fe2fec8063"
+  },
+  "br-admin/src/assets/images/exception/403.svg": {
+    "mtime": 1776990443269.3066,
+    "hash": "59100a846894dbe930d50bd20077ff13"
+  },
+  "br-admin/src/assets/images/exception/404.svg": {
+    "mtime": 1776990443269.4268,
+    "hash": "639ca5c8676cfa541e84f3b05413eeca"
+  },
+  "br-admin/src/assets/images/exception/500.svg": {
+    "mtime": 1776990443269.5696,
+    "hash": "ea902ee06405371408f125f2f7926e74"
+  },
+  "br-admin/src/assets/images/exception/developing.svg": {
+    "mtime": 1776990443269.9111,
+    "hash": "e0e74e7e131fe7dce4e88e435ea69bd9"
+  },
+  "br-admin/src/assets/images/exception/load-error.svg": {
+    "mtime": 1776990443270.1226,
+    "hash": "0adb08a8693e729c06e043de302d9020"
+  },
+  "br-admin/src/assets/images/exception/nodata.svg": {
+    "mtime": 1776990443270.3235,
+    "hash": "1501052a884bd7a3bf5e58b8acc30621"
+  },
+  "br-admin/src/assets/images/header-theme-dark.svg": {
+    "mtime": 1776990443270.3892,
+    "hash": "406e46295f14bccaceb29e82e40c81d0"
+  },
+  "br-admin/src/assets/images/login.svg": {
+    "mtime": 1776990443270.4675,
+    "hash": "e558dd7b11bc11e216c6702727dc59f5"
+  },
+  "br-admin/src/assets/images/logo.png": {
+    "mtime": 1786502634728.5044,
+    "hash": "2427b83c04973c256d7b82bf5ee5cecb"
+  },
+  "br-admin/src/assets/images/nav-horizontal-mix.svg": {
+    "mtime": 1776990443270.5933,
+    "hash": "767fe36c951bb86b57aa0643118a449c"
+  },
+  "br-admin/src/assets/images/nav-horizontal.svg": {
+    "mtime": 1776990443270.6436,
+    "hash": "91b5002e5c693a07053166a63b51534f"
+  },
+  "br-admin/src/assets/images/nav-theme-dark.svg": {
+    "mtime": 1776990443270.704,
+    "hash": "cb6749b4d3c42ca1004370cd020fc16d"
+  },
+  "br-admin/src/assets/images/nav-theme-light.svg": {
+    "mtime": 1776990443270.765,
+    "hash": "89e529ce2379eb5fc5b76521a88297dd"
+  },
+  "br-admin/src/assets/images/schoolboy.png": {
+    "mtime": 1776990443271.5388,
+    "hash": "3442c5df420ed87efa5616db512309f4"
+  },
+  "br-admin/src/assets/images/tool.png": {
+    "mtime": 1776990443271.6152,
+    "hash": "bf84d3a94ee0b49255a57c2283ca763c"
+  },
+  "br-app/src/static/logo.png": {
+    "mtime": 1786439635873.3425,
+    "hash": "31aa5231c7fc545b2acdebbfced28245"
+  },
+  "br-app/src/static/tab/booking-active.png": {
+    "mtime": 1778571678391.182,
+    "hash": "081df4db88f432762665adc14fdd8880"
+  },
+  "br-app/src/static/tab/booking.png": {
+    "mtime": 1778571678384.5972,
+    "hash": "69f3dc68b6c18e92ea1956408ac077ce"
+  },
+  "br-app/src/static/tab/home-active.png": {
+    "mtime": 1778571678380.969,
+    "hash": "fe2a18852f38ce832e6b1077088297bf"
+  },
+  "br-app/src/static/tab/home.png": {
+    "mtime": 1778571678371.6897,
+    "hash": "8591b28e50d85d53cc0e77d3c3d7e593"
+  },
+  "br-app/src/static/tab/order-active.png": {
+    "mtime": 1778571678397.5518,
+    "hash": "110751cedcf7e58ccc912aac6c2a5045"
+  },
+  "br-app/src/static/tab/order.png": {
+    "mtime": 1778571678393.4053,
+    "hash": "0c7758c28e15d44b9c0f8d52c30c4757"
+  },
+  "br-app/src/static/tab/profile-active.png": {
+    "mtime": 1778571678404.2864,
+    "hash": "71c8c70edb7291e15b36c4872a7de41b"
+  },
+  "br-app/src/static/tab/profile.png": {
+    "mtime": 1778571678400.7712,
+    "hash": "8f337b996b3fefc1d8bd68e8d9ef1211"
+  },
+  "br-app/src/static/tab/training-active.png": {
+    "mtime": 1786689186522.3699,
+    "hash": "cca2e92f81b2f2ce0c32cf16cf14895e"
+  },
+  "br-app/src/static/tab/training.png": {
+    "mtime": 1786689186523.0396,
+    "hash": "c76d2dfde07cedaedafd81e608e21cc4"
+  }
+}

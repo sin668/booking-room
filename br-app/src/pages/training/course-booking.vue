@@ -101,29 +101,33 @@
           <view
             v-for="(lesson, index) in visibleLessons"
             :key="lesson.id"
-            :class="['lesson-item', { selected: selectedLessonIds.includes(lesson.id) }]"
+            :class="['lesson-item', { selected: selectedLessonIds.includes(lesson.id), disabled: isLessonExpired(lesson.id) }]"
             @tap="toggleLesson(lesson.id)"
           >
-            <view class="lesson-checkbox">
+            <view :class="['lesson-checkbox', { disabled: isLessonExpired(lesson.id) }]">
               <text v-if="selectedLessonIds.includes(lesson.id)" class="lesson-check-icon">✓</text>
             </view>
             <view class="lesson-icon-wrap">
               <text class="lesson-play-icon">▶</text>
             </view>
             <view class="lesson-info">
-              <text class="lesson-title">{{ lesson.title }}</text>
+              <view class="lesson-title-row">
+                <text class="lesson-title">{{ lesson.title }}</text>
+                <text v-if="lesson.is_free_preview" class="lesson-free-tag">试听</text>
+              </view>
               <view class="lesson-meta">
                 <text class="lesson-duration">{{ formatDuration(lesson.duration_minutes) }}</text>
-                <text class="lesson-status">可预约</text>
+                <text v-if="isLessonExpired(lesson.id)" class="lesson-status lesson-status-expired">已过期</text>
+                <text v-else class="lesson-status">可预约</text>
               </view>
             </view>
-            <text class="lesson-price">¥{{ currentUnitPrice }}</text>
+            <text :class="['lesson-price', { 'lesson-price-free': lesson.is_free_preview }]">{{ lesson.is_free_preview ? '¥0' : '¥' + currentUnitPrice }}</text>
           </view>
 
           <!-- Full course promo -->
           <view
             v-if="!isFullPackage && currentFullPackagePrice"
-            class="full-package-bar"
+            :class="['full-package-bar', { 'full-package-bar-disabled': hasExpiredLessons }]"
             @tap="selectFullPackage"
           >
             <view class="full-package-left">
@@ -132,10 +136,11 @@
               </view>
               <view class="full-package-text">
                 <text class="full-package-title">全套{{ lessons.length }}课时更划算</text>
-                <text class="full-package-save">立省¥{{ fullPackageSaveAmount }}</text>
+                <text v-if="hasExpiredLessons" class="full-package-save full-package-warn">含过期课时，不可选全套</text>
+                <text v-else class="full-package-save">立省¥{{ fullPackageSaveAmount }}</text>
               </view>
             </view>
-            <text class="full-package-link">选择全套 ›</text>
+            <text class="full-package-link">{{ hasExpiredLessons ? '不可选' : '选择全套 ›' }}</text>
           </view>
 
           <!-- Expand/collapse toggle -->
@@ -160,6 +165,7 @@
               <text class="schedule-cal-icon">☑</text>
             </view>
             <view class="schedule-info">
+              <text v-if="startDateFormatted" class="schedule-start-date-big">开课日期：{{ startDateFormatted }}</text>
               <text v-if="startDateDesc" class="schedule-start-text">{{ startDateDesc }}</text>
               <text :class="['schedule-time-text', { expanded: scheduleExpanded }]" @tap="toggleSchedule">{{ scheduleDesc || '按课表上课' }}</text>
               <text class="schedule-desc">固定班课，按课表上课</text>
@@ -423,6 +429,7 @@ export default {
       scheduleExpanded: false,
       isFullPackage: false,
       lessonsExpanded: false,
+      lessonScheduleMap: {},  // lesson_id -> date string (YYYY-MM-DD)
 
       // Custom schedule time picker
       selectedStartDate: '',
@@ -474,6 +481,22 @@ export default {
 
     startDateDesc() {
       return formatCourseStartDate(this.courseInfo.start_date)
+    },
+
+    startDateFormatted() {
+      const sd = this.courseInfo.start_date
+      if (!sd) return ''
+      const text = String(sd).trim()
+      return text.includes('T') ? text.slice(0, text.indexOf('T')) : text.slice(0, 10)
+    },
+
+    hasExpiredLessons() {
+      if (!Object.keys(this.lessonScheduleMap).length) return false
+      const todayStr = this.getTodayStr()
+      return this.lessons.some(l => {
+        const d = this.lessonScheduleMap[l.id]
+        return d && d <= todayStr
+      })
     },
 
     fullPackageSaveAmount() {
@@ -537,20 +560,24 @@ export default {
     },
 
     priceSummary() {
-      const count = this.selectedLessonIds.length
-      const totalLessons = this.lessons.length
       const unitPrice = this.currentUnitPrice
       const couponDiscount = this.couponDiscount
 
       if (this.isFullPackage && this.currentFullPackagePrice) {
-        // 全套课时显示原价（未优惠前的标准价格）
-        const originalPrice = money(totalLessons * unitPrice)
-        const standardPrice = totalLessons * unitPrice
-        const discountAmount = money(Math.max(0, standardPrice - this.currentFullPackagePrice))
+        // 全套课时：排除试听课时后的原价计算
+        const nonFreeLessons = this.lessons.filter(l => !l.is_free_preview)
+        const originalPrice = money(nonFreeLessons.length * unitPrice)
+        const standardTotal = nonFreeLessons.length * unitPrice
+        const discountAmount = money(Math.max(0, standardTotal - this.currentFullPackagePrice))
         const totalPrice = money(Math.max(0, this.currentFullPackagePrice - couponDiscount))
         return { originalPrice, discountAmount, couponDiscount, totalPrice, unitPrice }
       }
 
+      // 单课时选择：排除试听课时
+      const selectedNonFree = this.lessons.filter(
+        l => this.selectedLessonIds.includes(l.id) && !l.is_free_preview
+      )
+      const count = selectedNonFree.length
       const originalPrice = money(count * unitPrice)
       const discountAmount = '0.00'
       const totalPrice = money(Math.max(0, count * unitPrice - couponDiscount))
@@ -558,12 +585,19 @@ export default {
     },
 
     priceLabel() {
-      const count = this.selectedLessonIds.length
-      const unitPrice = this.currentUnitPrice
       if (this.isFullPackage && this.currentFullPackagePrice) {
-        return `全套课时（${this.lessons.length}课时）`
+        const nonFreeCount = this.lessons.filter(l => !l.is_free_preview).length
+        return `全套课时（${this.lessons.length}课时，${nonFreeCount}节计费）`
       }
-      return `课程费（${count}课时 × ¥${unitPrice}）`
+      const selectedNonFree = this.lessons.filter(
+        l => this.selectedLessonIds.includes(l.id) && !l.is_free_preview
+      )
+      const count = selectedNonFree.length
+      const freeCount = this.selectedLessonIds.length - count
+      const unitPrice = this.currentUnitPrice
+      let label = `课程费（${count}课时 × ¥${unitPrice}）`
+      if (freeCount > 0) label = `课程费（${count}课时 × ¥${unitPrice}，${freeCount}节试听免费）`
+      return label
     },
 
     couponDiscountText() {
@@ -606,6 +640,23 @@ export default {
         this.courseInfo = res.course || res
         this.lessons = res.lessons || []
         
+        // 解析 lesson_schedule，建立 lesson_id -> date 映射
+        if (res.schedule && res.schedule.lesson_schedule) {
+          const map = {}
+          let scheduleData = res.schedule.lesson_schedule
+          if (typeof scheduleData === 'string') {
+            try { scheduleData = JSON.parse(scheduleData) } catch { scheduleData = [] }
+          }
+          if (Array.isArray(scheduleData)) {
+            scheduleData.forEach(item => {
+              if (item.lesson_id && item.date) {
+                map[item.lesson_id] = item.date
+              }
+            })
+          }
+          this.lessonScheduleMap = map
+        }
+
         // 从排课表获取教师信息
         if (res.schedule && res.schedule.teacher_id) {
           // 如果有排课信息，更新课程的老师信息
@@ -660,6 +711,8 @@ export default {
     },
 
     toggleLesson(lessonId) {
+      // 过期课时不可选
+      if (this.isLessonExpired(lessonId)) return
       const idx = this.selectedLessonIds.indexOf(lessonId)
       if (idx > -1) {
         this.selectedLessonIds.splice(idx, 1)
@@ -670,10 +723,29 @@ export default {
     },
 
     selectFullPackage() {
+      // 存在过期课时时不允许选全套
+      if (this.hasExpiredLessons) {
+        uni.showToast({ title: '含过期课时，无法选择全套', icon: 'none' })
+        return
+      }
       this.selectedLessonIds = this.lessons.map(l => l.id)
       this.isFullPackage = true
       this.lessonsExpanded = true
       uni.showToast({ title: `已选择全套${this.lessons.length}课时，立省¥${this.fullPackageSaveAmount}`, icon: 'none' })
+    },
+
+    isLessonExpired(lessonId) {
+      if (!this.lessonScheduleMap || !this.lessonScheduleMap[lessonId]) return false
+      const lessonDate = this.lessonScheduleMap[lessonId]
+      const todayStr = this.getTodayStr()
+      return lessonDate <= todayStr
+    },
+
+    getTodayStr() {
+      const now = new Date()
+      // 使用 Asia/Shanghai 时区
+      const shanghaiStr = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' })
+      return shanghaiStr
     },
 
     switchBookingType(type) {
@@ -1152,6 +1224,16 @@ function money(value) {
   background: $primary-light;
 }
 
+.lesson-item.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.lesson-item.disabled .lesson-checkbox {
+  border-color: $border-color;
+  background: #f5f5f5;
+}
+
 .lesson-checkbox {
   width: 36rpx;
   height: 36rpx;
@@ -1204,6 +1286,27 @@ function money(value) {
   white-space: nowrap;
 }
 
+.lesson-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.lesson-free-tag {
+  font-size: 18rpx;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #43A047, #66BB6A);
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.lesson-status-expired {
+  color: $text-muted !important;
+}
+
 .lesson-meta {
   display: flex;
   align-items: center;
@@ -1226,6 +1329,11 @@ function money(value) {
   font-weight: 500;
   color: $text-primary;
   flex-shrink: 0;
+}
+
+.lesson-price-free {
+  color: #43A047;
+  font-weight: 700;
 }
 
 /* Full package promo */
@@ -1282,6 +1390,16 @@ function money(value) {
 .full-package-link {
   font-size: 24rpx;
   color: $primary;
+  font-weight: 600;
+}
+
+.full-package-bar-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.full-package-warn {
+  color: #E64A19 !important;
   font-weight: 600;
 }
 
@@ -1342,6 +1460,13 @@ function money(value) {
 .schedule-start-text {
   font-size: 24rpx;
   color: $text-secondary;
+}
+
+.schedule-start-date-big {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: $primary;
+  margin-bottom: 4rpx;
 }
 
 .schedule-time-text {

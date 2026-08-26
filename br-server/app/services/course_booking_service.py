@@ -307,15 +307,25 @@ class CourseBookingService:
             if Decimal(str(user.balance)) < total_price:
                 raise WalletBalanceInsufficientError("余额不足")
 
-        # 6. 创建 Booking 记录
+        # 6. 根据开课日期判断订单状态
+        #    start_date <= 今天 → confirmed（进行中）
+        #    start_date > 今天  → pending（待开始）
+        today = datetime.now(CHINA_TIMEZONE).date()
+        start_date = getattr(schedule, "start_date", None) if schedule else None
+        if start_date is not None and start_date > today:
+            initial_status = "pending"
+        else:
+            initial_status = "confirmed"
+
+        # 7. 创建 Booking 记录
         booking = Booking(
             user_id=str(user_id),
             room_id=course["room_id"],
             seat_id=None,  # 课程预约不需要座位
-            date=datetime.now(CHINA_TIMEZONE).date(),
+            date=today,
             start_time=datetime.now(CHINA_TIMEZONE).time(),
             end_time=datetime.now(CHINA_TIMEZONE).time(),
-            status="confirmed" if balance_payment else "pending",
+            status=initial_status,
             original_price=original_price,
             discount_amount=discount_amount,
             total_price=total_price,
@@ -333,11 +343,11 @@ class CourseBookingService:
         db.add(booking)
         await db.flush()
 
-        # 6.5. 如果是自定义预约，保存用户选择的时间到排课表
+        # 7.5. 如果是自定义预约，保存用户选择的时间到排课表
         if data.schedule_type == "custom" and (data.start_date or data.time_slot):
             await self._save_custom_schedule(db, course["id"], data.start_date, data.time_slot)
 
-        # 7. 余额扣款
+        # 8. 余额扣款
         payment_params = None
         if balance_payment and user is not None:
             user.balance = Decimal(str(user.balance)) - total_price
@@ -357,7 +367,7 @@ class CourseBookingService:
             setattr(wallet_transaction, "payment_status", "paid")
             db.add(wallet_transaction)
 
-        # 8. 微信支付
+        # 9. 微信支付
         if data.payment_method == "wechat" and wechat_client is not None:
             from app.services.booking_payment_service import BookingPaymentService
 
@@ -380,7 +390,7 @@ class CourseBookingService:
                     # 微信支付创建失败，不阻断预约创建
                     payment_params = None
 
-        # 9. 标记优惠券已使用
+        # 10. 标记优惠券已使用
         if user_coupon is not None:
             coupon_service.mark_coupon_used(user_coupon, booking.id)
 
@@ -448,7 +458,10 @@ class CourseBookingService:
             }
 
         # 已支付状态取消 - 需要退款
-        if booking.status != "confirmed":
+        # 支持 confirmed（进行中）和 pending + paid（待开始已支付）两种状态
+        if booking.status not in ("confirmed",) and not (
+            booking.status == "pending" and booking.payment_status == "paid"
+        ):
             raise BookingCancellationNotAllowedError("该预约不可取消")
 
         if booking.payment_status != "paid":

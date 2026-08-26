@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import uuid
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from decimal import Decimal
 from typing import Any
 
@@ -20,6 +21,7 @@ from app.domain.payment_rules import (
     next_payment_check_delay,
 )
 from app.models.booking import Booking
+from app.models.course_schedule import CourseSchedule
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.models.user import User
@@ -159,7 +161,9 @@ class BookingPaymentService:
         if booking.payment_status != "pending":
             raise BookingPaymentAlreadyProcessedError("Booking payment already processed")
 
-        booking.status = "confirmed"
+        # 课程预约根据开课日期决定状态：已开课 → confirmed，未开课 → pending
+        paid_status = await self._determine_course_booking_status(booking)
+        booking.status = paid_status
         booking.payment_status = "paid"
         booking.transaction_id = notify.get("transaction_id")
         booking.paid_at = self._parse_wechat_success_time(notify.get("success_time")) or datetime.now()
@@ -264,6 +268,25 @@ class BookingPaymentService:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
         return parsed.replace(tzinfo=None)
 
+    async def _determine_course_booking_status(self, booking: Booking) -> str:
+        """课程预约根据开课日期返回状态，非课程预约返回 confirmed。
+
+        start_date <= 今天 → "confirmed"（进行中）
+        start_date > 今天  → "pending"（待开始）
+        """
+        if not booking.course_id:
+            return "confirmed"
+        schedule_result = await self._db.execute(
+            select(CourseSchedule.start_date)
+            .where(CourseSchedule.course_id == booking.course_id)
+            .limit(1)
+        )
+        start_date = schedule_result.scalar_one_or_none()
+        if start_date is None:
+            return "confirmed"
+        today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+        return "confirmed" if start_date <= today else "pending"
+
     def _decimal_to_cents(self, value: Decimal) -> int:
         return money_to_cents(value)
 
@@ -279,7 +302,8 @@ class BookingPaymentService:
             paid_cents = int(trade.get("amount", {}).get("total", -1))
             if paid_cents != expected_cents:
                 raise InvalidBookingPaymentCallbackError("WeChat Pay amount mismatch")
-            booking.status = "confirmed"
+            paid_status = await self._determine_course_booking_status(booking)
+            booking.status = paid_status
             booking.payment_status = "paid"
             booking.transaction_id = trade.get("transaction_id")
             booking.paid_at = self._parse_wechat_success_time(trade.get("success_time")) or now

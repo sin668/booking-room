@@ -140,12 +140,12 @@
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot lesson-icon-dot-active" />
                 </view>
-                <text class="lesson-highlight-text">第{{ getNearestLesson(order).sort_order || '?' }}讲：{{ getNearestLesson(order).lesson_title }}   {{ getNearestLesson(order).lesson_date }} {{ formatLessonStartTime(getNearestLesson(order).lesson_time_slot) }}上课</text>
+                <text class="lesson-highlight-text">{{ getNearestLesson(order).lesson_title }}   {{ getNearestLesson(order).lesson_date }} {{ formatLessonStartTime(getNearestLesson(order).lesson_time_slot) }}上课</text>
               </view>
               <view v-if="isLessonsExpanded(order)" class="lesson-expand-list">
                 <view v-for="ls in order.lesson_schedules" :key="ls.id" class="lesson-expand-item">
                   <view class="lesson-expand-dot" />
-                  <text class="lesson-expand-text">第{{ ls.sort_order }}讲：{{ ls.lesson_title }}   {{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</text>
+                  <text class="lesson-expand-text">{{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</text>
                 </view>
               </view>
             </template>
@@ -193,7 +193,7 @@
               <text class="action-btn-text">查看座位</text>
             </view>
             <view
-              v-if="(order.status === 'confirmed' || order.status === 'in_progress') && order.payment_status !== 'pending' && isCourseBooking(order)"
+              v-if="(order.status === 'confirmed' || order.status === 'in_progress' || displayStatus(order) === 'pending_start') && order.payment_status !== 'pending' && isCourseBooking(order)"
               class="action-btn"
               @tap="viewCourse(order)"
             >
@@ -312,7 +312,14 @@ export default {
     },
 
     isOrderPendingStart(order) {
-      return order.status === 'confirmed' && !order.started
+      if (order.status === 'confirmed' && !order.started) return true
+      // 待开始（已支付但课程未开始）
+      if (
+        order.status === 'pending' &&
+        order.payment_status === 'paid' &&
+        order.booking_type === 'course'
+      ) return true
+      return false
     },
 
     endDateText(order) {
@@ -398,6 +405,14 @@ export default {
 
     displayStatus(order) {
       if (!order) return order?.status || ''
+      // 已支付但课程未开始 → 待开始
+      if (
+        order.status === 'pending' &&
+        order.payment_status === 'paid' &&
+        order.booking_type === 'course'
+      ) {
+        return 'pending_start'
+      }
       if (order.status === 'confirmed' && order.booking_type === 'course' && order.started === true) {
         return 'in_progress'
       }
@@ -996,7 +1011,7 @@ export default {
 }
 
 .lesson-highlight-text {
-  font-size: 26rpx;
+  font-size: 24rpx;
   font-weight: 500;
   color: $success;
 }
@@ -1025,6 +1040,20 @@ export default {
 .lesson-expand-text {
   font-size: 24rpx;
   color: $text-secondary;
+}
+
+/* Pending-start (paid, course not yet started) status dot & badge */
+.dot-pending_start {
+  background: #2196F3;
+  box-shadow: 0 0 0 8rpx rgba(33, 150, 243, 0.12);
+}
+
+.badge-pending_start {
+  background: rgba(33, 150, 243, 0.1);
+}
+
+.badge-pending_start .status-badge-text {
+  color: #1976D2;
 }
 
 /* In-progress status dot & badge */

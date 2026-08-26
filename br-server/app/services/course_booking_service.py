@@ -314,10 +314,25 @@ class CourseBookingService:
         ]
         lesson_titles = [lesson.title for lesson in selected_lessons]
 
-        # 3. 计算价格
-        price_info = self.calculate_price(
-            course, schedule, data.booking_type, data.lesson_ids, total_lessons
-        )
+        # 3. 计算价格（排除试听课时）
+        #    试听课时 (is_free_preview=True) 费用为 ¥0，不计入支付金额
+        free_preview_ids = {
+            lesson.id for lesson in selected_lessons if getattr(lesson, 'is_free_preview', False)
+        }
+        paid_lesson_ids = [lid for lid in data.lesson_ids if lid not in free_preview_ids]
+
+        if not paid_lesson_ids:
+            # 全部为试听课时，无需支付
+            price_info = {
+                "original_price": Decimal("0"),
+                "discount_amount": Decimal("0"),
+                "unit_price": Decimal("0"),
+                "total_price": Decimal("0"),
+            }
+        else:
+            price_info = self.calculate_price(
+                course, schedule, data.booking_type, paid_lesson_ids, total_lessons
+            )
         original_price = price_info["original_price"]
         discount_amount = price_info["discount_amount"]
         total_price = price_info["total_price"]

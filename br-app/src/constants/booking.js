@@ -8,6 +8,7 @@ export const BOOKING_TABS = [
 
 export const BOOKING_STATUS_LABELS = {
   pending: '待支付',
+  pending_start: '待开始',
   confirmed: '已预约',
   in_progress: '进行中',
   completed: '已完成',

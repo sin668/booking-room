@@ -86,99 +86,100 @@
 
           <!-- 时间段选择器 -->
           <n-form-item label="上课时间段" path="time_slots">
-            <div v-if="weekDates.length > 0" class="schedule-grid">
-              <!-- 日期表头 -->
-              <div class="schedule-header">
-                <div class="header-cell time-header-cell">时间段</div>
+            <div class="schedule-wrapper">
+              <div v-if="weekDates.length > 0" class="schedule-grid">
+                <!-- 日期表头 -->
+                <div class="schedule-header">
+                  <div class="header-cell time-header-cell">时间段</div>
+                  <div
+                    v-for="date in weekDates"
+                    :key="date.dateStr"
+                    class="header-cell date-header"
+                  >
+                    <div class="weekday">{{ date.weekdayName }}</div>
+                    <div class="date">{{ date.dateDisplay }}</div>
+                  </div>
+                </div>
+                <!-- 时间段网格 -->
                 <div
-                  v-for="date in weekDates"
-                  :key="date.dateStr"
-                  class="header-cell date-header"
+                  v-for="timeSlot in timeSlots"
+                  :key="timeSlot"
+                  class="schedule-row"
                 >
-                  <div class="weekday">{{ date.weekdayName }}</div>
-                  <div class="date">{{ date.dateDisplay }}</div>
+                  <div class="time-label">
+                    {{ timeSlot }}
+                    <n-button
+                      v-if="!isDefaultTimeSlot(timeSlot)"
+                      text
+                      type="error"
+                      size="tiny"
+                      class="delete-slot-btn"
+                      @click.stop="removeCustomTimeSlot(timeSlot)"
+                    >
+                      <template #icon><n-icon size="12"><CloseOutline /></n-icon></template>
+                    </n-button>
+                  </div>
+                  <div
+                    v-for="date in weekDates"
+                    :key="`${date.weekday}-${timeSlot}`"
+                    class="slot-cell"
+                    :class="{ selected: isSelected(date.weekday, timeSlot) }"
+                    @click="toggleSlot(date.weekday, timeSlot)"
+                  >
+                    {{ isSelected(date.weekday, timeSlot) ? '✓' : '' }}
+                  </div>
                 </div>
               </div>
-              <!-- 时间段网格 -->
-              <div
-                v-for="timeSlot in timeSlots"
-                :key="timeSlot"
-                class="schedule-row"
-              >
-                <div class="time-label">
-                  {{ timeSlot }}
+              <!-- 新增时间段（表格下方） -->
+              <div v-if="weekDates.length > 0" class="add-slot-outside">
+                <n-button
+                  v-if="!showAddSlotInput"
+                  text
+                  type="primary"
+                  size="small"
+                  @click="showAddSlotInput = true"
+                >
+                  <template #icon><n-icon size="14"><AddOutline /></n-icon></template>
+                  新增时间段
+                </n-button>
+                <div v-if="showAddSlotInput" class="add-slot-form">
+                  <n-time-picker
+                    v-model:formatted-value="newSlotStart"
+                    format="HH:mm"
+                    value-format="HH:mm"
+                    placeholder="开始"
+                    size="small"
+                    style="width: 90px"
+                    :show-icon="false"
+                  />
+                  <span class="add-slot-separator">-</span>
+                  <n-time-picker
+                    v-model:formatted-value="newSlotEnd"
+                    format="HH:mm"
+                    value-format="HH:mm"
+                    placeholder="结束"
+                    size="small"
+                    style="width: 90px"
+                    :show-icon="false"
+                  />
                   <n-button
-                    v-if="!isDefaultTimeSlot(timeSlot)"
-                    text
-                    type="error"
+                    type="primary"
                     size="tiny"
-                    class="delete-slot-btn"
-                    @click.stop="removeCustomTimeSlot(timeSlot)"
+                    :disabled="!newSlotStart || !newSlotEnd"
+                    @click="confirmAddTimeSlot"
                   >
-                    <template #icon><n-icon size="12"><CloseOutline /></n-icon></template>
+                    确定
+                  </n-button>
+                  <n-button
+                    size="tiny"
+                    @click="cancelAddTimeSlot"
+                  >
+                    取消
                   </n-button>
                 </div>
-                <div
-                  v-for="date in weekDates"
-                  :key="`${date.weekday}-${timeSlot}`"
-                  class="slot-cell"
-                  :class="{ selected: isSelected(date.weekday, timeSlot) }"
-                  @click="toggleSlot(date.weekday, timeSlot)"
-                >
-                  {{ isSelected(date.weekday, timeSlot) ? '✓' : '' }}
-                </div>
               </div>
-
+              <n-empty v-if="weekDates.length === 0" description="请先选择开始日期" />
             </div>
-            <!-- 新增时间段（表格下方） -->
-            <div v-if="weekDates.length > 0" class="add-slot-outside">
-              <n-button
-                v-if="!showAddSlotInput"
-                text
-                type="primary"
-                size="small"
-                @click="showAddSlotInput = true"
-              >
-                <template #icon><n-icon size="14"><AddOutline /></n-icon></template>
-                新增时间段
-              </n-button>
-              <div v-if="showAddSlotInput" class="add-slot-form">
-                <n-time-picker
-                  v-model:formatted-value="newSlotStart"
-                  format="HH:mm"
-                  value-format="HH:mm"
-                  placeholder="开始"
-                  size="small"
-                  style="width: 90px"
-                  :show-icon="false"
-                />
-                <span class="add-slot-separator">-</span>
-                <n-time-picker
-                  v-model:formatted-value="newSlotEnd"
-                  format="HH:mm"
-                  value-format="HH:mm"
-                  placeholder="结束"
-                  size="small"
-                  style="width: 90px"
-                  :show-icon="false"
-                />
-                <n-button
-                  type="primary"
-                  size="tiny"
-                  :disabled="!newSlotStart || !newSlotEnd"
-                  @click="confirmAddTimeSlot"
-                >
-                  确定
-                </n-button>
-                <n-button
-                  size="tiny"
-                  @click="cancelAddTimeSlot"
-                >
-                  取消
-                </n-button>
-              </div>
-            </div>
-            <n-empty v-if="weekDates.length === 0" description="请先选择开始日期" />
           </n-form-item>
 
           <!-- 已选时间段显示 -->
@@ -311,25 +312,13 @@
       return;
     }
 
-    // 校验：不与已有时间段重叠
-    const newStart = timeToMinutes(start);
-    const newEnd = timeToMinutes(end);
-    for (const existing of timeSlots.value) {
-      const [eStart, eEnd] = existing.split('-');
-      const es = timeToMinutes(eStart);
-      const ee = timeToMinutes(eEnd);
-      if (newStart < ee && newEnd > es) {
-        window['$message']?.warning(`时间段 ${label} 与已有时间段 ${existing} 重叠`);
-        return;
-      }
-    }
-
     // 校验：不重复添加
     if (timeSlots.value.includes(label)) {
       window['$message']?.warning('该时间段已存在');
       return;
     }
 
+    const newStart = timeToMinutes(start);
     // 按时间顺序插入
     const idx = timeSlots.value.findIndex((s) => timeToMinutes(s.split('-')[0]) > newStart);
     if (idx === -1) {
@@ -959,6 +948,12 @@
 
   .delete-slot-btn:hover {
     opacity: 1;
+  }
+
+  /* 时间段整体容器 */
+  .schedule-wrapper {
+    width: 100%;
+    display: block;
   }
 
   /* 新增时间段（表格外） */

@@ -525,8 +525,12 @@ class AdminCourseService:
     ) -> CourseScheduleResponse:
         """延期某一课时及其后续所有课时。
 
-        采用删除旧记录 + 重建新记录的方式，确保数据正确持久化。
-        这是与 async SQLAlchemy ORM 最兼容的可靠方案。
+        延期逻辑（时间顺延）：
+        1. 第 N 讲的上课时间变为第 N+1 讲原来的上课时间
+        2. 第 N+1 讲的上课时间变为第 N+2 讲原来的上课时间
+        3. 以此类推，所有后续课时都顺延一个时段
+        4. 最后一门课时的上课时间由可用时间段循环计算得出（往后推一个时间段）
+        5. 更新 course_schedules 表的 end_date 字段（最后一个课时日期 + 1天）
         """
         logger = logging.getLogger(__name__)
 
@@ -547,19 +551,20 @@ class AdminCourseService:
             schedule.id, schedule.course_id, schedule.start_date, schedule.end_date, schedule.time_slots
         )
 
-        # 2. 从 lesson_schedules 表获取当前课时安排
+        # 2. 从 lesson_schedules 表获取当前课时安排（按 sort_order 排序）
         ls_result = await db.execute(
             select(LessonSchedule)
             .where(LessonSchedule.schedule_id == schedule_id)
             .order_by(LessonSchedule.sort_order.asc())
         )
-        current_schedules = list(ls_result.scalars().all())
-        if not current_schedules:
+        lesson_schedules = list(ls_result.scalars().all())
+        if not lesson_schedules:
             logger.error("[postpone] 排课记录没有课时安排: schedule_id=%s", schedule_id)
             raise ValueError("排课记录没有课时安排，无法延期")
 
-        logger.info("[postpone] 当前课时安排 (%d 条):", len(current_schedules))
-        for ls in current_schedules:
+        total_lessons = len(lesson_schedules)
+        logger.info("[postpone] 当前课时安排 (%d 条):", total_lessons)
+        for ls in lesson_schedules:
             logger.info(
                 "[postpone]   lesson_schedule: id=%s, lesson_id=%s, date=%s, time_slot=%s, sort=%s",
                 ls.id, ls.lesson_id, ls.lesson_date, ls.lesson_time_slot, ls.sort_order
@@ -567,7 +572,7 @@ class AdminCourseService:
 
         # 3. 找到目标课时的索引
         target_idx = None
-        for i, ls in enumerate(current_schedules):
+        for i, ls in enumerate(lesson_schedules):
             if ls.lesson_id == lesson_id:
                 target_idx = i
                 break
@@ -575,9 +580,31 @@ class AdminCourseService:
             logger.error("[postpone] 课时 %s 不存在于该排课记录中", lesson_id)
             raise ValueError(f"课时 {lesson_id} 不存在于该排课记录中")
 
-        logger.info("[postpone] 目标课时索引: %d (lesson_id=%s)", target_idx, lesson_id)
+        logger.info("[postpone] 目标课时索引: %d (lesson_id=%s), 共 %d 个课时", target_idx, lesson_id, total_lessons)
 
-        # 4. 解析 time_slots 获取时间段配置
+        # 4. 读取当前所有课时的日期和时间段（先保存原始值，避免修改过程中被覆盖）
+        current_dates = [ls.lesson_date for ls in lesson_schedules]
+        current_time_slots = [ls.lesson_time_slot for ls in lesson_schedules]
+
+        logger.info("[postpone] 当前日期列表: %s", [str(d) for d in current_dates])
+        logger.info("[postpone] 当前时间段列表: %s", current_time_slots)
+
+        # 5. 时间顺延：从 target_idx 开始，每个课时取下一个课时的时间
+        #    最后一个课时的时间由可用时间段循环计算得出
+        for i in range(target_idx, total_lessons - 1):
+            # 第 i 个课时取第 i+1 个课时的时间
+            old_date = lesson_schedules[i].lesson_date
+            old_time = lesson_schedules[i].lesson_time_slot
+            lesson_schedules[i].lesson_date = current_dates[i + 1]
+            lesson_schedules[i].lesson_time_slot = current_time_slots[i + 1]
+            logger.info(
+                "[postpone] 课时[%d] lesson_id=%s: %s %s -> %s %s (取自下一课时)",
+                i, lesson_schedules[i].lesson_id,
+                old_date, old_time,
+                lesson_schedules[i].lesson_date, lesson_schedules[i].lesson_time_slot
+            )
+
+        # 6. 最后一个课时：由可用时间段循环计算得出（往后推一个时间段）
         if not schedule.time_slots or not schedule.start_date:
             raise ValueError("排课记录缺少时间段或开始日期")
         try:
@@ -585,65 +612,37 @@ class AdminCourseService:
         except (json.JSONDecodeError, TypeError):
             raise ValueError("时间段格式错误")
 
-        # 5. 生成足够的可用槽位（至少 len(current_schedules)+1 个）
+        # 生成 total_lessons + 1 个槽位，最后一个槽位即为最后一课时的新时间
         all_slots = self._generate_all_slots(
-            schedule.start_date, time_slots, len(current_schedules) + 1
+            schedule.start_date, time_slots, total_lessons + 1
         )
-        if not all_slots:
-            raise ValueError("没有可用的时间槽位")
+        if not all_slots or len(all_slots) <= total_lessons:
+            raise ValueError("可用时间槽位不足，无法延期")
 
-        logger.info("[postpone] 生成的可用槽位数量: %d", len(all_slots))
-        for i, slot in enumerate(all_slots):
-            logger.info("[postpone]   slot[%d]: date=%s, time=%s", i, slot["date"], slot["time"])
+        next_slot = all_slots[total_lessons]
+        last_idx = total_lessons - 1
+        old_last_date = lesson_schedules[last_idx].lesson_date
+        old_last_time = lesson_schedules[last_idx].lesson_time_slot
+        lesson_schedules[last_idx].lesson_date = date.fromisoformat(next_slot["date"])
+        lesson_schedules[last_idx].lesson_time_slot = next_slot["time"]
+        logger.info(
+            "[postpone] 课时[%d] lesson_id=%s (最后一讲): %s %s -> %s %s (循环计算)",
+            last_idx, lesson_schedules[last_idx].lesson_id,
+            old_last_date, old_last_time,
+            lesson_schedules[last_idx].lesson_date, lesson_schedules[last_idx].lesson_time_slot
+        )
 
-        # 6. 计算延期后每个课时的新日期和时间段
-        new_lesson_data = []
-        for i, ls in enumerate(current_schedules):
-            if i < target_idx:
-                slot = all_slots[i]
-            else:
-                slot = all_slots[i + 1]
-            new_lesson_data.append({
-                "lesson_id": ls.lesson_id,
-                "lesson_date": date.fromisoformat(slot["date"]),
-                "lesson_time_slot": slot["time"],
-                "sort_order": ls.sort_order,
-            })
-            logger.info(
-                "[postpone] 课时映射: lesson_id=%s, 旧日期=%s -> 新日期=%s, 新时间段=%s",
-                ls.lesson_id, ls.lesson_date, slot["date"], slot["time"]
-            )
-
-        # 7. 删除旧的 lesson_schedules 记录
-        for ls in current_schedules:
-            await db.delete(ls)
-        await db.flush()
-        logger.info("[postpone] 已删除 %d 条旧 lesson_schedule 记录", len(current_schedules))
-
-        # 8. 创建新的 lesson_schedules 记录
-        for item in new_lesson_data:
-            new_ls = LessonSchedule(
-                schedule_id=schedule_id,
-                lesson_id=item["lesson_id"],
-                lesson_date=item["lesson_date"],
-                lesson_time_slot=item["lesson_time_slot"],
-                sort_order=item["sort_order"],
-            )
-            db.add(new_ls)
-        logger.info("[postpone] 已创建 %d 条新 lesson_schedule 记录", len(new_lesson_data))
-
-        # 9. 重新计算 end_date（最后一个课时的上课日期 + 1 天）
-        last_slot = all_slots[len(current_schedules)]
-        new_end_date = date.fromisoformat(last_slot["date"]) + timedelta(days=1)
+        # 7. 重新计算 end_date（最后一个课时的上课日期 + 1 天）
+        new_end_date = lesson_schedules[last_idx].lesson_date + timedelta(days=1)
         old_end_date = schedule.end_date
         schedule.end_date = new_end_date
         logger.info("[postpone] end_date 更新: %s -> %s", old_end_date, new_end_date)
 
-        # 10. 刷新到数据库
+        # 8. 刷新到数据库
         await db.flush()
         logger.info("[postpone] flush 完成")
 
-        # 11. 从数据库重新查询以构建响应（确保数据一致性）
+        # 9. 从数据库重新查询以构建响应（确保数据一致性）
         response = await self._schedule_to_response(db, schedule)
         logger.info(
             "[postpone] 最终响应: end_date=%s, lesson_schedules数量=%d",

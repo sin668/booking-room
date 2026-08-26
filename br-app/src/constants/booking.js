@@ -1,6 +1,6 @@
 export const BOOKING_TABS = [
   { label: '全部', value: 'all' },
-  { label: '待开始', value: 'confirmed' },
+  { label: '待开始', value: 'pending_start' },
   { label: '进行中', value: 'in_progress' },
   { label: '已完成', value: 'completed' },
   { label: '已取消', value: 'cancelled' },

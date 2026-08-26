@@ -328,16 +328,22 @@ async def list_bookings(
 
     await _sync_user_booking_completions(db, user_id)
 
-    # Handle 'in_progress' virtual status: confirmed course bookings that have started
+    # Handle virtual statuses
     is_in_progress_filter = status == "in_progress"
+    is_pending_start_filter = status == "pending_start"
     today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
 
     conditions = [Booking.user_id == str(user_id)]
-    if status is not None and not is_in_progress_filter:
+    if status is not None and not is_in_progress_filter and not is_pending_start_filter:
         conditions.append(Booking.status == status)
     elif is_in_progress_filter:
         # in_progress: status=confirmed, booking_type=course, start_date <= today
         conditions.append(Booking.status == "confirmed")
+        conditions.append(Booking.booking_type == "course")
+    elif is_pending_start_filter:
+        # pending_start: status=pending, payment_status=paid, booking_type=course
+        conditions.append(Booking.status == "pending")
+        conditions.append(Booking.payment_status == "paid")
         conditions.append(Booking.booking_type == "course")
 
     where_clause = and_(*conditions)

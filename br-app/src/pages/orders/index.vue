@@ -134,18 +134,27 @@
               </view>
               <text class="info-text">{{ order.room ? order.room.name : '未知培训室' }}</text>
             </view>
-            <!-- Lesson row: nearest lesson + expandable list (pending/in_progress) -->
+            <!-- Lesson row: nearest lesson + expandable list (in_progress / pending_start) -->
             <template v-if="order.status !== 'completed' && order.lesson_schedules && order.lesson_schedules.length">
-              <view class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
+              <!-- Highlight nearest lesson row: only for in_progress orders -->
+              <view v-if="displayStatus(order) === 'in_progress'" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot lesson-icon-dot-active" />
                 </view>
                 <text class="lesson-highlight-text">{{ getNearestLesson(order).lesson_title }}   {{ getNearestLesson(order).lesson_date }} {{ formatLessonStartTime(getNearestLesson(order).lesson_time_slot) }}上课</text>
               </view>
+              <!-- Expand toggle for pending_start orders (no highlight) -->
+              <view v-if="displayStatus(order) === 'pending_start'" class="card-info-row lesson-expand-toggle" @tap.stop="toggleLessons(order)">
+                <view class="info-icon lesson-icon">
+                  <view class="lesson-icon-dot" />
+                </view>
+                <text :class="['info-text', 'schedule-text', { expanded: isLessonsExpanded(order) }]">{{ order.lesson_schedules.length }}个课时 {{ isLessonsExpanded(order) ? '收起' : '展开' }}</text>
+              </view>
+              <!-- Expandable lesson list for both in_progress and pending_start -->
               <view v-if="isLessonsExpanded(order)" class="lesson-expand-list">
                 <view v-for="ls in order.lesson_schedules" :key="ls.id" class="lesson-expand-item">
                   <view class="lesson-expand-dot" />
-                  <text class="lesson-expand-text">{{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</text>
+                  <text class="lesson-expand-text">{{ ls.lesson_title }}  {{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</text>
                 </view>
               </view>
             </template>
@@ -1014,6 +1023,14 @@ export default {
   font-size: 24rpx;
   font-weight: 500;
   color: $success;
+}
+
+/* Lesson expand toggle (pending_start - no highlight) */
+.lesson-expand-toggle {
+  background: rgba(33, 150, 243, 0.04);
+  border-radius: 12rpx;
+  padding: 10rpx 14rpx;
+  margin-bottom: 14rpx;
 }
 
 /* Lesson expand list */

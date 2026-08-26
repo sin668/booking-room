@@ -165,8 +165,7 @@
               <text class="schedule-cal-icon">☑</text>
             </view>
             <view class="schedule-info">
-              <text v-if="startDateFormatted" class="schedule-start-date-big">开课日期：{{ startDateFormatted }}</text>
-              <text v-if="startDateDesc" class="schedule-start-text">{{ startDateDesc }}</text>
+              <text v-if="startDateDesc" class="schedule-start-date-big">{{ startDateDesc }}</text>
               <text :class="['schedule-time-text', { expanded: scheduleExpanded }]" @tap="toggleSchedule">{{ scheduleDesc || '按课表上课' }}</text>
               <text class="schedule-desc">固定班课，按课表上课</text>
             </view>
@@ -1463,8 +1462,8 @@ function money(value) {
 }
 
 .schedule-start-date-big {
-  font-size: 34rpx;
-  font-weight: 700;
+  font-size: 26rpx;
+  font-weight: 600;
   color: $primary;
   margin-bottom: 4rpx;
 }

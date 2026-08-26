@@ -246,7 +246,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, h, ref, watch } from 'vue';
+  import { computed, h, nextTick, ref, watch } from 'vue';
   import type { FormInst, FormRules } from 'naive-ui';
   import { NButton, NTag } from 'naive-ui';
   import { TimeOutline, AddOutline, CloseOutline } from '@vicons/ionicons5';
@@ -722,10 +722,16 @@
   function handleEdit(row: ScheduleRecord) {
     editingId.value = row.id;
     editingSchedule.value = row;
-    formValues.value.teacher_id = row.teacher_id;
+    // 确保 teacher_id 为 number 类型，避免表单验证 type:'number' 不匹配
+    formValues.value.teacher_id = row.teacher_id ? Number(row.teacher_id) : null;
     formValues.value.start_date = row.start_date;
     formValues.value.price = row.price;
     formValues.value.full_package_price = row.full_package_price;
+
+    // 重置表单验证状态，避免编辑时误报校验错误
+    nextTick(() => {
+      formRef.value?.restoreValidation();
+    });
 
     // 解析 time_slots（周几 + 时间段格式，兼容旧的日期格式）
     selectedSlots.value = new Set();

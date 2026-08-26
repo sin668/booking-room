@@ -590,7 +590,9 @@ class AdminCourseService:
         logger.info("[postpone] 当前时间段列表: %s", current_time_slots)
 
         # 5. 时间顺延：从 target_idx 开始，每个课时取下一个课时的时间
-        #    最后一个课时的时间由可用时间段循环计算得出
+        #    最后一个课时基于其当前时间找到下一个可用时间段
+        logger.info("[postpone] 开始顺延逻辑: target_idx=%d, total=%d", target_idx, total_lessons)
+
         for i in range(target_idx, total_lessons - 1):
             # 第 i 个课时取第 i+1 个课时的时间
             old_date = lesson_schedules[i].lesson_date
@@ -604,7 +606,8 @@ class AdminCourseService:
                 lesson_schedules[i].lesson_date, lesson_schedules[i].lesson_time_slot
             )
 
-        # 6. 最后一个课时：由可用时间段循环计算得出（往后推一个时间段）
+        # 6. 最后一个课时：基于当前最后一个课时的实际时间，找到下一个可用时间段
+        #    这样即使 time_slots 配置被修改过，也能基于实际数据正确顺延
         if not schedule.time_slots or not schedule.start_date:
             raise ValueError("排课记录缺少时间段或开始日期")
         try:
@@ -612,21 +615,19 @@ class AdminCourseService:
         except (json.JSONDecodeError, TypeError):
             raise ValueError("时间段格式错误")
 
-        # 生成 total_lessons + 1 个槽位，最后一个槽位即为最后一课时的新时间
-        all_slots = self._generate_all_slots(
-            schedule.start_date, time_slots, total_lessons + 1
-        )
-        if not all_slots or len(all_slots) <= total_lessons:
+        last_idx = total_lessons - 1
+        last_date = current_dates[last_idx]
+        last_time = current_time_slots[last_idx]
+        next_slot = self._find_next_slot_after(last_date, last_time, schedule.start_date, time_slots)
+        if next_slot is None:
             raise ValueError("可用时间槽位不足，无法延期")
 
-        next_slot = all_slots[total_lessons]
-        last_idx = total_lessons - 1
         old_last_date = lesson_schedules[last_idx].lesson_date
         old_last_time = lesson_schedules[last_idx].lesson_time_slot
         lesson_schedules[last_idx].lesson_date = date.fromisoformat(next_slot["date"])
         lesson_schedules[last_idx].lesson_time_slot = next_slot["time"]
         logger.info(
-            "[postpone] 课时[%d] lesson_id=%s (最后一讲): %s %s -> %s %s (循环计算)",
+            "[postpone] 课时[%d] lesson_id=%s (最后一讲): %s %s -> %s %s (基于当前时间顺延)",
             last_idx, lesson_schedules[last_idx].lesson_id,
             old_last_date, old_last_time,
             lesson_schedules[last_idx].lesson_date, lesson_schedules[last_idx].lesson_time_slot
@@ -726,6 +727,69 @@ class AdminCourseService:
         if all_slots and len(all_slots) >= len(course_lessons):
             last_slot_date = date.fromisoformat(all_slots[len(course_lessons) - 1]["date"])
             schedule.end_date = last_slot_date + timedelta(days=1)
+
+    @staticmethod
+    def _find_next_slot_after(
+        current_date: date,
+        current_time_slot: str,
+        start_date: date,
+        time_slots: list[dict],
+    ) -> dict | None:
+        """找到给定日期时间段的下一个可用时间段。
+
+        基于当前课时的实际日期和时间，在 time_slots 配置中找到紧接着的下一个时间段。
+        如果当天还有后续时间段则返回当天的；否则返回下一个可用日期的第一个时间段。
+
+        Args:
+            current_date: 当前课时的日期
+            current_time_slot: 当前课时的时间段（如 "08:00-10:00"）
+            start_date: 排课开始日期
+            time_slots: 时间段列表 [{"weekday": 1, "time_slot": "08:00-10:00"}, ...]
+
+        Returns:
+            {"date": "YYYY-MM-DD", "time": "HH:MM-HH:MM"} 或 None
+        """
+        if not time_slots:
+            return None
+
+        # 按 weekday 分组时间段，保持顺序
+        weekday_slots: dict[int, list[str]] = {}
+        for ts in time_slots:
+            wd = ts.get("weekday")
+            if wd:
+                time_range = ts.get("time_slot", "")
+                if time_range:
+                    weekday_slots.setdefault(wd, []).append(time_range)
+
+        if not weekday_slots:
+            return None
+
+        current_weekday = current_date.isoweekday()  # 1=Monday, 7=Sunday
+
+        # 1. 尝试同一天的下一个时间段
+        if current_weekday in weekday_slots:
+            day_time_slots = weekday_slots[current_weekday]
+            if current_time_slot in day_time_slots:
+                current_slot_idx = day_time_slots.index(current_time_slot)
+                if current_slot_idx + 1 < len(day_time_slots):
+                    # 当天有后续时间段
+                    return {
+                        "date": current_date.isoformat(),
+                        "time": day_time_slots[current_slot_idx + 1],
+                    }
+
+        # 2. 当天没有后续时间段，找下一个可用日期的第一个时间段
+        #    从 current_date + 1 开始，搜索最多 365 天
+        for day_offset in range(1, 366):
+            next_date = current_date + timedelta(days=day_offset)
+            next_weekday = next_date.isoweekday()
+            if next_weekday in weekday_slots:
+                return {
+                    "date": next_date.isoformat(),
+                    "time": weekday_slots[next_weekday][0],
+                }
+
+        return None
 
     @staticmethod
     def _generate_all_slots(

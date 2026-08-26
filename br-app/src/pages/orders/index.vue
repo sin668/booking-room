@@ -106,18 +106,24 @@
               </view>
               <text class="info-text">{{ order.teacher_name ? order.teacher_name + ' 老师' : '待分配老师' }}</text>
             </view>
-            <!-- Start date row -->
-            <view v-if="startDateText(order)" class="card-info-row">
+            <!-- Start date row (only for pending start) -->
+            <view v-if="isOrderPendingStart(order) && startDateText(order)" class="card-info-row">
               <view class="info-icon start-icon">
                 <view class="start-icon-dot" />
               </view>
               <text class="info-text">{{ startDateText(order) }}</text>
             </view>
-            <!-- Schedule row -->
-            <view v-if="scheduleText(order)" class="card-info-row">
-              <view class="info-icon clock-icon">
-                <view class="clock-icon-circle" />
-                <view class="clock-icon-hand" />
+            <!-- End date row (only for completed) -->
+            <view v-if="order.status === 'completed' && endDateText(order)" class="card-info-row">
+              <view class="info-icon start-icon">
+                <view class="start-icon-dot" />
+              </view>
+              <text class="info-text">{{ endDateText(order) }}</text>
+            </view>
+            <!-- Schedule row (not for completed) -->
+            <view v-if="order.status !== 'completed' && scheduleText(order)" class="card-info-row">
+              <view class="info-icon lesson-icon">
+                <view class="lesson-icon-dot" />
               </view>
               <text :class="['info-text', 'schedule-text', { expanded: isScheduleExpanded(order) }]" @tap.stop="toggleSchedule(order)">{{ scheduleText(order) }}</text>
             </view>
@@ -128,8 +134,23 @@
               </view>
               <text class="info-text">{{ order.room ? order.room.name : '未知培训室' }}</text>
             </view>
-            <!-- Lesson titles -->
-            <view v-if="order.lesson_titles && order.lesson_titles.length" class="card-info-row">
+            <!-- Lesson row: nearest lesson + expandable list (pending/in_progress) -->
+            <template v-if="order.status !== 'completed' && order.lesson_schedules && order.lesson_schedules.length">
+              <view class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
+                <view class="info-icon lesson-icon">
+                  <view class="lesson-icon-dot lesson-icon-dot-active" />
+                </view>
+                <text class="lesson-highlight-text">第{{ getNearestLesson(order).sort_order || '?' }}讲：{{ getNearestLesson(order).lesson_title }}   {{ getNearestLesson(order).lesson_date }} {{ formatLessonStartTime(getNearestLesson(order).lesson_time_slot) }}上课</text>
+              </view>
+              <view v-if="isLessonsExpanded(order)" class="lesson-expand-list">
+                <view v-for="ls in order.lesson_schedules" :key="ls.id" class="lesson-expand-item">
+                  <view class="lesson-expand-dot" />
+                  <text class="lesson-expand-text">第{{ ls.sort_order }}讲：{{ ls.lesson_title }}   {{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</text>
+                </view>
+              </view>
+            </template>
+            <!-- Lesson titles (fallback for completed or no lesson_schedules) -->
+            <view v-if="order.status === 'completed' && order.lesson_titles && order.lesson_titles.length" class="card-info-row">
               <view class="info-icon lesson-icon">
                 <view class="lesson-icon-dot" />
               </view>
@@ -172,7 +193,7 @@
               <text class="action-btn-text">查看座位</text>
             </view>
             <view
-              v-if="order.status === 'confirmed' && order.payment_status !== 'pending' && isCourseBooking(order)"
+              v-if="(order.status === 'confirmed' || order.status === 'in_progress') && order.payment_status !== 'pending' && isCourseBooking(order)"
               class="action-btn"
               @tap="viewCourse(order)"
             >
@@ -221,7 +242,7 @@
 import { cancelBookingOrder, fetchBookingsPage } from '@/services/bookingPageService'
 import { cancelCourseBooking } from '@/api/courseBooking'
 import { BOOKING_TABS, SEAT_ZONE_LABELS } from '@/constants/booking'
-import { formatBookingStatus, formatCourseSchedule, formatCourseStartDate, formatHourCount, formatMoney } from '@/utils/formatters'
+import { formatBookingStatus, formatCourseEndDate, formatCourseSchedule, formatCourseStartDate, formatHourCount, formatMoney } from '@/utils/formatters'
 
 const TABS = [
   { label: '全部', value: 'all' },
@@ -259,6 +280,7 @@ export default {
       hasMore: true,
       cancellingOrderId: null,
       expandedScheduleIds: {},
+      expandedLessons: {},
     }
   },
 
@@ -283,6 +305,46 @@ export default {
       const text = formatCourseSchedule(order?.schedule)
       if (!text || text.length <= SCHEDULE_TRUNCATE_THRESHOLD) return
       this.expandedScheduleIds[order.id] = !this.expandedScheduleIds[order.id]
+    },
+
+    isOrderStarted(order) {
+      return order.status === 'in_progress' || (order.status === 'confirmed' && order.started === true)
+    },
+
+    isOrderPendingStart(order) {
+      return order.status === 'confirmed' && !order.started
+    },
+
+    endDateText(order) {
+      return formatCourseEndDate(order?.end_date)
+    },
+
+    getTodayStr() {
+      const d = new Date()
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
+    },
+
+    getNearestLesson(order) {
+      const schedules = order?.lesson_schedules
+      if (!schedules || !schedules.length) return null
+      const todayStr = this.getTodayStr()
+      return schedules.find(s => s.lesson_date >= todayStr) || schedules[schedules.length - 1]
+    },
+
+    formatLessonStartTime(timeSlot) {
+      if (!timeSlot || typeof timeSlot !== 'string') return ''
+      return timeSlot.split('-')[0] || ''
+    },
+
+    isLessonsExpanded(order) {
+      return Boolean(this.expandedLessons[order?.id])
+    },
+
+    toggleLessons(order) {
+      this.expandedLessons[order.id] = !this.expandedLessons[order.id]
     },
 
     async resetAndLoad() {
@@ -910,6 +972,64 @@ export default {
   height: 12rpx;
   border-radius: 3rpx;
   background: $text-muted;
+}
+
+/* Lesson highlight row (nearest lesson) */
+.lesson-icon-dot-active {
+  background: $success;
+}
+
+.lesson-highlight-row {
+  background: rgba(7, 193, 96, 0.06);
+  border-radius: 12rpx;
+  padding: 10rpx 14rpx;
+  margin-bottom: 14rpx;
+}
+
+.lesson-highlight-text {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: $success;
+}
+
+/* Lesson expand list */
+.lesson-expand-list {
+  padding: 8rpx 0 8rpx 50rpx;
+  margin-bottom: 14rpx;
+}
+
+.lesson-expand-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 8rpx 0;
+}
+
+.lesson-expand-dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: $text-muted;
+  flex-shrink: 0;
+}
+
+.lesson-expand-text {
+  font-size: 24rpx;
+  color: $text-secondary;
+}
+
+/* In-progress status dot & badge */
+.dot-in_progress {
+  background: $primary;
+  box-shadow: 0 0 0 8rpx rgba(79, 110, 247, 0.1);
+}
+
+.badge-in_progress {
+  background: $primary-light;
+}
+
+.badge-in_progress .status-badge-text {
+  color: $primary;
 }
 
 /* Bottom row: duration + price */

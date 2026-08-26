@@ -35,6 +35,18 @@ class RoomBrief(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class LessonScheduleBrief(BaseModel):
+    """课时安排简要信息。"""
+    id: int
+    lesson_id: int
+    lesson_date: date
+    lesson_time_slot: str
+    lesson_title: str | None = None
+    sort_order: int = 0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class BookingCreate(BaseModel):
     seat_id: int
     date: date
@@ -81,6 +93,9 @@ class BookingResponse(BaseModel):
     teacher_avatar: str | None = None
     schedule: str | None = None
     start_date: str | None = None
+    end_date: str | None = None
+    started: bool | None = None
+    lesson_schedules: list[LessonScheduleBrief] | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

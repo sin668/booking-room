@@ -146,3 +146,17 @@ export function formatCourseStartDate(startDate) {
   if (!datePart) return ''
   return `于 ${datePart} 后开课`
 }
+
+/**
+ * 将 end_date 处理为结课时间文案，如 "于 2026-08-26 结课"
+ * @param {string|null|undefined} endDate - 结课日期（YYYY-MM-DD）
+ * @returns {string} 结课时间文案
+ */
+export function formatCourseEndDate(endDate) {
+  if (endDate === null || endDate === undefined) return ''
+  const text = String(endDate).trim()
+  if (!text) return ''
+  const datePart = text.includes('T') ? text.slice(0, text.indexOf('T')) : text.slice(0, 10)
+  if (!datePart) return ''
+  return `于 ${datePart} 结课`
+}

@@ -1,6 +1,7 @@
 import uuid
 from datetime import date, datetime, timedelta, time
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,8 @@ from app.domain.booking_rules import (
 from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
+from app.models.lesson_schedule import LessonSchedule
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
@@ -26,6 +29,7 @@ from app.schemas.booking import (
     BookingCreate,
     BookingListResponse,
     BookingResponse,
+    LessonScheduleBrief,
     PaymentMethodEnum,
     RoomBrief,
     SeatBrief,
@@ -323,11 +327,55 @@ async def list_bookings(
 
     await _sync_user_booking_completions(db, user_id)
 
+    # Handle 'in_progress' virtual status: confirmed course bookings that have started
+    is_in_progress_filter = status == "in_progress"
+    today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+
     conditions = [Booking.user_id == str(user_id)]
-    if status is not None:
+    if status is not None and not is_in_progress_filter:
         conditions.append(Booking.status == status)
+    elif is_in_progress_filter:
+        # in_progress: status=confirmed, booking_type=course, start_date <= today
+        conditions.append(Booking.status == "confirmed")
+        conditions.append(Booking.booking_type == "course")
 
     where_clause = and_(*conditions)
+
+    # For in_progress filter, we need to join with course_schedules to check start_date
+    if is_in_progress_filter:
+        # Get course_ids for this user's confirmed course bookings
+        course_booking_ids_result = await db.execute(
+            select(Booking.id, Booking.course_id).where(where_clause)
+        )
+        course_booking_rows = course_booking_ids_result.all()
+        candidate_booking_ids = {row[0] for row in course_booking_rows}
+        candidate_course_ids = {row[1] for row in course_booking_rows if row[1] is not None}
+
+        if candidate_course_ids:
+            # Find courses that have started (start_date <= today)
+            started_result = await db.execute(
+                select(CourseSchedule.course_id).where(
+                    CourseSchedule.course_id.in_(candidate_course_ids),
+                    CourseSchedule.start_date <= today,
+                )
+            )
+            started_course_ids = set(started_result.scalars().all())
+            # Filter booking IDs to only those whose course has started
+            valid_booking_ids = {
+                bid for bid, cid in course_booking_rows
+                if cid is not None and cid in started_course_ids
+            }
+            candidate_booking_ids &= valid_booking_ids
+        else:
+            candidate_booking_ids = set()
+
+        if not candidate_booking_ids:
+            return BookingListResponse(items=[], total=0, page=page, page_size=page_size)
+
+        where_clause = and_(
+            Booking.user_id == str(user_id),
+            Booking.id.in_(candidate_booking_ids),
+        )
 
     count_result = await db.execute(
         select(func.count()).select_from(Booking).where(where_clause)
@@ -355,10 +403,12 @@ async def list_bookings(
     course_booking_ids = {b.id for b in bookings if getattr(b, "booking_type", None) == "course"}
     course_map: dict[int, str] = {}  # course_id -> course_name
     course_schedule_map: dict[int, str] = {}  # course_id -> schedule
-    course_start_date_map: dict[int, str] = {}  # course_id -> start_date
+    course_start_date_map: dict[int, date | None] = {}  # course_id -> start_date
+    course_end_date_map: dict[int, date | None] = {}  # course_id -> end_date
     course_teacher_map: dict[int, int | None] = {}  # course_id -> teacher_id
     teacher_map: dict[int, dict] = {}  # teacher_id -> {name, avatar}
     lesson_map: dict[int, list[str]] = {}  # booking_id -> lesson_titles
+    lesson_schedule_map: dict[int, list[LessonScheduleBrief]] = {}  # course_id -> lesson_schedules
     if course_booking_ids:
         course_ids = {b.course_id for b in bookings if getattr(b, "booking_type", None) == "course" and b.course_id is not None}
         if course_ids:
@@ -368,7 +418,6 @@ async def list_bookings(
                 course_map[c.id] = c.name
             
             # 查询排课信息（从 course_schedules 表获取 schedule 和 teacher_id）
-            from app.models.course_schedule import CourseSchedule
             schedules_result = await db.execute(
                 select(CourseSchedule).where(CourseSchedule.course_id.in_(course_ids))
                 .order_by(CourseSchedule.course_id, CourseSchedule.created_at)
@@ -381,14 +430,50 @@ async def list_bookings(
             for cid, sched in schedule_by_course.items():
                 course_schedule_map[cid] = sched.time_slots
                 course_teacher_map[cid] = sched.teacher_id
-                if sched.start_date is not None:
-                    course_start_date_map[cid] = sched.start_date.isoformat()
+                course_start_date_map[cid] = sched.start_date
+                course_end_date_map[cid] = sched.end_date
             
             # 查询教师信息
             teacher_ids = {s.teacher_id for s in schedule_list if s.teacher_id is not None}
             if teacher_ids:
                 teachers_result = await db.execute(select(Teacher).where(Teacher.id.in_(teacher_ids)))
                 teacher_map = {t.id: {"name": t.name, "avatar": t.avatar} for t in teachers_result.scalars().all()}
+
+            # 查询课时安排（lesson_schedules + course_lessons title）
+            schedule_ids = {s.id for s in schedule_list}
+            if schedule_ids:
+                ls_result = await db.execute(
+                    select(LessonSchedule)
+                    .where(LessonSchedule.schedule_id.in_(schedule_ids))
+                    .order_by(LessonSchedule.sort_order)
+                )
+                lesson_schedules_list = list(ls_result.scalars().all())
+                # Build course_id -> schedule_id mapping
+                schedule_id_to_course = {s.id: s.course_id for s in schedule_list}
+                # Collect lesson_ids for title lookup
+                all_lesson_ids = {ls.lesson_id for ls in lesson_schedules_list}
+                lesson_title_map: dict[int, str] = {}
+                if all_lesson_ids:
+                    lt_result = await db.execute(
+                        select(CourseLesson.id, CourseLesson.title).where(CourseLesson.id.in_(all_lesson_ids))
+                    )
+                    lesson_title_map = {row[0]: row[1] for row in lt_result.all()}
+                # Group by course_id
+                for ls in lesson_schedules_list:
+                    cid = schedule_id_to_course.get(ls.schedule_id)
+                    if cid is not None:
+                        if cid not in lesson_schedule_map:
+                            lesson_schedule_map[cid] = []
+                        lesson_schedule_map[cid].append(
+                            LessonScheduleBrief(
+                                id=ls.id,
+                                lesson_id=ls.lesson_id,
+                                lesson_date=ls.lesson_date,
+                                lesson_time_slot=ls.lesson_time_slot,
+                                lesson_title=lesson_title_map.get(ls.lesson_id),
+                                sort_order=ls.sort_order,
+                            )
+                        )
 
         for b in bookings:
             if getattr(b, "booking_type", None) == "course" and b.lesson_ids:
@@ -409,7 +494,14 @@ async def list_bookings(
             resp.course_name = course_map.get(b.course_id) if b.course_id else None
             resp.lesson_titles = lesson_map.get(b.id)
             resp.schedule = course_schedule_map.get(b.course_id) if b.course_id else None
-            resp.start_date = course_start_date_map.get(b.course_id) if b.course_id else None
+            start_d = course_start_date_map.get(b.course_id) if b.course_id else None
+            resp.start_date = start_d.isoformat() if start_d else None
+            end_d = course_end_date_map.get(b.course_id) if b.course_id else None
+            resp.end_date = end_d.isoformat() if end_d else None
+            # started: start_date <= today (Asia/Shanghai)
+            resp.started = (start_d <= today) if start_d else None
+            # lesson_schedules
+            resp.lesson_schedules = lesson_schedule_map.get(b.course_id) if b.course_id else None
             # 设置教师信息
             if b.course_id and b.course_id in course_teacher_map:
                 teacher_id = course_teacher_map[b.course_id]

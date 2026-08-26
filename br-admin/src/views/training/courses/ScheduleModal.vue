@@ -44,6 +44,7 @@
                   placeholder="请选择老师"
                   :options="teacherOptions"
                   :loading="teacherLoading"
+                  :disabled="isCourseStarted"
                   filterable
                   clearable
                 />
@@ -56,6 +57,7 @@
                   type="date"
                   value-format="yyyy-MM-dd"
                   style="width: 100%"
+                  :disabled="isCourseStarted"
                   clearable
                 />
               </n-form-item>
@@ -202,7 +204,11 @@
           <n-form-item label="课程目录">
             <div style="width: 100%">
               <n-list v-if="computedLessonSchedule.length > 0" bordered>
-                <n-list-item v-for="(item, index) in computedLessonSchedule" :key="item.lessonId">
+                <n-list-item 
+                  v-for="(item, index) in computedLessonSchedule" 
+                  :key="item.lessonId"
+                  :class="{ 'lesson-locked': item.isLocked }"
+                >
                   <div class="lesson-item-row">
                     <n-text class="lesson-title">{{ formatLessonTitle(item.title, index) }}</n-text>
                     <span class="lesson-right-group">
@@ -433,10 +439,23 @@
     return lessons.value;
   });
 
+  // 课程是否已经开始（用于禁用授课老师和开始日期字段）
+  const isCourseStarted = computed(() => {
+    if (!formValues.value.start_date) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = new Date(formValues.value.start_date);
+    startDate.setHours(0, 0, 0, 0);
+    return today > startDate;
+  });
+
   // 课程目录计算
   const computedLessonSchedule = computed(() => {
     const lessonList = currentLessons.value;
     if (!formValues.value.start_date || selectedSlots.value.size === 0 || !lessonList.length) return [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     // 如果正在编辑且有 course_lessons 带 scheduled_date，使用后端数据
     if (editingSchedule.value?.course_lessons?.length) {
@@ -446,17 +465,24 @@
       if (scheduledLessons.length > 0) {
         return scheduledLessons
           .sort((a, b) => a.sort_order - b.sort_order)
-          .map((l, idx) => ({
-            lessonId: l.id,
-            title: resolveLessonTitle(l.id, idx),
-            dateDisplay: (l.scheduled_date as string).replace(/-/g, '/'),
-            timeSlotStart: (l.scheduled_time_slot as string).split('-')[0],
-            timeSlot: l.scheduled_time_slot as string,
-            canPostpone: isFutureDate(l.scheduled_date as string),
-          }));
+          .map((l, idx) => {
+            const lessonDate = new Date(l.scheduled_date as string);
+            lessonDate.setHours(0, 0, 0, 0);
+            const canPostpone = lessonDate > today; // 严格大于，当天不可延期
+            return {
+              lessonId: l.id,
+              title: resolveLessonTitle(l.id, idx),
+              dateDisplay: (l.scheduled_date as string).replace(/-/g, '/'),
+              timeSlotStart: (l.scheduled_time_slot as string).split('-')[0],
+              timeSlot: l.scheduled_time_slot as string,
+              canPostpone,
+              isLocked: !canPostpone, // 当天及之前的课时锁定
+            };
+          });
       }
     }
 
+    // 新建模式或无后端数据：根据 start_date + selectedSlots 计算
     // 生成所有可用的 (date, timeSlot) 组合，按时间排序
     const availableSlots: { dateStr: string; weekday: number; timeSlot: string }[] = [];
     for (const wd of weekDates.value) {
@@ -478,9 +504,6 @@
 
     if (availableSlots.length === 0) return [];
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     // 遍历所有课时，可用槽位循环使用（取模方式）
     return lessonList.map((lesson, index) => {
       const slot = availableSlots[index % availableSlots.length];
@@ -488,7 +511,8 @@
       const weekOffset = Math.floor(index / availableSlots.length) * 7;
       const lessonDate = new Date(slot.dateStr);
       lessonDate.setDate(lessonDate.getDate() + weekOffset);
-      const canPostpone = lessonDate > today;
+      lessonDate.setHours(0, 0, 0, 0);
+      const canPostpone = lessonDate > today; // 严格大于，当天不可延期
       return {
         lessonId: lesson.id,
         title: resolveLessonTitle(lesson.id, index),
@@ -496,15 +520,12 @@
         timeSlotStart: slot.timeSlot.split('-')[0],
         timeSlot: slot.timeSlot,
         canPostpone,
+        isLocked: !canPostpone, // 当天及之前的课时锁定
       };
     });
   });
 
-  function isFutureDate(dateStr: string): boolean {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return new Date(dateStr) > today;
-  }
+
 
   /**
    * 解析课时标题：优先从已加载的 lessons 中匹配真实标题，
@@ -1035,5 +1056,15 @@
 
   .postpone-btn {
     flex-shrink: 0;
+  }
+
+  /* 锁定的课时样式 */
+  .lesson-locked {
+    opacity: 0.5;
+    background-color: #f5f5f5;
+  }
+
+  .lesson-locked :deep(.n-list-item__main) {
+    color: #999;
   }
 </style>

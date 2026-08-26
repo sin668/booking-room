@@ -770,6 +770,7 @@
     if (!props.courseId || !editingSchedule.value) return;
     // 保存当前编辑的排课 ID，避免 loadSchedules 后引用失效
     const currentEditingId = editingSchedule.value.id;
+    console.log('[postpone] 延期参数:', { courseId: props.courseId, scheduleId: currentEditingId, lessonId: item.lessonId, title: item.title });
     window['$dialog']?.warning({
       title: '确认延期',
       content: `是否确定延期课时"${item.title}"？`,
@@ -777,18 +778,22 @@
       negativeText: '取消',
       onPositiveClick: async () => {
         try {
-          await postponeCourseLessonSchedule(
+          console.log('[postpone] 调用 API:', { courseId: props.courseId!, scheduleId: currentEditingId, lessonId: item.lessonId });
+          const result = await postponeCourseLessonSchedule(
             props.courseId!,
             currentEditingId,
             item.lessonId
           );
+          console.log('[postpone] API 返回结果:', result);
           window['$message']?.success('延期成功');
           // 刷新排课列表（force: true 绕过缓存）
           await loadSchedules();
+          console.log('[postpone] 刷新后排课列表:', scheduleList.value.map(s => ({ id: s.id, end_date: s.end_date, lesson_count: s.course_lessons?.length || 0 })));
           // 从刷新后的列表中找到当前编辑的记录，用新数据更新 editingSchedule
           const updated = scheduleList.value.find((s) => s.id === currentEditingId);
           if (updated) {
             editingSchedule.value = { ...updated };
+            console.log('[postpone] 更新 editingSchedule:', { id: updated.id, end_date: updated.end_date });
           }
         } catch (err) {
           console.error('延期失败:', err);

@@ -89,7 +89,7 @@
             <div v-if="weekDates.length > 0" class="schedule-grid">
               <!-- 日期表头 -->
               <div class="schedule-header">
-                <div class="header-cell"></div>
+                <div class="header-cell time-header-cell">时间段</div>
                 <div
                   v-for="date in weekDates"
                   :key="date.dateStr"
@@ -105,7 +105,19 @@
                 :key="timeSlot"
                 class="schedule-row"
               >
-                <div class="time-label">{{ timeSlot }}</div>
+                <div class="time-label">
+                  {{ timeSlot }}
+                  <n-button
+                    v-if="!isDefaultTimeSlot(timeSlot)"
+                    text
+                    type="error"
+                    size="tiny"
+                    class="delete-slot-btn"
+                    @click.stop="removeCustomTimeSlot(timeSlot)"
+                  >
+                    <template #icon><n-icon size="12"><CloseOutline /></n-icon></template>
+                  </n-button>
+                </div>
                 <div
                   v-for="date in weekDates"
                   :key="`${date.weekday}-${timeSlot}`"
@@ -115,6 +127,62 @@
                 >
                   {{ isSelected(date.weekday, timeSlot) ? '✓' : '' }}
                 </div>
+              </div>
+              <!-- 新增时间段行 -->
+              <div class="schedule-row add-slot-row">
+                <div class="time-label" style="cursor: default;">
+                  <n-button
+                    v-if="!showAddSlotInput"
+                    text
+                    type="primary"
+                    size="small"
+                    @click="showAddSlotInput = true"
+                  >
+                    <template #icon><n-icon size="14"><AddOutline /></n-icon></template>
+                    新增时间段
+                  </n-button>
+                  <div v-else class="add-slot-form">
+                    <n-time-picker
+                      v-model:formatted-value="newSlotStart"
+                      format="HH:mm"
+                      value-format="HH:mm"
+                      placeholder="开始"
+                      size="small"
+                      style="width: 90px"
+                      :show-icon="false"
+                    />
+                    <span class="add-slot-separator">-</span>
+                    <n-time-picker
+                      v-model:formatted-value="newSlotEnd"
+                      format="HH:mm"
+                      value-format="HH:mm"
+                      placeholder="结束"
+                      size="small"
+                      style="width: 90px"
+                      :show-icon="false"
+                    />
+                    <n-button
+                      type="primary"
+                      size="tiny"
+                      :disabled="!newSlotStart || !newSlotEnd"
+                      @click="confirmAddTimeSlot"
+                    >
+                      确定
+                    </n-button>
+                    <n-button
+                      size="tiny"
+                      @click="cancelAddTimeSlot"
+                    >
+                      取消
+                    </n-button>
+                  </div>
+                </div>
+                <div
+                  v-for="date in weekDates"
+                  :key="`add-${date.weekday}`"
+                  class="slot-cell"
+                  style="cursor: default;"
+                ></div>
               </div>
             </div>
             <n-empty v-else description="请先选择开始日期" />
@@ -141,21 +209,22 @@
             <div style="width: 100%">
               <n-list v-if="computedLessonSchedule.length > 0" bordered>
                 <n-list-item v-for="(item, index) in computedLessonSchedule" :key="item.lessonId">
-                  <n-flex align="center" justify="space-between">
-                    <n-flex align="center" :size="12">
+                  <div class="lesson-item-row">
+                    <div class="lesson-info">
                       <n-text>第 {{ index + 1 }} 讲：{{ item.title }}</n-text>
-                      <n-text depth="3">于 {{ item.dateDisplay }} {{ item.timeSlotStart }} 上课</n-text>
-                    </n-flex>
+                      <n-text depth="3" class="lesson-time-text">于 {{ item.dateDisplay }} {{ item.timeSlotStart }} 上课</n-text>
+                    </div>
                     <n-button
                       v-if="item.canPostpone && editingSchedule"
                       text
                       type="warning"
+                      class="postpone-btn"
                       @click="handlePostpone(item)"
                     >
                       <template #icon><n-icon><TimeOutline /></n-icon></template>
                       延期
                     </n-button>
-                  </n-flex>
+                  </div>
                 </n-list-item>
               </n-list>
               <n-empty v-else description="请先选择开始日期和上课时间段" />
@@ -179,7 +248,7 @@
   import { computed, h, ref, watch } from 'vue';
   import type { FormInst, FormRules } from 'naive-ui';
   import { NButton, NTag } from 'naive-ui';
-  import { TimeOutline } from '@vicons/ionicons5';
+  import { TimeOutline, AddOutline, CloseOutline } from '@vicons/ionicons5';
   import {
     getTeacherList,
     getCourseSchedules,
@@ -204,8 +273,8 @@
     (e: 'success'): void;
   }>();
 
-  // 时间段选项（2小时一个时间段）
-  const timeSlots = [
+  // 默认时间段（2小时一个时间段）
+  const defaultTimeSlots = [
     '08:00-10:00',
     '10:00-12:00',
     '12:00-14:00',
@@ -214,6 +283,92 @@
     '18:00-20:00',
     '20:00-22:00',
   ];
+
+  // 时间段列表（响应式，支持自定义新增）
+  const timeSlots = ref<string[]>([...defaultTimeSlots]);
+
+  // 新增时间段相关状态
+  const showAddSlotInput = ref(false);
+  const newSlotStart = ref<string | null>(null);
+  const newSlotEnd = ref<string | null>(null);
+
+  function isDefaultTimeSlot(slot: string): boolean {
+    return defaultTimeSlots.includes(slot);
+  }
+
+  function formatTimeStr(val: string): string {
+    // 确保格式为 HH:mm
+    return val.length === 5 ? val : val.substring(0, 5);
+  }
+
+  function timeToMinutes(t: string): number {
+    const [hh, mm] = t.split(':').map(Number);
+    return hh * 60 + mm;
+  }
+
+  function confirmAddTimeSlot() {
+    if (!newSlotStart.value || !newSlotEnd.value) return;
+    const start = formatTimeStr(newSlotStart.value);
+    const end = formatTimeStr(newSlotEnd.value);
+    const label = `${start}-${end}`;
+
+    // 校验：开始时间必须早于结束时间
+    if (timeToMinutes(start) >= timeToMinutes(end)) {
+      window['$message']?.warning('开始时间必须早于结束时间');
+      return;
+    }
+
+    // 校验：不与已有时间段重叠
+    const newStart = timeToMinutes(start);
+    const newEnd = timeToMinutes(end);
+    for (const existing of timeSlots.value) {
+      const [eStart, eEnd] = existing.split('-');
+      const es = timeToMinutes(eStart);
+      const ee = timeToMinutes(eEnd);
+      if (newStart < ee && newEnd > es) {
+        window['$message']?.warning(`时间段 ${label} 与已有时间段 ${existing} 重叠`);
+        return;
+      }
+    }
+
+    // 校验：不重复添加
+    if (timeSlots.value.includes(label)) {
+      window['$message']?.warning('该时间段已存在');
+      return;
+    }
+
+    // 按时间顺序插入
+    const idx = timeSlots.value.findIndex((s) => timeToMinutes(s.split('-')[0]) > newStart);
+    if (idx === -1) {
+      timeSlots.value.push(label);
+    } else {
+      timeSlots.value.splice(idx, 0, label);
+    }
+
+    cancelAddTimeSlot();
+    window['$message']?.success(`已添加时间段 ${label}`);
+  }
+
+  function cancelAddTimeSlot() {
+    showAddSlotInput.value = false;
+    newSlotStart.value = null;
+    newSlotEnd.value = null;
+  }
+
+  function removeCustomTimeSlot(slot: string) {
+    if (isDefaultTimeSlot(slot)) return;
+    timeSlots.value = timeSlots.value.filter((s) => s !== slot);
+    // 同时清除该时间段已选中的 slots
+    const keysToRemove: string[] = [];
+    selectedSlots.value.forEach((key) => {
+      if (key.endsWith(`|${slot}`)) keysToRemove.push(key);
+    });
+    keysToRemove.forEach((k) => selectedSlots.value.delete(k));
+    if (keysToRemove.length > 0) {
+      selectedSlots.value = new Set(selectedSlots.value);
+    }
+    window['$message']?.success(`已删除时间段 ${slot}`);
+  }
 
   const weekdayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
   // 周几索引（1-7，周日为7），用于 time_slots 存储
@@ -542,13 +697,29 @@
       try {
         const slots = JSON.parse(row.time_slots);
         if (Array.isArray(slots)) {
+          // 收集所有时间段，还原自定义时间段
+          const restoredCustomSlots = new Set<string>();
           slots.forEach((s: { weekday?: number; date?: string; time_slot: string }) => {
+            restoredCustomSlots.add(s.time_slot);
             if (s.weekday) {
               selectedSlots.value.add(`${s.weekday}|${s.time_slot}`);
             } else if (s.date) {
               // 兼容旧数据：由日期换算为周几
               const weekday = weekdayIndexMap[new Date(s.date).getDay()];
               selectedSlots.value.add(`${weekday}|${s.time_slot}`);
+            }
+          });
+          // 将不在默认列表中的时间段添加到 timeSlots
+          restoredCustomSlots.forEach((ts: string) => {
+            if (!timeSlots.value.includes(ts)) {
+              const idx = timeSlots.value.findIndex(
+                (s) => timeToMinutes(s.split('-')[0]) > timeToMinutes(ts.split('-')[0])
+              );
+              if (idx === -1) {
+                timeSlots.value.push(ts);
+              } else {
+                timeSlots.value.splice(idx, 0, ts);
+              }
             }
           });
         }
@@ -575,6 +746,9 @@
     };
     selectedSlots.value = new Set();
     editingSchedule.value = null;
+    // 重置时间段为默认值
+    timeSlots.value = [...defaultTimeSlots];
+    cancelAddTimeSlot();
   }
 
   function handlePostpone(item: { lessonId: number; title: string }) {
@@ -735,6 +909,11 @@
     color: #666;
     border-right: 1px solid #e0e0e0;
     background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    position: relative;
   }
 
   .slot-cell {
@@ -759,5 +938,66 @@
     background: #e6f7ff;
     color: #1890ff;
     font-weight: 600;
+  }
+
+  .time-header-cell {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+  }
+
+  .delete-slot-btn {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.6;
+  }
+
+  .delete-slot-btn:hover {
+    opacity: 1;
+  }
+
+  .add-slot-row .time-label {
+    background: #fff;
+  }
+
+  .add-slot-form {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .add-slot-separator {
+    color: #999;
+    font-size: 12px;
+  }
+
+  /* 课程目录布局 */
+  .lesson-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    width: 100%;
+  }
+
+  .lesson-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .lesson-time-text {
+    white-space: nowrap;
+    min-width: 180px;
+  }
+
+  .postpone-btn {
+    flex-shrink: 0;
+    margin-left: auto;
   }
 </style>

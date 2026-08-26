@@ -128,64 +128,58 @@
                   {{ isSelected(date.weekday, timeSlot) ? '✓' : '' }}
                 </div>
               </div>
-              <!-- 新增时间段行 -->
-              <div class="schedule-row add-slot-row">
-                <div class="time-label" style="cursor: default;">
-                  <n-button
-                    v-if="!showAddSlotInput"
-                    text
-                    type="primary"
-                    size="small"
-                    @click="showAddSlotInput = true"
-                  >
-                    <template #icon><n-icon size="14"><AddOutline /></n-icon></template>
-                    新增时间段
-                  </n-button>
-                  <div v-else class="add-slot-form">
-                    <n-time-picker
-                      v-model:formatted-value="newSlotStart"
-                      format="HH:mm"
-                      value-format="HH:mm"
-                      placeholder="开始"
-                      size="small"
-                      style="width: 90px"
-                      :show-icon="false"
-                    />
-                    <span class="add-slot-separator">-</span>
-                    <n-time-picker
-                      v-model:formatted-value="newSlotEnd"
-                      format="HH:mm"
-                      value-format="HH:mm"
-                      placeholder="结束"
-                      size="small"
-                      style="width: 90px"
-                      :show-icon="false"
-                    />
-                    <n-button
-                      type="primary"
-                      size="tiny"
-                      :disabled="!newSlotStart || !newSlotEnd"
-                      @click="confirmAddTimeSlot"
-                    >
-                      确定
-                    </n-button>
-                    <n-button
-                      size="tiny"
-                      @click="cancelAddTimeSlot"
-                    >
-                      取消
-                    </n-button>
-                  </div>
-                </div>
-                <div
-                  v-for="date in weekDates"
-                  :key="`add-${date.weekday}`"
-                  class="slot-cell"
-                  style="cursor: default;"
-                ></div>
+
+            </div>
+            <!-- 新增时间段（表格外） -->
+            <div v-if="weekDates.length > 0 && !showAddSlotInput" class="add-slot-outside">
+              <n-button
+                text
+                type="primary"
+                size="small"
+                @click="showAddSlotInput = true"
+              >
+                <template #icon><n-icon size="14"><AddOutline /></n-icon></template>
+                新增时间段
+              </n-button>
+            </div>
+            <div v-else-if="weekDates.length > 0 && showAddSlotInput" class="add-slot-outside">
+              <div class="add-slot-form">
+                <n-time-picker
+                  v-model:formatted-value="newSlotStart"
+                  format="HH:mm"
+                  value-format="HH:mm"
+                  placeholder="开始"
+                  size="small"
+                  style="width: 90px"
+                  :show-icon="false"
+                />
+                <span class="add-slot-separator">-</span>
+                <n-time-picker
+                  v-model:formatted-value="newSlotEnd"
+                  format="HH:mm"
+                  value-format="HH:mm"
+                  placeholder="结束"
+                  size="small"
+                  style="width: 90px"
+                  :show-icon="false"
+                />
+                <n-button
+                  type="primary"
+                  size="tiny"
+                  :disabled="!newSlotStart || !newSlotEnd"
+                  @click="confirmAddTimeSlot"
+                >
+                  确定
+                </n-button>
+                <n-button
+                  size="tiny"
+                  @click="cancelAddTimeSlot"
+                >
+                  取消
+                </n-button>
               </div>
             </div>
-            <n-empty v-else description="请先选择开始日期" />
+            <n-empty v-if="weekDates.length === 0" description="请先选择开始日期" />
           </n-form-item>
 
           <!-- 已选时间段显示 -->
@@ -210,20 +204,20 @@
               <n-list v-if="computedLessonSchedule.length > 0" bordered>
                 <n-list-item v-for="(item, index) in computedLessonSchedule" :key="item.lessonId">
                   <div class="lesson-item-row">
-                    <div class="lesson-info">
-                      <n-text>第 {{ index + 1 }} 讲：{{ item.title }}</n-text>
+                    <n-text class="lesson-title">第 {{ index + 1 }} 讲：{{ item.title }}</n-text>
+                    <span class="lesson-right-group">
                       <n-text depth="3" class="lesson-time-text">于 {{ item.dateDisplay }} {{ item.timeSlotStart }} 上课</n-text>
-                    </div>
-                    <n-button
-                      v-if="item.canPostpone && editingSchedule"
-                      text
-                      type="warning"
-                      class="postpone-btn"
-                      @click="handlePostpone(item)"
-                    >
-                      <template #icon><n-icon><TimeOutline /></n-icon></template>
-                      延期
-                    </n-button>
+                      <n-button
+                        v-if="item.canPostpone && editingSchedule"
+                        text
+                        type="warning"
+                        class="postpone-btn"
+                        @click="handlePostpone(item)"
+                      >
+                        <template #icon><n-icon><TimeOutline /></n-icon></template>
+                        延期
+                      </n-button>
+                    </span>
                   </div>
                 </n-list-item>
               </n-list>
@@ -958,8 +952,9 @@
     opacity: 1;
   }
 
-  .add-slot-row .time-label {
-    background: #fff;
+  /* 新增时间段（表格外） */
+  .add-slot-outside {
+    margin-top: 8px;
   }
 
   .add-slot-form {
@@ -978,26 +973,26 @@
   .lesson-item-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 24px;
     width: 100%;
   }
 
-  .lesson-info {
+  .lesson-title {
+    flex-shrink: 0;
+  }
+
+  .lesson-right-group {
+    margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 16px;
-    min-width: 0;
-    flex: 1;
+    gap: 12px;
+    flex-shrink: 0;
   }
 
   .lesson-time-text {
     white-space: nowrap;
-    min-width: 180px;
   }
 
   .postpone-btn {
     flex-shrink: 0;
-    margin-left: auto;
   }
 </style>

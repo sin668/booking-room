@@ -446,9 +446,9 @@
       if (scheduledLessons.length > 0) {
         return scheduledLessons
           .sort((a, b) => a.sort_order - b.sort_order)
-          .map((l) => ({
+          .map((l, idx) => ({
             lessonId: l.id,
-            title: l.title || `第${l.sort_order}讲`,
+            title: resolveLessonTitle(l.id, idx),
             dateDisplay: (l.scheduled_date as string).replace(/-/g, '/'),
             timeSlotStart: (l.scheduled_time_slot as string).split('-')[0],
             timeSlot: l.scheduled_time_slot as string,
@@ -491,7 +491,7 @@
       const canPostpone = lessonDate > today;
       return {
         lessonId: lesson.id,
-        title: lesson.title || `第${index + 1}讲`,
+        title: resolveLessonTitle(lesson.id, index),
         dateDisplay: formatDate(lessonDate).replace(/-/g, '/'),
         timeSlotStart: slot.timeSlot.split('-')[0],
         timeSlot: slot.timeSlot,
@@ -506,14 +506,27 @@
     return new Date(dateStr) > today;
   }
 
+  /**
+   * 解析课时标题：优先从已加载的 lessons 中匹配真实标题，
+   * 其次使用 l.title（如有），最后 fallback 为 "第N讲"（index+1 保证从1开始）
+   */
+  function resolveLessonTitle(lessonId: number, index: number): string {
+    // 从已加载的 course lessons 中查找真实标题
+    const lesson = lessons.value.find((l) => l.id === lessonId);
+    const rawTitle = lesson?.title;
+    if (rawTitle) {
+      return formatLessonTitle(rawTitle, index);
+    }
+    return `第${index + 1}讲`;
+  }
+
   /** 格式化课程目录标题，避免重复的"第N讲"前缀 */
   function formatLessonTitle(title: string, index: number): string {
-    const prefix = `第${index + 1}讲`;
-    // 如果标题已经包含"第N讲"格式前缀，直接使用
-    if (/^第\s*\d+\s*讲[：:]/.test(title)) {
+    // 如果标题已经包含"第N讲"格式前缀（带或不带冒号），直接使用
+    if (/^第\s*\d+\s*讲/.test(title)) {
       return title;
     }
-    return `${prefix}：${title}`;
+    return `第${index + 1}讲：${title}`;
   }
 
   // 表格列定义
@@ -755,6 +768,8 @@
 
   function handlePostpone(item: { lessonId: number; title: string }) {
     if (!props.courseId || !editingSchedule.value) return;
+    // 保存当前编辑的排课 ID，避免 loadSchedules 后引用失效
+    const currentEditingId = editingSchedule.value.id;
     window['$dialog']?.warning({
       title: '确认延期',
       content: `是否确定延期课时"${item.title}"？`,
@@ -764,18 +779,19 @@
         try {
           await postponeCourseLessonSchedule(
             props.courseId!,
-            editingSchedule.value!.id,
+            currentEditingId,
             item.lessonId
           );
           window['$message']?.success('延期成功');
           // 刷新排课列表（force: true 绕过缓存）
           await loadSchedules();
           // 从刷新后的列表中找到当前编辑的记录，用新数据更新 editingSchedule
-          const updated = scheduleList.value.find((s) => s.id === editingSchedule.value!.id);
+          const updated = scheduleList.value.find((s) => s.id === currentEditingId);
           if (updated) {
             editingSchedule.value = { ...updated };
           }
-        } catch {
+        } catch (err) {
+          console.error('延期失败:', err);
           window['$message']?.error('延期失败');
         }
       },

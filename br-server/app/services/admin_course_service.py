@@ -507,11 +507,10 @@ class AdminCourseService:
         """延期某一课时及其后续所有课时。
 
         逻辑：
-        1. 解析 lesson_schedule JSON 获取课时列表
-        2. 解析 time_slots JSON 获取可用时间段
-        3. 生成所有可用时间槽位（按日期时间排序）
-        4. 将目标课时及其后续课时顺延一个槽位
-        5. 重新计算 end_date
+        1. 从 course_lessons 表获取课时列表
+        2. 解析 time_slots + start_date 生成所有可用时间槽位（循环扩展至覆盖所有课时+1）
+        3. 将目标课时及其后续课时各取下一个槽位的时间（顺延）
+        4. 重建 lesson_schedule JSON 并更新 end_date
         """
         result = await db.execute(
             select(CourseSchedule).where(CourseSchedule.id == schedule_id)
@@ -520,48 +519,63 @@ class AdminCourseService:
         if not schedule:
             raise ValueError("排课记录不存在")
 
-        if not schedule.lesson_schedule:
-            raise ValueError("课时安排为空，无法延期")
-
-        try:
-            lessons = json.loads(schedule.lesson_schedule)
-        except (json.JSONDecodeError, TypeError):
-            raise ValueError("课时安排格式错误")
+        # 从 course_lessons 表获取课时列表（不依赖 lesson_schedule 字段）
+        lessons_result = await db.execute(
+            select(CourseLesson)
+            .where(CourseLesson.course_id == schedule.course_id)
+            .order_by(CourseLesson.sort_order.asc())
+        )
+        db_lessons = list(lessons_result.scalars().all())
+        if not db_lessons:
+            raise ValueError("课程没有课时，无法延期")
 
         # 找到目标课时的索引
         target_idx = None
-        for i, lesson in enumerate(lessons):
-            if lesson.get("lesson_id") == lesson_id:
+        for i, lesson in enumerate(db_lessons):
+            if lesson.id == lesson_id:
                 target_idx = i
                 break
         if target_idx is None:
-            raise ValueError(f"课时 {lesson_id} 不存在")
+            raise ValueError(f"课时 {lesson_id} 不存在于该课程中")
 
-        # 解析 time_slots 获取可用时间段
-        available_slots = self._generate_available_slots(
-            schedule.time_slots, schedule.start_date, lessons
+        # 解析 time_slots 获取时间段配置
+        if not schedule.time_slots or not schedule.start_date:
+            raise ValueError("排课记录缺少时间段或开始日期")
+        try:
+            time_slots = json.loads(schedule.time_slots)
+        except (json.JSONDecodeError, TypeError):
+            raise ValueError("时间段格式错误")
+
+        # 生成足够的可用槽位（至少 len(lessons)+1 个，保证最后一个课时也能顺延）
+        all_slots = self._generate_all_slots(
+            schedule.start_date, time_slots, len(db_lessons) + 1
         )
-
-        if not available_slots:
+        if not all_slots:
             raise ValueError("没有可用的时间槽位")
 
-        # 将目标课时及其后续课时顺延一个槽位
-        for i in range(target_idx, len(lessons)):
-            if i < len(lessons) and available_slots:
-                # 为每个后续课时找到下一个可用槽位
-                current_date = lessons[i].get("scheduled_date", "")
-                current_time = lessons[i].get("time_slot", "")
-                # 在 available_slots 中找到当前槽位之后的下一个槽位
-                next_slot = self._find_next_slot(available_slots, current_date, current_time)
-                if next_slot:
-                    lessons[i]["scheduled_date"] = next_slot["date"]
-                    lessons[i]["time_slot"] = next_slot["time"]
+        # 构建延期后的 lesson_schedule：
+        # - 目标课时之前的课时保持原槽位
+        # - 目标课时及之后的课时各取下一个槽位
+        lesson_schedule = []
+        for i, lesson in enumerate(db_lessons):
+            if i < target_idx:
+                # 目标之前的课时不变
+                slot = all_slots[i]
+            else:
+                # 目标及之后的课时顺延一个槽位
+                slot = all_slots[i + 1]
+            lesson_schedule.append({
+                "lesson_id": lesson.id,
+                "title": lesson.title,
+                "scheduled_date": slot["date"],
+                "time_slot": slot["time"],
+            })
 
-        # 更新 lesson_schedule
-        schedule.lesson_schedule = json.dumps(lessons, ensure_ascii=False)
-
-        # 重新计算 end_date = 最后一个课时日期 + 1 天
-        schedule.end_date = self._calc_end_date_from_schedule(schedule.lesson_schedule)
+        # 更新 schedule 的 lesson_schedule 和 end_date
+        schedule.lesson_schedule = json.dumps(lesson_schedule, ensure_ascii=False)
+        last_date_str = lesson_schedule[-1]["scheduled_date"]
+        last_date = date.fromisoformat(last_date_str)
+        schedule.end_date = last_date + timedelta(days=1)
 
         await db.flush()
         return self._schedule_to_response(schedule)
@@ -586,53 +600,49 @@ class AdminCourseService:
             return None
 
     @staticmethod
-    def _generate_available_slots(
-        time_slots_json: str | None,
-        start_date: date | None,
-        lessons: list[dict],
+    def _generate_all_slots(
+        start_date: date,
+        time_slots: list[dict],
+        needed: int,
     ) -> list[dict]:
-        """根据 time_slots 和 start_date 生成所有可用时间槽位列表。"""
-        if not time_slots_json or not start_date:
-            return []
-        try:
-            time_slots = json.loads(time_slots_json)
-        except (json.JSONDecodeError, TypeError):
+        """根据 start_date 和 time_slots 生成至少 needed 个可用时间槽位。
+
+        按日期+时间段排序，循环扩展周次直到生成足够槽位。
+        """
+        if not start_date or not time_slots:
             return []
 
-        # 收集已占用的 (date, time) 组合
-        occupied = set()
-        for lesson in lessons:
-            d = lesson.get("scheduled_date", "")
-            t = lesson.get("time_slot", "")
-            if d and t:
-                occupied.add((d, t))
+        # 按 weekday 分组时间段
+        weekday_slots: dict[int, list[str]] = {}
+        for ts in time_slots:
+            wd = ts.get("weekday")
+            if wd:
+                # time_slots 格式: {"weekday": 1, "time_slot": "08:00-10:00"}
+                time_range = ts.get("time_slot", "")
+                if time_range:
+                    weekday_slots.setdefault(wd, []).append(time_range)
+
+        if not weekday_slots:
+            return []
 
         slots = []
-        # 生成从 start_date 起 365 天内的可用槽位
-        for day_offset in range(365):
-            current_date = start_date + timedelta(days=day_offset)
-            date_str = current_date.isoformat()
-            weekday = current_date.isoweekday()  # 1=Monday
-            for ts in time_slots:
-                if ts.get("weekday") == weekday:
-                    time_range = f"{ts.get('start', '')}-{ts.get('end', '')}"
-                    if (date_str, time_range) not in occupied:
+        week_offset = 0
+        while len(slots) < needed:
+            for day_offset in range(7):
+                current_date = start_date + timedelta(days=week_offset + day_offset)
+                date_str = current_date.isoformat()
+                weekday = current_date.isoweekday()  # 1=Monday, 7=Sunday
+                if weekday in weekday_slots:
+                    for time_range in weekday_slots[weekday]:
                         slots.append({"date": date_str, "time": time_range})
+                        if len(slots) >= needed:
+                            break
+                if len(slots) >= needed:
+                    break
+            week_offset += 7
+            if week_offset > 365 * 2:  # 安全上限
+                break
         return slots
-
-    @staticmethod
-    def _find_next_slot(
-        available_slots: list[dict], current_date: str, current_time: str
-    ) -> dict | None:
-        """在可用槽位列表中找到当前槽位之后的第一个槽位。"""
-        found_current = False
-        for slot in available_slots:
-            if found_current:
-                return slot
-            if slot["date"] == current_date and slot["time"] == current_time:
-                found_current = True
-        # 如果没找到当前槽位，返回列表中第一个槽位
-        return available_slots[0] if available_slots else None
 
     @staticmethod
     def _schedule_to_response(schedule: CourseSchedule) -> CourseScheduleResponse:

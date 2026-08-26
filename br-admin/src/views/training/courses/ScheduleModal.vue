@@ -752,13 +752,22 @@
       negativeText: '取消',
       onPositiveClick: async () => {
         try {
-          await postponeCourseLessonSchedule(
+          const result = await postponeCourseLessonSchedule(
             props.courseId!,
             editingSchedule.value!.id,
             item.lessonId
           );
           window['$message']?.success('延期成功');
+          // 刷新排课列表
           await loadSchedules();
+          // 更新编辑中的排课记录（保持延期后的 lesson_schedule 同步）
+          if (result && editingSchedule.value) {
+            editingSchedule.value = {
+              ...editingSchedule.value,
+              lesson_schedule: (result as any).lesson_schedule || null,
+              end_date: (result as any).end_date || null,
+            };
+          }
         } catch {
           window['$message']?.error('延期失败');
         }

@@ -12,6 +12,7 @@ from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
+from app.models.lesson_schedule import LessonSchedule
 from app.models.teacher import Teacher
 from app.models.coupon import Coupon, UserCoupon
 from app.models.user import User
@@ -106,17 +107,51 @@ class CourseBookingService:
             } if teacher else None,
         }
 
+        # 查询 lesson_schedules（新中间表）
+        lesson_schedules_list = []
+        if schedule:
+            ls_result = await db.execute(
+                select(LessonSchedule)
+                .where(LessonSchedule.schedule_id == schedule.id)
+                .order_by(LessonSchedule.sort_order.asc())
+            )
+            lesson_schedules_list = [
+                {
+                    "lesson_id": ls.lesson_id,
+                    "lesson_date": ls.lesson_date.isoformat() if ls.lesson_date else None,
+                    "lesson_time_slot": ls.lesson_time_slot,
+                }
+                for ls in ls_result.scalars().all()
+            ]
+
+        # 构建 schedule dict（包含 lesson_schedules 数据）
+        schedule_dict = None
+        if schedule:
+            schedule_dict = {
+                "id": schedule.id,
+                "course_id": schedule.course_id,
+                "teacher_id": schedule.teacher_id,
+                "start_date": schedule.start_date.isoformat() if schedule.start_date else None,
+                "end_date": schedule.end_date.isoformat() if schedule.end_date else None,
+                "time_slots": schedule.time_slots,
+                "price": float(schedule.price) if schedule.price else None,
+                "custom_price": float(schedule.custom_price) if schedule.custom_price else None,
+                "full_package_price": float(schedule.full_package_price) if schedule.full_package_price else None,
+                "full_custom_price": float(schedule.full_custom_price) if schedule.full_custom_price else None,
+                "lesson_schedules": lesson_schedules_list,
+            }
+
         return {
             "course": course_dict,
             "lessons": lessons,
             "total_lessons_count": len(lessons),
-            "schedule": schedule,
+            "schedule": schedule_dict,
         }
 
     def calculate_price(
         self,
         course: Course,
-        schedule: CourseSchedule | None,
+        schedule: dict | CourseSchedule | None,
         booking_type: str,
         lesson_ids: list[int],
         total_lessons: int,
@@ -132,12 +167,21 @@ class CourseBookingService:
         """
         lesson_count = len(lesson_ids)
 
-        # 从排课表获取价格，如果没有排课记录则使用 0
-        price = Decimal(str(schedule.price)) if schedule else Decimal("0")
-        custom_price = Decimal(str(schedule.custom_price)) if schedule else Decimal("0")
+        # 从排课表获取价格（支持 dict 和 ORM 对象两种形式）
+        if isinstance(schedule, dict):
+            price_val = schedule.get("price")
+            custom_price_val = schedule.get("custom_price")
+            full_package_price_val = schedule.get("full_package_price")
+        else:
+            price_val = schedule.price if schedule else None
+            custom_price_val = schedule.custom_price if schedule else None
+            full_package_price_val = schedule.full_package_price if schedule and schedule.full_package_price is not None else None
+
+        price = Decimal(str(price_val)) if price_val else Decimal("0")
+        custom_price = Decimal(str(custom_price_val)) if custom_price_val else Decimal("0")
         full_package_price = (
-            Decimal(str(schedule.full_package_price))
-            if schedule and schedule.full_package_price is not None
+            Decimal(str(full_package_price_val))
+            if full_package_price_val is not None
             else None
         )
 
@@ -311,7 +355,12 @@ class CourseBookingService:
         #    start_date <= 今天 → confirmed（进行中）
         #    start_date > 今天  → pending（待开始）
         today = datetime.now(CHINA_TIMEZONE).date()
-        start_date = getattr(schedule, "start_date", None) if schedule else None
+        if isinstance(schedule, dict):
+            start_date_str = schedule.get("start_date")
+            from datetime import date as date_type
+            start_date = date_type.fromisoformat(start_date_str) if start_date_str else None
+        else:
+            start_date = getattr(schedule, "start_date", None) if schedule else None
         if start_date is not None and start_date > today:
             initial_status = "pending"
         else:

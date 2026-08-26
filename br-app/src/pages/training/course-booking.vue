@@ -639,28 +639,28 @@ export default {
         const res = await getCourseLessons(this.courseId)
         this.courseInfo = res.course || res
         this.lessons = res.lessons || []
-        
-        // 解析 lesson_schedule，建立 lesson_id -> date 映射
-        if (res.schedule && res.schedule.lesson_schedule) {
-          const map = {}
-          let scheduleData = res.schedule.lesson_schedule
-          if (typeof scheduleData === 'string') {
-            try { scheduleData = JSON.parse(scheduleData) } catch { scheduleData = [] }
+
+        // 从 schedule dict 获取开课日期（start_date 在 schedule 上，不在 course 上）
+        if (res.schedule) {
+          if (!this.courseInfo.start_date && res.schedule.start_date) {
+            this.courseInfo.start_date = res.schedule.start_date
           }
-          if (Array.isArray(scheduleData)) {
-            scheduleData.forEach(item => {
-              if (item.lesson_id && item.date) {
-                map[item.lesson_id] = item.date
+
+          // 解析新表 lesson_schedules，建立 lesson_id -> date 映射
+          if (Array.isArray(res.schedule.lesson_schedules)) {
+            const map = {}
+            res.schedule.lesson_schedules.forEach(item => {
+              if (item.lesson_id && item.lesson_date) {
+                map[item.lesson_id] = item.lesson_date
               }
             })
+            this.lessonScheduleMap = map
           }
-          this.lessonScheduleMap = map
-        }
 
-        // 从排课表获取教师信息
-        if (res.schedule && res.schedule.teacher_id) {
-          // 如果有排课信息，更新课程的老师信息
-          this.courseInfo.teacher = res.schedule.teacher || this.courseInfo.teacher
+          // 从排课表获取教师信息
+          if (res.schedule.teacher_id) {
+            this.courseInfo.teacher = res.schedule.teacher || this.courseInfo.teacher
+          }
         }
 
         await Promise.all([

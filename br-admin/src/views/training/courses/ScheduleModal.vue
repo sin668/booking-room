@@ -639,8 +639,17 @@
     listLoading.value = true;
     try {
       const data = await getCourseSchedules(props.courseId);
-      // 深拷贝生成新引用并递增 key，强制表格重新渲染，避免数据更新后视图不变
-      scheduleList.value = data.map((item) => ({ ...item }));
+      // 深拷贝 + 字段映射：后端返回 lesson_schedules(lesson_date/lesson_time_slot)，
+      // 前端 computed 依赖 course_lessons(scheduled_date/scheduled_time_slot)
+      scheduleList.value = data.map((item: any) => ({
+        ...item,
+        course_lessons: (item.lesson_schedules || []).map((ls: any) => ({
+          id: ls.lesson_id,
+          sort_order: ls.sort_order,
+          scheduled_date: ls.lesson_date,
+          scheduled_time_slot: ls.lesson_time_slot,
+        })),
+      }));
       tableKey.value += 1;
     } catch {
       window['$message']?.error('加载排课记录失败');
@@ -748,7 +757,7 @@
     if (!props.courseId || !editingSchedule.value) return;
     window['$dialog']?.warning({
       title: '确认延期',
-      content: `是否确定延期课时“${item.title}”？`,
+      content: `是否确定延期课时"${item.title}"？`,
       positiveText: '确定',
       negativeText: '取消',
       onPositiveClick: async () => {
@@ -759,14 +768,12 @@
             item.lessonId
           );
           window['$message']?.success('延期成功');
-          // 刷新排课列表
+          // 刷新排课列表（force: true 绕过缓存）
           await loadSchedules();
-          // 更新编辑中的排课记录：从刷新后的列表中找到当前记录
-          if (editingSchedule.value) {
-            const updated = scheduleList.value.find((s) => s.id === editingSchedule.value!.id);
-            if (updated) {
-              editingSchedule.value = { ...updated };
-            }
+          // 从刷新后的列表中找到当前编辑的记录，用新数据更新 editingSchedule
+          const updated = scheduleList.value.find((s) => s.id === editingSchedule.value!.id);
+          if (updated) {
+            editingSchedule.value = { ...updated };
           }
         } catch {
           window['$message']?.error('延期失败');

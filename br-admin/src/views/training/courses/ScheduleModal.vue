@@ -89,7 +89,7 @@
           <!-- 时间段选择器 -->
           <n-form-item label="上课时间段" path="time_slots">
             <div class="schedule-wrapper">
-              <div v-if="weekDates.length > 0" class="schedule-grid">
+              <div v-if="weekDates.length > 0" :class="['schedule-grid', { 'schedule-locked': isCourseStarted }]">
                 <!-- 日期表头 -->
                 <div class="schedule-header">
                   <div class="header-cell time-header-cell">时间段</div>
@@ -1072,5 +1072,10 @@
 
   .lesson-locked :deep(.n-list-item__main) {
     color: #999;
+  }
+
+  .schedule-locked {
+    opacity: 0.5;
+    pointer-events: none;
   }
 </style>

@@ -56,12 +56,12 @@
           <!-- Top row: title + status badge -->
           <view class="card-header">
             <view class="store-title-wrap">
-              <view :class="['status-dot', `dot-${order.status}`]" />
+              <view :class="['status-dot', `dot-${displayStatus(order)}`]" />
               <text v-if="isCourseBooking(order)" class="store-name">{{ order.course_name || '课程预约' }}</text>
               <text v-else class="store-name">{{ order.room ? order.room.name : '未知门店' }}</text>
             </view>
-            <view :class="['status-badge', `badge-${order.status}`]">
-              <text class="status-badge-text">{{ statusLabel(order.status) }}</text>
+            <view :class="['status-badge', `badge-${displayStatus(order)}`]">
+              <text class="status-badge-text">{{ statusLabel(order) }}</text>
             </view>
           </view>
 
@@ -396,8 +396,17 @@ export default {
       this.loadOrders()
     },
 
-    statusLabel(status) {
-      return formatBookingStatus(status)
+    displayStatus(order) {
+      if (!order) return order?.status || ''
+      if (order.status === 'confirmed' && order.booking_type === 'course' && order.started === true) {
+        return 'in_progress'
+      }
+      return order.status
+    },
+
+    statusLabel(order) {
+      if (!order) return ''
+      return formatBookingStatus(this.displayStatus(order))
     },
 
     isCourseBooking(order) {

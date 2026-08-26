@@ -64,8 +64,8 @@
     "hash": "2f247e102c4e5a248797999734b81605"
   },
   "br-admin/src/api/course/index.ts": {
-    "mtime": 1787652405047.0894,
-    "hash": "afe09ae45f2f68eedf16ad01f0f74199"
+    "mtime": 1787709724928.9023,
+    "hash": "98d55998c0e0552d1b41380c7c8e672c"
   },
   "br-admin/src/api/dashboard/console.ts": {
     "mtime": 1776990443267.854,
@@ -1052,8 +1052,8 @@
     "hash": "19e6614300a0195631bd4df320b5056b"
   },
   "br-admin/src/views/training/courses/ScheduleModal.vue": {
-    "mtime": 1787707078744.9768,
-    "hash": "cde04a90926869d76e16eac3f8a12724"
+    "mtime": 1787734381619.6003,
+    "hash": "a282991eb841ecdd0d58d6aecdf185a0"
   },
   "br-admin/src/views/training/courses/edit.vue": {
     "mtime": 1787047514575.0073,
@@ -1232,8 +1232,8 @@
     "hash": "f55328f06406ae9f1899d9648ca98371"
   },
   "br-app/src/constants/booking.js": {
-    "mtime": 1780274852375.1587,
-    "hash": "4ec7810371d4662f28f9e40bc82b083e"
+    "mtime": 1787713165758.4148,
+    "hash": "86ed266dd3fb89c501435082dbf4eb0c"
   },
   "br-app/src/constants/wallet.js": {
     "mtime": 1780274852375.1985,
@@ -1288,8 +1288,8 @@
     "hash": "1149d1379e8012e9633b940ad50515da"
   },
   "br-app/src/pages/orders/index.vue": {
-    "mtime": 1787100242367.2317,
-    "hash": "a9b8123ffc88f72c5d9f5e7f8dad4975"
+    "mtime": 1787713165759.1868,
+    "hash": "ca128c00f94c8a8f2de9a0b900b100f8"
   },
   "br-app/src/pages/profile/index.vue": {
     "mtime": 1786440671504.1387,
@@ -1316,8 +1316,8 @@
     "hash": "0b67d51c9d2f7513ca480d6636384bf5"
   },
   "br-app/src/pages/training/course-booking.vue": {
-    "mtime": 1787706468670.2703,
-    "hash": "2a4217cb0bf4c5e0a18481ad76c9b9a8"
+    "mtime": 1787735365804.4521,
+    "hash": "7701742a34249d72a3df3a12702ec64f"
   },
   "br-app/src/pages/training/course-detail.vue": {
     "mtime": 1786948046542.828,
@@ -1380,8 +1380,8 @@
     "hash": "da1607b5e3e59c9c0488d55a780da092"
   },
   "br-app/src/utils/formatters.js": {
-    "mtime": 1787101612778.2598,
-    "hash": "0467b3725f3722b32d3e9a3b69ea8fa2"
+    "mtime": 1787713165759.9155,
+    "hash": "6df08d0a7ff2bf0e6bc5975c021f7a5e"
   },
   "br-app/src/utils/notificationTypes.js": {
     "mtime": 1779937996281.1687,
@@ -1632,8 +1632,8 @@
     "hash": "165cac812677436f04234c1faa12d0af"
   },
   "br-server/app/api/routes/booking.py": {
-    "mtime": 1786584383400.236,
-    "hash": "8fb50249de51672a27c98cf51c535ba3"
+    "mtime": 1787713165760.791,
+    "hash": "ca026b6fee850b058e318a0fc5ab186c"
   },
   "br-server/app/api/routes/booking_verification.py": {
     "mtime": 1779870485294.0657,
@@ -1740,8 +1740,8 @@
     "hash": "821512eb6cbfabadf52b6314deece359"
   },
   "br-server/app/models/__init__.py": {
-    "mtime": 1787109923819.4673,
-    "hash": "25dc0eb36cec46400c8a4315279d70f6"
+    "mtime": 1787709468605.0068,
+    "hash": "5330eaec2539df49a5d66e47b35b90cc"
   },
   "br-server/app/models/activity.py": {
     "mtime": 1780880454124.942,
@@ -1784,8 +1784,8 @@
     "hash": "65ed60d45ef2db3523a83c7c670e62e1"
   },
   "br-server/app/models/course_schedule.py": {
-    "mtime": 1787651293689.8628,
-    "hash": "f8a8bfcdab93d2bd895a9f105df01a76"
+    "mtime": 1787709496605.9124,
+    "hash": "cfc5c9bddda88ca9740a398a54c6a3cc"
   },
   "br-server/app/models/notification.py": {
     "mtime": 1779937996282.8442,
@@ -1848,8 +1848,8 @@
     "hash": "fc0dc96031f6916e4f5b15d276003c80"
   },
   "br-server/app/schemas/admin_course.py": {
-    "mtime": 1787651314272.3584,
-    "hash": "dc86dc91be59d30b6ca34c8d5860c955"
+    "mtime": 1787709524605.5645,
+    "hash": "a73fd347841d5230ee7b07ca19aaecae"
   },
   "br-server/app/schemas/admin_menu.py": {
     "mtime": 1779102594400.559,
@@ -1876,8 +1876,8 @@
     "hash": "5d0f76d931992b54eb2e74c6bf82077a"
   },
   "br-server/app/schemas/booking.py": {
-    "mtime": 1787104765458.9004,
-    "hash": "ceaee595be597032c6897683ece64e14"
+    "mtime": 1787713165761.7422,
+    "hash": "4fb532a93c88cf907df17b8e9091e446"
   },
   "br-server/app/schemas/booking_verification.py": {
     "mtime": 1779870377437.901,
@@ -1956,8 +1956,8 @@
     "hash": "fb71a2df9d768df1f1129aa718e47c86"
   },
   "br-server/app/services/admin_course_service.py": {
-    "mtime": 1787707113765.3152,
-    "hash": "fc2e0fbd8c2183f0f959354fab16e4be"
+    "mtime": 1787729043232.8826,
+    "hash": "cd021397d5dd19a1f6e743c2b4064855"
   },
   "br-server/app/services/admin_menu_service.py": {
     "mtime": 1787104765460.2695,
@@ -2000,8 +2000,8 @@
     "hash": "82976d1b4757e7ba632caba3b5efcae6"
   },
   "br-server/app/services/booking_service.py": {
-    "mtime": 1787104765461.3103,
-    "hash": "c1ebe77974feba12cd26a9c342c203b0"
+    "mtime": 1787713165763.722,
+    "hash": "90f4708cc79575f49701bcdc98541748"
   },
   "br-server/app/services/booking_verification_service.py": {
     "mtime": 1780274852382.901,
@@ -2020,8 +2020,8 @@
     "hash": "332fc1e9f639e958551fa41f757eae5f"
   },
   "br-server/app/services/course_booking_service.py": {
-    "mtime": 1787706459922.4224,
-    "hash": "93c553768a414a89f316618be975a320"
+    "mtime": 1787714127678.16,
+    "hash": "9fcae017eea37bd039123aea8da00938"
   },
   "br-server/app/services/jwt_service.py": {
     "mtime": 1780389451472.2483,
@@ -4064,8 +4064,8 @@
     "hash": "dbfc6eff3d6d5f9eeb049078585b23ae"
   },
   ".graphify/GRAPH_REPORT.md": {
-    "mtime": 1787705652282.7847,
-    "hash": "13a55c81c47233a2af3af90e76c18fa6"
+    "mtime": 1787734406926.4822,
+    "hash": "b3301c36af7db4741df3b3b1dda69c00"
   },
   ".graphify/studio/index.html": {
     "mtime": 1787642879172.1843,
@@ -4096,7 +4096,15 @@
     "hash": "50c3fe83be20991912628817343b09aa"
   },
   ".graphify/2026-08-26/GRAPH_REPORT.md": {
-    "mtime": 1787705652151.1638,
-    "hash": "594fc73504b459b8fc55e5e83a560faf"
+    "mtime": 1787734406769.0188,
+    "hash": "753027dbb9c2c109f6aab3c3cd8d14a9"
+  },
+  "br-server/alembic/versions/2026_08_26_1000-f5a6b7c8d9e0_drop_lesson_schedule_create_lesson_schedules_table.py": {
+    "mtime": 1787709509604.797,
+    "hash": "7cfa737cfefba1fef803a5485c59f713"
+  },
+  "br-server/app/models/lesson_schedule.py": {
+    "mtime": 1787709457724.1619,
+    "hash": "37159f995dfcc8946c2c2b9f5675baf4"
   }
 }

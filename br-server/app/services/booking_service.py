@@ -116,6 +116,7 @@ async def _sync_user_booking_completions(
             Booking.user_id == str(user_id),
             Booking.status == "confirmed",
             Booking.payment_status == "paid",
+            Booking.booking_type != "course",
         )
     )
     changed = False

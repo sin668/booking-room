@@ -415,7 +415,7 @@ async def list_bookings(
     course_teacher_map: dict[int, int | None] = {}  # course_id -> teacher_id
     teacher_map: dict[int, dict] = {}  # teacher_id -> {name, avatar}
     lesson_map: dict[int, list[str]] = {}  # booking_id -> lesson_titles
-    lesson_schedule_map: dict[int, list[LessonScheduleBrief]] = {}  # course_id -> lesson_schedules
+    lesson_schedule_map: dict[int, list[LessonScheduleBrief]] = {}  # booking_id -> lesson_schedules (filtered by booking.lesson_ids)
     if course_booking_ids:
         course_ids = {b.course_id for b in bookings if getattr(b, "booking_type", None) == "course" and b.course_id is not None}
         if course_ids:
@@ -465,13 +465,14 @@ async def list_bookings(
                         select(CourseLesson.id, CourseLesson.title).where(CourseLesson.id.in_(all_lesson_ids))
                     )
                     lesson_title_map = {row[0]: row[1] for row in lt_result.all()}
-                # Group by course_id
+                # Group by course_id (intermediate, will be filtered per booking later)
+                lesson_schedule_by_course: dict[int, list[LessonScheduleBrief]] = {}
                 for ls in lesson_schedules_list:
                     cid = schedule_id_to_course.get(ls.schedule_id)
                     if cid is not None:
-                        if cid not in lesson_schedule_map:
-                            lesson_schedule_map[cid] = []
-                        lesson_schedule_map[cid].append(
+                        if cid not in lesson_schedule_by_course:
+                            lesson_schedule_by_course[cid] = []
+                        lesson_schedule_by_course[cid].append(
                             LessonScheduleBrief(
                                 id=ls.id,
                                 lesson_id=ls.lesson_id,
@@ -481,6 +482,14 @@ async def list_bookings(
                                 sort_order=ls.sort_order,
                             )
                         )
+                # Store as booking_id -> filtered lesson_schedules (only lessons in booking.lesson_ids)
+                for b in bookings:
+                    if getattr(b, "booking_type", None) == "course" and b.course_id and b.lesson_ids:
+                        all_course_ls = lesson_schedule_by_course.get(b.course_id, [])
+                        booked_lesson_ids = set(b.lesson_ids)
+                        lesson_schedule_map[b.id] = [
+                            ls for ls in all_course_ls if ls.lesson_id in booked_lesson_ids
+                        ]
 
         for b in bookings:
             if getattr(b, "booking_type", None) == "course" and b.lesson_ids:
@@ -507,8 +516,8 @@ async def list_bookings(
             resp.end_date = end_d.isoformat() if end_d else None
             # started: start_date <= today (Asia/Shanghai)
             resp.started = (start_d <= today) if start_d else None
-            # lesson_schedules
-            resp.lesson_schedules = lesson_schedule_map.get(b.course_id) if b.course_id else None
+            # lesson_schedules (already filtered by booking.lesson_ids above)
+            resp.lesson_schedules = lesson_schedule_map.get(b.id)
             # 设置教师信息
             if b.course_id and b.course_id in course_teacher_map:
                 teacher_id = course_teacher_map[b.course_id]

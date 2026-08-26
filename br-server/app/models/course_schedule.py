@@ -1,7 +1,7 @@
 from datetime import datetime, date
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -29,10 +29,6 @@ class CourseSchedule(Base):
         Text, nullable=True,
         comment="上课时间段，JSON 数组格式，如 [{\"weekday\":1,\"start\":\"09:00\",\"end\":\"11:00\"}]",
     )
-    lesson_schedule: Mapped[str | None] = mapped_column(
-        Text, nullable=True,
-        comment="课时安排JSON，存储每个课时的实际上课日期时间",
-    )
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     custom_price: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     full_package_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
@@ -40,4 +36,9 @@ class CourseSchedule(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    # Relationships
+    lesson_schedules = relationship(
+        "LessonSchedule", back_populates="schedule", cascade="all, delete-orphan"
     )

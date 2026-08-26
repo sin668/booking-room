@@ -619,6 +619,7 @@
       "br-server/tests/test_wechat_phone_binding.py"
     ],
     "document": [
+      ".graphify/2026-08-26/GRAPH_REPORT.md",
       ".graphify/GRAPH_REPORT.md",
       ".graphify/studio/index.html",
       ".graphify/studio/studio-template.html",
@@ -1032,15 +1033,15 @@
     ],
     "video": []
   },
-  "total_files": 1023,
-  "total_words": 507552,
+  "total_files": 1024,
+  "total_words": 515682,
   "needs_graph": true,
-  "warning": "Large corpus: 1023 files · ~507,552 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder, or use --no-semantic to run AST-only.",
+  "warning": "Large corpus: 1024 files · ~515,682 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder, or use --no-semantic to run AST-only.",
   "skipped_sensitive": [],
   "graphifyignore_patterns": 42,
   "git": {
     "source_owner": "git",
-    "source_hash": "74d09c0d9e0477ae25567585ef537bf344952bdb",
+    "source_hash": "902892a753c95c2ae50ceeb8ad478c0e3dabf49e",
     "branches": [
       "feature/20260814/training-course-list",
       "feature/20260817/course-booking",
@@ -1057,10 +1058,10 @@
     "source": "default-auto",
     "root": ".",
     "git_root": ".",
-    "head": "74d09c0d9e0477ae25567585ef537bf344952bdb",
-    "candidate_count": 1431,
-    "included_count": 1023,
-    "excluded_untracked_count": 0,
+    "head": "902892a753c95c2ae50ceeb8ad478c0e3dabf49e",
+    "candidate_count": 1437,
+    "included_count": 1024,
+    "excluded_untracked_count": 1,
     "excluded_ignored_count": 89219,
     "excluded_sensitive_count": 0,
     "missing_committed_count": 24,

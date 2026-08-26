@@ -85,6 +85,9 @@ export interface LessonItem {
   duration_minutes?: number | null;
   sort_order: number;
   is_free_preview: boolean;
+  // 排课后端计算字段（仅在 course_lessons 随 schedule 返回时有值）
+  scheduled_date?: string | null;
+  scheduled_time_slot?: string | null;
 }
 
 export interface LessonCreateParams {
@@ -212,8 +215,8 @@ export interface ScheduleRecord {
   teacher_id?: number | null;
   start_date?: string | null;
   time_slots?: string | null;
-  lesson_schedule?: string | null;
   course_lessons?: LessonItem[] | null;
+  end_date?: string | null;
   price: number;
   custom_price: number;
   full_package_price?: number | null;

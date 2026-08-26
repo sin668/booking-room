@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
+from app.models.lesson_schedule import LessonSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.schemas.admin_course import (
@@ -24,6 +25,7 @@ from app.schemas.admin_course import (
     CourseScheduleItem,
     CourseScheduleResponse,
     CourseScheduleUpdate,
+    LessonScheduleResponse,
 )
 
 MAX_PAGE_SIZE = 50
@@ -401,22 +403,41 @@ class AdminCourseService:
             .order_by(CourseSchedule.created_at)
         )
         schedules = list(result.scalars().all())
-        return [
-            CourseScheduleResponse(
-                id=s.id,
-                course_id=s.course_id,
-                teacher_id=s.teacher_id,
-                start_date=str(s.start_date) if s.start_date else None,
-                end_date=str(s.end_date) if s.end_date else None,
-                time_slots=s.time_slots,
-                lesson_schedule=s.lesson_schedule,
-                price=float(s.price),
-                custom_price=float(s.custom_price),
-                full_package_price=float(s.full_package_price) if s.full_package_price else None,
-                full_custom_price=float(s.full_custom_price) if s.full_custom_price else None,
+        responses = []
+        for s in schedules:
+            # 查询该排课记录的 lesson_schedules
+            ls_result = await db.execute(
+                select(LessonSchedule)
+                .where(LessonSchedule.schedule_id == s.id)
+                .order_by(LessonSchedule.sort_order.asc())
             )
-            for s in schedules
-        ]
+            lesson_schedules = [
+                LessonScheduleResponse(
+                    id=ls.id,
+                    schedule_id=ls.schedule_id,
+                    lesson_id=ls.lesson_id,
+                    lesson_date=str(ls.lesson_date),
+                    lesson_time_slot=ls.lesson_time_slot,
+                    sort_order=ls.sort_order,
+                )
+                for ls in ls_result.scalars().all()
+            ]
+            responses.append(
+                CourseScheduleResponse(
+                    id=s.id,
+                    course_id=s.course_id,
+                    teacher_id=s.teacher_id,
+                    start_date=str(s.start_date) if s.start_date else None,
+                    end_date=str(s.end_date) if s.end_date else None,
+                    time_slots=s.time_slots,
+                    price=float(s.price),
+                    custom_price=float(s.custom_price),
+                    full_package_price=float(s.full_package_price) if s.full_package_price else None,
+                    full_custom_price=float(s.full_custom_price) if s.full_custom_price else None,
+                    lesson_schedules=lesson_schedules,
+                )
+            )
+        return responses
 
     async def create_schedule(
         self, db: AsyncSession, course_id: int, data: CourseScheduleCreate
@@ -438,17 +459,16 @@ class AdminCourseService:
             full_custom_price=data.full_custom_price,
         )
 
-        # 处理 lesson_schedule 和自动计算 end_date
-        if data.lesson_schedule:
-            schedule.lesson_schedule = data.lesson_schedule
-            if not data.end_date:
-                schedule.end_date = self._calc_end_date_from_schedule(data.lesson_schedule)
         if data.end_date:
             schedule.end_date = date.fromisoformat(data.end_date)
 
         db.add(schedule)
         await db.flush()
-        return self._schedule_to_response(schedule)
+
+        # 自动生成 lesson_schedules 和 end_date
+        await self._save_lesson_schedules(db, schedule)
+
+        return await self._schedule_to_response(db, schedule)
 
     async def update_schedule(
         self, db: AsyncSession, schedule_id: int, data: CourseScheduleUpdate
@@ -476,16 +496,13 @@ class AdminCourseService:
         if data.full_custom_price is not None:
             schedule.full_custom_price = data.full_custom_price
 
-        # 处理 lesson_schedule 和自动计算 end_date
-        if data.lesson_schedule is not None:
-            schedule.lesson_schedule = data.lesson_schedule
-            if data.end_date is None:
-                schedule.end_date = self._calc_end_date_from_schedule(data.lesson_schedule)
         if data.end_date is not None:
             schedule.end_date = date.fromisoformat(data.end_date) if data.end_date else None
 
-        await db.flush()
-        return self._schedule_to_response(schedule)
+        # 重新生成 lesson_schedules（删除旧记录并重新创建）
+        await self._save_lesson_schedules(db, schedule, regenerate=True)
+
+        return await self._schedule_to_response(db, schedule)
 
     async def delete_schedule(self, db: AsyncSession, schedule_id: int) -> bool:
         """删除排课记录。"""
@@ -507,10 +524,10 @@ class AdminCourseService:
         """延期某一课时及其后续所有课时。
 
         逻辑：
-        1. 从 course_lessons 表获取课时列表
-        2. 解析 time_slots + start_date 生成所有可用时间槽位（循环扩展至覆盖所有课时+1）
+        1. 从 lesson_schedules 表读取当前课时安排
+        2. 解析 time_slots + start_date 生成所有可用时间槽位
         3. 将目标课时及其后续课时各取下一个槽位的时间（顺延）
-        4. 重建 lesson_schedule JSON 并更新 end_date
+        4. 更新 lesson_schedules 表中的记录并重新计算 end_date
         """
         result = await db.execute(
             select(CourseSchedule).where(CourseSchedule.id == schedule_id)
@@ -519,24 +536,24 @@ class AdminCourseService:
         if not schedule:
             raise ValueError("排课记录不存在")
 
-        # 从 course_lessons 表获取课时列表（不依赖 lesson_schedule 字段）
-        lessons_result = await db.execute(
-            select(CourseLesson)
-            .where(CourseLesson.course_id == schedule.course_id)
-            .order_by(CourseLesson.sort_order.asc())
+        # 从 lesson_schedules 表获取当前课时安排
+        ls_result = await db.execute(
+            select(LessonSchedule)
+            .where(LessonSchedule.schedule_id == schedule_id)
+            .order_by(LessonSchedule.sort_order.asc())
         )
-        db_lessons = list(lessons_result.scalars().all())
-        if not db_lessons:
-            raise ValueError("课程没有课时，无法延期")
+        current_schedules = list(ls_result.scalars().all())
+        if not current_schedules:
+            raise ValueError("排课记录没有课时安排，无法延期")
 
         # 找到目标课时的索引
         target_idx = None
-        for i, lesson in enumerate(db_lessons):
-            if lesson.id == lesson_id:
+        for i, ls in enumerate(current_schedules):
+            if ls.lesson_id == lesson_id:
                 target_idx = i
                 break
         if target_idx is None:
-            raise ValueError(f"课时 {lesson_id} 不存在于该课程中")
+            raise ValueError(f"课时 {lesson_id} 不存在于该排课记录中")
 
         # 解析 time_slots 获取时间段配置
         if not schedule.time_slots or not schedule.start_date:
@@ -546,58 +563,99 @@ class AdminCourseService:
         except (json.JSONDecodeError, TypeError):
             raise ValueError("时间段格式错误")
 
-        # 生成足够的可用槽位（至少 len(lessons)+1 个，保证最后一个课时也能顺延）
+        # 生成足够的可用槽位（至少 len(current_schedules)+1 个）
         all_slots = self._generate_all_slots(
-            schedule.start_date, time_slots, len(db_lessons) + 1
+            schedule.start_date, time_slots, len(current_schedules) + 1
         )
         if not all_slots:
             raise ValueError("没有可用的时间槽位")
 
-        # 构建延期后的 lesson_schedule：
-        # - 目标课时之前的课时保持原槽位
-        # - 目标课时及之后的课时各取下一个槽位
-        lesson_schedule = []
-        for i, lesson in enumerate(db_lessons):
+        # 更新 lesson_schedules：目标之前的课时不变，目标及之后顺延一个槽位
+        for i, ls in enumerate(current_schedules):
             if i < target_idx:
-                # 目标之前的课时不变
                 slot = all_slots[i]
             else:
-                # 目标及之后的课时顺延一个槽位
                 slot = all_slots[i + 1]
-            lesson_schedule.append({
-                "lesson_id": lesson.id,
-                "title": lesson.title,
-                "scheduled_date": slot["date"],
-                "time_slot": slot["time"],
-            })
+            ls.lesson_date = date.fromisoformat(slot["date"])
+            ls.lesson_time_slot = slot["time"]
 
-        # 更新 schedule 的 lesson_schedule 和 end_date
-        schedule.lesson_schedule = json.dumps(lesson_schedule, ensure_ascii=False)
-        last_date_str = lesson_schedule[-1]["scheduled_date"]
-        last_date = date.fromisoformat(last_date_str)
-        schedule.end_date = last_date + timedelta(days=1)
+        # 重新计算 end_date（最后一个课时的上课日期 + 1 天）
+        last_ls = current_schedules[-1]
+        schedule.end_date = last_ls.lesson_date + timedelta(days=1)
 
         await db.flush()
-        return self._schedule_to_response(schedule)
+        return await self._schedule_to_response(db, schedule)
 
     # ── 辅助方法 ──────────────────────────────────────────────────
 
-    @staticmethod
-    def _calc_end_date_from_schedule(lesson_schedule_json: str | None) -> date | None:
-        """从 lesson_schedule JSON 中计算 end_date（最后一个课时日期 + 1 天）。"""
-        if not lesson_schedule_json:
-            return None
+    async def _save_lesson_schedules(
+        self,
+        db: AsyncSession,
+        schedule: CourseSchedule,
+        regenerate: bool = False,
+    ) -> None:
+        """根据 start_date + time_slots + course_lessons 生成 lesson_schedules 记录。
+
+        如果 regenerate=True，先删除旧记录再重新创建。
+        同时自动计算 end_date（最后一个课时的上课日期 + 1 天）。
+        """
+        if not schedule.start_date or not schedule.time_slots:
+            return
+
         try:
-            lessons = json.loads(lesson_schedule_json)
-            if not lessons:
-                return None
-            last_date_str = lessons[-1].get("scheduled_date")
-            if not last_date_str:
-                return None
-            last_date = date.fromisoformat(last_date_str)
-            return last_date + timedelta(days=1)
-        except (json.JSONDecodeError, TypeError, ValueError):
-            return None
+            time_slots = json.loads(schedule.time_slots)
+        except (json.JSONDecodeError, TypeError):
+            return
+
+        # 获取课程的课时列表
+        lessons_result = await db.execute(
+            select(CourseLesson)
+            .where(CourseLesson.course_id == schedule.course_id)
+            .order_by(CourseLesson.sort_order.asc())
+        )
+        course_lessons = list(lessons_result.scalars().all())
+        if not course_lessons:
+            return
+
+        if regenerate:
+            # 删除旧的 lesson_schedules
+            await db.execute(
+                select(LessonSchedule).where(LessonSchedule.schedule_id == schedule.id)
+            )
+            old_ls_result = await db.execute(
+                select(LessonSchedule).where(LessonSchedule.schedule_id == schedule.id)
+            )
+            for ls in old_ls_result.scalars().all():
+                await db.delete(ls)
+            await db.flush()
+
+        # 生成所有可用槽位
+        all_slots = self._generate_all_slots(
+            schedule.start_date, time_slots, len(course_lessons)
+        )
+        if not all_slots:
+            return
+
+        # 为每个课时创建 LessonSchedule 记录（取模循环分配）
+        for i, lesson in enumerate(course_lessons):
+            if i >= len(all_slots):
+                break
+            slot = all_slots[i]
+            ls = LessonSchedule(
+                schedule_id=schedule.id,
+                lesson_id=lesson.id,
+                lesson_date=date.fromisoformat(slot["date"]),
+                lesson_time_slot=slot["time"],
+                sort_order=i,
+            )
+            db.add(ls)
+
+        await db.flush()
+
+        # 自动计算 end_date（最后一个课时的上课日期 + 1 天）
+        if all_slots and len(all_slots) >= len(course_lessons):
+            last_slot_date = date.fromisoformat(all_slots[len(course_lessons) - 1]["date"])
+            schedule.end_date = last_slot_date + timedelta(days=1)
 
     @staticmethod
     def _generate_all_slots(
@@ -645,8 +703,27 @@ class AdminCourseService:
         return slots
 
     @staticmethod
-    def _schedule_to_response(schedule: CourseSchedule) -> CourseScheduleResponse:
+    async def _schedule_to_response(
+        db: AsyncSession, schedule: CourseSchedule
+    ) -> CourseScheduleResponse:
         """将 CourseSchedule 模型转换为 CourseScheduleResponse。"""
+        # 查询 lesson_schedules
+        ls_result = await db.execute(
+            select(LessonSchedule)
+            .where(LessonSchedule.schedule_id == schedule.id)
+            .order_by(LessonSchedule.sort_order.asc())
+        )
+        lesson_schedules = [
+            LessonScheduleResponse(
+                id=ls.id,
+                schedule_id=ls.schedule_id,
+                lesson_id=ls.lesson_id,
+                lesson_date=str(ls.lesson_date),
+                lesson_time_slot=ls.lesson_time_slot,
+                sort_order=ls.sort_order,
+            )
+            for ls in ls_result.scalars().all()
+        ]
         return CourseScheduleResponse(
             id=schedule.id,
             course_id=schedule.course_id,
@@ -654,9 +731,9 @@ class AdminCourseService:
             start_date=str(schedule.start_date) if schedule.start_date else None,
             end_date=str(schedule.end_date) if schedule.end_date else None,
             time_slots=schedule.time_slots,
-            lesson_schedule=schedule.lesson_schedule,
             price=float(schedule.price),
             custom_price=float(schedule.custom_price),
             full_package_price=float(schedule.full_package_price) if schedule.full_package_price else None,
             full_custom_price=float(schedule.full_custom_price) if schedule.full_custom_price else None,
+            lesson_schedules=lesson_schedules,
         )

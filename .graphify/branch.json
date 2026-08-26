@@ -3,14 +3,14 @@
   "branchName": "main",
   "worktreePath": "/Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room",
   "upstream": "origin/main",
-  "mergeBase": "74d09c0d9e0477ae25567585ef537bf344952bdb",
+  "mergeBase": "902892a753c95c2ae50ceeb8ad478c0e3dabf49e",
   "firstSeenHead": "e78ec5ce99c5effd2deaf6d5ab2fcf05c052de53",
-  "lastSeenHead": "74d09c0d9e0477ae25567585ef537bf344952bdb",
-  "lastAnalyzedHead": "74d09c0d9e0477ae25567585ef537bf344952bdb",
+  "lastSeenHead": "902892a753c95c2ae50ceeb8ad478c0e3dabf49e",
+  "lastAnalyzedHead": "902892a753c95c2ae50ceeb8ad478c0e3dabf49e",
   "stale": false,
   "staleReason": null,
   "staleSince": null,
   "lifecycleEvent": null,
   "createdAt": "2026-08-25T07:26:07.711Z",
-  "updatedAt": "2026-08-26T00:54:12.302Z"
+  "updatedAt": "2026-08-26T01:19:28.548Z"
 }

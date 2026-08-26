@@ -1052,8 +1052,8 @@
     "hash": "19e6614300a0195631bd4df320b5056b"
   },
   "br-admin/src/views/training/courses/ScheduleModal.vue": {
-    "mtime": 1787705474017.738,
-    "hash": "334510823caa429dee6c8aad48573e74"
+    "mtime": 1787707078744.9768,
+    "hash": "cde04a90926869d76e16eac3f8a12724"
   },
   "br-admin/src/views/training/courses/edit.vue": {
     "mtime": 1787047514575.0073,
@@ -1316,8 +1316,8 @@
     "hash": "0b67d51c9d2f7513ca480d6636384bf5"
   },
   "br-app/src/pages/training/course-booking.vue": {
-    "mtime": 1787100228997.9004,
-    "hash": "15d24ba570a30bfb193418eb9d302e6f"
+    "mtime": 1787706468670.2703,
+    "hash": "2a4217cb0bf4c5e0a18481ad76c9b9a8"
   },
   "br-app/src/pages/training/course-detail.vue": {
     "mtime": 1786948046542.828,
@@ -1956,8 +1956,8 @@
     "hash": "fb71a2df9d768df1f1129aa718e47c86"
   },
   "br-server/app/services/admin_course_service.py": {
-    "mtime": 1787651477927.5396,
-    "hash": "0838cc42f83450a895088c32b0d8dac6"
+    "mtime": 1787707113765.3152,
+    "hash": "fc2e0fbd8c2183f0f959354fab16e4be"
   },
   "br-server/app/services/admin_menu_service.py": {
     "mtime": 1787104765460.2695,
@@ -1996,8 +1996,8 @@
     "hash": "ac6b324e6e4e5fc3e23d7104697011fa"
   },
   "br-server/app/services/booking_payment_service.py": {
-    "mtime": 1780274852382.5464,
-    "hash": "cf8f0148f1159927f030a17cb7d8926e"
+    "mtime": 1787706717384.4878,
+    "hash": "82976d1b4757e7ba632caba3b5efcae6"
   },
   "br-server/app/services/booking_service.py": {
     "mtime": 1787104765461.3103,
@@ -2020,8 +2020,8 @@
     "hash": "332fc1e9f639e958551fa41f757eae5f"
   },
   "br-server/app/services/course_booking_service.py": {
-    "mtime": 1787646298806.5352,
-    "hash": "cc06f32427d03a42c5cb1b95ecd58f64"
+    "mtime": 1787706459922.4224,
+    "hash": "93c553768a414a89f316618be975a320"
   },
   "br-server/app/services/jwt_service.py": {
     "mtime": 1780389451472.2483,
@@ -4064,8 +4064,8 @@
     "hash": "dbfc6eff3d6d5f9eeb049078585b23ae"
   },
   ".graphify/GRAPH_REPORT.md": {
-    "mtime": 1787642863712.087,
-    "hash": "594fc73504b459b8fc55e5e83a560faf"
+    "mtime": 1787705652282.7847,
+    "hash": "13a55c81c47233a2af3af90e76c18fa6"
   },
   ".graphify/studio/index.html": {
     "mtime": 1787642879172.1843,
@@ -4094,5 +4094,9 @@
   "openspec/changes/archive/2026-08-25-fix-course-booking-dict-access/verification-report.md": {
     "mtime": 1787646298809.3394,
     "hash": "50c3fe83be20991912628817343b09aa"
+  },
+  ".graphify/2026-08-26/GRAPH_REPORT.md": {
+    "mtime": 1787705652151.1638,
+    "hash": "594fc73504b459b8fc55e5e83a560faf"
   }
 }

@@ -12,6 +12,7 @@ from app.models.seat import Seat
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
+from app.models.lesson_schedule import LessonSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.models.teacher_room import TeacherRoom
@@ -30,6 +31,7 @@ __all__ = [
     "Course",
     "CourseLesson",
     "CourseSchedule",
+    "LessonSchedule",
     "Coupon",
     "Notification",
     "NotificationPreference",

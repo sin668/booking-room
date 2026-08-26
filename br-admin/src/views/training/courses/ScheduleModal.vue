@@ -208,9 +208,10 @@
                     <span class="lesson-right-group">
                       <n-text depth="3" class="lesson-time-text">于 {{ item.dateDisplay }} {{ item.timeSlotStart }} 上课</n-text>
                       <n-button
-                        v-if="item.canPostpone && editingSchedule"
+                        v-if="editingSchedule"
                         text
-                        type="warning"
+                        :type="item.canPostpone ? 'warning' : 'default'"
+                        :disabled="!item.canPostpone"
                         class="postpone-btn"
                         @click="handlePostpone(item)"
                       >
@@ -437,22 +438,22 @@
     const lessonList = currentLessons.value;
     if (!formValues.value.start_date || selectedSlots.value.size === 0 || !lessonList.length) return [];
 
-    // 如果正在编辑且有 lesson_schedule，使用后端数据
-    if (editingSchedule.value?.lesson_schedule) {
-      try {
-        const schedule = JSON.parse(editingSchedule.value.lesson_schedule);
-        if (Array.isArray(schedule)) {
-          return schedule.map((item: any) => ({
-            lessonId: item.lesson_id,
-            title: item.title,
-            dateDisplay: item.scheduled_date,
-            timeSlotStart: item.time_slot.split('-')[0],
-            timeSlot: item.time_slot,
-            canPostpone: isFutureDate(item.scheduled_date),
+    // 如果正在编辑且有 course_lessons 带 scheduled_date，使用后端数据
+    if (editingSchedule.value?.course_lessons?.length) {
+      const scheduledLessons = editingSchedule.value.course_lessons.filter(
+        (l) => l.scheduled_date && l.scheduled_time_slot
+      );
+      if (scheduledLessons.length > 0) {
+        return scheduledLessons
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map((l) => ({
+            lessonId: l.id,
+            title: l.title || `第${l.sort_order}讲`,
+            dateDisplay: (l.scheduled_date as string).replace(/-/g, '/'),
+            timeSlotStart: (l.scheduled_time_slot as string).split('-')[0],
+            timeSlot: l.scheduled_time_slot as string,
+            canPostpone: isFutureDate(l.scheduled_date as string),
           }));
-        }
-      } catch {
-        // ignore
       }
     }
 
@@ -752,7 +753,7 @@
       negativeText: '取消',
       onPositiveClick: async () => {
         try {
-          const result = await postponeCourseLessonSchedule(
+          await postponeCourseLessonSchedule(
             props.courseId!,
             editingSchedule.value!.id,
             item.lessonId
@@ -760,13 +761,12 @@
           window['$message']?.success('延期成功');
           // 刷新排课列表
           await loadSchedules();
-          // 更新编辑中的排课记录（保持延期后的 lesson_schedule 同步）
-          if (result && editingSchedule.value) {
-            editingSchedule.value = {
-              ...editingSchedule.value,
-              lesson_schedule: (result as any).lesson_schedule || null,
-              end_date: (result as any).end_date || null,
-            };
+          // 更新编辑中的排课记录：从刷新后的列表中找到当前记录
+          if (editingSchedule.value) {
+            const updated = scheduleList.value.find((s) => s.id === editingSchedule.value!.id);
+            if (updated) {
+              editingSchedule.value = { ...updated };
+            }
           }
         } catch {
           window['$message']?.error('延期失败');

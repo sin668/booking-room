@@ -137,7 +137,6 @@ class CourseScheduleCreate(BaseModel):
     start_date: str | None = None
     end_date: str | None = None
     time_slots: str | None = None
-    lesson_schedule: str | None = None
     price: float = 0
     custom_price: float = 0
     full_package_price: float | None = None
@@ -150,11 +149,22 @@ class CourseScheduleUpdate(BaseModel):
     start_date: str | None = None
     end_date: str | None = None
     time_slots: str | None = None
-    lesson_schedule: str | None = None
     price: float | None = None
     custom_price: float | None = None
     full_package_price: float | None = None
     full_custom_price: float | None = None
+
+
+class LessonScheduleResponse(BaseModel):
+    """课时安排响应"""
+    id: int
+    schedule_id: int
+    lesson_id: int
+    lesson_date: str
+    lesson_time_slot: str
+    sort_order: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourseScheduleResponse(BaseModel):
@@ -165,10 +175,10 @@ class CourseScheduleResponse(BaseModel):
     start_date: str | None = None
     end_date: str | None = None
     time_slots: str | None = None
-    lesson_schedule: str | None = None
     price: float
     custom_price: float
     full_package_price: float | None = None
     full_custom_price: float | None = None
+    lesson_schedules: list[LessonScheduleResponse] = []
 
     model_config = ConfigDict(from_attributes=True)

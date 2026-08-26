@@ -130,9 +130,10 @@
               </div>
 
             </div>
-            <!-- 新增时间段（表格外） -->
-            <div v-if="weekDates.length > 0 && !showAddSlotInput" class="add-slot-outside">
+            <!-- 新增时间段（表格下方） -->
+            <div v-if="weekDates.length > 0" class="add-slot-outside">
               <n-button
+                v-if="!showAddSlotInput"
                 text
                 type="primary"
                 size="small"
@@ -141,9 +142,7 @@
                 <template #icon><n-icon size="14"><AddOutline /></n-icon></template>
                 新增时间段
               </n-button>
-            </div>
-            <div v-else-if="weekDates.length > 0 && showAddSlotInput" class="add-slot-outside">
-              <div class="add-slot-form">
+              <div v-if="showAddSlotInput" class="add-slot-form">
                 <n-time-picker
                   v-model:formatted-value="newSlotStart"
                   format="HH:mm"
@@ -204,7 +203,7 @@
               <n-list v-if="computedLessonSchedule.length > 0" bordered>
                 <n-list-item v-for="(item, index) in computedLessonSchedule" :key="item.lessonId">
                   <div class="lesson-item-row">
-                    <n-text class="lesson-title">第 {{ index + 1 }} 讲：{{ item.title }}</n-text>
+                    <n-text class="lesson-title">{{ formatLessonTitle(item.title, index) }}</n-text>
                     <span class="lesson-right-group">
                       <n-text depth="3" class="lesson-time-text">于 {{ item.dateDisplay }} {{ item.timeSlotStart }} 上课</n-text>
                       <n-button
@@ -515,6 +514,16 @@
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return new Date(dateStr) > today;
+  }
+
+  /** 格式化课程目录标题，避免重复的"第N讲"前缀 */
+  function formatLessonTitle(title: string, index: number): string {
+    const prefix = `第${index + 1}讲`;
+    // 如果标题已经包含"第N讲"格式前缀，直接使用
+    if (/^第\s*\d+\s*讲[：:]/.test(title)) {
+      return title;
+    }
+    return `${prefix}：${title}`;
   }
 
   // 表格列定义
@@ -984,7 +993,7 @@
     margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 32px;
     flex-shrink: 0;
   }
 

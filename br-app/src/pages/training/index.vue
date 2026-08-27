@@ -14,7 +14,7 @@
     </navigator>
 
     <!-- 分类 TAB -->
-    <scroll-view class="tab-bar" scroll-x :show-scrollbar="false">
+    <view class="tab-bar">
       <view
         v-for="tab in tabs"
         :key="tab.key"
@@ -23,7 +23,7 @@
       >
         <text class="tab-text">{{ tab.label }}</text>
       </view>
-    </scroll-view>
+    </view>
 
     <!-- 内容区域 -->
     <view class="content">
@@ -576,17 +576,17 @@ onReachBottom(() => {
   left: 0;
   right: 0;
   z-index: 80;
+  display: flex;
   background: $surface;
-  white-space: nowrap;
   border-bottom: 1rpx solid $border-soft;
 }
 
 .tab-item {
-  display: inline-flex;
+  flex: 1;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 24rpx 0;
-  margin: 0 22rpx;
   position: relative;
 }
 

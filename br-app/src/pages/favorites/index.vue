@@ -13,7 +13,7 @@
     </view>
 
     <!-- Tab 栏 -->
-    <scroll-view class="tab-bar" scroll-x :show-scrollbar="false">
+    <view class="tab-bar">
       <view
         v-for="tab in tabs"
         :key="tab.key"
@@ -22,7 +22,7 @@
       >
         <text class="tab-text">{{ tab.label }}</text>
       </view>
-    </scroll-view>
+    </view>
 
     <!-- 内容区 -->
     <scroll-view class="content" scroll-y @scrolltolower="onReachBottom">
@@ -387,17 +387,17 @@ export default {
   position: sticky;
   top: 0;
   z-index: 10;
+  display: flex;
   background: $surface;
-  white-space: nowrap;
   border-bottom: 1rpx solid $border-soft;
 }
 
 .tab-item {
-  display: inline-flex;
+  flex: 1;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 24rpx 0;
-  margin: 0 22rpx;
   position: relative;
 }
 

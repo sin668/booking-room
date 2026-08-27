@@ -6,17 +6,12 @@
     </view>
 
     <!-- 搜索栏 -->
-    <view class="search-bar">
+    <navigator url="/pages/search/index" class="search-bar">
       <view class="search-input-wrap">
         <view class="icon icon-search search-icon" />
-        <input
-          class="search-input"
-          type="text"
-          placeholder="搜索课程、老师"
-          placeholder-class="search-placeholder"
-        />
+        <text class="search-placeholder-text">搜索课程、老师</text>
       </view>
-    </view>
+    </navigator>
 
     <!-- 分类 TAB -->
     <scroll-view class="tab-bar" scroll-x :show-scrollbar="false">
@@ -67,7 +62,7 @@
       <!-- 全部：培训室列表 -->
       <template v-else-if="activeTab === 'all'">
         <!-- 推广 Banner -->
-        <view class="banner">
+        <view class="banner" @tap="goBannerDetail">
           <image
             class="banner-image"
             src="https://images.unsplash.com/photo-1522202176988-662241b9f3ee?w=800&h=400&fit=crop&q=85"
@@ -184,7 +179,7 @@
                   </view>
                   <view class="hot-course-schedule-row">
                     <view class="icon icon-clock hot-schedule-icon" />
-                    <text :class="['hot-course-schedule', { expanded: isScheduleExpanded(course) }]" @tap.stop="toggleSchedule(course)">{{ scheduleText(course) || '排课待定' }}</text>
+                    <text :class="['hot-course-schedule', { expanded: isScheduleExpanded(course) }]">{{ scheduleText(course) || '排课待定' }}</text>
                     <text class="hot-schedule-dot">·</text>
                     <text class="hot-course-status">可预约</text>
                   </view>
@@ -270,7 +265,7 @@
                   <text class="course-price">{{ course.price }}</text>
                   <text class="course-price-unit">/课时</text>
                 </view>
-                <view class="course-book-btn">
+                <view class="course-book-btn" @tap.stop="goCourseBooking(course)">
                   <text class="book-btn-text">预约</text>
                 </view>
               </view>
@@ -375,14 +370,6 @@ function previewRoomCover(room, index) {
   })
 }
 
-function previewCourseImage(course) {
-  if (!course || !course.cover_image) return
-  uni.previewImage({
-    urls: [course.cover_image],
-    current: course.cover_image,
-  })
-}
-
 function roomTags(room, index = 0) {
   if (room.tags && Array.isArray(room.tags)) return room.tags
   const key = Number(room.id || index)
@@ -405,6 +392,25 @@ function onCourseDetail(course) {
 function goCourseDetail(course) {
   if (!course || !course.id) return
   uni.navigateTo({ url: '/pages/training/course-detail?course_id=' + course.id })
+}
+
+function goBannerDetail() {
+  uni.navigateTo({ url: '/pages/banner/detail?id=1' })
+}
+
+function goTeacherDetail(teacher) {
+  if (!teacher || !teacher.id) return
+  uni.navigateTo({ url: `/pages/teacher/detail?id=${teacher.id}` })
+}
+
+function previewCourseImage(course) {
+  const url = course.cover_image
+  if (url) {
+    uni.previewImage({
+      urls: [url],
+      current: url,
+    })
+  }
 }
 
 function goCourseBooking(course) {
@@ -556,15 +562,11 @@ onReachBottom(() => {
   color: $text-muted;
 }
 
-.search-input {
+.search-placeholder-text {
   flex: 1;
   font-size: 27rpx;
-  color: $text-primary;
-  line-height: 1.4;
-}
-
-.search-placeholder {
   color: #C8C9CB;
+  line-height: 1.4;
 }
 
 /* ── Category tabs ── */

@@ -166,7 +166,7 @@
             </view>
             <view class="schedule-info">
               <text v-if="startDateDesc" class="schedule-start-date-big">{{ startDateDesc }}</text>
-              <text :class="['schedule-time-text', { expanded: scheduleExpanded }]" @tap="toggleSchedule">{{ scheduleDesc || '按课表上课' }}</text>
+              <text class="schedule-time-text">{{ scheduleDesc || '按课表上课' }}</text>
               <text class="schedule-desc">固定班课，按课表上课</text>
             </view>
           </view>
@@ -414,7 +414,6 @@ import {
 } from '@/constants/wallet'
 import { pollPaymentStatus } from '@/services/paymentPolling'
 
-const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
 export default {
   data() {
@@ -425,7 +424,6 @@ export default {
       selectedLessonIds: [],
       bookingType: 'fixed',
       scheduleType: 'fixed',
-      scheduleExpanded: false,
       isFullPackage: false,
       lessonsExpanded: false,
       lessonScheduleMap: {},  // lesson_id -> date string (YYYY-MM-DD)
@@ -753,11 +751,6 @@ export default {
       this.loadAvailableCoupons()
     },
 
-    toggleSchedule() {
-      const text = this.scheduleDesc
-      if (!text || text.length <= SCHEDULE_TRUNCATE_THRESHOLD) return
-      this.scheduleExpanded = !this.scheduleExpanded
-    },
 
     selectPaymentMethod(method) {
       this.paymentMethod = method
@@ -1451,6 +1444,7 @@ function money(value) {
 
 .schedule-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6rpx;
@@ -1472,14 +1466,10 @@ function money(value) {
   font-size: 26rpx;
   font-weight: 600;
   color: $text-primary;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.schedule-time-text.expanded {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   white-space: normal;
-  overflow: visible;
+  line-height: 1.5;
 }
 
 .schedule-desc {

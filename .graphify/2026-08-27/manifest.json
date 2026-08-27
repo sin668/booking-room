@@ -1252,8 +1252,8 @@
     "hash": "f4f81993d80c57acd9240b67b8a442e8"
   },
   "br-app/src/pages/booking/detail.vue": {
-    "mtime": 1787122728834.9895,
-    "hash": "d93a56180f574e34ae98c5e0fe1c8245"
+    "mtime": 1787815821653.0693,
+    "hash": "45ce2e2c021db1975014e949e8d19f6f"
   },
   "br-app/src/pages/booking/index.vue": {
     "mtime": 1780274852376.4128,
@@ -1272,8 +1272,8 @@
     "hash": "00550ebc305b3210c615823c19b2669c"
   },
   "br-app/src/pages/index/index.vue": {
-    "mtime": 1780880454123.6272,
-    "hash": "3dc34cb4accf168d6be963354613795c"
+    "mtime": 1787822849789.3152,
+    "hash": "7a99641881e762cc4ed5e6ecfee284ec"
   },
   "br-app/src/pages/login/login.vue": {
     "mtime": 1786440258556.229,
@@ -1288,12 +1288,12 @@
     "hash": "1149d1379e8012e9633b940ad50515da"
   },
   "br-app/src/pages/orders/index.vue": {
-    "mtime": 1787794112127.7925,
-    "hash": "a62e4f0ce8d8f9f40b9260ed4d231947"
+    "mtime": 1787820478118.682,
+    "hash": "0356ab834cbcbdc05405cca588a772d5"
   },
   "br-app/src/pages/profile/index.vue": {
-    "mtime": 1786440671504.1387,
-    "hash": "85bd5763b378a7f747717c8661d5a961"
+    "mtime": 1787822613747.8076,
+    "hash": "ce5559a4320082599ad6f5dd7ae1e5de"
   },
   "br-app/src/pages/qrcode/index.vue": {
     "mtime": 1779870765302.7712,
@@ -1324,12 +1324,12 @@
     "hash": "aaf65670d37a790c36c59e059427c56d"
   },
   "br-app/src/pages/training/index.vue": {
-    "mtime": 1787100217250.7761,
-    "hash": "dcf6faa181c39fc48561ac7cc995d0ee"
+    "mtime": 1787824374758.3916,
+    "hash": "2d61f9e345d27a682fbf2c72c2dfab06"
   },
   "br-app/src/pages/verify-booking/index.vue": {
-    "mtime": 1778553634273.6963,
-    "hash": "779febb1abe3272a2960e03588c6e307"
+    "mtime": 1787809709649.2139,
+    "hash": "e3b414679c110a6bc181dccacd24aef2"
   },
   "br-app/src/pages/wallet/transactions.vue": {
     "mtime": 1780274852380.7446,
@@ -1344,8 +1344,8 @@
     "hash": "4e0b0a10bdf9d7b10fb46e11a9a86db5"
   },
   "br-app/src/services/followedRooms.js": {
-    "mtime": 1780368652913.4426,
-    "hash": "1eadc43dfd77814df11e8530df0e4ba1"
+    "mtime": 1787822566211.721,
+    "hash": "49d5d8ce22524043fec21b6e3ace3797"
   },
   "br-app/src/services/followedTeachers.js": {
     "mtime": 1786944922402.9067,
@@ -1376,11 +1376,11 @@
     "hash": "00e9e272f84372390693a613d2ec26b6"
   },
   "br-app/src/utils/followedRooms.js": {
-    "mtime": 1780274852381.4695,
-    "hash": "da1607b5e3e59c9c0488d55a780da092"
+    "mtime": 1787815206672.7993,
+    "hash": "52ffa9ec65105ae1064601957b81816c"
   },
   "br-app/src/utils/formatters.js": {
-    "mtime": 1787713165759.9155,
+    "mtime": 1787822313660.891,
     "hash": "6df08d0a7ff2bf0e6bc5975c021f7a5e"
   },
   "br-app/src/utils/notificationTypes.js": {
@@ -1452,7 +1452,7 @@
     "hash": "233c028b2ad500ea9443ca89615c8594"
   },
   "br-server/alembic/versions/2026_05_21_1100-a1b2c3d4e5f6_merge_users_phase1_extend.py": {
-    "mtime": 1779334932214.9375,
+    "mtime": 1787811874762.4963,
     "hash": "4531f739005e27ac26e4034d10341529"
   },
   "br-server/alembic/versions/2026_05_21_1101-b2c3d4e5f6a1_merge_users_phase2_data.py": {
@@ -1704,8 +1704,8 @@
     "hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "br-server/app/core/config.py": {
-    "mtime": 1780024644774.6206,
-    "hash": "3952c18f6bb6644eb7fa864cb2b7dc64"
+    "mtime": 1787814029083.8984,
+    "hash": "7ef59c20d7bf7fb44e09ab44a22dc5b5"
   },
   "br-server/app/core/database.py": {
     "mtime": 1776324762660.4163,
@@ -1720,8 +1720,8 @@
     "hash": "1e5f6c0f9f48dba0e5dd6e6d6040a11d"
   },
   "br-server/app/domain/booking_rules.py": {
-    "mtime": 1780274852381.8662,
-    "hash": "a551e44363cf961172ba0389d32fd472"
+    "mtime": 1787808964455.927,
+    "hash": "32b85ab778dd077685cb557b682854cd"
   },
   "br-server/app/domain/payment_rules.py": {
     "mtime": 1780274852381.9143,
@@ -1736,8 +1736,8 @@
     "hash": "40e4b92d6e2de15a53ad9f558ad107b3"
   },
   "br-server/app/main.py": {
-    "mtime": 1787035992241.5605,
-    "hash": "821512eb6cbfabadf52b6314deece359"
+    "mtime": 1787814044473.7815,
+    "hash": "399acb9caaa833af24ec3bb3cbde7fc3"
   },
   "br-server/app/models/__init__.py": {
     "mtime": 1787709468605.0068,
@@ -1764,8 +1764,8 @@
     "hash": "3d00a809d53afb02e8cee0516a5c3c7a"
   },
   "br-server/app/models/booking.py": {
-    "mtime": 1786948046545.1187,
-    "hash": "4ab0efbe359eb8b586e64dcc36ed5154"
+    "mtime": 1787811211059.76,
+    "hash": "5ce1b93367ece154b179a4955b6f9c6b"
   },
   "br-server/app/models/city.py": {
     "mtime": 1778837890956.878,
@@ -1876,8 +1876,8 @@
     "hash": "5d0f76d931992b54eb2e74c6bf82077a"
   },
   "br-server/app/schemas/booking.py": {
-    "mtime": 1787793278279.7292,
-    "hash": "ddf33e77b98597da448b9ea3ac128ebe"
+    "mtime": 1787811273120.7192,
+    "hash": "98fe315a1a47aab3b277bad0f5e26310"
   },
   "br-server/app/schemas/booking_verification.py": {
     "mtime": 1779870377437.901,
@@ -1896,8 +1896,8 @@
     "hash": "47011757a580a4aed7f2ea3d7ef4d305"
   },
   "br-server/app/schemas/course.py": {
-    "mtime": 1787048993586.057,
-    "hash": "49301fcfe9f81b852a854e670e06e7d2"
+    "mtime": 1787814956877.9338,
+    "hash": "51b6dea99e020cb6b8f99dcb8d855b04"
   },
   "br-server/app/schemas/course_booking.py": {
     "mtime": 1787022286169.3088,
@@ -1908,8 +1908,8 @@
     "hash": "ec56c5f7dab7c7e90efcc666bb77e5e4"
   },
   "br-server/app/schemas/room_follow.py": {
-    "mtime": 1780368460596.7139,
-    "hash": "9ff7ae298eb8b5795040bc4890e55a28"
+    "mtime": 1787822513760.7947,
+    "hash": "ed27fbf2bede75badfe09fcbb1715112"
   },
   "br-server/app/schemas/seat.py": {
     "mtime": 1779065317912.966,
@@ -1996,16 +1996,16 @@
     "hash": "ac6b324e6e4e5fc3e23d7104697011fa"
   },
   "br-server/app/services/booking_payment_service.py": {
-    "mtime": 1787706717384.4878,
-    "hash": "82976d1b4757e7ba632caba3b5efcae6"
+    "mtime": 1787795566904.9084,
+    "hash": "8670b6e0abb031b1ed022aa732fd4818"
   },
   "br-server/app/services/booking_service.py": {
-    "mtime": 1787793090435.3774,
-    "hash": "81c14c4f6ee6957e5622d34e9bfe37af"
+    "mtime": 1787820304417.026,
+    "hash": "8cdffbf9a179d660a5a0e7a03cda5218"
   },
   "br-server/app/services/booking_verification_service.py": {
-    "mtime": 1780274852382.901,
-    "hash": "56f22283e7ece5896186bf84427a7722"
+    "mtime": 1787809709638.8726,
+    "hash": "5c186b990ed09a4cf9a5946bc86fd818"
   },
   "br-server/app/services/captcha_service.py": {
     "mtime": 1776325841702.628,
@@ -2032,8 +2032,8 @@
     "hash": "d07c7176dda6e922524641888b694080"
   },
   "br-server/app/services/room_follow_service.py": {
-    "mtime": 1787023721103.3608,
-    "hash": "bfea3e82772f6be6e1ec43bec686b38d"
+    "mtime": 1787822544564.27,
+    "hash": "6be0813a09c24120e3eefd5703482b20"
   },
   "br-server/app/services/seat_service.py": {
     "mtime": 1779065317913.3801,
@@ -2068,8 +2068,8 @@
     "hash": "2594c96fdf2c8dce7519a83e8351c6d8"
   },
   "br-server/app/services/training_service.py": {
-    "mtime": 1787119991505.1836,
-    "hash": "ab22b21413471b7ac34028866c8dee0e"
+    "mtime": 1787815094637.3528,
+    "hash": "6f4df8691afd9d3a1cf9e0320d273a32"
   },
   "br-server/app/services/upload_service.py": {
     "mtime": 1787121050187.993,
@@ -2196,12 +2196,12 @@
     "hash": "f549b05f7da745a7d8ede3635aa7f2d6"
   },
   "br-server/tests/test_api_booking.py": {
-    "mtime": 1780274852383.8477,
-    "hash": "d8f971af67f443a7e96d8288c3e391df"
+    "mtime": 1787809412483.1045,
+    "hash": "e14cb86564028cddf17140ec289f5236"
   },
   "br-server/tests/test_api_booking_verification.py": {
-    "mtime": 1779870313803.973,
-    "hash": "b663cafb2cbc685a4a5baf8d302a0dd1"
+    "mtime": 1787809886226.6528,
+    "hash": "4618cce0128393401538f8bd9f25f8e8"
   },
   "br-server/tests/test_api_coupon.py": {
     "mtime": 1780912471243.5767,
@@ -2280,16 +2280,16 @@
     "hash": "3d5e00aa36689f62f28d7910a1d64f04"
   },
   "br-server/tests/test_booking_rules.py": {
-    "mtime": 1780274852383.942,
-    "hash": "2f69ac1f485aa31e24f7a130f09d7384"
+    "mtime": 1787809055122.1335,
+    "hash": "c1ab1bd596b3e1c25e61029b9fcce516"
   },
   "br-server/tests/test_booking_use_cases.py": {
     "mtime": 1780274852383.985,
     "hash": "bb1eca58f7101b29724b5ca19f9adaa7"
   },
   "br-server/tests/test_booking_verification_service.py": {
-    "mtime": 1778568361290.9282,
-    "hash": "5ef38160792585bfe13f2cf8fda41420"
+    "mtime": 1787809863090.9402,
+    "hash": "31975a957825b90e6699b54e27421af5"
   },
   "br-server/tests/test_captcha_service.py": {
     "mtime": 1776325294454.719,
@@ -4064,8 +4064,8 @@
     "hash": "dbfc6eff3d6d5f9eeb049078585b23ae"
   },
   ".graphify/GRAPH_REPORT.md": {
-    "mtime": 1787791362357.1865,
-    "hash": "77e9eb67980418ed66e8069099523aa8"
+    "mtime": 1787794225341.386,
+    "hash": "571434957410b56c951bf97914066f6b"
   },
   ".graphify/studio/index.html": {
     "mtime": 1787642879172.1843,
@@ -4108,7 +4108,19 @@
     "hash": "37159f995dfcc8946c2c2b9f5675baf4"
   },
   ".graphify/2026-08-27/GRAPH_REPORT.md": {
-    "mtime": 1787791362241.549,
-    "hash": "b2a465759c0080a70ce1e33c558391b2"
+    "mtime": 1787794225215.0593,
+    "hash": "77e9eb67980418ed66e8069099523aa8"
+  },
+  "br-app/src/pages/favorites/index.vue": {
+    "mtime": 1787823527914.3572,
+    "hash": "19ff23f5990270779a42435303965f28"
+  },
+  "br-server/alembic/versions/2026_08_27_1000-add_highlighted_lesson_id_to_bookings.py": {
+    "mtime": 1787811928721.39,
+    "hash": "9298dac222f783bf018f767aa3b60a3a"
+  },
+  "br-server/app/services/order_status_scheduler.py": {
+    "mtime": 1787814056117.732,
+    "hash": "195b76582562c50ac66feedcab337008"
   }
 }

@@ -30,6 +30,7 @@ def _to_followed_room(
         business_hours=room.business_hours,
         status=room.status,
         min_price=room.min_price,
+        room_type=room.room_type,
         followed_at=followed_at,
     )
 
@@ -74,6 +75,7 @@ async def list_followed_rooms(
                 business_hours=None,
                 status="active",
                 min_price=0,
+                room_type="teacher",
                 followed_at=follow.created_at,
             )
             for follow, teacher in result.all()
@@ -118,6 +120,7 @@ async def list_followed_rooms(
                 business_hours=None,
                 status=course.status,
                 min_price=schedule.price if schedule else 0,
+                room_type="course",
                 followed_at=follow.created_at,
             )
             for follow, course, schedule in result.all()
@@ -191,6 +194,7 @@ async def follow_room(
             address="",
             status="active",
             min_price=0,
+            room_type="teacher",
             followed_at=follow.created_at,
         ), created
 
@@ -231,6 +235,7 @@ async def follow_room(
             address="",
             status=course.status,
             min_price=schedule.price if schedule else 0,
+            room_type="course",
             followed_at=follow.created_at,
         ), created
 

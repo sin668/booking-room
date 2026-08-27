@@ -50,32 +50,13 @@
           <text class="menu-item-meta">查看全部</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
-        <view class="menu-item" @tap="toggleFollowedRooms">
+        <view class="menu-item" @tap="navigateTo('/pages/favorites/index')">
           <view class="menu-icon teal">
             <view class="store-icon" />
           </view>
-          <text class="menu-item-text">关注自习室</text>
-          <text class="menu-item-meta">{{ followedRoomsSummary }}</text>
-          <text class="dropdown-arrow">{{ showFollowedRoomsDropdown ? '⌃' : '⌄' }}</text>
-        </view>
-        <view v-if="showFollowedRoomsDropdown" class="followed-dropdown">
-          <view v-if="followedRooms.length === 0" class="followed-empty">
-            <text class="followed-empty-text">暂无关注自习室</text>
-          </view>
-          <block v-else>
-            <view
-              v-for="room in followedRooms"
-              :key="room.id"
-              class="followed-room press-effect"
-              @tap="openFollowedRoom(room)"
-            >
-              <view class="followed-room-main">
-                <text class="followed-room-name">{{ room.name }}</text>
-                <text class="followed-room-address">{{ room.address || '地址待完善' }}</text>
-              </view>
-              <view class="icon icon-arrow-right menu-arrow" />
-            </view>
-          </block>
+          <text class="menu-item-text">我的关注</text>
+          <text class="menu-item-meta">{{ followSummary }}</text>
+          <view class="icon icon-arrow-right menu-arrow" />
         </view>
 
         <view class="menu-divider" />
@@ -155,7 +136,7 @@ import { useUserStore } from '@/store/modules/user'
 import { getCoupons } from '@/api/coupons'
 import { getMonthlySummary } from '@/api/studyRecords'
 import { getBalance } from '@/api/wallet'
-import { getFollowedRooms, getFollowedRoomsSummary, syncFollowedRooms } from '@/services/followedRooms'
+import { getAllFollowedCategories } from '@/services/followedRooms'
 import { formatAmount, formatMoney } from '@/utils/formatters'
 
 export default {
@@ -167,7 +148,7 @@ export default {
       totalStudyHours: 0,
       profileRequestId: 0,
       followedRooms: [],
-      showFollowedRoomsDropdown: false,
+      followTotalCount: 0,
     }
   },
   computed: {
@@ -181,7 +162,10 @@ export default {
       return `${this.formatHours(this.totalStudyHours)}h`
     },
     followedRoomsSummary() {
-      return getFollowedRoomsSummary(this.followedRooms)
+      return this.followTotalCount > 0 ? `${this.followTotalCount}项关注` : '暂无关注'
+    },
+    followSummary() {
+      return this.followTotalCount > 0 ? `${this.followTotalCount}项关注` : ''
     },
   },
   onShow() {
@@ -206,19 +190,17 @@ export default {
     },
     async loadFollowedRooms() {
       try {
-        this.followedRooms = await syncFollowedRooms()
+        const categories = await getAllFollowedCategories()
+        this.followedRooms = [
+          ...categories.studyRooms,
+          ...categories.trainingRooms,
+          ...categories.courses,
+          ...categories.teachers,
+        ]
+        this.followTotalCount = this.followedRooms.length
       } catch {
-        this.followedRooms = await getFollowedRooms()
+        this.followTotalCount = 0
       }
-    },
-    toggleFollowedRooms() {
-      this.loadFollowedRooms()
-      this.showFollowedRoomsDropdown = !this.showFollowedRoomsDropdown
-    },
-    openFollowedRoom(room) {
-      if (!room?.id) return
-      this.showFollowedRoomsDropdown = false
-      uni.navigateTo({ url: `/pages/booking/detail?room_id=${room.id}` })
     },
     async loadProfileStats() {
       const requestId = ++this.profileRequestId
@@ -559,14 +541,6 @@ export default {
   color: $text-muted;
 }
 
-.dropdown-arrow {
-  width: 28rpx;
-  font-size: 30rpx;
-  line-height: 30rpx;
-  text-align: center;
-  color: $text-muted;
-}
-
 .store-icon {
   width: 36rpx;
   height: 30rpx;
@@ -596,64 +570,6 @@ export default {
   height: 16rpx;
   border-radius: 4rpx 4rpx 0 0;
   background: #00a884;
-}
-
-.followed-dropdown {
-  margin: 0 28rpx 14rpx 112rpx;
-  border-radius: 22rpx;
-  overflow: hidden;
-  background: $surface-soft;
-  border: 1rpx solid $border-soft;
-}
-
-.followed-empty {
-  min-height: 88rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 24rpx;
-}
-
-.followed-empty-text {
-  font-size: 25rpx;
-  color: $text-muted;
-}
-
-.followed-room {
-  min-height: 96rpx;
-  padding: 16rpx 18rpx 16rpx 24rpx;
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  border-top: 1rpx solid rgba(79, 110, 247, 0.08);
-}
-
-.followed-room:first-child {
-  border-top: none;
-}
-
-.followed-room-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-
-.followed-room-name {
-  font-size: 27rpx;
-  font-weight: 700;
-  color: $text-primary;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.followed-room-address {
-  font-size: 23rpx;
-  color: $text-muted;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .history-icon {

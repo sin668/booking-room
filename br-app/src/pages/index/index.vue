@@ -90,15 +90,15 @@
         </view>
       </view>
 
-      <view v-if="followedRooms.length > 0" class="section">
+      <!-- 关注自习室 -->
+      <view v-if="followedStudyRooms.length > 0" class="section">
         <view class="section-header">
           <text class="section-title">关注自习室</text>
-          <text class="section-more" @tap="onTapMoreRooms">查看更多</text>
+          <text class="section-more" @tap="onTapFavorites">查看更多</text>
         </view>
-
         <view class="room-list">
           <view
-            v-for="room in followedRooms"
+            v-for="room in followedStudyRooms"
             :key="room.id"
             class="room-card"
             @tap="onTapRoom(room)"
@@ -117,6 +117,103 @@
                 </text>
               </view>
             </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 关注培训室 -->
+      <view v-if="followedTrainingRooms.length > 0" class="section">
+        <view class="section-header">
+          <text class="section-title">关注培训室</text>
+          <text class="section-more" @tap="onTapFavorites">查看更多</text>
+        </view>
+        <view class="room-list">
+          <view
+            v-for="room in followedTrainingRooms"
+            :key="'tr-' + room.id"
+            class="room-card"
+            @tap="onTapRoom(room)"
+          >
+            <image class="room-cover" :src="roomCover(room)" mode="aspectFill" />
+            <view class="room-info">
+              <text class="room-name">{{ room.name }}</text>
+              <view class="room-address-row">
+                <view class="icon icon-location room-address-icon" />
+                <text class="room-address">{{ room.address || '地址待完善' }}</text>
+              </view>
+              <view class="room-meta">
+                <text class="room-tag purple">培训室</text>
+                <text :class="['room-price', { muted: !roomPriceText(room) }]">
+                  {{ roomPriceText(room) || '查看详情' }}
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 关注课程 -->
+      <view v-if="followedCourses.length > 0" class="section">
+        <view class="section-header">
+          <text class="section-title">关注课程</text>
+          <text class="section-more" @tap="onTapFavorites">查看更多</text>
+        </view>
+        <view class="room-list">
+          <view
+            v-for="course in followedCourses"
+            :key="'c-' + course.id"
+            class="room-card"
+            @tap="onTapCourse(course)"
+          >
+            <image
+              v-if="course.cover_image"
+              class="room-cover"
+              :src="course.cover_image"
+              mode="aspectFill"
+            />
+            <view v-else class="room-cover course-ph">
+              <view class="course-ph-icon" />
+            </view>
+            <view class="room-info">
+              <text class="room-name">{{ course.name }}</text>
+              <text v-if="course.description" class="room-address">{{ course.description }}</text>
+              <view class="room-meta">
+                <text v-if="Number(course.min_price) > 0" class="room-price">¥{{ course.min_price }}起</text>
+                <text v-else class="room-tag green">免费</text>
+                <view class="icon icon-arrow-right room-arrow" />
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 关注教师 -->
+      <view v-if="followedTeachers.length > 0" class="section">
+        <view class="section-header">
+          <text class="section-title">关注教师</text>
+          <text class="section-more" @tap="onTapFavorites">查看更多</text>
+        </view>
+        <view class="teacher-mini-list">
+          <view
+            v-for="teacher in followedTeachers"
+            :key="'t-' + teacher.id"
+            class="teacher-mini-card"
+            @tap="onTapTeacher(teacher)"
+          >
+            <image
+              v-if="teacher.cover_image"
+              class="teacher-mini-avatar"
+              :src="teacher.cover_image"
+              mode="aspectFill"
+            />
+            <view v-else class="teacher-mini-avatar-ph">
+              <text class="teacher-mini-avatar-text">{{ (teacher.name || 'T').charAt(0) }}</text>
+            </view>
+            <view class="teacher-mini-info">
+              <text class="teacher-mini-name">{{ teacher.name }}</text>
+              <text v-if="teacher.description" class="teacher-mini-desc">{{ teacher.description }}</text>
+            </view>
+            <view class="icon icon-arrow-right teacher-mini-arrow" />
           </view>
         </view>
       </view>
@@ -155,7 +252,7 @@ import { getBanners } from '@/api/banners'
 import { getActivities } from '@/api/activities'
 import { getNotificationUnreadSummary } from '@/api/notifications'
 import { useCityStore } from '@/store/modules/city'
-import { getFollowedRooms, syncFollowedRooms } from '@/services/followedRooms'
+import { getAllFollowedCategories } from '@/services/followedRooms'
 import { formatRoomMinPrice } from '@/utils/formatters'
 
 const REAL_ROOM_COVERS = [
@@ -173,7 +270,10 @@ export default {
       banners: [],
       currentBanner: 0,
       activities: [],
-      followedRooms: [],
+      followedStudyRooms: [],
+      followedTrainingRooms: [],
+      followedCourses: [],
+      followedTeachers: [],
       lastCityId: null,
       quickEntries: [
         { label: '钱包充值', iconClass: 'icon-wallet', bgColor: 'rgba(79,110,247,0.1)', color: '#4F6EF7', path: '/pages/recharge/index' },
@@ -251,23 +351,28 @@ export default {
     async loadFollowedRooms() {
       const cityId = this.currentCityId == null ? null : Number(this.currentCityId)
       const cityName = this.currentCityName || ''
-      let rooms = []
       try {
-        rooms = await syncFollowedRooms()
+        const categories = await getAllFollowedCategories()
+        this.followedStudyRooms = categories.studyRooms
+          .filter((room) => {
+            if (cityId !== null && room.city_id !== null && room.city_id !== undefined && room.city_id !== '') {
+              return Number(room.city_id) === cityId
+            }
+            if (cityName && room.city_name) {
+              return room.city_name === cityName
+            }
+            return !room.city_id && !room.city_name
+          })
+          .slice(0, 2)
+        this.followedTrainingRooms = categories.trainingRooms.slice(0, 2)
+        this.followedCourses = categories.courses.slice(0, 2)
+        this.followedTeachers = categories.teachers.slice(0, 2)
       } catch {
-        rooms = await getFollowedRooms()
+        this.followedStudyRooms = []
+        this.followedTrainingRooms = []
+        this.followedCourses = []
+        this.followedTeachers = []
       }
-      this.followedRooms = rooms
-        .filter((room) => {
-          if (cityId !== null && room.city_id !== null && room.city_id !== undefined && room.city_id !== '') {
-            return Number(room.city_id) === cityId
-          }
-          if (cityName && room.city_name) {
-            return room.city_name === cityName
-          }
-          return !room.city_id && !room.city_name
-        })
-        .slice(0, 3)
     },
 
     roomCover(room) {
@@ -321,7 +426,21 @@ export default {
     },
 
     onTapMoreRooms() {
-      uni.switchTab({ url: '/pages/booking/index' })
+      uni.navigateTo({ url: '/pages/favorites/index' })
+    },
+
+    onTapFavorites() {
+      uni.navigateTo({ url: '/pages/favorites/index' })
+    },
+
+    onTapCourse(course) {
+      if (!course?.id) return
+      uni.navigateTo({ url: `/pages/training/course-detail?course_id=${course.id}` })
+    },
+
+    onTapTeacher(teacher) {
+      if (!teacher?.id) return
+      uni.navigateTo({ url: `/pages/teacher/profile?teacher_id=${teacher.id}` })
     },
 
     onTapRoom(room) {
@@ -768,6 +887,16 @@ export default {
   color: $primary;
 }
 
+.room-tag.purple {
+  background: rgba(108, 92, 231, 0.08);
+  color: $purple;
+}
+
+.room-tag.green {
+  background: rgba(7, 193, 96, 0.08);
+  color: $success;
+}
+
 .room-price {
   font-size: 26rpx;
   font-weight: 700;
@@ -778,6 +907,114 @@ export default {
   font-size: 22rpx;
   font-weight: 600;
   color: $primary;
+}
+
+.room-arrow {
+  font-size: 24rpx;
+  color: $text-muted;
+}
+
+.course-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(79, 110, 247, 0.08), rgba(108, 92, 231, 0.06));
+}
+
+.course-ph-icon {
+  width: 56rpx;
+  height: 56rpx;
+  border: 4rpx solid $primary;
+  border-radius: 12rpx;
+  position: relative;
+}
+
+.course-ph-icon::after {
+  content: '';
+  position: absolute;
+  left: 10rpx;
+  right: 10rpx;
+  top: 50%;
+  height: 4rpx;
+  background: $primary;
+  border-radius: 2rpx;
+}
+
+/* Teacher mini list */
+.teacher-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 0 28rpx;
+}
+
+.teacher-mini-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 24rpx;
+  background: $surface;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+  transition: transform 0.2s;
+}
+
+.teacher-mini-card:active {
+  transform: scale(0.98);
+}
+
+.teacher-mini-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #eef1fb;
+}
+
+.teacher-mini-avatar-ph {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, $primary, $purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teacher-mini-avatar-text {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.teacher-mini-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-mini-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $text-primary;
+  display: block;
+}
+
+.teacher-mini-desc {
+  display: block;
+  font-size: 22rpx;
+  color: $text-secondary;
+  margin-top: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teacher-mini-arrow {
+  font-size: 24rpx;
+  color: $text-muted;
+  flex-shrink: 0;
 }
 
 .empty-rooms {

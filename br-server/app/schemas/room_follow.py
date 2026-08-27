@@ -15,6 +15,7 @@ class FollowedRoomResponse(BaseModel):
     business_hours: str | None = None
     status: str
     min_price: Decimal
+    room_type: str | None = None
     followed_at: datetime
 
 

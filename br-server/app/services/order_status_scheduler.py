@@ -28,6 +28,7 @@ async def check_and_update_order_statuses() -> dict:
     current_time = now.time()
 
     stats = {
+        "total_scanned": 0,
         "seat_started": 0,
         "seat_completed": 0,
         "course_started": 0,
@@ -47,6 +48,7 @@ async def check_and_update_order_statuses() -> dict:
             )
         )
         bookings = result.scalars().all()
+        stats["total_scanned"] = len(bookings)
 
         for booking in bookings:
             try:

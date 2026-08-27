@@ -95,7 +95,18 @@ async def _order_status_check_job() -> None:
     from app.services.order_status_scheduler import check_and_update_order_statuses
     try:
         stats = await check_and_update_order_statuses()
-        logger.info("Order status check completed: %s", stats)
+        total_changes = (
+            stats["seat_started"] + stats["seat_completed"]
+            + stats["course_started"] + stats["course_highlight_updated"] + stats["course_completed"]
+        )
+        logger.info(
+            "[订单状态定时任务] 扫描 %d 个订单，变更 %d 个 | "
+            "自习室: 开始 %d / 完成 %d | "
+            "课程: 开始 %d / 高亮更新 %d / 完成 %d",
+            stats["total_scanned"], total_changes,
+            stats["seat_started"], stats["seat_completed"],
+            stats["course_started"], stats["course_highlight_updated"], stats["course_completed"],
+        )
     except Exception:
         logger.exception("Order status check job failed")
         raise

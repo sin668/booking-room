@@ -208,7 +208,7 @@ export default {
       try {
         this.followedRooms = await syncFollowedRooms()
       } catch {
-        this.followedRooms = getFollowedRooms()
+        this.followedRooms = await getFollowedRooms()
       }
     },
     toggleFollowedRooms() {

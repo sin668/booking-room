@@ -25,6 +25,7 @@
           class="hero-image"
           :src="heroImage"
           mode="aspectFill"
+          @tap="previewHeroImage"
         />
         <view class="hero-gradient" />
         <view class="hero-title">
@@ -111,7 +112,7 @@
         </view>
         <scroll-view class="photo-scroll" scroll-x :show-scrollbar="false">
           <view class="photo-list">
-            <view v-for="(photo, idx) in displayPhotos" :key="idx" class="photo-card">
+            <view v-for="(photo, idx) in displayPhotos" :key="idx" class="photo-card" @tap="previewRoomPhoto(idx)">
               <image class="photo-image" :src="photo" mode="aspectFill" />
             </view>
             <view v-if="roomPhotos.length > 3" class="photo-card photo-more" @tap="onViewAllPhotos">
@@ -341,17 +342,21 @@
 <script>
 import { getSeatStats } from '@/api/seats'
 import { getTrainingRoomDetail } from '@/api/training'
-import { followRoom, isRoomFollowed, unfollowRoom } from '@/services/followedRooms'
+import {
+  followRoom as apiFollowRoom,
+  unfollowRoom as apiUnfollowRoom,
+  getFollowedRooms as apiGetFollowedRooms,
+} from '@/api/roomFollows'
 import { fetchBookingRoom } from '@/services/bookingPageService'
 import { formatCourseSchedule, formatCourseStartDate } from '@/utils/formatters'
 
 const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
 const REAL_ROOM_PHOTOS = [
-  'https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&h=560&fit=crop&q=85',
-  'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=520&h=360&fit=crop&q=85',
-  'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=520&h=360&fit=crop&q=85',
-  'https://images.unsplash.com/photo-1577720643272-265f09367456?w=520&h=360&fit=crop&q=85',
+  'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800',
+  'https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=800',
+  'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800',
+  'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800',
 ]
 
 export default {
@@ -372,7 +377,15 @@ export default {
 
   computed: {
     roomPhotos() {
-      const photos = this.room.cover_image ? [this.room.cover_image, ...REAL_ROOM_PHOTOS] : REAL_ROOM_PHOTOS
+      // 优先使用后端 environment_images 数据
+      const envImages = this.room.environment_images
+      if (envImages && envImages.length > 0) {
+        return envImages
+      }
+      // 后端数据为空时，才使用默认示例图片
+      const photos = this.room.cover_image
+        ? [this.room.cover_image, ...REAL_ROOM_PHOTOS]
+        : REAL_ROOM_PHOTOS
       return [...new Set(photos)]
     },
 
@@ -381,7 +394,7 @@ export default {
     },
 
     heroImage() {
-      return this.roomPhotos[0]
+      return this.room.cover_image || this.roomPhotos[0]
     },
 
     roomName() {
@@ -470,7 +483,6 @@ export default {
 
     if (options.room_id) {
       this.roomId = options.room_id
-      this.isFav = isRoomFollowed(this.roomId)
       this.loadData()
     }
   },
@@ -511,11 +523,22 @@ export default {
       })
     },
 
+    async loadFollowStatus() {
+      try {
+        const data = await apiGetFollowedRooms()
+        const items = data?.items || []
+        this.isFav = items.some((r) => Number(r.id) === Number(this.roomId))
+      } catch {
+        this.isFav = false
+      }
+    },
+
     async loadRoom() {
       try {
         const data = await fetchBookingRoom(this.roomId)
         this.room = data || {}
-        this.isFav = isRoomFollowed(this.roomId)
+        this.isFav = false
+        await this.loadFollowStatus()
       } catch {
         // room stays empty
       }
@@ -539,7 +562,30 @@ export default {
     },
 
     onViewAllPhotos() {
-      // placeholder
+      if (!this.roomPhotos.length) return
+      uni.previewImage({
+        urls: this.roomPhotos,
+        current: this.roomPhotos[0],
+      })
+    },
+
+    previewRoomPhoto(index) {
+      if (!this.roomPhotos.length) return
+      uni.previewImage({
+        urls: this.roomPhotos,
+        current: this.roomPhotos[index],
+      })
+    },
+
+    previewHeroImage() {
+      const urls = this.room.cover_image && !this.roomPhotos.includes(this.room.cover_image)
+        ? [this.room.cover_image, ...this.roomPhotos]
+        : this.roomPhotos
+      if (!urls.length) return
+      uni.previewImage({
+        urls,
+        current: this.heroImage,
+      })
     },
 
     async onToggleFav() {
@@ -547,7 +593,7 @@ export default {
 
       if (this.isFav) {
         try {
-          await unfollowRoom(this.roomId)
+          await apiUnfollowRoom(this.roomId)
           this.isFav = false
           uni.showToast({ title: '已取消关注', icon: 'none' })
         } catch {
@@ -557,17 +603,7 @@ export default {
       }
 
       try {
-        await followRoom({
-          ...this.room,
-          id: this.room.id || this.roomId,
-          name: this.roomName,
-          address: this.displayAddress,
-          cover_image: this.heroImage,
-          city_id: this.room.city_id,
-          city_name: this.room.city_name,
-          min_price: this.room.min_price,
-          status: this.room.status,
-        })
+        await apiFollowRoom(this.roomId)
         this.isFav = true
         uni.showToast({ title: '已加入关注自习室', icon: 'none' })
       } catch {

@@ -44,6 +44,7 @@ class TrainingRoomResponse(BaseModel):
     name: str
     description: str | None = None
     cover_image: str | None = None
+    environment_images: list[str] | None = None
     address: str
     city_id: int | None = None
     city_name: str | None = None
@@ -112,6 +113,7 @@ class TrainingRoomDetailResponse(BaseModel):
     name: str
     description: str | None = None
     cover_image: str | None = None
+    environment_images: list[str] | None = None
     address: str
     business_hours: str | None = None
     status: str

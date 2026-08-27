@@ -211,6 +211,7 @@ async def get_training_room_detail(
         name=room_obj.name,
         description=room_obj.description,
         cover_image=room_obj.cover_image,
+        environment_images=room_obj.environment_images,
         address=room_obj.address,
         business_hours=room_obj.business_hours,
         status=room_obj.status,

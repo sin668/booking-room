@@ -1,9 +1,5 @@
-export const FOLLOWED_ROOMS_STORAGE_KEY = 'followed_rooms'
-
 import {
   fetchPersistedFollowedRooms,
-  persistFollowRoom,
-  persistUnfollowRoom,
 } from '@/api/roomFollows'
 
 export function normalizeRoom(room = {}) {
@@ -23,62 +19,24 @@ export function normalizeRoom(room = {}) {
   }
 }
 
-export function getFollowedRooms() {
-  const storedRooms = uni.getStorageSync(FOLLOWED_ROOMS_STORAGE_KEY)
-  const rooms = Array.isArray(storedRooms) ? storedRooms : []
-  return rooms.map(normalizeRoom).filter(Boolean)
-}
-
-function setFollowedRooms(rooms) {
-  const nextRooms = (Array.isArray(rooms) ? rooms : []).map(normalizeRoom).filter(Boolean)
-  uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, nextRooms)
-  return nextRooms
-}
-
-export async function syncFollowedRooms() {
+/**
+ * 从后端 API 获取关注房间列表（异步）
+ */
+export async function getFollowedRooms() {
   const data = await fetchPersistedFollowedRooms()
-  return setFollowedRooms(data?.items || [])
+  const items = data?.items || []
+  return items.map(normalizeRoom).filter(Boolean)
 }
 
-export function isRoomFollowed(roomId) {
-  const normalizedId = Number(roomId)
-  return getFollowedRooms().some((room) => room.id === normalizedId)
-}
+/**
+ * syncFollowedRooms 保留为 getFollowedRooms 的别名，兼容旧调用
+ */
+export const syncFollowedRooms = getFollowedRooms
 
-export async function followRoom(room) {
-  const normalizedRoom = normalizeRoom(room)
-  if (!normalizedRoom) return getFollowedRooms()
-
-  const previousRooms = getFollowedRooms()
-  const rooms = previousRooms.filter((item) => item.id !== normalizedRoom.id)
-  const nextRooms = [normalizedRoom, ...rooms]
-  uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, nextRooms)
-
-  try {
-    const persistedRoom = await persistFollowRoom(normalizedRoom.id)
-    return setFollowedRooms([persistedRoom, ...rooms])
-  } catch (error) {
-    uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, previousRooms)
-    throw error
-  }
-}
-
-export async function unfollowRoom(roomId) {
-  const normalizedId = Number(roomId)
-  const previousRooms = getFollowedRooms()
-  const nextRooms = previousRooms.filter((room) => room.id !== normalizedId)
-  uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, nextRooms)
-
-  try {
-    await persistUnfollowRoom(normalizedId)
-  } catch (error) {
-    uni.setStorageSync(FOLLOWED_ROOMS_STORAGE_KEY, previousRooms)
-    throw error
-  }
-  return nextRooms
-}
-
-export function getFollowedRoomsSummary(rooms = getFollowedRooms()) {
+/**
+ * 纯函数：根据传入的房间数组生成关注摘要文本
+ */
+export function getFollowedRoomsSummary(rooms = []) {
   if (rooms.length === 0) return '暂无关注'
   if (rooms.length === 1) return rooms[0].name
   return `${rooms[0].name}等${rooms.length}家`

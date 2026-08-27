@@ -90,12 +90,13 @@
             :key="room.id"
             :class="['room-card', 'animate-in', `delay-${Math.min(index + 1, 3)}`]"
           >
-            <view class="room-header" @tap="toggleExpand(room.id)">
+            <view class="room-header" @tap="goRoomDetail(room.id)">
               <view class="room-cover-wrap">
                 <image
                   class="room-cover"
                   :src="roomCover(room, index)"
                   mode="aspectFill"
+                  @tap.stop="previewRoomCover(room, index)"
                 />
                 <view :class="['cover-status', room.status === 'open' ? 'open' : 'closed']">
                   <text class="cover-status-text">{{ room.status === 'open' ? '可预约' : '休息中' }}</text>
@@ -107,7 +108,7 @@
               <view class="room-info">
                 <view class="room-info-top">
                   <view class="room-title-row">
-                    <text class="room-name" @tap.stop="goRoomDetail(room.id)">{{ room.name }}</text>
+                    <text class="room-name">{{ room.name }}</text>
                     <text :class="['room-status', room.status === 'open' ? 'status-open' : 'status-closed']">
                       {{ room.status === 'open' ? '营业中' : '休息中' }}
                     </text>
@@ -131,7 +132,7 @@
                     >{{ tag }}</text>
                   </view>
                 </view>
-                <view class="room-meta">
+                <view class="room-meta" @tap.stop="toggleExpand(room.id)">
                   <text class="hot-label-text">热门推荐课程</text>
                   <view class="room-meta-right">
                     <view class="room-price-wrap">
@@ -149,12 +150,12 @@
                 v-for="course in room.hot_courses"
                 :key="course.id"
                 class="hot-course-item"
-                @tap="onCourseDetail(course)"
               >
                 <image
                   class="hot-course-cover"
-                  :src="courseCover(course)"
+                  :src="course.cover_image"
                   mode="aspectFill"
+                  @tap.stop="previewCourseImage(course)"
                 />
                 <view class="hot-course-info">
                   <view class="hot-course-top">
@@ -215,7 +216,7 @@
             <view class="course-cover-wrap">
               <image
                 class="course-cover"
-                :src="courseCover(course)"
+                :src="course.cover_image"
                 mode="aspectFill"
               />
             </view>
@@ -318,15 +319,6 @@ const REAL_ROOM_COVERS = [
   'https://images.unsplash.com/photo-1568665630394-8f679e2c7a4f?w=400&h=500&fit=crop&q=85',
 ]
 
-const REAL_COURSE_COVERS = [
-  'https://images.unsplash.com/photo-1546410531-bb4caa6b5cb9?w=300&h=300&fit=crop&q=85',
-  'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300&h=300&fit=crop&q=85',
-  'https://images.unsplash.com/photo-1516321318963-37678e7950e0?w=300&h=300&fit=crop&q=85',
-  'https://images.unsplash.com/photo-1454165184704-b8c9c3c2c94a?w=300&h=300&fit=crop&q=85',
-  'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300&h=300&fit=crop&q=85',
-  'https://images.unsplash.com/photo-1546410531-bb4caa6b5cb9?w=300&h=300&fit=crop&q=85',
-]
-
 const ROOM_TAG_POOL = [
   ['多媒体', '小班', '1对1'],
   ['投影', '大班', '空调'],
@@ -374,10 +366,20 @@ function roomCover(room, index = 0) {
   return REAL_ROOM_COVERS[key % REAL_ROOM_COVERS.length]
 }
 
-function courseCover(course) {
-  if (course.cover_image) return course.cover_image
-  const key = Number(course.id || 0)
-  return REAL_COURSE_COVERS[key % REAL_COURSE_COVERS.length]
+function previewRoomCover(room, index) {
+  const url = roomCover(room, index)
+  uni.previewImage({
+    urls: [url],
+    current: url,
+  })
+}
+
+function previewCourseImage(course) {
+  if (!course || !course.cover_image) return
+  uni.previewImage({
+    urls: [course.cover_image],
+    current: course.cover_image,
+  })
 }
 
 function roomTags(room, index = 0) {

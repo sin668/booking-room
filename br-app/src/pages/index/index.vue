@@ -255,7 +255,7 @@ export default {
       try {
         rooms = await syncFollowedRooms()
       } catch {
-        rooms = getFollowedRooms()
+        rooms = await getFollowedRooms()
       }
       this.followedRooms = rooms
         .filter((room) => {

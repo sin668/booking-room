@@ -13,20 +13,16 @@
     </view>
 
     <!-- Tab 栏 -->
-    <view class="tab-bar">
+    <scroll-view class="tab-bar" scroll-x :show-scrollbar="false">
       <view
         v-for="tab in tabs"
         :key="tab.key"
-        :class="['tab-item', { active: activeTab === tab.key }]"
+        :class="['tab-item', { 'tab-active': activeTab === tab.key }]"
         @tap="onTabChange(tab.key)"
       >
         <text class="tab-text">{{ tab.label }}</text>
-        <view v-if="tab.count > 0" class="tab-badge">
-          <text class="tab-badge-text">{{ tab.count > 99 ? '99+' : tab.count }}</text>
-        </view>
-        <view v-if="activeTab === tab.key" class="tab-indicator" />
       </view>
-    </view>
+    </scroll-view>
 
     <!-- 内容区 -->
     <scroll-view class="content" scroll-y @scrolltolower="onReachBottom">
@@ -250,10 +246,10 @@ export default {
   computed: {
     tabs() {
       return [
-        { key: 'room', label: '关注自习室', count: this.studyRooms.length },
-        { key: 'training', label: '关注培训室', count: this.trainingRooms.length },
-        { key: 'course', label: '关注课程', count: this.courses.length },
-        { key: 'teacher', label: '关注教师', count: this.teachers.length },
+        { key: 'room', label: '关注自习室' },
+        { key: 'training', label: '关注培训室' },
+        { key: 'course', label: '关注课程' },
+        { key: 'teacher', label: '关注教师' },
       ]
     },
   },
@@ -388,64 +384,44 @@ export default {
 
 /* Tab bar */
 .tab-bar {
-  display: flex;
-  background: #fff;
-  padding: 0 16rpx;
-  border-bottom: 1rpx solid $border-soft;
   position: sticky;
   top: 0;
   z-index: 10;
+  background: $surface;
+  white-space: nowrap;
+  border-bottom: 1rpx solid $border-soft;
 }
 
 .tab-item {
-  flex: 1;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6rpx;
-  height: 84rpx;
+  padding: 24rpx 0;
+  margin: 0 22rpx;
   position: relative;
-  transition: all 0.25s $ease-out;
 }
 
 .tab-text {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: $text-secondary;
-  transition: color 0.25s;
+  letter-spacing: 1rpx;
 }
 
-.tab-item.active .tab-text {
+.tab-active .tab-text {
   color: $primary;
-  font-weight: 700;
-}
-
-.tab-badge {
-  min-width: 32rpx;
-  height: 32rpx;
-  padding: 0 8rpx;
-  border-radius: 16rpx;
-  background: $danger;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tab-badge-text {
-  font-size: 18rpx;
-  color: #fff;
   font-weight: 600;
 }
 
-.tab-indicator {
+.tab-active::after {
+  content: '';
   position: absolute;
-  bottom: 0;
+  bottom: 4rpx;
   left: 50%;
   transform: translateX(-50%);
-  width: 48rpx;
-  height: 6rpx;
-  border-radius: 3rpx;
+  width: 32rpx;
+  height: 4rpx;
   background: $primary;
-  transition: all 0.25s $ease-out;
+  border-radius: 2rpx;
 }
 
 /* Content */

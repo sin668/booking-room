@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from jose import ExpiredSignatureError, JWTError, jwt
-from sqlalchemy import select, update
+from sqlalchemy import and_, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -186,7 +186,10 @@ def _build_booking_summary(
         end_time=booking.end_time,
         total_price=booking.total_price,
         status=booking.status,
-        can_verify=booking.status == "confirmed",
+        can_verify=(
+            booking.status == "confirmed"
+            or (booking.status == "pending" and booking.payment_status == "paid")
+        ),
     )
 
 
@@ -249,17 +252,35 @@ async def confirm_verification(
 
     if booking.status == "completed":
         raise BookingAlreadyVerifiedError("预约已核销")
-    if booking.status != "confirmed":
+    if booking.status not in ("confirmed", "pending") or (
+        booking.status == "pending" and booking.payment_status != "paid"
+    ):
         raise BookingNotVerifiableError("预约状态不可核销")
+
+    now = _booking_now()
+    end_at = datetime.combine(
+        booking.date, booking.end_time, tzinfo=_booking_timezone()
+    )
+    new_status = "confirmed" if now <= end_at else "completed"
+
+    # 幂等保护：已核销的 confirmed 预约不可重复核销
+    if booking.status == "confirmed" and new_status == "confirmed":
+        raise BookingAlreadyVerifiedError("预约已核销")
 
     update_result = await db.execute(
         update(Booking)
         .where(
             Booking.id == payload.booking_id,
             Booking.user_id == booking.user_id,
-            Booking.status == "confirmed",
+            or_(
+                Booking.status == "confirmed",
+                and_(
+                    Booking.status == "pending",
+                    Booking.payment_status == "paid",
+                ),
+            ),
         )
-        .values(status="completed")
+        .values(status=new_status)
     )
     if update_result.rowcount != 1:
         refreshed = await _load_booking_for_status(db, payload)
@@ -328,7 +349,13 @@ async def _load_verifiable_booking_rows(
         .join(StudyRoom, StudyRoom.id == Booking.room_id)
         .where(
             Booking.user_id == str(user_id),
-            Booking.status == "confirmed",
+            or_(
+                Booking.status == "confirmed",
+                and_(
+                    Booking.status == "pending",
+                    Booking.payment_status == "paid",
+                ),
+            ),
         )
         .order_by(Booking.date.asc(), Booking.start_time.asc(), Booking.id.asc())
     )

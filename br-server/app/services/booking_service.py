@@ -97,6 +97,7 @@ def _sync_booking_completion(booking: Booking, now: datetime | None = None) -> b
             payment_status=booking.payment_status,
             booking_date=booking.date,
             start_time=booking.start_time,
+            end_time=booking.end_time,
             now=current_time,
         )
     )
@@ -543,6 +544,8 @@ async def list_bookings(
             resp.started = (start_d <= today) if start_d else None
             # lesson_schedules (already filtered by booking.lesson_ids above)
             resp.lesson_schedules = lesson_schedule_map.get(b.id) or []
+            # highlighted_lesson_id
+            resp.highlighted_lesson_id = getattr(b, "highlighted_lesson_id", None)
             # 设置教师信息
             if b.course_id and b.course_id in course_teacher_map:
                 teacher_id = course_teacher_map[b.course_id]

@@ -10,6 +10,7 @@ class BookingCompletionInput:
     payment_status: str
     booking_date: date
     start_time: time
+    end_time: time
     now: datetime
 
 
@@ -49,9 +50,5 @@ def should_mark_booking_completed(value: BookingCompletionInput) -> bool:
     return (
         value.status == "confirmed"
         and value.payment_status == "paid"
-        and has_booking_started(
-            booking_date=value.booking_date,
-            start_time=value.start_time,
-            now=value.now,
-        )
+        and datetime.combine(value.booking_date, value.end_time) <= value.now
     )

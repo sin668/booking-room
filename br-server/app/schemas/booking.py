@@ -97,6 +97,7 @@ class BookingResponse(BaseModel):
     end_date: str | None = None
     started: bool | None = None
     lesson_schedules: list[LessonScheduleBrief] | None = None
+    highlighted_lesson_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

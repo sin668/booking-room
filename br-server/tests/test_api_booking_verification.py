@@ -207,7 +207,12 @@ async def test_admin_can_inspect_verification_token(
 async def test_admin_can_confirm_verification(
     auth_client: AsyncClient,
     seed_verifiable_booking,
+    db_session: AsyncSession,
 ):
+    booking = seed_verifiable_booking["booking"]
+    # Set end_time in the past so confirm results in "completed"
+    booking.end_time = time(0, 1)
+    await db_session.flush()
     token = (await auth_client.post("/api/v1/booking-verifications/token")).json()["token"]
 
     response = await auth_client.post(f"/api/v1/booking-verifications/{token}/confirm")
@@ -219,25 +224,36 @@ async def test_admin_can_confirm_verification(
     assert seed_verifiable_booking["booking"].status == "completed"
 
 
-async def test_admin_can_confirm_future_booking_with_valid_token(
+async def test_admin_can_confirm_future_booking_returns_confirmed(
     auth_client: AsyncClient,
     seed_verifiable_booking,
+    db_session: AsyncSession,
 ):
+    """Future pending+paid booking (now <= end_time) should become confirmed, not completed."""
     booking = seed_verifiable_booking["booking"]
-    booking.date = datetime.now(UTC).date() + timedelta(days=1)
+    booking.status = "pending"
+    booking.payment_status = "paid"
+    # end_time=23:59 ensures real now <= end_time so status stays confirmed
+    booking.start_time = time(0, 0)
+    booking.end_time = time(23, 59)
+    await db_session.flush()
     token = (await auth_client.post("/api/v1/booking-verifications/token")).json()["token"]
 
     response = await auth_client.post(f"/api/v1/booking-verifications/{token}/confirm")
 
     assert response.status_code == 200
-    assert response.json()["booking"]["status"] == "completed"
+    assert response.json()["booking"]["status"] == "confirmed"
 
 
 async def test_real_admin_header_can_inspect_and_confirm(
     auth_client: AsyncClient,
     seed_verifiable_booking,
+    db_session: AsyncSession,
     monkeypatch,
 ):
+    booking = seed_verifiable_booking["booking"]
+    booking.end_time = time(0, 1)
+    await db_session.flush()
     token = (await auth_client.post("/api/v1/booking-verifications/token")).json()["token"]
     app = auth_client._transport.app
     app.dependency_overrides.pop(get_current_admin, None)
@@ -301,10 +317,84 @@ async def test_expired_token_returns_410(
 async def test_repeated_confirm_returns_409(
     auth_client: AsyncClient,
     seed_verifiable_booking,
+    db_session: AsyncSession,
 ):
+    booking = seed_verifiable_booking["booking"]
+    # Set end_time in the past so first confirm results in "completed"
+    booking.end_time = time(0, 1)
+    await db_session.flush()
     token = (await auth_client.post("/api/v1/booking-verifications/token")).json()["token"]
     first = await auth_client.post(f"/api/v1/booking-verifications/{token}/confirm")
     second = await auth_client.post(f"/api/v1/booking-verifications/{token}/confirm")
 
     assert first.status_code == 200
     assert second.status_code == 409
+
+
+async def test_admin_can_confirm_pending_paid_booking(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_verifiable_booking,
+    monkeypatch,
+):
+    """pending+paid booking can be verified via API and returns confirmed/completed."""
+    from app.services.booking_verification_service import _booking_timezone
+    from app.services import booking_verification_service
+
+    booking = seed_verifiable_booking["booking"]
+    booking.status = "pending"
+    booking.payment_status = "paid"
+    booking.start_time = time(9, 0)
+    booking.end_time = time(23, 59)  # end_time far in the future today
+    await db_session.flush()
+
+    # Issue token first (uses real _booking_now for token timestamp)
+    token_resp = await auth_client.post("/api/v1/booking-verifications/token")
+    assert token_resp.status_code == 200
+    token = token_resp.json()["token"]
+
+    # Now patch _booking_now to be before end_time for the confirm step
+    today = booking.date
+    fixed_now = datetime(today.year, today.month, today.day, 10, 0, tzinfo=_booking_timezone())
+    monkeypatch.setattr(booking_verification_service, "_booking_now", lambda: fixed_now)
+
+    response = await auth_client.post(f"/api/v1/booking-verifications/{token}/confirm")
+
+    assert response.status_code == 200
+    assert response.json()["booking"]["status"] == "confirmed"
+
+
+async def test_confirm_already_confirmed_booking_returns_409(
+    auth_client: AsyncClient,
+    seed_verifiable_booking,
+    db_session: AsyncSession,
+):
+    """Idempotent protection: confirming a confirmed booking with now <= end_time returns 409."""
+    booking = seed_verifiable_booking["booking"]
+    # confirmed+paid with end_time=23:59 ensures real now <= end_time
+    booking.status = "confirmed"
+    booking.payment_status = "paid"
+    booking.start_time = time(0, 0)
+    booking.end_time = time(23, 59)
+    await db_session.flush()
+    token = (await auth_client.post("/api/v1/booking-verifications/token")).json()["token"]
+
+    response = await auth_client.post(f"/api/v1/booking-verifications/{token}/confirm")
+
+    assert response.status_code == 409
+
+
+async def test_pending_unpaid_booking_cannot_be_verified(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_verifiable_booking,
+):
+    """pending (unpaid) booking should return 400 when trying to verify."""
+    booking = seed_verifiable_booking["booking"]
+    booking.status = "pending"
+    booking.payment_status = "pending"
+    await db_session.flush()
+
+    response = await auth_client.post("/api/v1/booking-verifications/token")
+
+    assert response.status_code == 404

@@ -148,12 +148,20 @@ const priceText = computed(() => {
   return Number.isNaN(num) ? value : num.toFixed(2)
 })
 const statusText = computed(() => {
-  const map = {
-    confirmed: '待核销',
-    completed: '已核销',
-    cancelled: '已取消',
+  const status = booking.value?.status
+  if (status === 'pending') return '待核销'
+  if (status === 'confirmed') {
+    // 核销后：根据时间判断进行中还是已核销
+    if (booking.value?.date && booking.value?.end_time) {
+      const now = new Date()
+      const endDate = new Date(booking.value.date + 'T' + booking.value.end_time)
+      if (now > endDate) return '已核销'
+    }
+    return '进行中'
   }
-  return map[booking.value?.status] || booking.value?.status || '-'
+  if (status === 'completed') return '已核销'
+  if (status === 'cancelled') return '已取消'
+  return status || '-'
 })
 const statusClass = computed(() => {
   return booking.value?.status || 'unknown'

@@ -49,15 +49,46 @@ def test_can_cancel_paid_booking_rejects_started_booking():
     assert result is False
 
 
-def test_should_mark_booking_completed_only_for_started_confirmed_paid_booking():
+def test_should_mark_booking_completed_when_now_at_or_after_end_time():
     result = should_mark_booking_completed(
         BookingCompletionInput(
             status="confirmed",
             payment_status="paid",
             booking_date=date(2026, 5, 30),
             start_time=time(9, 0),
-            now=datetime(2026, 5, 30, 9, 1),
+            end_time=time(11, 0),
+            now=datetime(2026, 5, 30, 11, 0),
         )
     )
 
     assert result is True
+
+
+def test_should_not_mark_booking_completed_when_now_between_start_and_end_time():
+    result = should_mark_booking_completed(
+        BookingCompletionInput(
+            status="confirmed",
+            payment_status="paid",
+            booking_date=date(2026, 5, 30),
+            start_time=time(9, 0),
+            end_time=time(11, 0),
+            now=datetime(2026, 5, 30, 10, 0),
+        )
+    )
+
+    assert result is False
+
+
+def test_should_not_mark_booking_completed_before_start_time():
+    result = should_mark_booking_completed(
+        BookingCompletionInput(
+            status="confirmed",
+            payment_status="paid",
+            booking_date=date(2026, 5, 30),
+            start_time=time(9, 0),
+            end_time=time(11, 0),
+            now=datetime(2026, 5, 30, 8, 59),
+        )
+    )
+
+    assert result is False

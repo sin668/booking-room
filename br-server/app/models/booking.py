@@ -49,6 +49,7 @@ class Booking(Base):
     booking_type: Mapped[str] = mapped_column(String(20), default="seat", nullable=False, index=True)
     course_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("courses.id"), nullable=True)
     lesson_ids: Mapped[list[int] | None] = mapped_column(ARRAY(Integer), nullable=True)
+    highlighted_lesson_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="当前高亮的课时ID（课程预约）")
     schedule_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

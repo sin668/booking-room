@@ -90,6 +90,27 @@ async def _booking_payment_reconciliation_loop() -> None:
             pass
 
 
+async def _order_status_check_job() -> None:
+    """订单状态定时检查任务"""
+    from app.services.order_status_scheduler import check_and_update_order_statuses
+    try:
+        stats = await check_and_update_order_statuses()
+        logger.info("Order status check completed: %s", stats)
+    except Exception:
+        logger.exception("Order status check job failed")
+        raise
+
+
+async def _order_status_check_loop() -> None:
+    """Fallback periodic runner for order status check without APScheduler."""
+    while True:
+        await asyncio.sleep(settings.ORDER_STATUS_CHECK_INTERVAL_SECONDS)
+        try:
+            await _order_status_check_job()
+        except Exception:
+            pass
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: startup and shutdown events."""
@@ -103,11 +124,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             "interval",
             seconds=settings.BOOKING_CLEANUP_INTERVAL_SECONDS,
         )
+        scheduler.add_job(
+            _order_status_check_job,
+            "interval",
+            seconds=settings.ORDER_STATUS_CHECK_INTERVAL_SECONDS,
+            id="order_status_check",
+            replace_existing=True,
+        )
         scheduler.start()
         app.state.booking_cleanup_scheduler = scheduler
         logger.info(
             "Booking payment reconciliation scheduler started: interval=%s seconds",
             settings.BOOKING_CLEANUP_INTERVAL_SECONDS,
+        )
+        logger.info(
+            "Order status check scheduler started: interval=%s seconds",
+            settings.ORDER_STATUS_CHECK_INTERVAL_SECONDS,
         )
     else:
         fallback_task = asyncio.create_task(_booking_payment_reconciliation_loop())
@@ -116,6 +148,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             "Booking payment reconciliation using asyncio fallback: "
             "apscheduler is not installed; interval=%s seconds",
             settings.BOOKING_CLEANUP_INTERVAL_SECONDS,
+        )
+        order_status_fallback_task = asyncio.create_task(_order_status_check_loop())
+        app.state.order_status_fallback_task = order_status_fallback_task
+        logger.warning(
+            "Order status check using asyncio fallback: "
+            "apscheduler is not installed; interval=%s seconds",
+            settings.ORDER_STATUS_CHECK_INTERVAL_SECONDS,
         )
     yield
     # Shutdown
@@ -126,6 +165,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         fallback_task.cancel()
         with suppress(asyncio.CancelledError):
             await fallback_task
+    order_status_fallback_task = getattr(app.state, "order_status_fallback_task", None)
+    if order_status_fallback_task is not None:
+        order_status_fallback_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await order_status_fallback_task
     await close_redis()
 
 

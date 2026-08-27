@@ -1178,7 +1178,7 @@ class TestCancelBooking:
         self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
     ):
         user = await self._seed_user(db_session, Decimal("0.00"))
-        started_at = datetime.now() - timedelta(minutes=1)
+        started_at = datetime.now() - timedelta(hours=2)
         seat = seed_room_seat["seat_a"]
         room = seed_room_seat["room"]
         booking = Booking(
@@ -1187,7 +1187,7 @@ class TestCancelBooking:
             room_id=room.id,
             date=started_at.date(),
             start_time=started_at.time().replace(microsecond=0),
-            end_time=(started_at + timedelta(hours=2)).time().replace(microsecond=0),
+            end_time=(started_at + timedelta(hours=1)).time().replace(microsecond=0),
             status="confirmed",
             total_price=Decimal("45.00"),
             payment_method="balance",
@@ -1287,7 +1287,7 @@ class TestCancelBooking:
         self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
     ):
         await self._seed_user(db_session, Decimal("0.00"))
-        started_at = datetime.now() - timedelta(minutes=1)
+        started_at = datetime.now() - timedelta(hours=2)
         seat = seed_room_seat["seat_a"]
         room = seed_room_seat["room"]
         booking = Booking(
@@ -1296,7 +1296,7 @@ class TestCancelBooking:
             room_id=room.id,
             date=started_at.date(),
             start_time=started_at.time().replace(microsecond=0),
-            end_time=(started_at + timedelta(hours=2)).time().replace(microsecond=0),
+            end_time=(started_at + timedelta(hours=1)).time().replace(microsecond=0),
             status="confirmed",
             total_price=Decimal("45.00"),
             payment_method="balance",

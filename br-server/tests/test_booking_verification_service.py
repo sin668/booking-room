@@ -96,7 +96,29 @@ async def verification_data(db_session: AsyncSession):
         status="completed",
         total_price=45.00,
     )
-    db_session.add_all([confirmed, cancelled, completed])
+    pending_paid = Booking(
+        seat_id=seat.id,
+        user_id=str(USER_ID),
+        room_id=room.id,
+        date=today,
+        start_time=time(9, 0),
+        end_time=time(11, 0),
+        status="pending",
+        payment_status="paid",
+        total_price=30.00,
+    )
+    pending_unpaid = Booking(
+        seat_id=seat.id,
+        user_id=str(USER_ID),
+        room_id=room.id,
+        date=today,
+        start_time=time(14, 0),
+        end_time=time(16, 0),
+        status="pending",
+        payment_status="pending",
+        total_price=30.00,
+    )
+    db_session.add_all([confirmed, cancelled, completed, pending_paid, pending_unpaid])
     await db_session.flush()
 
     return {
@@ -106,6 +128,8 @@ async def verification_data(db_session: AsyncSession):
         "confirmed": confirmed,
         "cancelled": cancelled,
         "completed": completed,
+        "pending_paid": pending_paid,
+        "pending_unpaid": pending_unpaid,
     }
 
 
@@ -178,11 +202,12 @@ def test_verification_window_uses_configured_business_timezone(verification_data
     assert _is_booking_in_verification_window(booking, after_end) is False
 
 
-async def test_issue_verification_token_without_confirmed_booking_raises(
+async def test_issue_verification_token_without_verifiable_booking_raises(
     db_session: AsyncSession,
     verification_data,
 ):
     verification_data["confirmed"].status = "cancelled"
+    verification_data["pending_paid"].status = "cancelled"
     await db_session.flush()
 
     with pytest.raises(NoVerifiableBookingError):
@@ -395,18 +420,27 @@ async def test_expired_token_raises_for_inspect_and_confirm(
         await confirm_verification(db_session, token)
 
 
-async def test_confirm_verification_for_future_booking_succeeds(
+async def test_confirm_verification_for_future_booking_returns_confirmed(
     db_session: AsyncSession,
     verification_data,
+    monkeypatch,
 ):
-    booking = verification_data["confirmed"]
-    booking.date = datetime.now(UTC).date() + timedelta(days=1)
+    """Future pending+paid booking (now <= end_time) should become confirmed."""
+    booking = verification_data["pending_paid"]
+    # end_time far in the future so real UTC now < end_time
+    booking.start_time = time(0, 0)
+    booking.end_time = time(23, 59)
     await db_session.flush()
-    response = await issue_verification_token(db_session, USER_ID)
+    # Monkeypatch _booking_now to be before end_time for status determination
+    today = booking.date
+    fixed_now = datetime(today.year, today.month, today.day, 10, 0, tzinfo=_booking_timezone())
+    monkeypatch.setattr(booking_verification_service, "_booking_now", lambda: fixed_now)
+    # Token must use real UTC now because confirm_verification decodes with datetime.now(UTC)
+    token, _ = _create_verification_token(booking.id, str(USER_ID), datetime.now(UTC))
 
-    confirmed = await confirm_verification(db_session, response.token)
+    confirmed = await confirm_verification(db_session, token)
 
-    assert confirmed.booking.status == "completed"
+    assert confirmed.booking.status == "confirmed"
 
 
 async def test_confirm_verification_after_end_time_succeeds_with_valid_token(
@@ -427,7 +461,15 @@ async def test_confirm_verification_after_end_time_succeeds_with_valid_token(
 async def test_confirm_verification_marks_booking_completed(
     db_session: AsyncSession,
     verification_data,
+    monkeypatch,
 ):
+    """Confirmed booking with end_time in the past should become completed."""
+    booking = verification_data["confirmed"]
+    booking.start_time = time(0, 0)
+    booking.end_time = time(0, 1)
+    # Move pending_paid out of the way
+    verification_data["pending_paid"].status = "cancelled"
+    await db_session.flush()
     response = await issue_verification_token(db_session, USER_ID)
 
     confirmed = await confirm_verification(db_session, response.token)
@@ -453,3 +495,134 @@ async def test_completed_and_cancelled_bookings_cannot_be_confirmed(
 
     with pytest.raises(BookingNotVerifiableError):
         await confirm_verification(db_session, cancelled_token)
+
+
+async def test_confirm_verification_pending_paid_becomes_confirmed_when_before_end_time(
+    db_session: AsyncSession,
+    verification_data,
+    monkeypatch,
+):
+    """pending+paid booking with now <= end_time should become confirmed."""
+    booking = verification_data["pending_paid"]
+    # Fix now to be before end_time (11:00) on the same date as the booking
+    today = booking.date
+    fixed_now = datetime(today.year, today.month, today.day, 10, 0, tzinfo=_booking_timezone())
+    monkeypatch.setattr(booking_verification_service, "_booking_now", lambda: fixed_now)
+    token, _ = _create_verification_token(booking.id, str(USER_ID), datetime.now(UTC))
+
+    result = await confirm_verification(db_session, token)
+
+    assert result.booking.status == "confirmed"
+    # confirmed status → can_verify is True by design
+    assert result.booking.can_verify is True
+
+
+async def test_confirm_verification_pending_paid_becomes_completed_when_after_end_time(
+    db_session: AsyncSession,
+    verification_data,
+    monkeypatch,
+):
+    """pending+paid booking with now > end_time should become completed."""
+    booking = verification_data["pending_paid"]
+    # Fix now to be after end_time (11:00) on the same date as the booking
+    today = booking.date
+    fixed_now = datetime(today.year, today.month, today.day, 12, 0, tzinfo=_booking_timezone())
+    monkeypatch.setattr(booking_verification_service, "_booking_now", lambda: fixed_now)
+    token, _ = _create_verification_token(booking.id, str(USER_ID), datetime.now(UTC))
+
+    result = await confirm_verification(db_session, token)
+
+    assert result.booking.status == "completed"
+    assert result.booking.can_verify is False
+
+
+async def test_confirm_verification_confirmed_becomes_completed_when_after_end_time(
+    db_session: AsyncSession,
+    verification_data,
+    monkeypatch,
+):
+    """confirmed booking with now > end_time should become completed."""
+    booking = verification_data["confirmed"]
+    today = datetime.now(UTC).date()
+    booking.date = today
+    booking.start_time = time(9, 0)
+    booking.end_time = time(10, 0)
+    await db_session.flush()
+    # Fix now to be after end_time on the same date
+    fixed_now = datetime(today.year, today.month, today.day, 11, 0, tzinfo=_booking_timezone())
+    monkeypatch.setattr(booking_verification_service, "_booking_now", lambda: fixed_now)
+    token, _ = _create_verification_token(booking.id, str(USER_ID), datetime.now(UTC))
+
+    result = await confirm_verification(db_session, token)
+
+    assert result.booking.status == "completed"
+    assert result.booking.can_verify is False
+
+
+async def test_confirm_verification_pending_unpaid_raises_not_verifiable(
+    db_session: AsyncSession,
+    verification_data,
+):
+    """pending (unpaid) booking should raise BookingNotVerifiableError."""
+    booking = verification_data["pending_unpaid"]
+    token, _ = _create_verification_token(booking.id, str(USER_ID), datetime.now(UTC))
+
+    with pytest.raises(BookingNotVerifiableError):
+        await confirm_verification(db_session, token)
+
+
+async def test_issue_verification_token_includes_pending_paid_booking(
+    db_session: AsyncSession,
+    verification_data,
+):
+    """pending+paid booking should be verifiable and can_verify should be True."""
+    # Set confirmed booking to past so it's not selected; pending_paid is today
+    verification_data["confirmed"].date = date(2026, 1, 1)
+    verification_data["confirmed"].status = "completed"
+    await db_session.flush()
+
+    response = await issue_verification_token(db_session, USER_ID)
+
+    assert response.booking.id == verification_data["pending_paid"].id
+    assert response.booking.status == "pending"
+    assert response.booking.can_verify is True
+
+
+async def test_confirm_verification_already_confirmed_with_future_end_time_raises(
+    db_session: AsyncSession,
+    verification_data,
+    monkeypatch,
+):
+    """Idempotent protection: confirmed booking with now <= end_time must raise BookingAlreadyVerifiedError."""
+    booking = verification_data["confirmed"]
+    # Ensure booking is confirmed+paid with end_time in the future
+    booking.status = "confirmed"
+    booking.payment_status = "paid"
+    today = datetime.now(UTC).date()
+    booking.date = today
+    booking.start_time = time(0, 0)
+    booking.end_time = time(23, 59)
+    await db_session.flush()
+    # Fix now to be before end_time
+    fixed_now = datetime(today.year, today.month, today.day, 10, 0, tzinfo=_booking_timezone())
+    monkeypatch.setattr(booking_verification_service, "_booking_now", lambda: fixed_now)
+    token, _ = _create_verification_token(booking.id, str(USER_ID), datetime.now(UTC))
+
+    with pytest.raises(BookingAlreadyVerifiedError):
+        await confirm_verification(db_session, token)
+
+
+async def test_load_verifiable_bookings_includes_pending_paid(
+    db_session: AsyncSession,
+    verification_data,
+):
+    """_load_verifiable_booking_rows should return both confirmed and pending+paid bookings."""
+    rows = await booking_verification_service._load_verifiable_booking_rows(
+        db_session, USER_ID
+    )
+    booking_ids = {row[0].id for row in rows}
+    assert verification_data["confirmed"].id in booking_ids
+    assert verification_data["pending_paid"].id in booking_ids
+    assert verification_data["pending_unpaid"].id not in booking_ids
+    assert verification_data["cancelled"].id not in booking_ids
+    assert verification_data["completed"].id not in booking_ids

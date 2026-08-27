@@ -498,6 +498,26 @@ async def list_bookings(
                 )
                 lesson_map[b.id] = list(lessons_result.scalars().all())
 
+            # Fallback: 当 lesson_schedules 中间表无记录时，从 booking.lesson_ids + lesson_titles 构建基本条目
+            # 确保即使没有排课记录，前端也能显示可展开的课时列表
+            if (
+                getattr(b, "booking_type", None) == "course"
+                and b.lesson_ids
+                and b.id not in lesson_schedule_map
+            ):
+                fallback_titles = lesson_map.get(b.id, [])
+                lesson_schedule_map[b.id] = [
+                    LessonScheduleBrief(
+                        id=0,
+                        lesson_id=lid,
+                        lesson_date=None,
+                        lesson_time_slot="",
+                        lesson_title=fallback_titles[i] if i < len(fallback_titles) else None,
+                        sort_order=i,
+                    )
+                    for i, lid in enumerate(b.lesson_ids)
+                ]
+
     items: list[BookingResponse] = []
     for b in bookings:
         if getattr(b, "booking_type", None) == "course":

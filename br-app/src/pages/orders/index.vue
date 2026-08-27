@@ -152,9 +152,9 @@
               </view>
               <!-- Expandable lesson list for both in_progress and pending_start -->
               <view v-if="isLessonsExpanded(order)" class="lesson-expand-list">
-                <view v-for="ls in order.lesson_schedules" :key="ls.id" class="lesson-expand-item">
+                <view v-for="(ls, idx) in order.lesson_schedules" :key="ls.id || 'fb-' + idx" class="lesson-expand-item">
                   <view class="lesson-expand-dot" />
-                  <text class="lesson-expand-text">{{ ls.lesson_title }}  {{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</text>
+                  <text class="lesson-expand-text">{{ ls.lesson_title }}<template v-if="ls.lesson_date">  {{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</template></text>
                 </view>
               </view>
             </template>
@@ -1035,8 +1035,10 @@ export default {
 
 /* Lesson expand list */
 .lesson-expand-list {
-  padding: 8rpx 0 8rpx 50rpx;
+  padding: 8rpx 14rpx 8rpx 50rpx;
   margin-bottom: 14rpx;
+  background: rgba(33, 150, 243, 0.04);
+  border-radius: 12rpx;
 }
 
 .lesson-expand-item {

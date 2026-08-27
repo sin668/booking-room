@@ -1,6 +1,7 @@
 from datetime import date, datetime, time
 from decimal import Decimal
 from enum import Enum
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -39,7 +40,7 @@ class LessonScheduleBrief(BaseModel):
     """课时安排简要信息。"""
     id: int
     lesson_id: int
-    lesson_date: date
+    lesson_date: Optional[date] = None
     lesson_time_slot: str
     lesson_title: str | None = None
     sort_order: int = 0

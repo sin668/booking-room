@@ -336,7 +336,7 @@ const coursePage = ref(1)
 const courseTotal = ref(0)
 
 const tabs = [
-  { key: 'all', label: '全部' },
+  { key: 'all', label: '培训室' },
   { key: 'primaryschool', label: '小学辅导' },
   { key: 'middleschool', label: '中学辅导' },
   { key: 'civil_service', label: '公考备考' },

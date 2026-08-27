@@ -150,6 +150,7 @@
                 v-for="course in room.hot_courses"
                 :key="course.id"
                 class="hot-course-item"
+                @tap="goCourseDetail(course)"
               >
                 <image
                   class="hot-course-cover"
@@ -193,7 +194,7 @@
                       <text class="hot-course-price">{{ course.price }}</text>
                       <text class="hot-course-price-unit">/课时</text>
                     </view>
-                    <view class="hot-book-pill">
+                    <view class="hot-book-pill" @tap.stop="goCourseBooking(course)">
                       <text class="hot-book-pill-text">预约</text>
                     </view>
                   </view>
@@ -399,6 +400,16 @@ function goRoomDetail(roomId) {
 function onCourseDetail(course) {
   if (!course || !course.id) return
   uni.navigateTo({ url: '/pages/training/course-detail?course_id=' + course.id })
+}
+
+function goCourseDetail(course) {
+  if (!course || !course.id) return
+  uni.navigateTo({ url: '/pages/training/course-detail?course_id=' + course.id })
+}
+
+function goCourseBooking(course) {
+  if (!course || !course.id) return
+  uni.navigateTo({ url: '/pages/training/course-booking?course_id=' + course.id })
 }
 
 function hotCourseBadge(course) {

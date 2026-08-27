@@ -1288,8 +1288,8 @@
     "hash": "1149d1379e8012e9633b940ad50515da"
   },
   "br-app/src/pages/orders/index.vue": {
-    "mtime": 1787791294707.2537,
-    "hash": "add91f3a713669cd7d6e8c0a1637fdbd"
+    "mtime": 1787794112127.7925,
+    "hash": "a62e4f0ce8d8f9f40b9260ed4d231947"
   },
   "br-app/src/pages/profile/index.vue": {
     "mtime": 1786440671504.1387,
@@ -1876,8 +1876,8 @@
     "hash": "5d0f76d931992b54eb2e74c6bf82077a"
   },
   "br-server/app/schemas/booking.py": {
-    "mtime": 1787713165761.7422,
-    "hash": "4fb532a93c88cf907df17b8e9091e446"
+    "mtime": 1787793278279.7292,
+    "hash": "ddf33e77b98597da448b9ea3ac128ebe"
   },
   "br-server/app/schemas/booking_verification.py": {
     "mtime": 1779870377437.901,
@@ -2000,8 +2000,8 @@
     "hash": "82976d1b4757e7ba632caba3b5efcae6"
   },
   "br-server/app/services/booking_service.py": {
-    "mtime": 1787791339089.6733,
-    "hash": "023128d30aa8f2db255b1570705620bf"
+    "mtime": 1787793090435.3774,
+    "hash": "81c14c4f6ee6957e5622d34e9bfe37af"
   },
   "br-server/app/services/booking_verification_service.py": {
     "mtime": 1780274852382.901,
@@ -4064,8 +4064,8 @@
     "hash": "dbfc6eff3d6d5f9eeb049078585b23ae"
   },
   ".graphify/GRAPH_REPORT.md": {
-    "mtime": 1787791322323.95,
-    "hash": "b2a465759c0080a70ce1e33c558391b2"
+    "mtime": 1787791362357.1865,
+    "hash": "77e9eb67980418ed66e8069099523aa8"
   },
   ".graphify/studio/index.html": {
     "mtime": 1787642879172.1843,
@@ -4106,5 +4106,9 @@
   "br-server/app/models/lesson_schedule.py": {
     "mtime": 1787709457724.1619,
     "hash": "37159f995dfcc8946c2c2b9f5675baf4"
+  },
+  ".graphify/2026-08-27/GRAPH_REPORT.md": {
+    "mtime": 1787791362241.549,
+    "hash": "b2a465759c0080a70ce1e33c558391b2"
   }
 }

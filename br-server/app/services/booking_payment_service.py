@@ -269,23 +269,30 @@ class BookingPaymentService:
         return parsed.replace(tzinfo=None)
 
     async def _determine_course_booking_status(self, booking: Booking) -> str:
-        """课程预约根据开课日期返回状态，非课程预约返回 confirmed。
+        """课程预约根据开课日期返回状态，座位预约根据预约日期返回状态。
 
-        start_date <= 今天 → "confirmed"（进行中）
-        start_date > 今天  → "pending"（待开始）
+        课程预约:
+          start_date <= 今天 → "confirmed"（进行中）
+          start_date > 今天  → "pending"（待开始）
+        座位预约:
+          booking.date > 今天 → "pending"（待开始）
+          booking.date <= 今天 → "confirmed"
         """
-        if not booking.course_id:
-            return "confirmed"
-        schedule_result = await self._db.execute(
-            select(CourseSchedule.start_date)
-            .where(CourseSchedule.course_id == booking.course_id)
-            .limit(1)
-        )
-        start_date = schedule_result.scalar_one_or_none()
-        if start_date is None:
-            return "confirmed"
         today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
-        return "confirmed" if start_date <= today else "pending"
+        if booking.course_id:
+            schedule_result = await self._db.execute(
+                select(CourseSchedule.start_date)
+                .where(CourseSchedule.course_id == booking.course_id)
+                .limit(1)
+            )
+            start_date = schedule_result.scalar_one_or_none()
+            if start_date is None:
+                return "confirmed"
+            return "confirmed" if start_date <= today else "pending"
+        # 座位预约：根据预约日期判断
+        if booking.date:
+            return "confirmed" if booking.date <= today else "pending"
+        return "confirmed"
 
     def _decimal_to_cents(self, value: Decimal) -> int:
         return money_to_cents(value)

@@ -270,6 +270,13 @@ async def create_booking(
 
         user.balance = Decimal(str(user.balance)) - total_price
 
+    # 根据预约日期判断初始状态：预约日期 > 今天 → pending（待开始），否则 → confirmed
+    today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+    if balance_payment:
+        initial_status = "pending" if data.date > today else "confirmed"
+    else:
+        initial_status = "pending"
+
     booking = Booking(
         seat_id=data.seat_id,
         user_id=str(user_id),
@@ -277,7 +284,7 @@ async def create_booking(
         date=data.date,
         start_time=data.start_time,
         end_time=data.end_time,
-        status="confirmed" if balance_payment else "pending",
+        status=initial_status,
         original_price=original_price,
         discount_amount=discount_amount,
         total_price=total_price,
@@ -341,10 +348,9 @@ async def list_bookings(
         conditions.append(Booking.status == "confirmed")
         conditions.append(Booking.booking_type == "course")
     elif is_pending_start_filter:
-        # pending_start: status=pending, payment_status=paid, booking_type=course
+        # pending_start: status=pending, payment_status=paid (所有类型)
         conditions.append(Booking.status == "pending")
         conditions.append(Booking.payment_status == "paid")
-        conditions.append(Booking.booking_type == "course")
 
     where_clause = and_(*conditions)
 
@@ -709,7 +715,9 @@ async def pay_pending_booking(
             raise WalletBalanceInsufficientError("Wallet balance is insufficient")
 
         user.balance = Decimal(str(user.balance)) - total_price
-        booking.status = "confirmed"
+        # 根据预约日期判断状态：预约日期 > 今天 → pending（待开始），否则 → confirmed
+        today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+        booking.status = "pending" if booking.date > today else "confirmed"
         booking.payment_status = "paid"
         booking.payment_method = "balance"
         booking.payment_provider = None

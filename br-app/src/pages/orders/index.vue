@@ -195,7 +195,7 @@
               </text>
             </view>
             <view
-              v-if="order.status === 'confirmed' && order.payment_status !== 'pending' && !isCourseBooking(order)"
+              v-if="(order.status === 'confirmed' || displayStatus(order) === 'pending_start') && order.payment_status !== 'pending' && !isCourseBooking(order)"
               class="action-btn"
               @tap="viewSeat(order)"
             >
@@ -322,11 +322,10 @@ export default {
 
     isOrderPendingStart(order) {
       if (order.status === 'confirmed' && !order.started) return true
-      // 待开始（已支付但课程未开始）
+      // 待开始（已支付但预约未开始）
       if (
         order.status === 'pending' &&
-        order.payment_status === 'paid' &&
-        order.booking_type === 'course'
+        order.payment_status === 'paid'
       ) return true
       return false
     },
@@ -414,11 +413,10 @@ export default {
 
     displayStatus(order) {
       if (!order) return order?.status || ''
-      // 已支付但课程未开始 → 待开始
+      // 已支付但预约未开始 → 待开始
       if (
         order.status === 'pending' &&
-        order.payment_status === 'paid' &&
-        order.booking_type === 'course'
+        order.payment_status === 'paid'
       ) {
         return 'pending_start'
       }

@@ -13,6 +13,7 @@ from app.models.booking import Booking
 from app.models.lesson_schedule import LessonSchedule
 from app.models.course_schedule import CourseSchedule
 from app.core.database import async_session
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,8 @@ async def check_and_update_order_statuses() -> dict:
                 elif booking.booking_type == "course":
                     await _process_course_booking(session, booking, today, stats)
             except Exception:
-                logger.exception(f"Error processing booking {booking.id}")
+                if settings.SCHEDULER_LOG_ENABLED:
+                    logger.exception(f"Error processing booking {booking.id}")
 
         await session.commit()
 
@@ -79,13 +81,15 @@ async def _process_seat_booking(session, booking: Booking, today: date, current_
         # 待开始 → 进行中
         booking.status = "confirmed"
         stats["seat_started"] += 1
-        logger.info(f"Seat booking {booking.id}: pending → confirmed (started)")
+        if settings.SCHEDULER_LOG_ENABLED:
+            logger.info(f"Seat booking {booking.id}: pending → confirmed (started)")
 
     elif booking.status == "confirmed" and now >= booking_end:
         # 进行中 → 已完成
         booking.status = "completed"
         stats["seat_completed"] += 1
-        logger.info(f"Seat booking {booking.id}: confirmed → completed (ended)")
+        if settings.SCHEDULER_LOG_ENABLED:
+            logger.info(f"Seat booking {booking.id}: confirmed → completed (ended)")
 
 
 async def _process_course_booking(session, booking: Booking, today: date, stats: dict):
@@ -124,7 +128,8 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
             booking.status = "confirmed"
             # 高亮当前课时（第一个 lesson_date >= today 的课时）
             _update_highlight(booking, lessons, today, stats, is_new_start=True)
-            logger.info(f"Course booking {booking.id}: pending → confirmed, highlighting lesson")
+            if settings.SCHEDULER_LOG_ENABLED:
+                logger.info(f"Course booking {booking.id}: pending → confirmed, highlighting lesson")
 
     elif booking.status == "confirmed":
         # 进行中：检查是否需要推进高亮或完成
@@ -135,7 +140,8 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
             booking.status = "completed"
             booking.highlighted_lesson_id = None
             stats["course_completed"] += 1
-            logger.info(f"Course booking {booking.id}: confirmed → completed (all lessons done)")
+            if settings.SCHEDULER_LOG_ENABLED:
+                logger.info(f"Course booking {booking.id}: confirmed → completed (all lessons done)")
         else:
             # 检查是否需要推进高亮
             _update_highlight(booking, lessons, today, stats, is_new_start=False)
@@ -161,6 +167,7 @@ def _update_highlight(booking: Booking, lessons, today: date, stats: dict, is_ne
         booking.highlighted_lesson_id = target_lesson.lesson_id
         if not is_new_start:
             stats["course_highlight_updated"] += 1
-            logger.info(f"Course booking {booking.id}: highlight moved to lesson {target_lesson.lesson_id}")
+            if settings.SCHEDULER_LOG_ENABLED:
+                logger.info(f"Course booking {booking.id}: highlight moved to lesson {target_lesson.lesson_id}")
     elif is_new_start:
         stats["course_started"] += 1

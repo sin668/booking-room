@@ -73,7 +73,8 @@ async def _cleanup_unpaid_bookings_job() -> None:
                 else None
             )
             if wechat_client is None:
-                logger.info("Booking payment reconciliation skipped: WeChat Pay disabled")
+                if settings.SCHEDULER_LOG_ENABLED:
+                    logger.info("[微信支付对账定时任务] 已跳过: 微信支付未启用")
                 return
             count = await BookingPaymentService(
                 session,
@@ -81,10 +82,11 @@ async def _cleanup_unpaid_bookings_job() -> None:
                 config=settings,
             ).reconcile_pending_payments()
             await session.commit()
-            logger.info("Booking payment reconciliation processed %s booking(s)", count)
+            if settings.SCHEDULER_LOG_ENABLED:
+                logger.info("[微信支付对账定时任务] 已检查 %d 个待支付订单", count)
         except Exception:
             await session.rollback()
-            logger.exception("Booking payment reconciliation failed")
+            logger.exception("[微信支付对账定时任务] 执行失败")
             raise
 
 
@@ -104,18 +106,19 @@ async def _order_status_check_job() -> None:
     from app.services.order_status_scheduler import check_and_update_order_statuses
     try:
         stats = await check_and_update_order_statuses()
-        total_changes = (
-            stats["seat_started"] + stats["seat_completed"]
-            + stats["course_started"] + stats["course_highlight_updated"] + stats["course_completed"]
-        )
-        logger.info(
-            "[订单状态定时任务] 扫描 %d 个订单，变更 %d 个 | "
-            "自习室: 开始 %d / 完成 %d | "
-            "课程: 开始 %d / 高亮更新 %d / 完成 %d",
-            stats["total_scanned"], total_changes,
-            stats["seat_started"], stats["seat_completed"],
-            stats["course_started"], stats["course_highlight_updated"], stats["course_completed"],
-        )
+        if settings.SCHEDULER_LOG_ENABLED:
+            total_changes = (
+                stats["seat_started"] + stats["seat_completed"]
+                + stats["course_started"] + stats["course_highlight_updated"] + stats["course_completed"]
+            )
+            logger.info(
+                "[订单状态定时任务] 扫描 %d 个订单，变更 %d 个 | "
+                "自习室: 开始 %d / 完成 %d | "
+                "课程: 开始 %d / 高亮更新 %d / 完成 %d",
+                stats["total_scanned"], total_changes,
+                stats["seat_started"], stats["seat_completed"],
+                stats["course_started"], stats["course_highlight_updated"], stats["course_completed"],
+            )
     except Exception:
         logger.exception("Order status check job failed")
         raise

@@ -136,8 +136,15 @@
             </view>
             <!-- Lesson row: nearest lesson + expandable list (in_progress / pending_start) -->
             <template v-if="order.status !== 'completed' && order.lesson_schedules && order.lesson_schedules.length">
-              <!-- Highlight nearest lesson row: only for in_progress orders -->
-              <view v-if="displayStatus(order) === 'in_progress'" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
+              <!-- Highlight lesson row: only for in_progress orders with highlighted_lesson_id -->
+              <view v-if="displayStatus(order) === 'in_progress' && getHighlightedLesson(order)" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
+                <view class="info-icon lesson-icon">
+                  <view class="lesson-icon-dot lesson-icon-dot-active" />
+                </view>
+                <text class="lesson-highlight-text">{{ getHighlightedLesson(order).lesson_title }}   {{ getHighlightedLesson(order).lesson_date }} {{ formatLessonStartTime(getHighlightedLesson(order).lesson_time_slot) }}上课</text>
+              </view>
+              <!-- Fallback: in_progress without highlighted_lesson_id, use nearest lesson -->
+              <view v-if="displayStatus(order) === 'in_progress' && !getHighlightedLesson(order)" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot lesson-icon-dot-active" />
                 </view>
@@ -152,9 +159,9 @@
               </view>
               <!-- Expandable lesson list for both in_progress and pending_start -->
               <view v-if="isLessonsExpanded(order)" class="lesson-expand-list">
-                <view v-for="(ls, idx) in order.lesson_schedules" :key="ls.id || 'fb-' + idx" class="lesson-expand-item">
-                  <view class="lesson-expand-dot" />
-                  <text class="lesson-expand-text">{{ ls.lesson_title }} <template v-if="ls.lesson_date">  {{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</template></text>
+                <view v-for="(ls, idx) in order.lesson_schedules" :key="ls.id || 'fb-' + idx" :class="['lesson-expand-item', { 'lesson-expand-item-highlighted': order.highlighted_lesson_id && ls.lesson_id === order.highlighted_lesson_id }]">
+                  <view :class="['lesson-expand-dot', { 'lesson-expand-dot-highlighted': order.highlighted_lesson_id && ls.lesson_id === order.highlighted_lesson_id }]" />
+                  <text :class="['lesson-expand-text', { 'lesson-expand-text-highlighted': order.highlighted_lesson_id && ls.lesson_id === order.highlighted_lesson_id }]">{{ ls.lesson_title }} <template v-if="ls.lesson_date">  {{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</template></text>
                 </view>
               </view>
             </template>
@@ -340,6 +347,11 @@ export default {
       const m = String(d.getMonth() + 1).padStart(2, '0')
       const day = String(d.getDate()).padStart(2, '0')
       return `${y}-${m}-${day}`
+    },
+
+    getHighlightedLesson(order) {
+      if (!order || !order.highlighted_lesson_id || !order.lesson_schedules) return null
+      return order.lesson_schedules.find(ls => ls.lesson_id === order.highlighted_lesson_id) || null
     },
 
     getNearestLesson(order) {
@@ -1066,6 +1078,24 @@ export default {
 .lesson-expand-text {
   font-size: 24rpx;
   color: $text-secondary;
+}
+
+.lesson-expand-item-highlighted {
+  background: rgba(7, 193, 96, 0.08);
+  border-radius: 8rpx;
+  padding: 8rpx 12rpx;
+  margin: 0 -12rpx;
+}
+
+.lesson-expand-dot-highlighted {
+  background: $success;
+  width: 10rpx;
+  height: 10rpx;
+}
+
+.lesson-expand-text-highlighted {
+  font-weight: 600;
+  color: $success;
 }
 
 /* Pending-start (paid, course not yet started) status dot & badge */

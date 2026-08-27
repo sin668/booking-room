@@ -362,18 +362,10 @@ async def list_bookings(
     if is_in_progress_filter:
         # Separate course and seat booking IDs
         all_ids_result = await db.execute(
-            select(Booking.id, Booking.booking_type, Booking.course_id, Booking.date, Booking.start_time, Booking.end_time).where(where_clause)
+            select(Booking.id, Booking.booking_type, Booking.course_id).where(where_clause)
         )
         all_rows = all_ids_result.all()
-        now = datetime.now(ZoneInfo("Asia/Shanghai"))
-        seat_booking_ids = set()
-        for row in all_rows:
-            if row[1] != "course" and row[3] and row[4]:
-                booking_start = datetime.combine(row[3], row[4])
-                booking_end = datetime.combine(row[3], row[5]) if row[5] else None
-                # Only include seat bookings within active time window
-                if now >= booking_start and (booking_end is None or now < booking_end):
-                    seat_booking_ids.add(row[0])
+        seat_booking_ids = {row[0] for row in all_rows if row[1] != "course"}
         course_booking_rows = [(row[0], row[2]) for row in all_rows if row[1] == "course"]
         candidate_course_ids = {cid for _, cid in course_booking_rows if cid is not None}
 

@@ -449,7 +449,12 @@ export default {
 
     statusLabel(order) {
       if (!order) return ''
-      return formatBookingStatus(this.displayStatus(order))
+      const ds = this.displayStatus(order)
+      // 进行中TAB的自习室订单统一显示“进行中”
+      if (this.currentTab === 'in_progress' && !this.isCourseBooking(order) && ds === 'confirmed') {
+        return '进行中'
+      }
+      return formatBookingStatus(ds)
     },
 
     isCourseBooking(order) {

@@ -498,12 +498,12 @@ async def list_bookings(
                 )
                 lesson_map[b.id] = list(lessons_result.scalars().all())
 
-            # Fallback: 当 lesson_schedules 中间表无记录时，从 booking.lesson_ids + lesson_titles 构建基本条目
+            # Fallback: 当 lesson_schedules 中间表无记录或为空时，从 booking.lesson_ids + lesson_titles 构建基本条目
             # 确保即使没有排课记录，前端也能显示可展开的课时列表
             if (
                 getattr(b, "booking_type", None) == "course"
                 and b.lesson_ids
-                and b.id not in lesson_schedule_map
+                and not lesson_schedule_map.get(b.id)
             ):
                 fallback_titles = lesson_map.get(b.id, [])
                 lesson_schedule_map[b.id] = [
@@ -517,6 +517,28 @@ async def list_bookings(
                     )
                     for i, lid in enumerate(b.lesson_ids)
                 ]
+
+            # 最终兜底：确保所有课程预约的 lesson_schedules 不为 None
+            # 即使 lesson_ids 为空，也从 lesson_titles 构建基本条目
+            if (
+                getattr(b, "booking_type", None) == "course"
+                and not lesson_schedule_map.get(b.id)
+            ):
+                fallback_titles = lesson_map.get(b.id, [])
+                if fallback_titles:
+                    lesson_schedule_map[b.id] = [
+                        LessonScheduleBrief(
+                            id=0,
+                            lesson_id=0,
+                            lesson_date=None,
+                            lesson_time_slot="",
+                            lesson_title=title,
+                            sort_order=i,
+                        )
+                        for i, title in enumerate(fallback_titles)
+                    ]
+                else:
+                    lesson_schedule_map[b.id] = []
 
     items: list[BookingResponse] = []
     for b in bookings:
@@ -537,7 +559,8 @@ async def list_bookings(
             # started: start_date <= today (Asia/Shanghai)
             resp.started = (start_d <= today) if start_d else None
             # lesson_schedules (already filtered by booking.lesson_ids above)
-            resp.lesson_schedules = lesson_schedule_map.get(b.id)
+            # 确保始终返回非 null 列表
+            resp.lesson_schedules = lesson_schedule_map.get(b.id) or []
             # 设置教师信息
             if b.course_id and b.course_id in course_teacher_map:
                 teacher_id = course_teacher_map[b.course_id]

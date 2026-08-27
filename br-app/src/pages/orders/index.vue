@@ -135,7 +135,7 @@
               <text class="info-text">{{ order.room ? order.room.name : '未知培训室' }}</text>
             </view>
             <!-- Lesson row: nearest lesson + expandable list (in_progress / pending_start) -->
-            <template v-if="order.status !== 'completed' && order.lesson_schedules && order.lesson_schedules.length">
+            <template v-if="order.status !== 'completed' && getLessonList(order).length">
               <!-- Highlight nearest lesson row: only for in_progress orders -->
               <view v-if="displayStatus(order) === 'in_progress'" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
                 <view class="info-icon lesson-icon">
@@ -148,11 +148,11 @@
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot" />
                 </view>
-                <text :class="['info-text', 'schedule-text', { expanded: isLessonsExpanded(order) }]">{{ order.lesson_schedules.length }}个课时 {{ isLessonsExpanded(order) ? '收起' : '展开' }}</text>
+                <text :class="['info-text', 'schedule-text', { expanded: isLessonsExpanded(order) }]">{{ getLessonList(order).length }}个课时 {{ isLessonsExpanded(order) ? '收起' : '展开' }}</text>
               </view>
               <!-- Expandable lesson list for both in_progress and pending_start -->
               <view v-if="isLessonsExpanded(order)" class="lesson-expand-list">
-                <view v-for="(ls, idx) in order.lesson_schedules" :key="ls.id || 'fb-' + idx" class="lesson-expand-item">
+                <view v-for="(ls, idx) in getLessonList(order)" :key="ls.id || 'fb-' + idx" class="lesson-expand-item">
                   <view class="lesson-expand-dot" />
                   <text class="lesson-expand-text">{{ ls.lesson_title }}<template v-if="ls.lesson_date">  {{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</template></text>
                 </view>
@@ -344,7 +344,7 @@ export default {
     },
 
     getNearestLesson(order) {
-      const schedules = order?.lesson_schedules
+      const schedules = this.getLessonList(order)
       if (!schedules || !schedules.length) return null
       const todayStr = this.getTodayStr()
       return schedules.find(s => s.lesson_date >= todayStr) || schedules[schedules.length - 1]
@@ -361,6 +361,26 @@ export default {
 
     toggleLessons(order) {
       this.expandedLessons[order.id] = !this.expandedLessons[order.id]
+    },
+
+    /**
+     * 返回可展开的课时列表数据。
+     * 优先使用 lesson_schedules（含日期时间），回退到 lesson_titles。
+     */
+    getLessonList(order) {
+      if (order.lesson_schedules && order.lesson_schedules.length) {
+        return order.lesson_schedules
+      }
+      // Fallback: 从 lesson_titles 构建基本条目
+      if (order.lesson_titles && order.lesson_titles.length) {
+        return order.lesson_titles.map((title, idx) => ({
+          id: 'fb-' + idx,
+          lesson_title: title,
+          lesson_date: null,
+          lesson_time_slot: '',
+        }))
+      }
+      return []
     },
 
     async resetAndLoad() {

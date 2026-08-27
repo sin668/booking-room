@@ -148,13 +148,13 @@
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot" />
                 </view>
-                <text :class="['info-text', 'schedule-text', { expanded: isLessonsExpanded(order) }]">{{ order.lesson_schedules.length }}个课时 {{ isLessonsExpanded(order) ? '收起' : '展开' }}</text>
+                <text :class="['info-text', 'schedule-text', { expanded: isLessonsExpanded(order) }]">已成功预约 {{ order.lesson_schedules.length }}个课时 {{ isLessonsExpanded(order) ? '收起' : '展开' }}</text>
               </view>
               <!-- Expandable lesson list for both in_progress and pending_start -->
               <view v-if="isLessonsExpanded(order)" class="lesson-expand-list">
                 <view v-for="(ls, idx) in order.lesson_schedules" :key="ls.id || 'fb-' + idx" class="lesson-expand-item">
                   <view class="lesson-expand-dot" />
-                  <text class="lesson-expand-text">{{ ls.lesson_title }}<template v-if="ls.lesson_date">  {{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</template></text>
+                  <text class="lesson-expand-text">{{ ls.lesson_title }} <template v-if="ls.lesson_date">  {{ ls.lesson_date }} {{ formatLessonStartTime(ls.lesson_time_slot) }}</template></text>
                 </view>
               </view>
             </template>

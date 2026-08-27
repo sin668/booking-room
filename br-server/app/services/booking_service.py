@@ -491,20 +491,17 @@ async def list_bookings(
                             ls for ls in all_course_ls if ls.lesson_id in booked_lesson_ids
                         ]
 
-        for b in bookings:
-            if getattr(b, "booking_type", None) == "course" and b.lesson_ids:
+    # 查询课时标题 + fallback：当 lesson_schedules 中间表无记录时，从 lesson_ids + lesson_titles 构建基本条目
+    for b in bookings:
+        if getattr(b, "booking_type", None) == "course" and b.lesson_ids:
+            if b.id not in lesson_map:
                 lessons_result = await db.execute(
                     select(CourseLesson.title).where(CourseLesson.id.in_(b.lesson_ids))
                 )
                 lesson_map[b.id] = list(lessons_result.scalars().all())
 
-            # Fallback: 当 lesson_schedules 中间表无记录时，从 booking.lesson_ids + lesson_titles 构建基本条目
-            # 确保即使没有排课记录，前端也能显示可展开的课时列表
-            if (
-                getattr(b, "booking_type", None) == "course"
-                and b.lesson_ids
-                and b.id not in lesson_schedule_map
-            ):
+            # Fallback: 当 lesson_schedules 中间表无记录或过滤后为空时，构建基本条目
+            if not lesson_schedule_map.get(b.id):
                 fallback_titles = lesson_map.get(b.id, [])
                 lesson_schedule_map[b.id] = [
                     LessonScheduleBrief(
@@ -537,7 +534,7 @@ async def list_bookings(
             # started: start_date <= today (Asia/Shanghai)
             resp.started = (start_d <= today) if start_d else None
             # lesson_schedules (already filtered by booking.lesson_ids above)
-            resp.lesson_schedules = lesson_schedule_map.get(b.id)
+            resp.lesson_schedules = lesson_schedule_map.get(b.id) or []
             # 设置教师信息
             if b.course_id and b.course_id in course_teacher_map:
                 teacher_id = course_teacher_map[b.course_id]

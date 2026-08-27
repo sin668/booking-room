@@ -54,6 +54,15 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# 确保 app 命名空间的日志能输出到控制台（uvicorn 默认不配置 app logger）
+_app_logger = logging.getLogger("app")
+if not _app_logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+    _app_logger.addHandler(_handler)
+    _app_logger.setLevel(logging.INFO)
+    _app_logger.propagate = False
+
 
 async def _cleanup_unpaid_bookings_job() -> None:
     async with async_session() as session:

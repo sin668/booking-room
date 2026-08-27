@@ -420,8 +420,17 @@ export default {
       ) {
         return 'pending_start'
       }
+      // 课程预约：已确认且已开课 → 进行中
       if (order.status === 'confirmed' && order.booking_type === 'course' && order.started === true) {
         return 'in_progress'
+      }
+      // 座位预约：已确认且时段已开始 → 进行中
+      if (order.status === 'confirmed' && order.booking_type !== 'course' && order.date && order.start_time) {
+        const now = new Date()
+        const bookingStart = new Date(order.date + 'T' + order.start_time + ':00')
+        if (now >= bookingStart) {
+          return 'in_progress'
+        }
       }
       return order.status
     },

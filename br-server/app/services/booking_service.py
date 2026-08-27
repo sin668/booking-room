@@ -270,10 +270,12 @@ async def create_booking(
 
         user.balance = Decimal(str(user.balance)) - total_price
 
-    # 根据预约日期判断初始状态：预约日期 > 今天 → pending（待开始），否则 → confirmed
-    today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+    # 根据预约开始时间判断初始状态：当前时间 < date+start_time → pending（待开始），否则 → confirmed
+    now = datetime.now(ZoneInfo("Asia/Shanghai"))
     if balance_payment:
-        initial_status = "pending" if data.date > today else "confirmed"
+        booking_start = datetime.combine(data.date, data.start_time)
+        booking_start = booking_start.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+        initial_status = "pending" if now < booking_start else "confirmed"
     else:
         initial_status = "pending"
 
@@ -344,9 +346,9 @@ async def list_bookings(
     if status is not None and not is_in_progress_filter and not is_pending_start_filter:
         conditions.append(Booking.status == status)
     elif is_in_progress_filter:
-        # in_progress: status=confirmed, booking_type=course, start_date <= today
+        # in_progress: status=confirmed, payment_status=paid (所有已支付类型)
         conditions.append(Booking.status == "confirmed")
-        conditions.append(Booking.booking_type == "course")
+        conditions.append(Booking.payment_status == "paid")
     elif is_pending_start_filter:
         # pending_start: status=pending, payment_status=paid (所有类型)
         conditions.append(Booking.status == "pending")
@@ -354,16 +356,19 @@ async def list_bookings(
 
     where_clause = and_(*conditions)
 
-    # For in_progress filter, we need to join with course_schedules to check start_date
+    # For in_progress filter, seat bookings are already confirmed when started,
+    # so we only need to further filter course bookings by start_date
     if is_in_progress_filter:
-        # Get course_ids for this user's confirmed course bookings
-        course_booking_ids_result = await db.execute(
-            select(Booking.id, Booking.course_id).where(where_clause)
+        # Separate course and seat booking IDs
+        all_ids_result = await db.execute(
+            select(Booking.id, Booking.booking_type, Booking.course_id).where(where_clause)
         )
-        course_booking_rows = course_booking_ids_result.all()
-        candidate_booking_ids = {row[0] for row in course_booking_rows}
-        candidate_course_ids = {row[1] for row in course_booking_rows if row[1] is not None}
+        all_rows = all_ids_result.all()
+        seat_booking_ids = {row[0] for row in all_rows if row[1] != "course"}
+        course_booking_rows = [(row[0], row[2]) for row in all_rows if row[1] == "course"]
+        candidate_course_ids = {cid for _, cid in course_booking_rows if cid is not None}
 
+        valid_course_booking_ids = set()
         if candidate_course_ids:
             # Find courses that have started (start_date <= today)
             started_result = await db.execute(
@@ -373,21 +378,18 @@ async def list_bookings(
                 )
             )
             started_course_ids = set(started_result.scalars().all())
-            # Filter booking IDs to only those whose course has started
-            valid_booking_ids = {
+            valid_course_booking_ids = {
                 bid for bid, cid in course_booking_rows
                 if cid is not None and cid in started_course_ids
             }
-            candidate_booking_ids &= valid_booking_ids
-        else:
-            candidate_booking_ids = set()
 
-        if not candidate_booking_ids:
+        valid_booking_ids = seat_booking_ids | valid_course_booking_ids
+        if not valid_booking_ids:
             return BookingListResponse(items=[], total=0, page=page, page_size=page_size)
 
         where_clause = and_(
             Booking.user_id == str(user_id),
-            Booking.id.in_(candidate_booking_ids),
+            Booking.id.in_(valid_booking_ids),
         )
 
     count_result = await db.execute(
@@ -715,9 +717,11 @@ async def pay_pending_booking(
             raise WalletBalanceInsufficientError("Wallet balance is insufficient")
 
         user.balance = Decimal(str(user.balance)) - total_price
-        # 根据预约日期判断状态：预约日期 > 今天 → pending（待开始），否则 → confirmed
-        today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
-        booking.status = "pending" if booking.date > today else "confirmed"
+        # 根据预约开始时间判断状态：当前时间 < date+start_time → pending（待开始），否则 → confirmed
+        now = datetime.now(ZoneInfo("Asia/Shanghai"))
+        booking_start = datetime.combine(booking.date, booking.start_time)
+        booking_start = booking_start.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+        booking.status = "pending" if now < booking_start else "confirmed"
         booking.payment_status = "paid"
         booking.payment_method = "balance"
         booking.payment_provider = None

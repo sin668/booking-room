@@ -16,6 +16,10 @@
           <text class="stat-label">本月已完成</text>
         </view>
         <view class="stat-item">
+          <text class="stat-value">{{ summary.max_streak_days }}天</text>
+          <text class="stat-label">连续学习</text>
+        </view>
+        <view class="stat-item">
           <text class="stat-value">{{ summary.total_hours }}h</text>
           <text class="stat-label">累计学习时长</text>
         </view>

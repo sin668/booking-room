@@ -406,6 +406,9 @@ async def list_study_records(
                 continue
             items.append(_build_seat_record(b, seat, room, record_status))
 
+    # Sort all records by date desc (most recent first), then by start_time desc
+    items.sort(key=lambda x: (x.date, x.start_time), reverse=True)
+
     return StudyRecordListResponse(
         items=items,
         total=total,

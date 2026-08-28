@@ -74,17 +74,6 @@
       <view class="record-section">
         <text class="section-title">学习记录</text>
 
-        <view class="tab-bar">
-          <view
-            v-for="tab in tabs"
-            :key="tab.value"
-            :class="['tab-item', { 'tab-active': activeTab === tab.value }]"
-            @tap="switchTab(tab.value)"
-          >
-            <text :class="['tab-text', { 'tab-text-active': activeTab === tab.value }]">{{ tab.label }}</text>
-          </view>
-        </view>
-
         <view v-if="recordLoading && records.length === 0" class="record-loading">
           <view class="loading-spinner small" />
         </view>
@@ -171,11 +160,6 @@ const records = ref([])
 const page = ref(1)
 const total = ref(0)
 const hasMore = ref(true)
-const activeTab = ref('all')
-
-const tabs = [
-  { label: '全部', value: 'all' },
-]
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -275,12 +259,6 @@ async function loadAll() {
   loading.value = true
   await Promise.all([fetchSummary(), fetchRecords(true)])
   loading.value = false
-}
-
-function switchTab(tabValue) {
-  if (activeTab.value === tabValue) return
-  activeTab.value = tabValue
-  fetchRecords(true)
 }
 
 function prevMonth() {

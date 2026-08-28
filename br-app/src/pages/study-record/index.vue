@@ -121,7 +121,10 @@
                 <text class="status-badge status-completed">
                   已学习
                 </text>
-                <text v-if="record.record_type === 'course'" class="record-price">
+                <text v-if="record.record_type === 'seat'" class="record-price">
+                  <text class="price-symbol">¥</text>{{ record.total_price }}
+                </text>
+                <text v-else-if="record.record_type === 'course'" class="record-price">
                   <text class="price-symbol">¥</text>{{ formatLessonPrice(record.lesson_price) }}
                 </text>
               </view>

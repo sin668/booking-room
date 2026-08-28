@@ -192,29 +192,15 @@ class TestListStudyRecords:
         assert len(page2.items) == 2
 
     @pytest.mark.asyncio
-    async def test_list_excludes_cancelled(self, db_session: AsyncSession, seed_data):
-        seat, room = seed_data["seat"], seed_data["room"]
-        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(9, 0), time(12, 0), status="confirmed")
-        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 2), time(9, 0), time(12, 0), status="cancelled")
-
-        result = await list_study_records(db_session, USER_ID)
-
-        # Cancelled excluded; confirmed (in_progress) counted as studied → status="completed"
-        assert result.total == 1
-        assert result.items[0].status == "completed"
-
-    @pytest.mark.asyncio
-    async def test_list_status_filter(self, db_session: AsyncSession, seed_data):
+    async def test_list_excludes_non_studied(self, db_session: AsyncSession, seed_data):
         seat, room = seed_data["seat"], seed_data["room"]
         await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(9, 0), time(12, 0), status="completed")
         await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 2), time(9, 0), time(12, 0), status="confirmed")
         await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 3), time(9, 0), time(12, 0), status="pending")
+        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 4), time(9, 0), time(12, 0), status="cancelled")
 
-        # completed filter includes both completed AND confirmed (in_progress)
-        completed = await list_study_records(db_session, USER_ID, status="completed")
-        assert completed.total == 2
+        result = await list_study_records(db_session, USER_ID)
 
-        # upcoming filter only includes pending
-        upcoming = await list_study_records(db_session, USER_ID, status="upcoming")
-        assert upcoming.total == 1
-        assert upcoming.items[0].status == "upcoming"
+        # Only completed and confirmed are shown; pending and cancelled excluded
+        assert result.total == 2
+        assert all(item.status == "completed" for item in result.items)

@@ -16,10 +16,6 @@
           <text class="stat-label">本月已完成</text>
         </view>
         <view class="stat-item">
-          <text class="stat-value">{{ summary.monthly_upcoming_count }}次</text>
-          <text class="stat-label">本月待学习</text>
-        </view>
-        <view class="stat-item">
           <text class="stat-value">{{ summary.total_hours }}h</text>
           <text class="stat-label">累计学习时长</text>
         </view>
@@ -60,10 +56,6 @@
               v-if="cell.day && cell.studied"
               class="studied-dot studied-dot-green"
             />
-            <view
-              v-if="cell.day && cell.upcoming && !cell.studied"
-              class="studied-dot studied-dot-blue"
-            />
           </view>
         </view>
 
@@ -71,10 +63,6 @@
           <view class="legend-item">
             <view class="legend-dot legend-dot-green" />
             <text class="legend-text">已学习</text>
-          </view>
-          <view class="legend-item">
-            <view class="legend-dot legend-dot-blue" />
-            <text class="legend-text">未开始</text>
           </view>
           <view class="legend-item">
             <view class="legend-dot legend-dot-today" />
@@ -124,19 +112,16 @@
                   <text v-if="record.record_type === 'course'" class="course-name">{{ record.course_name || '培训课程' }}</text>
                   <text v-else class="room-name">{{ record.room_name }}</text>
                   <view class="record-sub-row">
-                    <text v-if="record.record_type === 'course'" class="lesson-detail-text">{{ record.lesson_title || '课时' }}<template v-if="record.lesson_price != null"> ￥{{ formatLessonPrice(record.lesson_price) }}</template></text>
+                    <text v-if="record.record_type === 'course'" class="lesson-detail-text">{{ record.lesson_title || '课时' }}</text>
                     <text v-else-if="record.seat_number" class="seat-number">{{ record.seat_number }}号座位<template v-if="record.seat_zone"> · {{ record.seat_zone }}</template></text>
                   </view>
                 </view>
               </view>
               <view class="record-right">
-                <text :class="['status-badge', record.status === 'completed' ? 'status-completed' : 'status-upcoming']">
-                  {{ record.status === 'completed' ? '已学习' : '未开始' }}
+                <text class="status-badge status-completed">
+                  已学习
                 </text>
-                <text v-if="record.record_type === 'course'" class="record-price">
-                  <text class="price-symbol">¥</text>{{ formatLessonPrice(record.lesson_price) }}
-                </text>
-                <text v-else-if="record.record_type === 'seat'" class="record-price">
+                <text v-if="record.record_type === 'seat'" class="record-price">
                   <text class="price-symbol">¥</text>{{ record.total_price }}
                 </text>
               </view>
@@ -187,8 +172,6 @@ const activeTab = ref('all')
 
 const tabs = [
   { label: '全部', value: 'all' },
-  { label: '未开始', value: 'upcoming' },
-  { label: '已学习', value: 'completed' },
 ]
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
@@ -197,14 +180,6 @@ const studiedDates = computed(() => {
   const set = new Set()
   for (const item of summary.value.calendar_mark || []) {
     if (item.studied) set.add(item.date)
-  }
-  return set
-})
-
-const upcomingDates = computed(() => {
-  const set = new Set()
-  for (const item of summary.value.calendar_mark || []) {
-    if (item.upcoming) set.add(item.date)
   }
   return set
 })
@@ -231,7 +206,6 @@ const calendarDays = computed(() => {
       isToday,
       isFuture,
       studied: studiedDates.value.has(dateStr),
-      upcoming: upcomingDates.value.has(dateStr),
     })
   }
   return cells
@@ -276,9 +250,6 @@ async function fetchRecords(reset) {
       month: monthStr,
       page: page.value,
       page_size: 10,
-    }
-    if (activeTab.value !== 'all') {
-      params.status = activeTab.value
     }
     const data = await getStudyRecordList(params)
     const items = data.items || []

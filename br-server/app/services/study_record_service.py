@@ -158,7 +158,7 @@ async def get_monthly_summary(
 
     month_condition = and_(
         Booking.user_id == str(user_id),
-        Booking.status != "cancelled",
+        Booking.status.in_(["completed", "confirmed"]),  # Only studied records
         extract("year", Booking.date) == year,
         extract("month", Booking.date) == month_num,
     )
@@ -166,9 +166,8 @@ async def get_monthly_summary(
     result = await db.execute(select(Booking).where(month_condition))
     month_bookings = result.scalars().all()
 
-    # Split: completed/confirmed -> studied; pending -> upcoming
-    studied_bookings = [b for b in month_bookings if _is_studied(b.status)]
-    upcoming_bookings = [b for b in month_bookings if not _is_studied(b.status)]
+    # All bookings are studied (completed+confirmed)
+    studied_bookings = month_bookings
 
     # Studied stats
     monthly_hours = 0.0
@@ -179,14 +178,7 @@ async def get_monthly_summary(
         monthly_hours += hours
         studied_dates.append(b.date)
 
-    # Upcoming stats
-    monthly_upcoming_hours = 0.0
-    monthly_upcoming_count = len(upcoming_bookings)
-    upcoming_dates: list[date] = []
-    for b in upcoming_bookings:
-        hours = _calculate_hours(b.start_time, b.end_time)
-        monthly_upcoming_hours += hours
-        upcoming_dates.append(b.date)
+    # No upcoming bookings to track
 
     # Total hours (all-time studied: completed + confirmed)
     total_result = await db.execute(
@@ -202,12 +194,11 @@ async def get_monthly_summary(
 
     _, days_in_month = calendar.monthrange(year, month_num)
     studied_set = set(studied_dates)
-    upcoming_set = set(upcoming_dates)
     calendar_mark = [
         CalendarMark(
             date=date(year, month_num, day),
             studied=(date(year, month_num, day) in studied_set),
-            upcoming=(date(year, month_num, day) in upcoming_set),
+            upcoming=False,  # No upcoming records shown
         )
         for day in range(1, days_in_month + 1)
     ]
@@ -220,8 +211,8 @@ async def get_monthly_summary(
         max_streak_days=max_streak,
         total_hours=round(total_hours, 1),
         calendar_mark=calendar_mark,
-        monthly_upcoming_hours=round(monthly_upcoming_hours, 1),
-        monthly_upcoming_count=monthly_upcoming_count,
+        monthly_upcoming_hours=0.0,
+        monthly_upcoming_count=0,
     )
 
 
@@ -241,17 +232,13 @@ async def list_study_records(
 
     conditions = [
         Booking.user_id == str(user_id),
-        Booking.status != "cancelled",
+        Booking.status.in_(["completed", "confirmed"]),  # Only studied records
     ]
     if month is not None:
         conditions.append(extract("year", Booking.date) == month.year)
         conditions.append(extract("month", Booking.date) == month.month)
 
-    # Status filter: "completed" -> studied (completed+confirmed); "upcoming" -> pending
-    if status == "completed":
-        conditions.append(Booking.status.in_(["completed", "confirmed"]))
-    elif status == "upcoming":
-        conditions.append(Booking.status == "pending")
+    # Status filter removed: only show studied (completed+confirmed) records
 
     where_clause = and_(*conditions)
 

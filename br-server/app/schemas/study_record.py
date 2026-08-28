@@ -28,10 +28,18 @@ class StudyRecordItem(BaseModel):
     id: int
     record_type: str = "seat"  # "seat" | "course"
     status: str = "completed"  # "completed" | "upcoming"
+    # Seat booking fields
     room_name: str | None = None
     seat_number: str | None = None
+    seat_zone: str | None = None
+    # Course booking fields
     course_name: str | None = None
     lesson_title: str | None = None
+    lesson_date: date | None = None
+    lesson_time_slot: str | None = None
+    duration_minutes: int | None = None
+    lesson_price: Decimal | None = None
+    # Common fields
     date: date
     start_time: time
     end_time: time

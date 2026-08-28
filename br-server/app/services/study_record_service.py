@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
 from app.models.course import Course
+from app.models.course_lesson import CourseLesson
+from app.models.lesson_schedule import LessonSchedule
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.schemas.study_record import (
@@ -16,10 +18,20 @@ from app.schemas.study_record import (
     StudyRecordListResponse,
     StudyRecordSummaryResponse,
 )
-from app.services.booking_service import _calculate_hours
+from app.services.booking_service import (
+    _calculate_hours,
+    _sync_user_booking_completions,
+)
 
 MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
+
+# Zone labels matching frontend SEAT_ZONE_LABELS
+_ZONE_LABELS = {
+    "quiet": "静音区",
+    "keyboard": "键盘区",
+    "vip": "VIP区",
+}
 
 
 def _calculate_streak_days(studied_dates: list[date]) -> int:
@@ -37,15 +49,24 @@ def _calculate_streak_days(studied_dates: list[date]) -> int:
     return max_streak
 
 
-def _build_seat_record(booking: Booking, seat: Seat | None, room: StudyRoom | None, status: str) -> StudyRecordItem:
+def _is_studied(status: str) -> bool:
+    """completed + confirmed(in_progress) both count as studied."""
+    return status in ("completed", "confirmed")
+
+
+def _build_seat_record(
+    booking: Booking, seat: Seat | None, room: StudyRoom | None, status: str
+) -> StudyRecordItem:
     """Build a study record item for a seat booking."""
     hours = _calculate_hours(booking.start_time, booking.end_time)
+    seat_zone_label = _ZONE_LABELS.get(seat.zone, seat.zone) if seat and seat.zone else None
     return StudyRecordItem(
         id=booking.id,
         record_type="seat",
         status=status,
         room_name=room.name if room else None,
         seat_number=seat.seat_number if seat else None,
+        seat_zone=seat_zone_label,
         date=booking.date,
         start_time=booking.start_time,
         end_time=booking.end_time,
@@ -54,25 +75,84 @@ def _build_seat_record(booking: Booking, seat: Seat | None, room: StudyRoom | No
     )
 
 
-def _build_course_record(booking: Booking, course_name: str | None, status: str) -> StudyRecordItem:
-    """Build a study record item for a course booking."""
-    hours = _calculate_hours(booking.start_time, booking.end_time)
-    return StudyRecordItem(
-        id=booking.id,
-        record_type="course",
-        status=status,
-        course_name=course_name,
-        date=booking.date,
-        start_time=booking.start_time,
-        end_time=booking.end_time,
-        hours=hours,
-        total_price=booking.total_price,
-    )
+def _build_course_lesson_records(
+    booking: Booking,
+    course_name: str | None,
+    lesson_schedules: list[LessonSchedule],
+    lesson_map: dict[int, CourseLesson],
+    status: str,
+) -> list[StudyRecordItem]:
+    """Expand a course booking into individual lesson record items."""
+    items: list[StudyRecordItem] = []
+    lesson_count = len(lesson_schedules)
+    if lesson_count == 0:
+        # Fallback: no lesson_schedules, show as single record
+        hours = _calculate_hours(booking.start_time, booking.end_time)
+        items.append(StudyRecordItem(
+            id=booking.id,
+            record_type="course",
+            status=status,
+            course_name=course_name,
+            date=booking.date,
+            start_time=booking.start_time,
+            end_time=booking.end_time,
+            hours=hours,
+            total_price=booking.total_price,
+        ))
+        return items
+
+    # Calculate per-lesson price
+    lesson_price = None
+    if lesson_count > 0 and booking.total_price:
+        try:
+            lesson_price = Decimal(str(booking.total_price)) / lesson_count
+        except Exception:
+            lesson_price = None
+
+    for ls in lesson_schedules:
+        lesson = lesson_map.get(ls.lesson_id)
+        lesson_title = lesson.title if lesson else None
+        duration_minutes = lesson.duration_minutes if lesson else None
+
+        # Parse time slot "08:00-10:00" -> start_time, end_time
+        parts = ls.lesson_time_slot.split("-") if ls.lesson_time_slot else []
+        try:
+            st = time.fromisoformat(parts[0].strip()) if len(parts) >= 1 else booking.start_time
+        except (ValueError, IndexError):
+            st = booking.start_time
+        try:
+            et = time.fromisoformat(parts[1].strip()) if len(parts) >= 2 else booking.end_time
+        except (ValueError, IndexError):
+            et = booking.end_time
+
+        hours = _calculate_hours(st, et)
+
+        items.append(StudyRecordItem(
+            id=ls.id,
+            record_type="course",
+            status=status,
+            course_name=course_name,
+            lesson_title=lesson_title,
+            lesson_date=ls.lesson_date,
+            lesson_time_slot=ls.lesson_time_slot,
+            duration_minutes=duration_minutes,
+            lesson_price=lesson_price,
+            date=ls.lesson_date,
+            start_time=st,
+            end_time=et,
+            hours=hours,
+            total_price=booking.total_price,
+        ))
+
+    return items
 
 
 async def get_monthly_summary(
     db: AsyncSession, user_id: uuid.UUID, month: date
 ) -> StudyRecordSummaryResponse:
+    # Sync in-progress completions first
+    await _sync_user_booking_completions(db, user_id)
+
     year = month.year
     month_num = month.month
 
@@ -83,33 +163,18 @@ async def get_monthly_summary(
         extract("month", Booking.date) == month_num,
     )
 
-    result = await db.execute(
-        select(Booking).where(month_condition)
-    )
+    result = await db.execute(select(Booking).where(month_condition))
     month_bookings = result.scalars().all()
 
-    # Split into completed and upcoming
-    completed_bookings = [b for b in month_bookings if b.status == "completed"]
-    upcoming_bookings = [b for b in month_bookings if b.status != "completed"]
+    # Split: completed/confirmed -> studied; pending -> upcoming
+    studied_bookings = [b for b in month_bookings if _is_studied(b.status)]
+    upcoming_bookings = [b for b in month_bookings if not _is_studied(b.status)]
 
-    seat_ids = {b.seat_id for b in month_bookings if b.seat_id}
-    room_ids = {b.room_id for b in month_bookings}
-
-    seat_map = {}
-    if seat_ids:
-        seats_result = await db.execute(select(Seat).where(Seat.id.in_(seat_ids)))
-        seat_map = {s.id: s for s in seats_result.scalars().all()}
-
-    room_map = {}
-    if room_ids:
-        rooms_result = await db.execute(select(StudyRoom).where(StudyRoom.id.in_(room_ids)))
-        room_map = {r.id: r for r in rooms_result.scalars().all()}
-
-    # Completed stats
+    # Studied stats
     monthly_hours = 0.0
-    monthly_bookings = len(completed_bookings)
-    studied_dates = []
-    for b in completed_bookings:
+    monthly_bookings = len(studied_bookings)
+    studied_dates: list[date] = []
+    for b in studied_bookings:
         hours = _calculate_hours(b.start_time, b.end_time)
         monthly_hours += hours
         studied_dates.append(b.date)
@@ -117,18 +182,18 @@ async def get_monthly_summary(
     # Upcoming stats
     monthly_upcoming_hours = 0.0
     monthly_upcoming_count = len(upcoming_bookings)
-    upcoming_dates = []
+    upcoming_dates: list[date] = []
     for b in upcoming_bookings:
         hours = _calculate_hours(b.start_time, b.end_time)
         monthly_upcoming_hours += hours
         upcoming_dates.append(b.date)
 
-    # Total hours (all-time completed only)
+    # Total hours (all-time studied: completed + confirmed)
     total_result = await db.execute(
         select(Booking.start_time, Booking.end_time).where(
             and_(
                 Booking.user_id == str(user_id),
-                Booking.status == "completed",
+                Booking.status.in_(["completed", "confirmed"]),
             )
         )
     )
@@ -168,6 +233,9 @@ async def list_study_records(
     month: date | None = None,
     status: str | None = None,
 ) -> StudyRecordListResponse:
+    # Sync in-progress completions first
+    await _sync_user_booking_completions(db, user_id)
+
     page_size = min(page_size, MAX_PAGE_SIZE)
     offset = (page - 1) * page_size
 
@@ -179,10 +247,11 @@ async def list_study_records(
         conditions.append(extract("year", Booking.date) == month.year)
         conditions.append(extract("month", Booking.date) == month.month)
 
+    # Status filter: "completed" -> studied (completed+confirmed); "upcoming" -> pending
     if status == "completed":
-        conditions.append(Booking.status == "completed")
+        conditions.append(Booking.status.in_(["completed", "confirmed"]))
     elif status == "upcoming":
-        conditions.append(Booking.status != "completed")
+        conditions.append(Booking.status == "pending")
 
     where_clause = and_(*conditions)
 
@@ -191,7 +260,7 @@ async def list_study_records(
     )
     total = count_result.scalar_one()
 
-    # Sort: completed by date desc, upcoming by date asc
+    # Sort: studied by date desc, upcoming by date asc
     order_clause = Booking.date.desc() if status != "upcoming" else Booking.date.asc()
 
     result = await db.execute(
@@ -206,31 +275,82 @@ async def list_study_records(
     # Build maps for seat/room/course lookups
     seat_ids = {b.seat_id for b in bookings if b.seat_id}
     room_ids = {b.room_id for b in bookings}
-    course_ids = {b.course_id for b in bookings if getattr(b, "booking_type", None) == "course" and b.course_id}
+    course_ids = {
+        b.course_id for b in bookings
+        if getattr(b, "booking_type", None) == "course" and b.course_id
+    }
 
-    seat_map = {}
+    seat_map: dict[int, Seat] = {}
     if seat_ids:
         seats_result = await db.execute(select(Seat).where(Seat.id.in_(seat_ids)))
         seat_map = {s.id: s for s in seats_result.scalars().all()}
 
-    room_map = {}
+    room_map: dict[int, StudyRoom] = {}
     if room_ids:
         rooms_result = await db.execute(select(StudyRoom).where(StudyRoom.id.in_(room_ids)))
         room_map = {r.id: r for r in rooms_result.scalars().all()}
 
-    course_map = {}
+    course_map: dict[int, str] = {}
     if course_ids:
         courses_result = await db.execute(select(Course).where(Course.id.in_(course_ids)))
         course_map = {c.id: c.name for c in courses_result.scalars().all()}
 
-    items = []
+    # Batch query lesson data for course bookings
+    lesson_schedule_map: dict[int, list[LessonSchedule]] = {}
+    lesson_map: dict[int, CourseLesson] = {}
+
+    course_bookings = [
+        b for b in bookings
+        if getattr(b, "booking_type", None) == "course" and b.lesson_ids
+    ]
+    if course_bookings:
+        all_lesson_ids: set[int] = set()
+        booking_lesson_ids: dict[int, list[int]] = {}
+        for b in course_bookings:
+            lids = list(b.lesson_ids) if b.lesson_ids else []
+            booking_lesson_ids[b.id] = lids
+            all_lesson_ids.update(lids)
+
+        if all_lesson_ids:
+            # Query lesson_schedules
+            ls_result = await db.execute(
+                select(LessonSchedule)
+                .where(LessonSchedule.lesson_id.in_(all_lesson_ids))
+                .order_by(LessonSchedule.sort_order)
+            )
+            all_ls = ls_result.scalars().all()
+
+            # Build lesson_id -> lesson_schedule mapping
+            ls_by_lesson_id: dict[int, LessonSchedule] = {}
+            for ls in all_ls:
+                ls_by_lesson_id[ls.lesson_id] = ls
+
+            # Group by booking_id
+            for bid, lids in booking_lesson_ids.items():
+                booking_ls = [ls_by_lesson_id[lid] for lid in lids if lid in ls_by_lesson_id]
+                booking_ls.sort(key=lambda x: (x.lesson_date, x.sort_order))
+                if booking_ls:
+                    lesson_schedule_map[bid] = booking_ls
+
+            # Query lesson titles and durations
+            lessons_result = await db.execute(
+                select(CourseLesson).where(CourseLesson.id.in_(all_lesson_ids))
+            )
+            lesson_map = {l.id: l for l in lessons_result.scalars().all()}
+
+    # Build record items
+    items: list[StudyRecordItem] = []
     for b in bookings:
-        record_status = "completed" if b.status == "completed" else "upcoming"
+        record_status = "completed" if _is_studied(b.status) else "upcoming"
         booking_type = getattr(b, "booking_type", None) or "seat"
 
         if booking_type == "course":
             course_name = course_map.get(b.course_id) if b.course_id else None
-            items.append(_build_course_record(b, course_name, record_status))
+            ls_list = lesson_schedule_map.get(b.id, [])
+            course_items = _build_course_lesson_records(
+                b, course_name, ls_list, lesson_map, record_status
+            )
+            items.extend(course_items)
         else:
             seat = seat_map.get(b.seat_id)
             room = room_map.get(b.room_id)

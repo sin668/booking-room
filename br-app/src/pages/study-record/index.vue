@@ -124,8 +124,8 @@
                   <text v-if="record.record_type === 'course'" class="course-name">{{ record.course_name || '培训课程' }}</text>
                   <text v-else class="room-name">{{ record.room_name }}</text>
                   <view class="record-sub-row">
-                    <text v-if="record.record_type === 'course'" class="lesson-title">{{ record.lesson_title || '课时' }}</text>
-                    <text v-else-if="record.seat_number" class="seat-number">{{ record.seat_number }}</text>
+                    <text v-if="record.record_type === 'course'" class="lesson-detail-text">{{ record.lesson_title || '课时' }}<template v-if="record.lesson_price != null"> ￥{{ formatLessonPrice(record.lesson_price) }}</template></text>
+                    <text v-else-if="record.seat_number" class="seat-number">{{ record.seat_number }}号座位<template v-if="record.seat_zone"> · {{ record.seat_zone }}</template></text>
                   </view>
                 </view>
               </view>
@@ -141,6 +141,10 @@
             <view class="record-bottom">
               <text class="record-time">{{ record.date }} {{ formatTime(record.start_time) }}-{{ formatTime(record.end_time) }}</text>
               <text class="record-duration">{{ record.hours }}小时</text>
+            </view>
+            <!-- Course lesson detail row -->
+            <view v-if="record.record_type === 'course' && record.lesson_date" class="lesson-meta-row">
+              <text class="lesson-meta-text">{{ record.lesson_date }} {{ formatLessonStartTime(record.lesson_time_slot) }}上课<template v-if="record.duration_minutes">  {{ record.duration_minutes }}分钟</template></text>
             </view>
           </view>
 
@@ -235,6 +239,16 @@ const calendarDays = computed(() => {
 function formatTime(time) {
   if (!time) return ''
   return time.substring(0, 5)
+}
+
+function formatLessonStartTime(timeSlot) {
+  if (!timeSlot || typeof timeSlot !== 'string') return ''
+  return timeSlot.split('-')[0] || ''
+}
+
+function formatLessonPrice(price) {
+  if (price == null) return ''
+  return Number(price).toFixed(2)
 }
 
 async function fetchSummary() {
@@ -730,9 +744,12 @@ onReachBottom(() => {
   flex-shrink: 0;
 }
 
-.lesson-title {
+.lesson-detail-text {
   font-size: 24rpx;
   color: $text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .status-badge {
@@ -779,6 +796,17 @@ onReachBottom(() => {
 
 .record-duration {
   font-size: 24rpx;
+  color: $text-muted;
+}
+
+.lesson-meta-row {
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx dashed $bg-color;
+}
+
+.lesson-meta-text {
+  font-size: 22rpx;
   color: $text-muted;
 }
 

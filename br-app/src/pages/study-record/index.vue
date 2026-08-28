@@ -133,18 +133,19 @@
                 <text :class="['status-badge', record.status === 'completed' ? 'status-completed' : 'status-upcoming']">
                   {{ record.status === 'completed' ? '已学习' : '未开始' }}
                 </text>
-                <text v-if="record.record_type === 'seat'" class="record-price">
+                <text v-if="record.record_type === 'course'" class="record-price">
+                  <text class="price-symbol">¥</text>{{ formatLessonPrice(record.lesson_price) }}
+                </text>
+                <text v-else-if="record.record_type === 'seat'" class="record-price">
                   <text class="price-symbol">¥</text>{{ record.total_price }}
                 </text>
               </view>
             </view>
             <view class="record-bottom">
-              <text class="record-time">{{ record.date }} {{ formatTime(record.start_time) }}-{{ formatTime(record.end_time) }}</text>
-              <text class="record-duration">{{ record.hours }}小时</text>
-            </view>
-            <!-- Course lesson detail row -->
-            <view v-if="record.record_type === 'course' && record.lesson_date" class="lesson-meta-row">
-              <text class="lesson-meta-text">{{ record.lesson_date }} {{ formatLessonStartTime(record.lesson_time_slot) }}上课<template v-if="record.duration_minutes">  {{ record.duration_minutes }}分钟</template></text>
+              <text v-if="record.record_type === 'course' && record.lesson_date" class="record-time">{{ record.lesson_date }} {{ formatLessonStartTime(record.lesson_time_slot) }}上课</text>
+              <text v-else class="record-time">{{ record.date }} {{ formatTime(record.start_time) }}-{{ formatTime(record.end_time) }}</text>
+              <text v-if="record.record_type === 'course' && record.duration_minutes" class="record-duration">{{ record.duration_minutes }}分钟</text>
+              <text v-else class="record-duration">{{ record.hours }}小时</text>
             </view>
           </view>
 

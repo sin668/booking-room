@@ -191,11 +191,27 @@ class TestListStudyRecords:
         assert len(page2.items) == 2
 
     @pytest.mark.asyncio
-    async def test_list_excludes_non_completed(self, db_session: AsyncSession, seed_data):
+    async def test_list_excludes_cancelled(self, db_session: AsyncSession, seed_data):
         seat, room = seed_data["seat"], seed_data["room"]
         await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(9, 0), time(12, 0), status="confirmed")
         await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 2), time(9, 0), time(12, 0), status="cancelled")
 
         result = await list_study_records(db_session, USER_ID)
 
-        assert result.total == 0
+        # Cancelled bookings are excluded; confirmed bookings appear as "upcoming"
+        assert result.total == 1
+        assert result.items[0].status == "upcoming"
+
+    @pytest.mark.asyncio
+    async def test_list_status_filter(self, db_session: AsyncSession, seed_data):
+        seat, room = seed_data["seat"], seed_data["room"]
+        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(9, 0), time(12, 0), status="completed")
+        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 2), time(9, 0), time(12, 0), status="confirmed")
+
+        completed = await list_study_records(db_session, USER_ID, status="completed")
+        assert completed.total == 1
+        assert completed.items[0].status == "completed"
+
+        upcoming = await list_study_records(db_session, USER_ID, status="upcoming")
+        assert upcoming.total == 1
+        assert upcoming.items[0].status == "upcoming"

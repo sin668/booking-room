@@ -28,6 +28,7 @@ async def list_records(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
     month: str | None = Query(None, pattern=r"^\d{4}-\d{2}$", description="月份，格式 YYYY-MM"),
+    status: str | None = Query(None, pattern=r"^(completed|upcoming)$", description="记录状态过滤：completed=已学习，upcoming=未开始"),
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> StudyRecordListResponse:
@@ -36,5 +37,5 @@ async def list_records(
         year, month_num = map(int, month.split("-"))
         month_date = date(year, month_num, 1)
     return await study_record_service.list_study_records(
-        db, user_id, page=page, page_size=page_size, month=month_date
+        db, user_id, page=page, page_size=page_size, month=month_date, status=status
     )

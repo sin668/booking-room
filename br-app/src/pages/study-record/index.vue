@@ -13,11 +13,11 @@
         </view>
         <view class="stat-item">
           <text class="stat-value">{{ summary.monthly_bookings }}次</text>
-          <text class="stat-label">本月预约次数</text>
+          <text class="stat-label">本月已完成</text>
         </view>
         <view class="stat-item">
-          <text class="stat-value">{{ summary.max_streak_days }}天</text>
-          <text class="stat-label">最长连续天数</text>
+          <text class="stat-value">{{ summary.monthly_upcoming_count }}次</text>
+          <text class="stat-label">本月待学习</text>
         </view>
         <view class="stat-item">
           <text class="stat-value">{{ summary.total_hours }}h</text>
@@ -58,7 +58,11 @@
             </view>
             <view
               v-if="cell.day && cell.studied"
-              class="studied-dot"
+              class="studied-dot studied-dot-green"
+            />
+            <view
+              v-if="cell.day && cell.upcoming && !cell.studied"
+              class="studied-dot studied-dot-blue"
             />
           </view>
         </view>
@@ -70,6 +74,10 @@
           </view>
           <view class="legend-item">
             <view class="legend-dot legend-dot-blue" />
+            <text class="legend-text">未开始</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-dot legend-dot-today" />
             <text class="legend-text">今天</text>
           </view>
         </view>
@@ -77,6 +85,17 @@
 
       <view class="record-section">
         <text class="section-title">学习记录</text>
+
+        <view class="tab-bar">
+          <view
+            v-for="tab in tabs"
+            :key="tab.value"
+            :class="['tab-item', { 'tab-active': activeTab === tab.value }]"
+            @tap="switchTab(tab.value)"
+          >
+            <text :class="['tab-text', { 'tab-text-active': activeTab === tab.value }]">{{ tab.label }}</text>
+          </view>
+        </view>
 
         <view v-if="recordLoading && records.length === 0" class="record-loading">
           <view class="loading-spinner small" />
@@ -89,21 +108,35 @@
         <view v-else class="record-list">
           <view
             v-for="record in records"
-            :key="record.id"
+            :key="`${record.record_type}-${record.id}`"
             class="record-card"
           >
             <view class="record-top">
-              <view class="record-room">
-                <view class="book-icon">
+              <view class="record-left">
+                <view v-if="record.record_type === 'course'" class="course-icon">
+                  <view class="course-icon-body" />
+                </view>
+                <view v-else class="book-icon">
                   <view class="book-icon-body" />
                   <view class="book-icon-page" />
                 </view>
-                <text class="room-name">{{ record.room_name }}</text>
-                <text class="seat-number">{{ record.seat_number }}</text>
+                <view class="record-info">
+                  <text v-if="record.record_type === 'course'" class="course-name">{{ record.course_name || '培训课程' }}</text>
+                  <text v-else class="room-name">{{ record.room_name }}</text>
+                  <view class="record-sub-row">
+                    <text v-if="record.record_type === 'course'" class="lesson-title">{{ record.lesson_title || '课时' }}</text>
+                    <text v-else-if="record.seat_number" class="seat-number">{{ record.seat_number }}</text>
+                  </view>
+                </view>
               </view>
-              <text class="record-price">
-                <text class="price-symbol">¥</text>{{ record.total_price }}
-              </text>
+              <view class="record-right">
+                <text :class="['status-badge', record.status === 'completed' ? 'status-completed' : 'status-upcoming']">
+                  {{ record.status === 'completed' ? '已学习' : '未开始' }}
+                </text>
+                <text v-if="record.record_type === 'seat'" class="record-price">
+                  <text class="price-symbol">¥</text>{{ record.total_price }}
+                </text>
+              </view>
             </view>
             <view class="record-bottom">
               <text class="record-time">{{ record.date }} {{ formatTime(record.start_time) }}-{{ formatTime(record.end_time) }}</text>
@@ -138,11 +171,20 @@ const summary = ref({
   max_streak_days: 0,
   total_hours: 0,
   calendar_mark: [],
+  monthly_upcoming_hours: 0,
+  monthly_upcoming_count: 0,
 })
 const records = ref([])
 const page = ref(1)
 const total = ref(0)
 const hasMore = ref(true)
+const activeTab = ref('all')
+
+const tabs = [
+  { label: '全部', value: 'all' },
+  { label: '未开始', value: 'upcoming' },
+  { label: '已学习', value: 'completed' },
+]
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -150,6 +192,14 @@ const studiedDates = computed(() => {
   const set = new Set()
   for (const item of summary.value.calendar_mark || []) {
     if (item.studied) set.add(item.date)
+  }
+  return set
+})
+
+const upcomingDates = computed(() => {
+  const set = new Set()
+  for (const item of summary.value.calendar_mark || []) {
+    if (item.upcoming) set.add(item.date)
   }
   return set
 })
@@ -176,6 +226,7 @@ const calendarDays = computed(() => {
       isToday,
       isFuture,
       studied: studiedDates.value.has(dateStr),
+      upcoming: upcomingDates.value.has(dateStr),
     })
   }
   return cells
@@ -192,7 +243,7 @@ async function fetchSummary() {
     const data = await getMonthlySummary({ month: monthStr })
     summary.value = data
   } catch {
-    summary.value = { monthly_hours: 0, monthly_bookings: 0, max_streak_days: 0, total_hours: 0, calendar_mark: [] }
+    summary.value = { monthly_hours: 0, monthly_bookings: 0, max_streak_days: 0, total_hours: 0, calendar_mark: [], monthly_upcoming_hours: 0, monthly_upcoming_count: 0 }
   }
 }
 
@@ -206,11 +257,15 @@ async function fetchRecords(reset) {
   recordLoading.value = true
   try {
     const monthStr = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}`
-    const data = await getStudyRecordList({
+    const params = {
       month: monthStr,
       page: page.value,
       page_size: 10,
-    })
+    }
+    if (activeTab.value !== 'all') {
+      params.status = activeTab.value
+    }
+    const data = await getStudyRecordList(params)
     const items = data.items || []
     if (page.value === 1) {
       records.value = items
@@ -231,6 +286,12 @@ async function loadAll() {
   loading.value = true
   await Promise.all([fetchSummary(), fetchRecords(true)])
   loading.value = false
+}
+
+function switchTab(tabValue) {
+  if (activeTab.value === tabValue) return
+  activeTab.value = tabValue
+  fetchRecords(true)
 }
 
 function prevMonth() {
@@ -439,8 +500,15 @@ onReachBottom(() => {
   width: 10rpx;
   height: 10rpx;
   border-radius: 50%;
-  background: $success;
   margin-top: 4rpx;
+}
+
+.studied-dot-green {
+  background: $success;
+}
+
+.studied-dot-blue {
+  background: $primary;
 }
 
 .day-inner.day-today + .studied-dot {
@@ -476,6 +544,11 @@ onReachBottom(() => {
   background: $primary;
 }
 
+.legend-dot-today {
+  background: $primary;
+  box-shadow: 0 2rpx 6rpx rgba(79, 110, 247, 0.3);
+}
+
 .legend-text {
   font-size: 22rpx;
   color: $text-muted;
@@ -491,6 +564,34 @@ onReachBottom(() => {
   color: $text-primary;
   margin-bottom: 20rpx;
   display: block;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.tab-item {
+  padding: 12rpx 28rpx;
+  border-radius: 24rpx;
+  background: $surface;
+  border: 1rpx solid $border-soft;
+}
+
+.tab-active {
+  background: $primary;
+  border-color: $primary;
+}
+
+.tab-text {
+  font-size: 24rpx;
+  color: $text-secondary;
+}
+
+.tab-text-active {
+  color: $white;
+  font-weight: 600;
 }
 
 .record-loading {
@@ -530,12 +631,29 @@ onReachBottom(() => {
   justify-content: space-between;
 }
 
-.record-room {
+.record-left {
   display: flex;
   align-items: center;
   gap: 12rpx;
   min-width: 0;
   flex: 1;
+}
+
+.record-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  min-width: 0;
+  flex: 1;
+}
+
+.record-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx;
 }
 
 .book-icon {
@@ -565,6 +683,23 @@ onReachBottom(() => {
   bottom: 0;
 }
 
+.course-icon {
+  width: 40rpx;
+  height: 36rpx;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.course-icon-body {
+  width: 36rpx;
+  height: 28rpx;
+  border-radius: 6rpx;
+  background: $orange;
+  position: absolute;
+  left: 2rpx;
+  top: 4rpx;
+}
+
 .room-name {
   font-size: 28rpx;
   font-weight: 600;
@@ -574,10 +709,47 @@ onReachBottom(() => {
   white-space: nowrap;
 }
 
+.course-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
 .seat-number {
   font-size: 24rpx;
   color: $text-secondary;
   flex-shrink: 0;
+}
+
+.lesson-title {
+  font-size: 24rpx;
+  color: $text-secondary;
+}
+
+.status-badge {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  font-weight: 500;
+}
+
+.status-completed {
+  color: $success;
+  background: rgba(82, 196, 26, 0.1);
+}
+
+.status-upcoming {
+  color: $primary;
+  background: rgba(79, 110, 247, 0.1);
 }
 
 .record-price {
@@ -585,7 +757,6 @@ onReachBottom(() => {
   font-weight: 600;
   color: $primary;
   flex-shrink: 0;
-  margin-left: 16rpx;
 }
 
 .price-symbol {

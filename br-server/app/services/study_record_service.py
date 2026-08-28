@@ -165,10 +165,13 @@ async def list_study_records(
         rooms_result = await db.execute(select(StudyRoom).where(StudyRoom.id.in_(room_ids)))
         room_map = {r.id: r for r in rooms_result.scalars().all()}
 
-    items = [
-        _build_record_item(b, seat_map[b.seat_id], room_map[b.room_id])
-        for b in bookings
-    ]
+    items = []
+    for b in bookings:
+        seat = seat_map.get(b.seat_id)
+        room = room_map.get(b.room_id)
+        if seat is None or room is None:
+            continue
+        items.append(_build_record_item(b, seat, room))
 
     return StudyRecordListResponse(
         items=items,

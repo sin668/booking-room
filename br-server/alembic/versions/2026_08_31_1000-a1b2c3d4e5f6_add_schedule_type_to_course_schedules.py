@@ -1,6 +1,6 @@
 """add_schedule_type_to_course_schedules
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: e8f9a0b1c2d3
 Revises: 97bc597327c1
 Create Date: 2026-08-31 10:00:00.000000
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a1b2c3d4e5f6'
+revision: str = 'e8f9a0b1c2d3'
 down_revision: Union[str, None] = '97bc597327c1'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

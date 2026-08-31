@@ -984,13 +984,8 @@ async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdm
 
     await db.flush()
 
-    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
-    room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one_or_none()
-    user_nickname = None
-    user_result = await db.execute(select(User.nickname).where(User.id == uuid.UUID(booking.user_id)))
-    user_nickname = user_result.scalar_one_or_none()
-
-    return _build_admin_booking_response(booking, seat, room, user_nickname=user_nickname)
+    # 重新查询获取完整数据，避免 flush 后 ORM 对象状态问题
+    return await admin_get_booking(db, booking_id)
 
 
 async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking) -> None:

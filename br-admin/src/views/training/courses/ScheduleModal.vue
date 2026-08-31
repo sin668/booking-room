@@ -574,6 +574,16 @@
     return `第${index + 1}讲：${title}`;
   }
 
+  /** 排课状态：当前日期 > 结课日期 → 已完成，否则进行中（无结课日期默认进行中） */
+  function isScheduleCompleted(row: ScheduleRecord): boolean {
+    if (!row.end_date) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(row.end_date);
+    endDate.setHours(0, 0, 0, 0);
+    return today > endDate;
+  }
+
   // 表格列定义
   const tableColumns = [
     {
@@ -599,6 +609,20 @@
       },
     },
     { title: '开始日期', key: 'start_date', width: 110 },
+    { title: '结课日期', key: 'end_date', width: 110, render: (row: ScheduleRecord) => row.end_date || '-' },
+    {
+      title: '排课状态',
+      key: 'schedule_status',
+      width: 100,
+      render(row: ScheduleRecord) {
+        const completed = isScheduleCompleted(row);
+        return h(
+          NTag,
+          { type: completed ? 'success' : 'warning', size: 'small', bordered: false },
+          () => (completed ? '已完成' : '进行中')
+        );
+      },
+    },
     {
       title: '每课时价格',
       key: 'price',
@@ -663,6 +687,10 @@
       width: 120,
       fixed: 'right' as const,
       render(row: ScheduleRecord) {
+        // 已完成的排课（当前日期 > 结课日期）不显示编辑/删除按钮
+        if (isScheduleCompleted(row)) {
+          return null;
+        }
         return h('div', { style: 'display: flex; gap: 8px;' }, [
           h(
             NButton,

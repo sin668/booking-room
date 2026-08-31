@@ -988,31 +988,26 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
     # 从 booking 记录中读取用户选择的日期和时间段
     # time_slots 格式与课程排课一致：[{"weekday": N, "time_slot": "HH:MM-HH:MM"}]
     # 兼容旧数据（纯字符串数组 ["HH:MM-HH:MM"]），补全 weekday 后重建
+    from app.services.admin_course_service import AdminCourseService
+
     lesson_date = booking.date or today
     time_slots_json = getattr(booking, "time_slots", None)
-    time_slot = ""
+    slots: list[dict] = []
     if time_slots_json:
         try:
-            slots = json.loads(time_slots_json)
-            if isinstance(slots, list) and slots:
-                first = slots[0]
-                if isinstance(first, dict):
-                    time_slot = str(first.get("time_slot") or "")
-                elif isinstance(first, str):
-                    time_slot = first
-                    slots = [
-                        {"weekday": lesson_date.isoweekday(), "time_slot": first}
-                        for first in slots
-                    ]
-                    time_slots_json = json.dumps(slots, ensure_ascii=False)
+            parsed = json.loads(time_slots_json)
+            if isinstance(parsed, list):
+                for item in parsed:
+                    if isinstance(item, dict):
+                        slots.append(item)
+                    elif isinstance(item, str):
+                        slots.append({"weekday": lesson_date.isoweekday(), "time_slot": item})
         except (json.JSONDecodeError, TypeError):
-            time_slot = ""
-    if not time_slot and booking.start_time and booking.end_time:
+            slots = []
+    if not slots and booking.start_time and booking.end_time:
         time_slot = f"{booking.start_time.strftime('%H:%M')}-{booking.end_time.strftime('%H:%M')}"
-        time_slots_json = json.dumps(
-            [{"weekday": lesson_date.isoweekday(), "time_slot": time_slot}],
-            ensure_ascii=False,
-        )
+        slots = [{"weekday": lesson_date.isoweekday(), "time_slot": time_slot}]
+    time_slots_json = json.dumps(slots, ensure_ascii=False)
 
     # 创建定制排课记录（授课老师取自订单记录）
     custom_schedule = CourseSchedule(
@@ -1027,14 +1022,32 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
     db.add(custom_schedule)
     await db.flush()
 
-    # 创建课时记录
+    # 创建课时记录：复用排课管理的取模循环分配 + 周次偏移算法计算每课时上课时间，
+    # 结课日期 = 最后一个课时的上课日期 + 1 天（与 _save_lesson_schedules 一致）
     lesson_ids = getattr(booking, "lesson_ids", None) or []
+    if lesson_ids and slots:
+        all_slots = AdminCourseService._generate_all_slots(lesson_date, slots, len(lesson_ids))
+    else:
+        all_slots = []
+
+    last_lesson_date = None
     for idx, lesson_id in enumerate(lesson_ids):
+        if idx < len(all_slots):
+            slot = all_slots[idx]
+            slot_date = date.fromisoformat(slot["date"])
+            slot_time = slot["time"]
+        else:
+            slot_date = lesson_date
+            slot_time = slots[0]["time_slot"] if slots else ""
+        last_lesson_date = slot_date
         lesson_schedule = LessonSchedule(
             schedule_id=custom_schedule.id,
             lesson_id=lesson_id,
-            lesson_date=lesson_date,
-            lesson_time_slot=time_slot,
+            lesson_date=slot_date,
+            lesson_time_slot=slot_time,
             sort_order=idx,
         )
         db.add(lesson_schedule)
+
+    if last_lesson_date is not None:
+        custom_schedule.end_date = last_lesson_date + timedelta(days=1)

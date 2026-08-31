@@ -436,6 +436,7 @@ class AdminCourseService:
                     custom_price=float(s.custom_price),
                     full_package_price=float(s.full_package_price) if s.full_package_price else None,
                     full_custom_price=float(s.full_custom_price) if s.full_custom_price else None,
+                    schedule_type=s.schedule_type,
                     lesson_schedules=lesson_schedules,
                 )
             )
@@ -869,5 +870,6 @@ class AdminCourseService:
             custom_price=float(schedule.custom_price),
             full_package_price=float(schedule.full_package_price) if schedule.full_package_price else None,
             full_custom_price=float(schedule.full_custom_price) if schedule.full_custom_price else None,
+            schedule_type=schedule.schedule_type,
             lesson_schedules=lesson_schedules,
         )

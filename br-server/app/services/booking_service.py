@@ -887,7 +887,9 @@ async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminRe
 
 async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
     """Cancel any booking with the same refund settlement as user cancellation."""
-    result = await db.execute(select(Booking).where(Booking.id == booking_id))
+    result = await db.execute(
+        select(Booking).where(Booking.id == booking_id).with_for_update()
+    )
     booking = result.scalar_one_or_none()
 
     if booking is None:
@@ -895,6 +897,48 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
 
     if booking.status == "cancelled":
         raise BookingAlreadyCancelledError("该预约已取消")
+
+    # pending_confirm 订单：管理员取消，全额退款不扣手续费
+    if booking.status == "pending_confirm" and booking.payment_status == "paid":
+        user_result = await db.execute(
+            select(User).where(User.id == uuid.UUID(booking.user_id)).with_for_update()
+        )
+        user = user_result.scalar_one_or_none()
+        if user is None:
+            raise BookingError("User not found")
+
+        refund_amount = Decimal(str(booking.total_price))
+        user.balance = (Decimal(str(user.balance)) + refund_amount).quantize(Decimal("0.01"))
+
+        now = booking_now(settings.BOOKING_TIMEZONE)
+        booking.status = "cancelled"
+        booking.cancelled_at = now
+        booking.penalty_amount = Decimal("0")
+        booking.refund_amount = refund_amount
+        booking.cancel_policy = "full_refund"
+        await coupon_service.restore_user_coupon_for_booking(db, booking)
+
+        wallet_transaction = WalletTransaction(
+            user_id=booking.user_id,
+            type="booking_refund",
+            amount=refund_amount,
+            bonus_amount=Decimal("0.00"),
+            balance_after=Decimal(str(user.balance)),
+            order_id=str(uuid.uuid4()),
+            status="completed",
+            payment_method=booking.payment_method,
+            booking_id=booking.id,
+        )
+        setattr(wallet_transaction, "payment_provider", booking.payment_provider or booking.payment_method)
+        setattr(wallet_transaction, "payment_status", "paid")
+        setattr(wallet_transaction, "paid_at", now)
+        db.add(wallet_transaction)
+        await db.flush()
+
+        seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
+        room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one_or_none()
+        user_nickname = (await db.execute(select(User.nickname).where(User.id == uuid.UUID(booking.user_id)))).scalar_one_or_none()
+        return _build_admin_booking_response(booking, seat, room, user_nickname=user_nickname)
 
     await cancel_booking(db, booking.id, uuid.UUID(booking.user_id))
     await db.refresh(booking)

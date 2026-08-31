@@ -107,6 +107,16 @@ class CourseBookingService:
             } if teacher else None,
         }
 
+        # 将老师的可排课时间段附加到 teacher 信息中
+        if teacher and teacher.available_time_slots:
+            import json
+            try:
+                course_dict["teacher"]["available_time_slots"] = json.loads(teacher.available_time_slots)
+            except (json.JSONDecodeError, TypeError):
+                course_dict["teacher"]["available_time_slots"] = []
+        elif teacher:
+            course_dict["teacher"]["available_time_slots"] = []
+
         # 查询 lesson_schedules（新中间表）
         lesson_schedules_list = []
         if schedule:

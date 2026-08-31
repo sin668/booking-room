@@ -70,6 +70,7 @@
               </view>
             </view>
             <view
+              v-if="Number(courseInfo.custom_price) > 0"
               :class="['type-item', { active: bookingType === 'custom' }]"
               @tap="switchBookingType('custom')"
             >
@@ -182,7 +183,7 @@
           <!-- Course start date picker -->
           <view class="date-picker-section">
             <view class="date-picker-label">课程开始日期</view>
-            <picker mode="date" :value="selectedStartDate" :start="minStartDate" @change="onDateChange">
+            <picker mode="date" :value="selectedStartDate" :start="minStartDate" :end="maxStartDate" @change="onDateChange">
               <view class="date-picker-input">
                 <text class="date-picker-value">{{ selectedStartDate || '请选择日期' }}</text>
                 <text class="date-picker-arrow">›</text>
@@ -206,7 +207,7 @@
           </scroll-view>
 
           <!-- Time slots grid -->
-          <view class="time-grid">
+          <view v-if="hasAvailableTimeSlots" class="time-grid">
             <view
               v-for="slot in timeSlots"
               :key="slot.value"
@@ -219,6 +220,9 @@
                 <text class="time-slot-end">{{ slot.end }}</text>
               </view>
             </view>
+          </view>
+          <view v-else class="no-time-slots-tip">
+            <text class="no-time-slots-text">请联系客服，确认具体上课时间哈~</text>
           </view>
         </view>
 
@@ -432,6 +436,7 @@ export default {
       selectedStartDate: '',
       selectedWeekday: 1,
       selectedTimeSlot: '',
+      teacherAvailableSlots: [],
 
       // Coupon
       coupon: null,
@@ -488,6 +493,7 @@ export default {
     },
 
     hasExpiredLessons() {
+      if (this.bookingType !== 'fixed') return false
       if (!Object.keys(this.lessonScheduleMap).length) return false
       const todayStr = this.getTodayStr()
       return this.lessons.some(l => {
@@ -514,11 +520,12 @@ export default {
       const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
       const today = new Date()
       const currentDay = today.getDay() || 7 // Convert Sunday (0) to 7
+      const startOffset = this.bookingType === 'custom' ? 3 : 0
       const list = []
       for (let i = 0; i < 7; i++) {
-        const dayIndex = (currentDay + i - 1) % 7
+        const dayIndex = (currentDay + startOffset + i - 1) % 7
         const d = new Date(today)
-        d.setDate(today.getDate() + i)
+        d.setDate(today.getDate() + startOffset + i)
         list.push({
           value: dayIndex + 1, // 1=Monday, 7=Sunday
           name: weekdays[dayIndex],
@@ -529,23 +536,40 @@ export default {
     },
 
     timeSlots() {
-      return [
-        { value: '08:00-10:00', start: '08:00', end: '10:00' },
-        { value: '10:00-12:00', start: '10:00', end: '12:00' },
-        { value: '12:00-14:00', start: '12:00', end: '14:00' },
-        { value: '14:00-16:00', start: '14:00', end: '16:00' },
-        { value: '16:00-18:00', start: '16:00', end: '18:00' },
-        { value: '18:00-20:00', start: '18:00', end: '20:00' },
-        { value: '20:00-22:00', start: '20:00', end: '22:00' },
-      ]
+      if (!this.teacherAvailableSlots || !this.teacherAvailableSlots.length) return []
+      return this.teacherAvailableSlots.map(slot => {
+        const parts = slot.split('-')
+        return {
+          value: slot,
+          start: parts[0] || '',
+          end: parts[1] || '',
+        }
+      })
+    },
+
+    hasAvailableTimeSlots() {
+      return this.timeSlots.length > 0
     },
 
     minStartDate() {
-      // 最小可选日期为今天
-      const today = new Date()
-      const year = today.getFullYear()
-      const month = String(today.getMonth() + 1).padStart(2, '0')
-      const day = String(today.getDate()).padStart(2, '0')
+      // 1V1私人定制：最小可选日期为当前时间3天后
+      // 固定班课：最小可选日期为今天
+      const offset = this.bookingType === 'custom' ? 3 : 0
+      const d = new Date()
+      d.setDate(d.getDate() + offset)
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    },
+
+    maxStartDate() {
+      // 1V1私人定制：最大可选日期为最小日期起一个月内
+      const minDate = new Date(this.minStartDate)
+      minDate.setMonth(minDate.getMonth() + 1)
+      const year = minDate.getFullYear()
+      const month = String(minDate.getMonth() + 1).padStart(2, '0')
+      const day = String(minDate.getDate()).padStart(2, '0')
       return `${year}-${month}-${day}`
     },
 
@@ -660,6 +684,13 @@ export default {
           }
         }
 
+        // 解析老师可排课时间段
+        if (this.courseInfo.teacher && this.courseInfo.teacher.available_time_slots) {
+          this.teacherAvailableSlots = this.courseInfo.teacher.available_time_slots
+        } else {
+          this.teacherAvailableSlots = []
+        }
+
         await Promise.all([
           this.loadWalletBalance(),
           this.loadAvailableCoupons(),
@@ -732,6 +763,8 @@ export default {
     },
 
     isLessonExpired(lessonId) {
+      // 过期规则仅对固定班课有效，1V1私人定制不受此限制
+      if (this.bookingType !== 'fixed') return false
       if (!this.lessonScheduleMap || !this.lessonScheduleMap[lessonId]) return false
       const lessonDate = this.lessonScheduleMap[lessonId]
       const todayStr = this.getTodayStr()
@@ -746,8 +779,15 @@ export default {
     },
 
     switchBookingType(type) {
+      if (type === 'custom' && !(Number(this.courseInfo.custom_price) > 0)) {
+        uni.showToast({ title: '该课程暂不支持1V1私人定制', icon: 'none' })
+        return
+      }
       this.bookingType = type
       this.scheduleType = type
+      // 切换预约类型时清除自定义时间选择
+      this.selectedStartDate = ''
+      this.selectedTimeSlot = ''
       this.loadAvailableCoupons()
     },
 
@@ -2244,6 +2284,22 @@ function money(value) {
 }
 
 .coupon-empty-text {
+  font-size: 26rpx;
+  color: $text-muted;
+}
+
+/* No time slots tip */
+.no-time-slots-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 24rpx;
+  background: $surface-soft;
+  border-radius: 16rpx;
+  border: 2rpx dashed $border-soft;
+}
+
+.no-time-slots-text {
   font-size: 26rpx;
   color: $text-muted;
 }

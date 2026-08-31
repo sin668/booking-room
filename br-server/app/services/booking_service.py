@@ -887,9 +887,7 @@ async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminRe
 
 async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
     """Cancel any booking with the same refund settlement as user cancellation."""
-    result = await db.execute(
-        select(Booking).where(Booking.id == booking_id).with_for_update()
-    )
+    result = await db.execute(select(Booking).where(Booking.id == booking_id))
     booking = result.scalar_one_or_none()
 
     if booking is None:
@@ -901,7 +899,7 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
     # pending_confirm 订单：管理员取消，全额退款不扣手续费
     if booking.status == "pending_confirm" and booking.payment_status == "paid":
         user_result = await db.execute(
-            select(User).where(User.id == uuid.UUID(booking.user_id)).with_for_update()
+            select(User).where(User.id == uuid.UUID(booking.user_id))
         )
         user = user_result.scalar_one_or_none()
         if user is None:
@@ -927,11 +925,11 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
             order_id=str(uuid.uuid4()),
             status="completed",
             payment_method=booking.payment_method,
+            payment_provider=booking.payment_provider or booking.payment_method,
+            payment_status="paid",
+            paid_at=now,
             booking_id=booking.id,
         )
-        setattr(wallet_transaction, "payment_provider", booking.payment_provider or booking.payment_method)
-        setattr(wallet_transaction, "payment_status", "paid")
-        setattr(wallet_transaction, "paid_at", now)
         db.add(wallet_transaction)
         await db.flush()
 

@@ -694,6 +694,49 @@ export function getCourseSchedules(courseId: number) {
 
 ---
 
+## BUG-26: Admin 取消"待确认"订单报 500 (MissingGreenlet)
+
+### 报错信息
+```
+POST /api/v1/admin/bookings/75/cancel HTTP/1.1" 500 Internal Server Error
+sqlalchemy.exc.MissingGreenlet: greenlet_spawn has not been called;
+can't call await_only() here. Was IO attempted in an unexpected place?
+```
+
+### 根本原因
+此 BUG 包含两层问题：
+
+**第一层：`pending_confirm` 状态不在可取消范围内**
+
+`admin_cancel_booking` 直接调用通用 `cancel_booking` 函数，该函数内有硬限制：
+
+```python
+if booking.status != "confirmed":
+    raise BookingCancellationNotAllowedError("该预约不可取消")
+```
+
+`pending_confirm`（待确认）订单不满足 `confirmed` 条件，首先触发 400 错误。
+
+**第二层：新增 pending_confirm 处理分支后触发 MissingGreenlet**
+
+为 `pending_confirm` 订单添加专属取消逻辑后，在 `admin_cancel_booking` 中使用了 `with_for_update()` 行锁查询 Booking 和 User，随后 `cancel_booking` 的 fallback 路径也对同一行再次 `with_for_update()`，在异步上下文中形成锁冲突。此外，`db.flush()` 后直接访问修改过的 ORM 对象属性（`booking.seat_id`、`booking.room_id`）构建响应，可能触发 SQLAlchemy 的延迟加载，在 async session 外部执行 IO 导致 `MissingGreenlet` 异常。
+
+### 解决方案
+
+1. **在 `admin_cancel_booking` 中为 `pending_confirm` 订单增加专属处理分支**：全额退款（`penalty_amount=0`）、恢复优惠券、创建钱包退款交易记录，绕过通用 `cancel_booking` 的 `confirmed` 状态限制。
+
+2. **移除所有 `with_for_update()` 行锁**：`admin_cancel_booking` 的 Booking 和 User 查询均不使用行锁，避免嵌套锁冲突。
+
+3. **WalletTransaction 字段改为构造函数直接传参**：`payment_provider`、`payment_status`、`paid_at` 直接在构造时传入，不使用 `setattr`。
+
+4. **统一使用 `admin_get_booking` 重新查询构建响应**：`pending_confirm` 路径和通用取消路径在 `flush`/`refresh` 后，均调用 `await admin_get_booking(db, booking_id)` 从数据库重新查询全新 ORM 对象构建响应，彻底避免 `flush` 后对象状态问题。
+
+**文件**: `br-server/app/services/booking_service.py`
+
+**提交**: `f174e70`, `2365213`, `986f1f0`
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -738,3 +781,4 @@ export function getCourseSchedules(courseId: number) {
 | `br-server/app/services/seed_admin.py` | #24 |
 | `br-admin/src/utils/http/alova/index.ts` | #25 |
 | `br-admin/src/api/course/index.ts` | #25 |
+| `br-server/app/services/booking_service.py` | #26 |

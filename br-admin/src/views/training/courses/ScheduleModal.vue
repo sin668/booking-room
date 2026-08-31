@@ -74,10 +74,32 @@
               </n-form-item>
             </n-gi>
             <n-gi>
+              <n-form-item label="定制每课时价格" path="custom_price">
+                <n-input-number
+                  v-model:value="formValues.custom_price"
+                  placeholder="选填"
+                  :min="0"
+                  :precision="2"
+                  style="width: 100%"
+                />
+              </n-form-item>
+            </n-gi>
+            <n-gi>
               <n-form-item label="全套优惠价" path="full_package_price">
                 <n-input-number
                   v-model:value="formValues.full_package_price"
                   placeholder="请输入"
+                  :min="0"
+                  :precision="2"
+                  style="width: 100%"
+                />
+              </n-form-item>
+            </n-gi>
+            <n-gi>
+              <n-form-item label="定制全套优惠价" path="full_custom_price">
+                <n-input-number
+                  v-model:value="formValues.full_custom_price"
+                  placeholder="选填"
                   :min="0"
                   :precision="2"
                   style="width: 100%"
@@ -380,7 +402,9 @@
     teacher_id: null as number | null,
     start_date: null as string | null,
     price: 0 as number | null,
+    custom_price: null as number | null,
     full_package_price: null as number | null,
+    full_custom_price: null as number | null,
   });
 
   // 已选时间段（格式：dateStr|timeSlot）
@@ -581,6 +605,26 @@
       },
     },
     {
+      title: '定制每课时价格',
+      key: 'custom_price',
+      width: 120,
+      render(row: ScheduleRecord) {
+        return row.custom_price
+          ? h(NTag, { type: 'warning', size: 'small', bordered: false }, () => `¥${row.custom_price}`)
+          : '-';
+      },
+    },
+    {
+      title: '定制全套优惠价',
+      key: 'full_custom_price',
+      width: 130,
+      render(row: ScheduleRecord) {
+        return row.full_custom_price
+          ? h(NTag, { type: 'warning', size: 'small', bordered: false }, () => `¥${row.full_custom_price}`)
+          : '-';
+      },
+    },
+    {
       title: '上课时间',
       key: 'time_slots',
       width: 250,
@@ -726,7 +770,9 @@
     formValues.value.teacher_id = row.teacher_id ? Number(row.teacher_id) : null;
     formValues.value.start_date = row.start_date;
     formValues.value.price = row.price;
+    formValues.value.custom_price = row.custom_price ?? null;
     formValues.value.full_package_price = row.full_package_price;
+    formValues.value.full_custom_price = row.full_custom_price ?? null;
 
     // 重置表单验证状态，避免编辑时误报校验错误
     nextTick(() => {
@@ -784,7 +830,9 @@
       teacher_id: null,
       start_date: null,
       price: 0,
+      custom_price: null,
       full_package_price: null,
+      full_custom_price: null,
     };
     selectedSlots.value = new Set();
     editingSchedule.value = null;
@@ -853,8 +901,9 @@
         start_date: formValues.value.start_date,
         time_slots: timeSlotsJson,
         price: formValues.value.price || 0,
-        custom_price: 0,
+        custom_price: formValues.value.custom_price ?? 0,
         full_package_price: formValues.value.full_package_price,
+        full_custom_price: formValues.value.full_custom_price,
       };
 
       if (editingId.value) {

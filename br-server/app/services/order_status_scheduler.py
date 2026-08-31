@@ -77,19 +77,27 @@ async def _process_seat_booking(session, booking: Booking, today: date, current_
     booking_end = datetime.combine(booking.date, booking.end_time)
     now = datetime.combine(today, current_time)
 
+    if settings.SCHEDULER_LOG_ENABLED:
+        logger.info(
+            "[自习室订单 %d] status=%s, date=%s, start=%s, end=%s | now=%s | start_cmp=%s",
+            booking.id, booking.status, booking.date, booking.start_time, booking.end_time,
+            now.strftime("%Y-%m-%d %H:%M:%S"),
+            "now >= booking_start" if now >= booking_start else "now < booking_start",
+        )
+
     if booking.status == "pending" and now >= booking_start:
         # 待开始 → 进行中
         booking.status = "confirmed"
         stats["seat_started"] += 1
         if settings.SCHEDULER_LOG_ENABLED:
-            logger.info(f"Seat booking {booking.id}: pending → confirmed (started)")
+            logger.info("Seat booking %d: pending → confirmed (started)", booking.id)
 
     elif booking.status == "confirmed" and now >= booking_end:
         # 进行中 → 已完成
         booking.status = "completed"
         stats["seat_completed"] += 1
         if settings.SCHEDULER_LOG_ENABLED:
-            logger.info(f"Seat booking {booking.id}: confirmed → completed (ended)")
+            logger.info("Seat booking %d: confirmed → completed (ended)", booking.id)
 
 
 async def _process_course_booking(session, booking: Booking, today: date, stats: dict):
@@ -119,11 +127,22 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
     lessons = result.scalars().all()
 
     if not lessons:
+        if settings.SCHEDULER_LOG_ENABLED:
+            logger.info("[课程订单 %d] status=%s, 但未找到课时安排 (course_id=%s, lesson_ids=%s)", booking.id, booking.status, booking.course_id, booking.lesson_ids)
         return
+
+    first_lesson = lessons[0]
+    last_lesson = lessons[-1]
+    if settings.SCHEDULER_LOG_ENABLED:
+        logger.info(
+            "[课程订单 %d] status=%s, today=%s | first_lesson=%s, last_lesson=%s | highlighted=%s",
+            booking.id, booking.status, today,
+            first_lesson.lesson_date, last_lesson.lesson_date,
+            booking.highlighted_lesson_id,
+        )
 
     if booking.status == "pending":
         # 待开始：检查当前日期是否 >= 第一课时的上课日期
-        first_lesson = lessons[0]
         if today >= first_lesson.lesson_date:
             booking.status = "confirmed"
             # 高亮当前课时（第一个 lesson_date >= today 的课时）
@@ -133,8 +152,6 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
 
     elif booking.status == "confirmed":
         # 进行中：检查是否需要推进高亮或完成
-        last_lesson = lessons[-1]
-
         if today > last_lesson.lesson_date:
             # 当前日期超过最后一门课时的日期 → 已完成
             booking.status = "completed"

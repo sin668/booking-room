@@ -986,6 +986,8 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
     today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
 
     # 从 booking 记录中读取用户选择的日期和时间段
+    # time_slots 格式与课程排课一致：[{"weekday": N, "time_slot": "HH:MM-HH:MM"}]
+    # 兼容旧数据（纯字符串数组 ["HH:MM-HH:MM"]），补全 weekday 后重建
     lesson_date = booking.date or today
     time_slots_json = getattr(booking, "time_slots", None)
     time_slot = ""
@@ -993,12 +995,24 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
         try:
             slots = json.loads(time_slots_json)
             if isinstance(slots, list) and slots:
-                time_slot = str(slots[0])
+                first = slots[0]
+                if isinstance(first, dict):
+                    time_slot = str(first.get("time_slot") or "")
+                elif isinstance(first, str):
+                    time_slot = first
+                    slots = [
+                        {"weekday": lesson_date.isoweekday(), "time_slot": first}
+                        for first in slots
+                    ]
+                    time_slots_json = json.dumps(slots, ensure_ascii=False)
         except (json.JSONDecodeError, TypeError):
             time_slot = ""
     if not time_slot and booking.start_time and booking.end_time:
         time_slot = f"{booking.start_time.strftime('%H:%M')}-{booking.end_time.strftime('%H:%M')}"
-        time_slots_json = json.dumps([time_slot], ensure_ascii=False)
+        time_slots_json = json.dumps(
+            [{"weekday": lesson_date.isoweekday(), "time_slot": time_slot}],
+            ensure_ascii=False,
+        )
 
     # 创建定制排课记录（授课老师取自订单记录）
     custom_schedule = CourseSchedule(

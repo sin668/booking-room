@@ -432,8 +432,14 @@ class CourseBookingService:
                 except (ValueError, TypeError):
                     pass
             if data.time_slot:
+                # 与课程排课 time_slots 格式一致：[{"weekday": N, "time_slot": "HH:MM-HH:MM"}]
+                # weekday 从用户选择的开课日期推算（isoweekday: 1=周一, 7=周日）
                 import json
-                booking_time_slots = json.dumps([data.time_slot], ensure_ascii=False)
+                weekday = booking_date.isoweekday()
+                booking_time_slots = json.dumps(
+                    [{"weekday": weekday, "time_slot": data.time_slot}],
+                    ensure_ascii=False,
+                )
 
         # 授课老师取自课程排课记录（course_schedules.teacher_id）
         booking_teacher_id = None

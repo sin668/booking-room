@@ -397,13 +397,33 @@ class CourseBookingService:
                 initial_status = "confirmed"
 
         # 7. 创建 Booking 记录
+        #    1V1定制：将用户选择的日期和时间段存入 booking 记录，供管理员确认时使用
+        booking_date = today
+        booking_start_time = datetime.now(CHINA_TIMEZONE).time()
+        booking_end_time = datetime.now(CHINA_TIMEZONE).time()
+        if data.booking_type == "custom":
+            from datetime import time as time_type
+            if data.start_date:
+                try:
+                    from datetime import date as date_type
+                    booking_date = date_type.fromisoformat(data.start_date)
+                except (ValueError, TypeError):
+                    pass
+            if data.time_slot and '-' in data.time_slot:
+                try:
+                    parts = data.time_slot.split('-')
+                    booking_start_time = time_type.fromisoformat(parts[0].strip())
+                    booking_end_time = time_type.fromisoformat(parts[1].strip())
+                except (ValueError, TypeError):
+                    pass
+
         booking = Booking(
             user_id=str(user_id),
             room_id=course["room_id"],
             seat_id=None,  # 课程预约不需要座位
-            date=today,
-            start_time=datetime.now(CHINA_TIMEZONE).time(),
-            end_time=datetime.now(CHINA_TIMEZONE).time(),
+            date=booking_date,
+            start_time=booking_start_time,
+            end_time=booking_end_time,
             status=initial_status,
             original_price=original_price,
             discount_amount=discount_amount,
@@ -422,9 +442,7 @@ class CourseBookingService:
         db.add(booking)
         await db.flush()
 
-        # 7.5. 如果是自定义预约，保存用户选择的时间到排课表
-        if data.schedule_type == "custom" and (data.start_date or data.time_slot):
-            await self._save_custom_schedule(db, course["id"], data.start_date, data.time_slot)
+        # 7.5. 1V1定制预约不在这里写入排课表，等管理员确认后再创建排课记录
 
         # 8. 余额扣款
         payment_params = None

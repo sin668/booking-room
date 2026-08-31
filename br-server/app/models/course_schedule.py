@@ -33,6 +33,10 @@ class CourseSchedule(Base):
     custom_price: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     full_package_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     full_custom_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    schedule_type: Mapped[str] = mapped_column(
+        String(20), default="fixed", nullable=False,
+        comment="排课类型: fixed=固定班课, custom=定制课时",
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False

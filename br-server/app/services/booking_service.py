@@ -909,7 +909,10 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
 
 
 async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
-    """确认待确认订单，根据当前时间变更为“待开始”或“进行中”。"""
+    """确认待确认订单，根据当前时间变更为“待开始”或“进行中”。
+
+    对于1V1定制课时，确认时才创建排课记录（course_schedules + lesson_schedules）。
+    """
     result = await db.execute(select(Booking).where(Booking.id == booking_id))
     booking = result.scalar_one_or_none()
 
@@ -922,10 +925,13 @@ async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdm
     # 根据当前时间判断：如果课程已开始则“进行中”，否则“待开始”
     today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
     if booking.booking_type == "course" and booking.course_id:
-        # 查询课程排课的开始日期
+        # 查询课程排课的开始日期（仅查固定班课）
         schedule_result = await db.execute(
             select(CourseSchedule.start_date)
-            .where(CourseSchedule.course_id == booking.course_id)
+            .where(
+                CourseSchedule.course_id == booking.course_id,
+                CourseSchedule.schedule_type == "fixed",
+            )
             .order_by(CourseSchedule.created_at)
             .limit(1)
         )
@@ -934,6 +940,10 @@ async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdm
             booking.status = "confirmed"
         else:
             booking.status = "pending"
+
+        # 1V1定制课时：确认时创建排课记录
+        if getattr(booking, "schedule_type", None) == "custom":
+            await _create_custom_schedule_on_confirm(db, booking)
     else:
         # 非课程预约，直接设为 confirmed
         booking.status = "confirmed"
@@ -947,3 +957,42 @@ async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdm
     user_nickname = user_result.scalar_one_or_none()
 
     return _build_admin_booking_response(booking, seat, room, user_nickname=user_nickname)
+
+
+async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking) -> None:
+    """管理员确认1V1定制订单时，创建定制排课记录和课时记录。"""
+    import json
+
+    today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+
+    # 从 booking 记录中读取用户选择的日期和时间段
+    lesson_date = booking.date or today
+    time_slot = ""
+    if booking.start_time and booking.end_time:
+        time_slot = f"{booking.start_time.strftime('%H:%M')}-{booking.end_time.strftime('%H:%M')}"
+    time_slots_json = json.dumps([time_slot], ensure_ascii=False) if time_slot else None
+
+    # 创建定制排课记录
+    custom_schedule = CourseSchedule(
+        course_id=booking.course_id,
+        teacher_id=None,
+        start_date=lesson_date,
+        time_slots=time_slots_json,
+        price=Decimal("0"),
+        custom_price=Decimal(str(booking.total_price)) if booking.total_price else Decimal("0"),
+        schedule_type="custom",
+    )
+    db.add(custom_schedule)
+    await db.flush()
+
+    # 创建课时记录
+    lesson_ids = getattr(booking, "lesson_ids", None) or []
+    for idx, lesson_id in enumerate(lesson_ids):
+        lesson_schedule = LessonSchedule(
+            schedule_id=custom_schedule.id,
+            lesson_id=lesson_id,
+            lesson_date=lesson_date,
+            lesson_time_slot=time_slot,
+            sort_order=idx,
+        )
+        db.add(lesson_schedule)

@@ -2,9 +2,11 @@ from contextlib import asynccontextmanager
 import asyncio
 import logging
 import re
+from datetime import datetime, timedelta
 from pathlib import Path
 from contextlib import suppress
 from typing import AsyncGenerator
+from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -134,6 +136,53 @@ async def _order_status_check_loop() -> None:
             pass
 
 
+def _parse_schedule_status_check_time() -> tuple[int, int]:
+    """解析排课状态检查每日运行时间（HH:MM），非法配置回退到 00:00。"""
+    try:
+        hour_str, minute_str = settings.SCHEDULE_STATUS_CHECK_TIME.split(":")
+        hour, minute = int(hour_str), int(minute_str)
+        if 0 <= hour <= 23 and 0 <= minute <= 59:
+            return hour, minute
+    except (ValueError, AttributeError):
+        pass
+    logger.warning(
+        "Invalid SCHEDULE_STATUS_CHECK_TIME=%r, fallback to 00:00",
+        getattr(settings, "SCHEDULE_STATUS_CHECK_TIME", None),
+    )
+    return 0, 0
+
+
+async def _schedule_status_check_job() -> None:
+    """排课状态定时检查任务：扫描进行中排课，当前日期 > 结课日期 → 已完成"""
+    from app.services.schedule_status_scheduler import check_and_update_schedule_statuses
+    try:
+        stats = await check_and_update_schedule_statuses()
+        if settings.SCHEDULER_LOG_ENABLED:
+            logger.info(
+                "[排课状态定时任务] 扫描 %d 条进行中排课，标记完成 %d 条",
+                stats["total_scanned"], stats["schedule_completed"],
+            )
+    except Exception:
+        logger.exception("Schedule status check job failed")
+        raise
+
+
+async def _schedule_status_check_loop() -> None:
+    """Fallback daily runner for schedule status check without APScheduler."""
+    tz = ZoneInfo("Asia/Shanghai")
+    hour, minute = _parse_schedule_status_check_time()
+    while True:
+        now = datetime.now(tz)
+        target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if target <= now:
+            target += timedelta(days=1)
+        await asyncio.sleep((target - now).total_seconds())
+        try:
+            await _schedule_status_check_job()
+        except Exception:
+            pass
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: startup and shutdown events."""
@@ -154,6 +203,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             id="order_status_check",
             replace_existing=True,
         )
+        _hour, _minute = _parse_schedule_status_check_time()
+        scheduler.add_job(
+            _schedule_status_check_job,
+            "cron",
+            hour=_hour,
+            minute=_minute,
+            timezone=ZoneInfo("Asia/Shanghai"),
+            id="schedule_status_check",
+            replace_existing=True,
+        )
         scheduler.start()
         app.state.booking_cleanup_scheduler = scheduler
         logger.info(
@@ -163,6 +222,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info(
             "Order status check scheduler started: interval=%s seconds",
             settings.ORDER_STATUS_CHECK_INTERVAL_SECONDS,
+        )
+        logger.info(
+            "Schedule status check scheduler started: daily at %02d:%02d (Asia/Shanghai)",
+            _hour, _minute,
         )
     else:
         fallback_task = asyncio.create_task(_booking_payment_reconciliation_loop())
@@ -179,6 +242,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             "apscheduler is not installed; interval=%s seconds",
             settings.ORDER_STATUS_CHECK_INTERVAL_SECONDS,
         )
+        schedule_status_fallback_task = asyncio.create_task(_schedule_status_check_loop())
+        app.state.schedule_status_fallback_task = schedule_status_fallback_task
+        logger.warning(
+            "Schedule status check using asyncio fallback: "
+            "apscheduler is not installed; daily at %s (Asia/Shanghai)",
+            settings.SCHEDULE_STATUS_CHECK_TIME,
+        )
     yield
     # Shutdown
     if scheduler is not None:
@@ -193,6 +263,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         order_status_fallback_task.cancel()
         with suppress(asyncio.CancelledError):
             await order_status_fallback_task
+    schedule_status_fallback_task = getattr(app.state, "schedule_status_fallback_task", None)
+    if schedule_status_fallback_task is not None:
+        schedule_status_fallback_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await schedule_status_fallback_task
     await close_redis()
 
 

@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     BOOKING_TIMEZONE: str = "Asia/Shanghai"
     BOOKING_CLEANUP_INTERVAL_SECONDS: int = 60
     ORDER_STATUS_CHECK_INTERVAL_SECONDS: int = 300  # 订单状态检查间隔（秒），默认5分钟
+    SCHEDULE_STATUS_CHECK_TIME: str = "00:00"  # 排课状态检查每日运行时间（HH:MM，Asia/Shanghai）
     SCHEDULER_LOG_ENABLED: bool = True  # 定时任务日志总开关
 
     # WeChat Pay

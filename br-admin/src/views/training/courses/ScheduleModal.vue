@@ -585,6 +585,19 @@
         return teacher ? teacher.label : '-';
       },
     },
+    {
+      title: '类型',
+      key: 'schedule_type',
+      width: 100,
+      render(row: ScheduleRecord) {
+        const isCustom = row.schedule_type === 'custom';
+        return h(
+          NTag,
+          { type: isCustom ? 'warning' : 'info', size: 'small', bordered: false },
+          () => (isCustom ? '定制课时' : '固定班课')
+        );
+      },
+    },
     { title: '开始日期', key: 'start_date', width: 110 },
     {
       title: '每课时价格',

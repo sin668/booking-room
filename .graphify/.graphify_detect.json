@@ -1044,14 +1044,14 @@
     "video": []
   },
   "total_files": 1034,
-  "total_words": 541698,
+  "total_words": 541756,
   "needs_graph": true,
-  "warning": "Large corpus: 1034 files · ~541,698 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder, or use --no-semantic to run AST-only.",
+  "warning": "Large corpus: 1034 files · ~541,756 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder, or use --no-semantic to run AST-only.",
   "skipped_sensitive": [],
   "graphifyignore_patterns": 42,
   "git": {
     "source_owner": "git",
-    "source_hash": "986f1f024d008c3ecf40e559a63da494d62067d9",
+    "source_hash": "408d4997f984091837f4adafcd8485788238c663",
     "branches": [
       "dev",
       "feature/20260814/training-course-list",
@@ -1069,8 +1069,8 @@
     "source": "default-auto",
     "root": ".",
     "git_root": ".",
-    "head": "986f1f024d008c3ecf40e559a63da494d62067d9",
-    "candidate_count": 1466,
+    "head": "408d4997f984091837f4adafcd8485788238c663",
+    "candidate_count": 1467,
     "included_count": 1034,
     "excluded_untracked_count": 0,
     "excluded_ignored_count": 89174,

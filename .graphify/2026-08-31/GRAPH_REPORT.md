@@ -1,24 +1,24 @@
 # Graph Report - .  (2026-08-31)
 
 ## Corpus Check
-- Large corpus: 1034 files · ~542,352 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder, or use --no-semantic to run AST-only.
+- Large corpus: 1034 files · ~541,698 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder, or use --no-semantic to run AST-only.
 
 ## Summary
-- 5356 nodes · 11300 edges · 206 communities detected
+- 5359 nodes · 11305 edges · 206 communities detected
 - Extraction: 78% EXTRACTED · 22% INFERRED · 0% AMBIGUOUS · INFERRED: 2485 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
-- Edge kinds: contains: 2754 · uses: 2485 · ON_BRANCH: 1275 · MODIFIES: 1200 · calls: 998 · method: 680 · rationale_for: 586 · PARENT_OF: 403 · imports_from: 324 · inherits: 305 · imports: 283 · re_exports: 7
+- Edge kinds: contains: 2754 · uses: 2485 · ON_BRANCH: 1276 · MODIFIES: 1200 · calls: 999 · method: 680 · rationale_for: 588 · PARENT_OF: 404 · imports_from: 324 · inherits: 305 · imports: 283 · re_exports: 7
 
 
 ## Input Scope
 - Requested: auto
 - Resolved: committed (source: default-auto)
-- Included files: 1034 · Candidates: 1464
-- Excluded: 1 untracked · 89174 ignored · 0 sensitive · 24 missing committed
+- Included files: 1034 · Candidates: 1466
+- Excluded: 0 untracked · 89174 ignored · 0 sensitive · 24 missing committed
 - Recommendation: Use --scope all or graphify.yaml inputs.corpus for a knowledge-base folder.
 
 ## Graph Freshness
-- Built from Git commit: `2365213`
+- Built from Git commit: `986f1f0`
 - Compare this hash to `git rev-parse HEAD` before trusting freshness-sensitive graph output.
 ## God Nodes (most connected - your core abstractions)
 1. `StudyRoom` - 246 edges
@@ -47,16 +47,16 @@
 ## Communities
 
 ### Community 0 - "Booking Service Tests"
+Cohesion: 0.05
+Nodes (143): feature/20260814/training-course-list, feature/20260817/course-booking, feature/20260817/course-detail-page, feature/20260817/teacher-profile-page, 008166a chore: Comet build→verify transition — all guard checks passed, 0191aac fix: redirect expired admin sessions to login, 037946c feat: add study record frontend page, 061bda0 feat: 实现 seat-select 页面 viewMode 只读查看模式 (+135 more)
+
+### Community 1 - "Teacher Management Tests"
 Cohesion: 0.02
 Nodes (87): City, 老师与培训室/综合室的多对多关联表。      room_id 仅允许关联 study_rooms 中 room_type 为 training 或 compr, TeacherRoom, Teacher, 删除老师。返回 "ok"；不存在返回 "not_found"；存在排课返回 "has_schedules"。, 按老师统计关联课程数（去重 course_id）。, 校验房间存在且 room_type 为培训室或综合室。, get_active_cities() (+79 more)
 
-### Community 1 - "Teacher Management Tests"
-Cohesion: 0.04
-Nodes (119): dev, main, 020ddd3 debug: 延期功能前后端参数传递添加调试日志, 04745c9 chore: archive course-booking, 04f0a66 feat: 新增订单状态定时转换任务, 051c8b1 fix: 修复开课日期不显示和过期课时禁用逻辑 - 后端返回lesson_schedules数据, 0605022 fix: 课程编辑页与列表页在原 tab 内互相跳转，不再新开标签页, 0b33239 feat: 统计区域添加连续学习天数显示 (+111 more)
-
 ### Community 2 - "Booking Cancellation Tests"
-Cohesion: 0.06
-Nodes (117): feature/20260817/course-booking, feature/20260817/course-detail-page, feature/20260817/teacher-profile-page, 008166a chore: Comet build→verify transition — all guard checks passed, 0191aac fix: redirect expired admin sessions to login, 061bda0 feat: 实现 seat-select 页面 viewMode 只读查看模式, 06c38d2 fix: 优化管理端钱包流水展示, 0719233 fix: reconcile pending wechat bookings (+109 more)
+Cohesion: 0.04
+Nodes (122): dev, main, 020ddd3 debug: 延期功能前后端参数传递添加调试日志, 04745c9 chore: archive course-booking, 04f0a66 feat: 新增订单状态定时转换任务, 051c8b1 fix: 修复开课日期不显示和过期课时禁用逻辑 - 后端返回lesson_schedules数据, 0605022 fix: 课程编辑页与列表页在原 tab 内互相跳转，不再新开标签页, 0b33239 feat: 统计区域添加连续学习天数显示 (+114 more)
 
 ### Community 3 - "Wallet Service Tests"
 Cohesion: 0.04
@@ -79,128 +79,128 @@ Cohesion: 0.04
 Nodes (68): BaseModel, AdminCurrentResponse, AdminLoginRequest, AdminMessageResponse, AdminPasswordUpdate, AdminPermissionItem, AdminProfileUpdate, AdminTokenResponse (+60 more)
 
 ### Community 8 - "Teacher Management Tests"
-Cohesion: 0.05
-Nodes (49): feature/20260814/training-course-list, 037946c feat: add study record frontend page, 0fad7a7 fix: resolve API 307 redirect and 404 caused by trailing slash inconsistency, 155ef06 Ignore local worktrees, 1f38399 Merge branch 'worktree-learning-record-frontend-t5-7' into main, 2caef8e Merge pull request #2 from sin668/feat/booking-room-list-detail-fix, 3af03bb fix: consolidate CORS and trailing-slash into single ASGI middleware, 3e4b38d docs: archive account security settings spec (+41 more)
-
-### Community 9 - "Booking Payment Tests"
 Cohesion: 0.04
 Nodes (27): CountTo, routes, routes, routes, routes, routes, routes, routes (+19 more)
 
-### Community 10 - "Auth & Login Tests"
+### Community 9 - "Booking Payment Tests"
 Cohesion: 0.04
 Nodes (55): AdminContext, Course, RoomFollow, 管理端老师管理 API 测试。  覆盖：列表分页/筛选、详情、新增、编辑、删除（含排课拒绝）、状态切换、 room_type 校验、权限控制。, 发布设置：新增时可指定 status，编辑时可通过 PUT 修改 status。, C 端培训室详情的教师团队与课程讲师过滤未激活老师。, qualifications/teaching_tags 为空时入库为 NULL，详情接口应返回 200 且容忍为空列表。, API tests for current-user followed study rooms. (+47 more)
 
-### Community 11 - "Auth & Login Tests"
+### Community 10 - "Auth & Login Tests"
 Cohesion: 0.10
 Nodes (53): Exception, WalletRepository, Booking direct payment orchestration., Verify a WeChat callback and mark a booking payment as paid once., Query due pending WeChat bookings and advance their payment state., Base exception for booking payment operations., Service for booking WeChat payment creation and callbacks., Create a WeChat JSAPI payment order for a pending booking. (+45 more)
 
-### Community 12 - "SMS & Captcha Tests"
+### Community 11 - "Auth & Login Tests"
 Cohesion: 0.04
 Nodes (41): 14c7316 Merge branch 'implement-wechat-quick-login-phone-binding' into main, 6daf2cb feat: add username profile settings, a8157af feat: add account security settings, b3ae959 feat: implement wechat quick login, d4aefe4 登录有效期调整为 3 天, change_password(), deactivate_account(), get_account_security() (+33 more)
 
-### Community 13 - "Booking System Core"
+### Community 12 - "SMS & Captcha Tests"
 Cohesion: 0.03
 Nodes (23): 02a1920 fix: resolve menu icons, directory paths, and hidden menu filtering (BUG-19), 2f06520 merge: unified User-AdminUser model with user management CRUD, 9093d5e docs: archive merge-users-admin-users openspec and sync specs, c069a02 feat: unify user access control — remove user_type filtering from auth, legacy_headers(), test_role_crud_duplicate_and_assigned_delete_conflict(), test_role_menu_assignment_updates_auth_permissions(), Test creating app user defaults user_type to 'app (+15 more)
 
-### Community 14 - "Booking Data Models"
+### Community 13 - "Booking System Core"
 Cohesion: 0.06
 Nodes (46): AdminCouponItem, buildActivityCouponFormItem(), buildActivitySearchSchemas(), buildActivityTableColumns(), buildBookingSearchSchemas(), buildBookingTableColumns(), buildRoomSearchSchemas(), buildRoomTableColumns() (+38 more)
 
-### Community 15 - "Auth & Login Tests"
-Cohesion: 0.05
-Nodes (25): 02b3b93 feat: add course-detail page with all sections (7.1-7.8), 148395b feat(br-app): add course detail navigation from training list page, 2323e70 feat: implement course detail API with TDD, 3437127 test(task-6): 课程详情+关注完整测试，实现 list course follows, 45e5bef feat: extend Course and Booking models for course booking, 7fc110c fix: 修复课程详情API访问已迁移字段的错误, 84887cb fix: resolve Alembic migration revision ID conflict and fix inactive course test, 85b99a1 feat: extend order list for course bookings and add course detail entry (+17 more)
+### Community 14 - "Booking Data Models"
+Cohesion: 0.04
+Nodes (28): 02b3b93 feat: add course-detail page with all sections (7.1-7.8), 0fc7746 chore: add teacher-profile-page OpenSpec artifacts and design doc, 148395b feat(br-app): add course detail navigation from training list page, 2323e70 feat: implement course detail API with TDD, 3437127 test(task-6): 课程详情+关注完整测试，实现 list course follows, 38a606f chore: archive course-detail-page change, 45e5bef feat: extend Course and Booking models for course booking, 7fc110c fix: 修复课程详情API访问已迁移字段的错误 (+20 more)
 
-### Community 16 - "Teacher Management Tests"
+### Community 15 - "Auth & Login Tests"
 Cohesion: 0.06
 Nodes (36): ActivityAdminResponse, ActivityCouponAdminResponse, ActivityCouponClaimResponse, ActivityCouponClaimUserCouponResponse, ActivityCouponInput, ActivityCouponPublicResponse, ActivityCouponTemplateResponse, ActivityCreate (+28 more)
 
-### Community 17 - "Auth & Login Tests"
+### Community 16 - "Teacher Management Tests"
 Cohesion: 0.06
 Nodes (36): { apiUrl, urlPrefix }, mockAdapter, { useMock, loggerMock }, ContentTypeEnum, RequestEnum, ResultEnum, IAsyncRouteState, IScreenLockState (+28 more)
 
-### Community 18 - "Auth Service Layer"
+### Community 17 - "Auth & Login Tests"
 Cohesion: 0.08
 Nodes (37): bind_wechat_phone(), bind_wechat_phone_by_sms(), get_me(), login(), logout(), Authenticate or create an app user with a WeChat mini program code., Bind a phone obtained from WeChat phone authorization code., Bind a phone to a WeChat user with SMS fallback verification. (+29 more)
 
-### Community 19 - "Booking System Core"
+### Community 18 - "Auth Service Layer"
 Cohesion: 0.07
 Nodes (39): BaseSettings, Return missing mini program login settings without exposing values., Whether WeChat mini program login is enabled and configured., Raise a sanitized error if WeChat mini program login cannot be used., Return the normalized upload storage driver., Return missing OSS setting names without exposing configured values., Raise a sanitized error if upload storage cannot be used., Application settings loaded from environment variables and .env file. (+31 more)
 
-### Community 20 - "Room Management Tests"
+### Community 19 - "Booking System Core"
 Cohesion: 0.05
 Nodes (28): Alova, result, TypeConsole, TypeOrderLarge, TypeSaleroom, TypeVisits, doCustomTimes(), pagination() (+20 more)
 
-### Community 21 - "SMS & Captcha Tests"
+### Community 20 - "Room Management Tests"
 Cohesion: 0.06
 Nodes (43): AliyunSMSProvider, Aliyun Dysms API client for sending SMS verification codes., mock_redis(), Unit tests for SMS service (extended coverage)., Second send within 60 s is rejected with 429., The 11th send in one day is rejected with 429., Return a mock async Redis client., Invalid captcha token returns 400. (+35 more)
 
+### Community 21 - "SMS & Captcha Tests"
+Cohesion: 0.05
+Nodes (26): 023eb00 feat: add GET /api/v1/training/rooms/{room_id} route, 071ac5f chore: add implementation plan for training-room-overview, 2fe2097 feat: add get_training_room_detail to training_service (TDD green phase), 3590666 Merge branch 'feature/20260814/training-room-overview' into main, 4150deb test: add failing tests for get_training_room_detail (TDD red phase), 42c7c58 fix: commit missing Alembic migration file for training tables, 4c94688 feat: 为 StudyRoom 添加 rating 列和 city 关系，含迁移, 4ecad22 chore: add training-course-list OpenSpec artifacts, design doc, and implementation plan (+18 more)
+
 ### Community 22 - "Auth & Login Tests"
+Cohesion: 0.08
+Nodes (49): admin_cancel_booking(), admin_confirm_booking(), admin_get_booking(), admin_list_bookings(), BookingAlreadyCancelledError, BookingCancellationNotAllowedError, BookingConflictError, BookingCouponUnavailableError (+41 more)
+
+### Community 23 - "Database Config"
 Cohesion: 0.14
 Nodes (47): base64url_encode(), CompactVerificationPayload, create_compact_verification_token(), decode_compact_verification_token(), ensure_utc(), ExpiredVerificationToken, InvalidVerificationToken, sign_compact_token() (+39 more)
 
-### Community 23 - "Database Config"
-Cohesion: 0.05
-Nodes (22): 023eb00 feat: add GET /api/v1/training/rooms/{room_id} route, 071ac5f chore: add implementation plan for training-room-overview, 3590666 Merge branch 'feature/20260814/training-room-overview' into main, 42c7c58 fix: commit missing Alembic migration file for training tables, 4c94688 feat: 为 StudyRoom 添加 rating 列和 city 关系，含迁移, 4ecad22 chore: add training-course-list OpenSpec artifacts, design doc, and implementation plan, 681b536 feat: add training API module, 7a0a320 tweak: 已取消订单隐藏去支付和取消按钮 (+14 more)
-
 ### Community 24 - "Auth & Login Tests"
-Cohesion: 0.08
-Nodes (47): admin_cancel_booking(), admin_confirm_booking(), admin_get_booking(), admin_list_bookings(), BookingAlreadyCancelledError, BookingCancellationNotAllowedError, BookingConflictError, BookingCouponUnavailableError (+39 more)
-
-### Community 25 - "JWT Token Tests"
 Cohesion: 0.05
 Nodes (7): 8403348 refactor: extract admin page builders, d2114a6 merge: br-admin business refactor, routes, routes, columns, adminInfo, token
 
-### Community 26 - "Auth & WeChat Integration"
+### Community 25 - "JWT Token Tests"
 Cohesion: 0.07
 Nodes (32): Base, get_db(), FastAPI dependency that provides an async database session., DeclarativeBase, SystemSetting, UserIdentityVerification, User, _create_access_token() (+24 more)
 
-### Community 27 - "Coupon System"
+### Community 26 - "Auth & WeChat Integration"
 Cohesion: 0.05
 Nodes (28): ADMIN_NATIVE_META, AdminPageParams, AdminPageResponse, BasicTableResult, compactQuery(), normalizePageParams(), toBasicTableResult(), AdminLoginParams (+20 more)
 
-### Community 28 - "Teacher Management"
+### Community 27 - "Coupon System"
 Cohesion: 0.07
 Nodes (23): Notification, NotificationPreference, NotificationType, NotificationNotFoundError, NotificationService, _preference_enabled(), _validate_type(), StrEnum (+15 more)
 
-### Community 29 - "Data Models & Schemas"
+### Community 28 - "Teacher Management"
 Cohesion: 0.08
 Nodes (37): legacy_headers(), seed_users(), test_create_admin_user(), test_create_admin_user_requires_username(), test_create_app_user(), test_create_app_user_invalid_phone_format(), test_create_app_user_requires_phone(), test_create_duplicate_phone_returns_409() (+29 more)
 
-### Community 30 - "Miscellaneous Module"
+### Community 29 - "Data Models & Schemas"
 Cohesion: 0.06
 Nodes (23): mock_db(), _mock_keys_result(), _mock_scalar_result(), Unit tests for AuthService., Successful registration returns TokenResponse., Registering with an existing phone raises 409., Registering with invalid SMS code raises 400., When nickname is None, a default '学习者XXXXXX' nickname is generated. (+15 more)
 
-### Community 31 - "Auth & Login Tests"
+### Community 30 - "Miscellaneous Module"
 Cohesion: 0.06
 Nodes (29): CaptchaService, Aliyun Captcha 2.0 verification service., Verify a captcha token.          - If no ``ALIYUN_CAPTCHA_SCENE_ID`` is configur, Check whether a captcha token has already been consumed., _percent_encode(), SMS verification code service with rate-limiting., Return a 6-digit random numeric string., Send a verification code to *phone*.          Workflow:         1. Validate capt (+21 more)
 
-### Community 32 - "Auth & Login Tests"
+### Community 31 - "Auth & Login Tests"
 Cohesion: 0.08
 Nodes (27): get_current_admin_context(), get_current_user_id(), get_optional_current_user_id(), Extract and validate the current user ID from the access token., 有登录凭证时解析用户 ID，无凭证时返回 None。, Resolve the current administrator from Bearer or legacy admin token., AdminMenu, AdminRole (+19 more)
 
-### Community 33 - "Auth & WeChat Integration"
+### Community 32 - "Auth & Login Tests"
 Cohesion: 0.06
 Nodes (7): 7d72fbb test: add study record service and API tests, TestGetSummary, TestListRecords, _add_booking(), TestCalculateStreakDays, TestGetMonthlySummary, TestListStudyRecords
 
-### Community 34 - "Payment & Wallet"
+### Community 33 - "Auth & WeChat Integration"
 Cohesion: 0.06
 Nodes (19): 1e48f73 fix: 老师详情接口容忍 qualifications 为 NULL（AdminTeacherDetail 校验失败 500）, 7a418d3 tweak: 老师管理后端 — teachers 表扩展 + teacher_rooms 关联 + 管理端 CRUD API + C 端详情扩展与测试, be95476 feat: 老师新增/编辑页发布设置（是否激活）+ C 端老师列表过滤未激活 + 学习室编辑页行距统一, AdminTeacherCreate, AdminTeacherDetail, AdminTeacherListItem, AdminTeacherListResponse, AdminTeacherStatusUpdate (+11 more)
 
-### Community 35 - "Booking Payment Tests"
+### Community 34 - "Payment & Wallet"
 Cohesion: 0.06
 Nodes (21): _booking_payment_reconciliation_loop(), _cleanup_unpaid_bookings_job(), lifespan(), Fallback periodic runner for environments without APScheduler., Application lifespan: startup and shutdown events., BookingItem, BookingListParams, BookingListResult (+13 more)
 
-### Community 36 - "Booking Domain Service"
+### Community 35 - "Booking Payment Tests"
 Cohesion: 0.08
 Nodes (23): PageEnum, DEFAULT_CONFIG, filter(), getConfig(), TreeHelperConfig, useAsyncRoute(), useAsyncRouteStore, ProjectSettingState (+15 more)
 
-### Community 37 - "Booking Service Tests"
+### Community 36 - "Booking Domain Service"
 Cohesion: 0.06
 Nodes (12): 7721d2b feat: 自习室新建/编辑改为页面跳转，列表新增城市/类型列与过滤，支持环境图片与上架状态, 7d4de92 chore: 房间管理模块文案「自习室」统一替换为「学习室」, routes, admin_get_room(), admin_list_rooms(), create_room(), delete_room(), get_study_room() (+4 more)
 
-### Community 38 - "Course Management"
+### Community 37 - "Booking Service Tests"
 Cohesion: 0.06
 Nodes (24): jwt_service(), _mock_keys_result(), mock_redis(), Unit tests for JWTService., Refresh token contains sub, type=refresh, exp, and jti., Each refresh token gets a unique jti., blacklist_token stores the jti in Redis with correct TTL., Return an AsyncMock whose coroutine resolves to the given list. (+16 more)
+
+### Community 38 - "Course Management"
+Cohesion: 0.11
+Nodes (20): 2caef8e Merge pull request #2 from sin668/feat/booking-room-list-detail-fix, 5187776 feat: show wallet balance on booking confirmation, 548e6b2 fix: load profile wallet stats, 549c0fa refactor br-app mobile UI, 597670e Add profile stat navigation links, 7487fee style: soften booking wallet balance, 794936b Add persisted study room follows, 887d314 refactor: share payment polling logic (+12 more)
 
 ### Community 39 - "Booking Cancellation Tests"
 Cohesion: 0.06
@@ -560,7 +560,7 @@ Nodes (3): adminRequest(), confirmVerification(), inspectVerificationToken()
 
 ### Community 150 - "Teacher Management"
 Cohesion: 0.22
-Nodes (9): 206bd75 chore: check off Task 1 (models + migration) complete, 41a79ef chore: check off Task 5 (backend tests) complete, 549a461 chore: check off Task 2 (schemas) complete, 79b06c2 chore: check off Task 3 (services) complete, 87ce0cd test: add training API integration tests and room_type homepage tests, 89d41ad feat: add training API routes and room_type filter in study_room routes, a075ed7 chore: check off Task 4 (API routes) complete, bbbec30 feat: add training service with room/course queries and seed data (+1 more)
+Nodes (3): 0fad7a7 fix: resolve API 307 redirect and 404 caused by trailing slash inconsistency, bc0df21 docs: archive coupon management admin spec, df8ff83 fix: improve activity coupon selection
 
 ### Community 151 - "Miscellaneous Module"
 Cohesion: 0.31
@@ -871,7 +871,7 @@ Cohesion: 1.00
 Nodes (1): params
 
 ## Knowledge Gaps
-- **424 isolated node(s):** `Base exception for booking operations.`, `Create a booking with conflict detection.      Note: For MVP, conflict detection`, `List bookings for the current user with pagination.`, `Get a booking detail. Only own bookings are visible.`, `Cancel own paid future booking and refund the remaining amount to wallet.` (+419 more)
+- **426 isolated node(s):** `Base exception for booking operations.`, `Create a booking with conflict detection.      Note: For MVP, conflict detection`, `List bookings for the current user with pagination.`, `Get a booking detail. Only own bookings are visible.`, `Cancel own paid future booking and refund the remaining amount to wallet.` (+421 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **Thin community `Booking Cancellation Tests`** (2 nodes): `routes`, `ParentLayout()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -979,17 +979,17 @@ Nodes (1): params
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Settings` connect `Booking System Core` to `SMS & Captcha Tests`, `Auth & Login Tests`, `Auth Service Layer`, `Auth & Login Tests`, `Booking Cancellation Tests`, `Admin RBAC System`, `SMS & Captcha Tests`, `Teacher Management Tests`, `User Management`, `Token Verification`, `Booking Verification Tests`, `Auth & Login Tests`, `Miscellaneous Module`, `Miscellaneous Module`, `Miscellaneous Module`, `Course Management`, `Redis Connection`, `Payment & Wallet`, `Database Migrations`?**
+- **Why does `Settings` connect `Auth Service Layer` to `Auth & Login Tests`, `Auth & Login Tests`, `Auth & Login Tests`, `Miscellaneous Module`, `Booking Cancellation Tests`, `Admin RBAC System`, `Room Management Tests`, `Auth & Login Tests`, `User Management`, `Token Verification`, `Booking Verification Tests`, `Auth & Login Tests`, `Miscellaneous Module`, `Miscellaneous Module`, `Data Models & Schemas`, `Booking Service Tests`, `Redis Connection`, `Payment & Wallet`, `Database Migrations`?**
   _High betweenness centrality (0.093) - this node is a cross-community bridge._
-- **Why does `StudyRoom` connect `Wallet Service Tests` to `Database Config`, `Booking Payment Tests`, `Auth & WeChat Integration`, `Booking Service Tests`, `Backend Service Layer`, `Booking Payment Tests`, `Auth & Login Tests`, `Auth & Login Tests`, `Auth & Login Tests`, `RBAC Service Layer`, `Teacher Management`, `Booking Service Tests`, `Token Verification`, `Booking Payment Service`, `Teacher Management Tests`, `User Profile Tests`, `Auth & WeChat Integration`, `Deployment Config`, `Auth Service Layer`, `Teacher Management Tests`, `Auth & Login Tests`, `Integration Tests`?**
+- **Why does `StudyRoom` connect `Wallet Service Tests` to `SMS & Captcha Tests`, `Booking Payment Tests`, `JWT Token Tests`, `Teacher Management Tests`, `Backend Service Layer`, `Booking Payment Tests`, `Auth & Login Tests`, `Database Config`, `Booking Payment Tests`, `RBAC Service Layer`, `Teacher Management`, `Booking Service Tests`, `Token Verification`, `Booking Payment Service`, `User Profile Tests`, `Auth & Login Tests`, `Deployment Config`, `Auth Service Layer`, `Teacher Management Tests`, `Auth & Login Tests`, `Integration Tests`?**
   _High betweenness centrality (0.081) - this node is a cross-community bridge._
-- **Why does `Base` connect `Auth & WeChat Integration` to `Miscellaneous Module`, `Token Verification`, `Auth & Login Tests`, `Auth & Login Tests`, `Booking Payment Tests`, `Teacher & Course Models`, `Booking Service Tests`, `Auth & Login Tests`, `Teacher Management`, `Wallet Service Tests`, `Booking Payment Tests`, `Auth & WeChat Integration`, `Miscellaneous Module`?**
+- **Why does `Base` connect `JWT Token Tests` to `Miscellaneous Module`, `Token Verification`, `Auth & Login Tests`, `Auth & Login Tests`, `Booking Payment Tests`, `Teacher & Course Models`, `Teacher Management Tests`, `Booking Payment Tests`, `Coupon System`, `Wallet Service Tests`, `Payment & Wallet`, `Auth & WeChat Integration`, `Miscellaneous Module`?**
   _High betweenness centrality (0.042) - this node is a cross-community bridge._
 - **Are the 244 inferred relationships involving `StudyRoom` (e.g. with `Base` and `City`) actually correct?**
   _`StudyRoom` has 244 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 212 inferred relationships involving `Settings` (e.g. with `AdminAuthService` and `AuthService`) actually correct?**
   _`Settings` has 212 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Base exception for booking operations.`, `Create a booking with conflict detection.      Note: For MVP, conflict detection`, `List bookings for the current user with pagination.` to the rest of the system?**
-  _424 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _426 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Booking Service Tests` be split into smaller, more focused modules?**
-  _Cohesion score 0.02348993288590604 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04876926616057051 - nodes in this community are weakly interconnected._

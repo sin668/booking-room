@@ -221,6 +221,7 @@ export interface ScheduleRecord {
   custom_price: number;
   full_package_price?: number | null;
   full_custom_price?: number | null;
+  schedule_type?: string;
 }
 
 export interface ScheduleCreateParams {

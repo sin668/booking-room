@@ -1,24 +1,24 @@
 # Graph Report - .  (2026-08-31)
 
 ## Corpus Check
-- Large corpus: 1034 files · ~541,698 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder, or use --no-semantic to run AST-only.
+- Large corpus: 1034 files · ~541,756 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder, or use --no-semantic to run AST-only.
 
 ## Summary
-- 5359 nodes · 11305 edges · 206 communities detected
+- 5362 nodes · 11311 edges · 206 communities detected
 - Extraction: 78% EXTRACTED · 22% INFERRED · 0% AMBIGUOUS · INFERRED: 2485 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
-- Edge kinds: contains: 2754 · uses: 2485 · ON_BRANCH: 1276 · MODIFIES: 1200 · calls: 999 · method: 680 · rationale_for: 588 · PARENT_OF: 404 · imports_from: 324 · inherits: 305 · imports: 283 · re_exports: 7
+- Edge kinds: contains: 2754 · uses: 2485 · ON_BRANCH: 1278 · MODIFIES: 1200 · calls: 1000 · method: 680 · rationale_for: 589 · PARENT_OF: 406 · imports_from: 324 · inherits: 305 · imports: 283 · re_exports: 7
 
 
 ## Input Scope
 - Requested: auto
 - Resolved: committed (source: default-auto)
-- Included files: 1034 · Candidates: 1466
+- Included files: 1034 · Candidates: 1467
 - Excluded: 0 untracked · 89174 ignored · 0 sensitive · 24 missing committed
 - Recommendation: Use --scope all or graphify.yaml inputs.corpus for a knowledge-base folder.
 
 ## Graph Freshness
-- Built from Git commit: `986f1f0`
+- Built from Git commit: `408d499`
 - Compare this hash to `git rev-parse HEAD` before trusting freshness-sensitive graph output.
 ## God Nodes (most connected - your core abstractions)
 1. `StudyRoom` - 246 edges
@@ -56,7 +56,7 @@ Nodes (87): City, 老师与培训室/综合室的多对多关联表。      room
 
 ### Community 2 - "Booking Cancellation Tests"
 Cohesion: 0.04
-Nodes (122): dev, main, 020ddd3 debug: 延期功能前后端参数传递添加调试日志, 04745c9 chore: archive course-booking, 04f0a66 feat: 新增订单状态定时转换任务, 051c8b1 fix: 修复开课日期不显示和过期课时禁用逻辑 - 后端返回lesson_schedules数据, 0605022 fix: 课程编辑页与列表页在原 tab 内互相跳转，不再新开标签页, 0b33239 feat: 统计区域添加连续学习天数显示 (+114 more)
+Nodes (124): dev, main, 020ddd3 debug: 延期功能前后端参数传递添加调试日志, 04745c9 chore: archive course-booking, 04f0a66 feat: 新增订单状态定时转换任务, 051c8b1 fix: 修复开课日期不显示和过期课时禁用逻辑 - 后端返回lesson_schedules数据, 0605022 fix: 课程编辑页与列表页在原 tab 内互相跳转，不再新开标签页, 0b33239 feat: 统计区域添加连续学习天数显示 (+116 more)
 
 ### Community 3 - "Wallet Service Tests"
 Cohesion: 0.04
@@ -131,12 +131,12 @@ Cohesion: 0.06
 Nodes (43): AliyunSMSProvider, Aliyun Dysms API client for sending SMS verification codes., mock_redis(), Unit tests for SMS service (extended coverage)., Second send within 60 s is rejected with 429., The 11th send in one day is rejected with 429., Return a mock async Redis client., Invalid captcha token returns 400. (+35 more)
 
 ### Community 21 - "SMS & Captcha Tests"
-Cohesion: 0.05
-Nodes (26): 023eb00 feat: add GET /api/v1/training/rooms/{room_id} route, 071ac5f chore: add implementation plan for training-room-overview, 2fe2097 feat: add get_training_room_detail to training_service (TDD green phase), 3590666 Merge branch 'feature/20260814/training-room-overview' into main, 4150deb test: add failing tests for get_training_room_detail (TDD red phase), 42c7c58 fix: commit missing Alembic migration file for training tables, 4c94688 feat: 为 StudyRoom 添加 rating 列和 city 关系，含迁移, 4ecad22 chore: add training-course-list OpenSpec artifacts, design doc, and implementation plan (+18 more)
+Cohesion: 0.08
+Nodes (50): admin_cancel_booking(), admin_confirm_booking(), admin_get_booking(), admin_list_bookings(), BookingAlreadyCancelledError, BookingCancellationNotAllowedError, BookingConflictError, BookingCouponUnavailableError (+42 more)
 
 ### Community 22 - "Auth & Login Tests"
-Cohesion: 0.08
-Nodes (49): admin_cancel_booking(), admin_confirm_booking(), admin_get_booking(), admin_list_bookings(), BookingAlreadyCancelledError, BookingCancellationNotAllowedError, BookingConflictError, BookingCouponUnavailableError (+41 more)
+Cohesion: 0.05
+Nodes (26): 023eb00 feat: add GET /api/v1/training/rooms/{room_id} route, 071ac5f chore: add implementation plan for training-room-overview, 2fe2097 feat: add get_training_room_detail to training_service (TDD green phase), 3590666 Merge branch 'feature/20260814/training-room-overview' into main, 4150deb test: add failing tests for get_training_room_detail (TDD red phase), 42c7c58 fix: commit missing Alembic migration file for training tables, 4c94688 feat: 为 StudyRoom 添加 rating 列和 city 关系，含迁移, 4ecad22 chore: add training-course-list OpenSpec artifacts, design doc, and implementation plan (+18 more)
 
 ### Community 23 - "Database Config"
 Cohesion: 0.14
@@ -871,7 +871,7 @@ Cohesion: 1.00
 Nodes (1): params
 
 ## Knowledge Gaps
-- **426 isolated node(s):** `Base exception for booking operations.`, `Create a booking with conflict detection.      Note: For MVP, conflict detection`, `List bookings for the current user with pagination.`, `Get a booking detail. Only own bookings are visible.`, `Cancel own paid future booking and refund the remaining amount to wallet.` (+421 more)
+- **427 isolated node(s):** `Base exception for booking operations.`, `Create a booking with conflict detection.      Note: For MVP, conflict detection`, `List bookings for the current user with pagination.`, `Get a booking detail. Only own bookings are visible.`, `Cancel own paid future booking and refund the remaining amount to wallet.` (+422 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **Thin community `Booking Cancellation Tests`** (2 nodes): `routes`, `ParentLayout()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -981,7 +981,7 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Settings` connect `Auth Service Layer` to `Auth & Login Tests`, `Auth & Login Tests`, `Auth & Login Tests`, `Miscellaneous Module`, `Booking Cancellation Tests`, `Admin RBAC System`, `Room Management Tests`, `Auth & Login Tests`, `User Management`, `Token Verification`, `Booking Verification Tests`, `Auth & Login Tests`, `Miscellaneous Module`, `Miscellaneous Module`, `Data Models & Schemas`, `Booking Service Tests`, `Redis Connection`, `Payment & Wallet`, `Database Migrations`?**
   _High betweenness centrality (0.093) - this node is a cross-community bridge._
-- **Why does `StudyRoom` connect `Wallet Service Tests` to `SMS & Captcha Tests`, `Booking Payment Tests`, `JWT Token Tests`, `Teacher Management Tests`, `Backend Service Layer`, `Booking Payment Tests`, `Auth & Login Tests`, `Database Config`, `Booking Payment Tests`, `RBAC Service Layer`, `Teacher Management`, `Booking Service Tests`, `Token Verification`, `Booking Payment Service`, `User Profile Tests`, `Auth & Login Tests`, `Deployment Config`, `Auth Service Layer`, `Teacher Management Tests`, `Auth & Login Tests`, `Integration Tests`?**
+- **Why does `StudyRoom` connect `Wallet Service Tests` to `Auth & Login Tests`, `Booking Payment Tests`, `JWT Token Tests`, `Teacher Management Tests`, `Backend Service Layer`, `Booking Payment Tests`, `Auth & Login Tests`, `Database Config`, `Booking Payment Tests`, `RBAC Service Layer`, `Teacher Management`, `Booking Service Tests`, `Token Verification`, `Booking Payment Service`, `User Profile Tests`, `Auth & Login Tests`, `Deployment Config`, `Auth Service Layer`, `Teacher Management Tests`, `Auth & Login Tests`, `Integration Tests`?**
   _High betweenness centrality (0.081) - this node is a cross-community bridge._
 - **Why does `Base` connect `JWT Token Tests` to `Miscellaneous Module`, `Token Verification`, `Auth & Login Tests`, `Auth & Login Tests`, `Booking Payment Tests`, `Teacher & Course Models`, `Teacher Management Tests`, `Booking Payment Tests`, `Coupon System`, `Wallet Service Tests`, `Payment & Wallet`, `Auth & WeChat Integration`, `Miscellaneous Module`?**
   _High betweenness centrality (0.042) - this node is a cross-community bridge._
@@ -990,6 +990,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 212 inferred relationships involving `Settings` (e.g. with `AdminAuthService` and `AuthService`) actually correct?**
   _`Settings` has 212 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Base exception for booking operations.`, `Create a booking with conflict detection.      Note: For MVP, conflict detection`, `List bookings for the current user with pagination.` to the rest of the system?**
-  _426 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _427 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Booking Service Tests` be split into smaller, more focused modules?**
   _Cohesion score 0.04876926616057051 - nodes in this community are weakly interconnected._

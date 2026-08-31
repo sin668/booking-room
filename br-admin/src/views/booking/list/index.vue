@@ -114,45 +114,36 @@
   }
 
   const actionColumn = reactive({
-    width: 200,
+    width: 240,
     title: '操作',
     key: 'action',
     fixed: 'right' as const,
     render(record: BookingItem) {
-      const dropDownActions: any[] = [];
-      if (record.status === 'pending') {
-        dropDownActions.push({
-          label: '取消',
-          key: 'cancel',
+      // “确认”“取消”直接展示为按钮，不放入“更多”下拉菜单
+      const actions: any[] = [
+        {
+          label: '查看',
+          onClick: handleView.bind(null, record),
+          auth: ['booking:view'],
+        },
+      ];
+      if (record.status === 'pending_confirm') {
+        actions.push({
+          label: '确认',
+          onClick: handleConfirm.bind(null, record),
           auth: ['booking:cancel'],
         });
       }
-      if (record.status === 'pending_confirm') {
-        dropDownActions.push({
-          label: '确认',
-          key: 'confirm',
-          auth: ['booking:cancel'],
-        });
-        dropDownActions.push({
+      if (record.status === 'pending' || record.status === 'pending_confirm') {
+        actions.push({
           label: '取消',
-          key: 'cancel',
+          onClick: handleCancel.bind(null, record),
           auth: ['booking:cancel'],
         });
       }
       return h(TableAction as any, {
         style: 'button',
-        actions: [
-          {
-            label: '查看',
-            onClick: handleView.bind(null, record),
-            auth: ['booking:view'],
-          },
-        ],
-        dropDownActions,
-        select: (key: string) => {
-          if (key === 'cancel') handleCancel(record);
-          if (key === 'confirm') handleConfirm(record);
-        },
+        actions,
       });
     },
   });

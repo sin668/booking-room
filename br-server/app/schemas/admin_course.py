@@ -179,6 +179,7 @@ class CourseScheduleResponse(BaseModel):
     custom_price: float
     full_package_price: float | None = None
     full_custom_price: float | None = None
+    schedule_type: str = "fixed"
     lesson_schedules: list[LessonScheduleResponse] = []
 
     model_config = ConfigDict(from_attributes=True)

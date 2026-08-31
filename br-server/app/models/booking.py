@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Time, func
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Text, Time, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -51,6 +51,14 @@ class Booking(Base):
     lesson_ids: Mapped[list[int] | None] = mapped_column(ARRAY(Integer), nullable=True)
     highlighted_lesson_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="当前高亮的课时ID（课程预约）")
     schedule_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    time_slots: Mapped[str | None] = mapped_column(
+        Text, nullable=True,
+        comment="1V1私人定制上课时间段，JSON 数组格式，如 [\"09:00-11:00\"]，对应 course_schedules.time_slots",
+    )
+    teacher_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("teachers.id"), nullable=True,
+        comment="授课老师，对应 course_schedules.teacher_id",
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False

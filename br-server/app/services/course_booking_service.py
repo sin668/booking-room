@@ -398,9 +398,13 @@ class CourseBookingService:
 
         # 7. 创建 Booking 记录
         #    1V1定制：将用户选择的日期和时间段存入 booking 记录，供管理员确认时使用
+        #    date → 对应 course_schedules.start_date
+        #    time_slots → 对应 course_schedules.time_slots（JSON 数组）
+        #    teacher_id → 对应 course_schedules.teacher_id
         booking_date = today
         booking_start_time = datetime.now(CHINA_TIMEZONE).time()
         booking_end_time = datetime.now(CHINA_TIMEZONE).time()
+        booking_time_slots = None
         if data.booking_type == "custom":
             from datetime import time as time_type
             if data.start_date:
@@ -416,6 +420,16 @@ class CourseBookingService:
                     booking_end_time = time_type.fromisoformat(parts[1].strip())
                 except (ValueError, TypeError):
                     pass
+            if data.time_slot:
+                import json
+                booking_time_slots = json.dumps([data.time_slot], ensure_ascii=False)
+
+        # 授课老师取自课程排课记录（course_schedules.teacher_id）
+        booking_teacher_id = None
+        if isinstance(schedule, dict):
+            booking_teacher_id = schedule.get("teacher_id")
+        elif schedule is not None:
+            booking_teacher_id = getattr(schedule, "teacher_id", None)
 
         booking = Booking(
             user_id=str(user_id),
@@ -438,6 +452,8 @@ class CourseBookingService:
             course_id=course["id"],
             lesson_ids=data.lesson_ids,
             schedule_type=data.schedule_type,
+            time_slots=booking_time_slots,
+            teacher_id=booking_teacher_id,
         )
         db.add(booking)
         await db.flush()

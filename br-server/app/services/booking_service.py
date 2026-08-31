@@ -351,8 +351,8 @@ async def list_bookings(
         conditions.append(Booking.status == "confirmed")
         conditions.append(Booking.payment_status == "paid")
     elif is_pending_start_filter:
-        # pending_start: status=pending, payment_status=paid (所有类型)
-        conditions.append(Booking.status == "pending")
+        # pending_start: status in (pending, pending_confirm), payment_status=paid
+        conditions.append(Booking.status.in_(["pending", "pending_confirm"]))
         conditions.append(Booking.payment_status == "paid")
 
     where_clause = and_(*conditions)
@@ -766,11 +766,12 @@ async def pay_pending_booking(
 
 
 def _build_admin_booking_response(
-    booking: Booking, seat: Seat | None, room: StudyRoom | None
+    booking: Booking, seat: Seat | None, room: StudyRoom | None, user_nickname: str | None = None
 ) -> BookingAdminResponse:
     return BookingAdminResponse(
         id=booking.id,
         user_id=booking.user_id,
+        user_nickname=user_nickname,
         room_id=booking.room_id,
         seat_id=booking.seat_id,
         date=booking.date,
@@ -837,17 +838,25 @@ async def admin_list_bookings(
 
     seat_ids = {b.seat_id for b in bookings if b.seat_id is not None}
     room_ids = {b.room_id for b in bookings}
+    user_ids = {b.user_id for b in bookings}
 
     seats_result = await db.execute(select(Seat).where(Seat.id.in_(seat_ids))) if seat_ids else None
     rooms_result = await db.execute(select(StudyRoom).where(StudyRoom.id.in_(room_ids))) if room_ids else None
     seat_map = {s.id: s for s in seats_result.scalars().all()} if seats_result else {}
     room_map = {r.id: r for r in rooms_result.scalars().all()} if rooms_result else {}
 
+    # 查询用户昵称
+    user_nickname_map: dict[str, str] = {}
+    if user_ids:
+        users_result = await db.execute(select(User.id, User.nickname).where(User.id.in_(user_ids)))
+        user_nickname_map = {str(row[0]): row[1] for row in users_result.all()}
+
     items: list[BookingAdminResponse] = []
     for b in bookings:
         items.append(
             _build_admin_booking_response(
-                b, seat_map.get(b.seat_id), room_map.get(b.room_id)
+                b, seat_map.get(b.seat_id), room_map.get(b.room_id),
+                user_nickname=user_nickname_map.get(b.user_id),
             )
         )
 
@@ -869,8 +878,11 @@ async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminRe
 
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one_or_none()
+    user_nickname = None
+    user_result = await db.execute(select(User.nickname).where(User.id == uuid.UUID(booking.user_id)))
+    user_nickname = user_result.scalar_one_or_none()
 
-    return _build_admin_booking_response(booking, seat, room)
+    return _build_admin_booking_response(booking, seat, room, user_nickname=user_nickname)
 
 
 async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
@@ -889,5 +901,49 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
 
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one_or_none()
+    user_nickname = None
+    user_result = await db.execute(select(User.nickname).where(User.id == uuid.UUID(booking.user_id)))
+    user_nickname = user_result.scalar_one_or_none()
 
-    return _build_admin_booking_response(booking, seat, room)
+    return _build_admin_booking_response(booking, seat, room, user_nickname=user_nickname)
+
+
+async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
+    """确认待确认订单，根据当前时间变更为“待开始”或“进行中”。"""
+    result = await db.execute(select(Booking).where(Booking.id == booking_id))
+    booking = result.scalar_one_or_none()
+
+    if booking is None:
+        raise BookingNotFoundError("预约不存在")
+
+    if booking.status != "pending_confirm":
+        raise BookingError("该预约不是待确认状态")
+
+    # 根据当前时间判断：如果课程已开始则“进行中”，否则“待开始”
+    today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+    if booking.booking_type == "course" and booking.course_id:
+        # 查询课程排课的开始日期
+        schedule_result = await db.execute(
+            select(CourseSchedule.start_date)
+            .where(CourseSchedule.course_id == booking.course_id)
+            .order_by(CourseSchedule.created_at)
+            .limit(1)
+        )
+        course_start_date = schedule_result.scalar_one_or_none()
+        if course_start_date is not None and course_start_date <= today:
+            booking.status = "confirmed"
+        else:
+            booking.status = "pending"
+    else:
+        # 非课程预约，直接设为 confirmed
+        booking.status = "confirmed"
+
+    await db.flush()
+
+    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
+    room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one_or_none()
+    user_nickname = None
+    user_result = await db.execute(select(User.nickname).where(User.id == uuid.UUID(booking.user_id)))
+    user_nickname = user_result.scalar_one_or_none()
+
+    return _build_admin_booking_response(booking, seat, room, user_nickname=user_nickname)

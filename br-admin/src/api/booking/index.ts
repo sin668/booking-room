@@ -6,6 +6,7 @@ import { ADMIN_NATIVE_META } from '@/api/contracts/admin';
 export interface BookingItem {
   id: number;
   user_id: string;
+  user_nickname: string | null;
   room_id: number;
   seat_id: number;
   date: string;
@@ -64,6 +65,12 @@ export function getBookingDetail(id: number) {
 
 export function cancelBooking(id: number) {
   return Alova.Post<BookingItem>(`/v1/admin/bookings/${id}/cancel`, undefined, {
+    meta: ADMIN_NATIVE_META,
+  });
+}
+
+export function confirmBooking(id: number) {
+  return Alova.Post<BookingItem>(`/v1/admin/bookings/${id}/confirm`, undefined, {
     meta: ADMIN_NATIVE_META,
   });
 }

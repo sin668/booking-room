@@ -150,8 +150,8 @@
                 </view>
                 <text class="lesson-highlight-text">{{ getNearestLesson(order).lesson_title }}   {{ getNearestLesson(order).lesson_date }} {{ formatLessonStartTime(getNearestLesson(order).lesson_time_slot) }}上课</text>
               </view>
-              <!-- Expand toggle for pending_start orders (no highlight) -->
-              <view v-if="displayStatus(order) === 'pending_start'" class="card-info-row lesson-expand-toggle" @tap.stop="toggleLessons(order)">
+              <!-- Expand toggle for pending_start / pending_confirm orders (no highlight) -->
+              <view v-if="displayStatus(order) === 'pending_start' || displayStatus(order) === 'pending_confirm'" class="card-info-row lesson-expand-toggle" @tap.stop="toggleLessons(order)">
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot" />
                 </view>
@@ -209,7 +209,7 @@
               <text class="action-btn-text">查看座位</text>
             </view>
             <view
-              v-if="(order.status === 'confirmed' || order.status === 'in_progress' || displayStatus(order) === 'pending_start') && order.payment_status !== 'pending' && isCourseBooking(order)"
+              v-if="(order.status === 'confirmed' || order.status === 'in_progress' || displayStatus(order) === 'pending_start' || displayStatus(order) === 'pending_confirm') && order.payment_status !== 'pending' && isCourseBooking(order)"
               class="action-btn"
               @tap="viewCourse(order)"
             >
@@ -334,6 +334,11 @@ export default {
         order.status === 'pending' &&
         order.payment_status === 'paid'
       ) return true
+      // 待确认（1V1私人定制已支付待管理员确认）
+      if (
+        order.status === 'pending_confirm' &&
+        order.payment_status === 'paid'
+      ) return true
       return false
     },
 
@@ -425,6 +430,10 @@ export default {
 
     displayStatus(order) {
       if (!order) return order?.status || ''
+      // 1V1私人定制待确认 → 待确认
+      if (order.status === 'pending_confirm') {
+        return 'pending_confirm'
+      }
       // 已支付但预约未开始 → 待开始
       if (
         order.status === 'pending' &&
@@ -1101,6 +1110,20 @@ export default {
 .lesson-expand-text-highlighted {
   font-weight: 600;
   color: $success;
+}
+
+/* Pending-confirm (1V1 custom, awaiting admin confirmation) status dot & badge */
+.dot-pending_confirm {
+  background: #FF9800;
+  box-shadow: 0 0 0 8rpx rgba(255, 152, 0, 0.12);
+}
+
+.badge-pending_confirm {
+  background: rgba(255, 152, 0, 0.1);
+}
+
+.badge-pending_confirm .status-badge-text {
+  color: #E65100;
 }
 
 /* Pending-start (paid, course not yet started) status dot & badge */

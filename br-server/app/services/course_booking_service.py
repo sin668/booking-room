@@ -376,20 +376,25 @@ class CourseBookingService:
             if Decimal(str(user.balance)) < total_price:
                 raise WalletBalanceInsufficientError("余额不足")
 
-        # 6. 根据开课日期判断订单状态
-        #    start_date <= 今天 → confirmed（进行中）
-        #    start_date > 今天  → pending（待开始）
+        # 6. 根据预约类型和开课日期判断订单状态
+        #    1V1私人定制(custom) → pending_confirm（待确认），需管理员确认
+        #    固定班课(fixed):
+        #      start_date <= 今天 → confirmed（进行中）
+        #      start_date > 今天  → pending（待开始）
         today = datetime.now(CHINA_TIMEZONE).date()
-        if isinstance(schedule, dict):
-            start_date_str = schedule.get("start_date")
-            from datetime import date as date_type
-            start_date = date_type.fromisoformat(start_date_str) if start_date_str else None
+        if data.booking_type == "custom":
+            initial_status = "pending_confirm"
         else:
-            start_date = getattr(schedule, "start_date", None) if schedule else None
-        if start_date is not None and start_date > today:
-            initial_status = "pending"
-        else:
-            initial_status = "confirmed"
+            if isinstance(schedule, dict):
+                start_date_str = schedule.get("start_date")
+                from datetime import date as date_type
+                start_date = date_type.fromisoformat(start_date_str) if start_date_str else None
+            else:
+                start_date = getattr(schedule, "start_date", None) if schedule else None
+            if start_date is not None and start_date > today:
+                initial_status = "pending"
+            else:
+                initial_status = "confirmed"
 
         # 7. 创建 Booking 记录
         booking = Booking(
@@ -532,9 +537,11 @@ class CourseBookingService:
             }
 
         # 已支付状态取消 - 需要退款
-        # 支持 confirmed（进行中）和 pending + paid（待开始已支付）两种状态
+        # 支持 confirmed（进行中）、pending + paid（待开始已支付）、pending_confirm + paid（待确认已支付）
         if booking.status not in ("confirmed",) and not (
             booking.status == "pending" and booking.payment_status == "paid"
+        ) and not (
+            booking.status == "pending_confirm" and booking.payment_status == "paid"
         ):
             raise BookingCancellationNotAllowedError("该预约不可取消")
 

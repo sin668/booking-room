@@ -135,6 +135,7 @@ class BookingListResponse(BaseModel):
 class BookingAdminResponse(BaseModel):
     id: int
     user_id: str
+    user_nickname: str | None = None
     room_id: int
     seat_id: int | None = None
     date: date

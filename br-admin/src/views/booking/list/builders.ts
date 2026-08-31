@@ -25,12 +25,12 @@ export function buildBookingTableColumns(): BasicColumn<BookingItem>[] {
   return [
     { title: 'ID', key: 'id', width: 60 },
     {
-      title: '用户ID',
-      key: 'user_id',
+      title: '用户昵称',
+      key: 'user_nickname',
       width: 120,
       ellipsis: { tooltip: true },
       render(record) {
-        return record.user_id.slice(0, 8) + '...';
+        return record.user_nickname || record.user_id.slice(0, 8) + '...';
       },
     },
     {

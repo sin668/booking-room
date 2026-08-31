@@ -21,7 +21,7 @@
   import { h, onMounted, reactive, ref } from 'vue';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, useForm } from '@/components/Form/index';
-  import { cancelBooking, getBookingList, type BookingItem } from '@/api/booking';
+  import { cancelBooking, confirmBooking, getBookingList, type BookingItem } from '@/api/booking';
   import { useAdminBusiness } from '@/store/modules/adminBusiness';
   import { toBasicTableResult } from '@/api/contracts/admin';
   import { normalizeDateRange } from '@/views/business/shared/formSchemaBuilders';
@@ -64,9 +64,13 @@
   };
 
   function handleCancel(record: BookingItem) {
+    const isPendingConfirm = record.status === 'pending_confirm';
+    const content = isPendingConfirm
+      ? '确定要取消该订单吗？取消后将全额退款，不扣费。'
+      : '确定要取消该订单吗？取消后不可恢复。';
     window['$dialog'].warning({
       title: '确认取消',
-      content: '确定要取消该订单吗？取消后不可恢复。',
+      content,
       positiveText: '确认取消',
       negativeText: '返回',
       onPositiveClick: async () => {
@@ -76,6 +80,24 @@
           actionRef.value?.reload();
         } catch {
           window['$message'].error('取消失败');
+        }
+      },
+    });
+  }
+
+  function handleConfirm(record: BookingItem) {
+    window['$dialog'].info({
+      title: '确认订单',
+      content: '确认该订单后，将根据当前时间变更为“待开始”或“进行中”。',
+      positiveText: '确认',
+      negativeText: '返回',
+      onPositiveClick: async () => {
+        try {
+          await confirmBooking(record.id);
+          window['$message'].success('订单已确认');
+          actionRef.value?.reload();
+        } catch {
+          window['$message'].error('确认失败');
         }
       },
     });
@@ -92,13 +114,25 @@
   }
 
   const actionColumn = reactive({
-    width: 150,
+    width: 200,
     title: '操作',
     key: 'action',
     fixed: 'right' as const,
     render(record: BookingItem) {
       const dropDownActions: any[] = [];
-      if (record.status === 'confirmed') {
+      if (record.status === 'pending') {
+        dropDownActions.push({
+          label: '取消',
+          key: 'cancel',
+          auth: ['booking:cancel'],
+        });
+      }
+      if (record.status === 'pending_confirm') {
+        dropDownActions.push({
+          label: '确认',
+          key: 'confirm',
+          auth: ['booking:cancel'],
+        });
         dropDownActions.push({
           label: '取消',
           key: 'cancel',
@@ -117,6 +151,7 @@
         dropDownActions,
         select: (key: string) => {
           if (key === 'cancel') handleCancel(record);
+          if (key === 'confirm') handleConfirm(record);
         },
       });
     },

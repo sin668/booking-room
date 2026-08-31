@@ -1,6 +1,6 @@
 """培训室与课程查询服务。"""
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.city import City
@@ -31,12 +31,18 @@ DEFAULT_PAGE_SIZE = 10
 async def _get_first_schedule_for_courses(
     db: AsyncSession, course_ids: list[int]
 ) -> dict[int, CourseSchedule | None]:
-    """批量获取课程的第一条排课记录（按 created_at ASC 取最早的一条）。"""
+    """批量获取课程的第一条排课记录（按 created_at ASC 取最早的一条）。
+
+    仅取固定班课（schedule_type=fixed）排课，定制课时不对 C 端列表展示。
+    """
     if not course_ids:
         return {}
     result = await db.execute(
         select(CourseSchedule)
-        .where(CourseSchedule.course_id.in_(course_ids))
+        .where(
+            CourseSchedule.course_id.in_(course_ids),
+            CourseSchedule.schedule_type == "fixed",
+        )
         .order_by(CourseSchedule.course_id, CourseSchedule.created_at)
     )
     schedules = result.scalars().all()
@@ -95,7 +101,13 @@ async def list_training_rooms(
 
     hot_result = await db.execute(
         select(Course, CourseSchedule, Teacher)
-        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+        .outerjoin(
+            CourseSchedule,
+            and_(
+                Course.id == CourseSchedule.course_id,
+                CourseSchedule.schedule_type == "fixed",
+            ),
+        )
         .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
         .where(
             Course.room_id.in_(room_ids),
@@ -163,7 +175,13 @@ async def get_training_room_detail(
     # Step 2: 查询该房间下 status=active 的课程，LEFT JOIN course_schedules + teachers
     courses_result = await db.execute(
         select(Course, CourseSchedule, Teacher)
-        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+        .outerjoin(
+            CourseSchedule,
+            and_(
+                Course.id == CourseSchedule.course_id,
+                CourseSchedule.schedule_type == "fixed",
+            ),
+        )
         .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
         .where(Course.room_id == room_id, Course.status == "active")
         .order_by(Course.sort_order)
@@ -254,7 +272,13 @@ async def list_courses(
     result = await db.execute(
         select(Course, StudyRoom.name.label("room_name"), CourseSchedule, Teacher)
         .join(StudyRoom, Course.room_id == StudyRoom.id)
-        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+        .outerjoin(
+            CourseSchedule,
+            and_(
+                Course.id == CourseSchedule.course_id,
+                CourseSchedule.schedule_type == "fixed",
+            ),
+        )
         .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
         .where(*filters)
         .order_by(Course.sort_order.asc(), Course.id.asc())
@@ -293,7 +317,13 @@ async def get_course_detail(
     # Step 1: 课程基本信息 + 排课 + 教师 + 教室
     result = await db.execute(
         select(Course, CourseSchedule, Teacher, StudyRoom)
-        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+        .outerjoin(
+            CourseSchedule,
+            and_(
+                Course.id == CourseSchedule.course_id,
+                CourseSchedule.schedule_type == "fixed",
+            ),
+        )
         .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
         .outerjoin(StudyRoom, Course.room_id == StudyRoom.id)
         .where(Course.id == course_id, Course.status == "active")
@@ -314,7 +344,13 @@ async def get_course_detail(
     # Step 3: 相关课程（同分类，排除当前课程，最多 6 门）
     related_result = await db.execute(
         select(Course, CourseSchedule)
-        .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+        .outerjoin(
+            CourseSchedule,
+            and_(
+                Course.id == CourseSchedule.course_id,
+                CourseSchedule.schedule_type == "fixed",
+            ),
+        )
         .where(
             Course.category == course.category,
             Course.id != course_id,

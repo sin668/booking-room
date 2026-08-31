@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
@@ -57,13 +57,24 @@ class CourseBookingService:
     async def get_course_with_lessons(
         self, course_id: int, db: AsyncSession
     ) -> dict | None:
-        """查询课程详情 + 课时列表 + 排课信息。"""
-        # 使用 JOIN 一次性获取课程和排课信息
+        """查询课程详情 + 课时列表 + 排课信息。
+
+        仅关联固定班课（schedule_type=fixed）排课，定制课时记录不在 C 端展示。
+        """
+        # 使用 JOIN 一次性获取课程和排课信息（仅固定班课排课，取最早一条）
         result = await db.execute(
             select(Course, CourseSchedule, Teacher)
-            .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+            .outerjoin(
+                CourseSchedule,
+                and_(
+                    Course.id == CourseSchedule.course_id,
+                    CourseSchedule.schedule_type == "fixed",
+                ),
+            )
             .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
             .where(Course.id == course_id)
+            .order_by(CourseSchedule.created_at.asc())
+            .limit(1)
         )
         row = result.one_or_none()
         if row is None:

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, Integer, Numeric, String, func
+from sqlalchemy import JSON, DateTime, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -30,6 +30,9 @@ class Teacher(Base):
     )
     qualifications: Mapped[list | None] = mapped_column(
         JSON, nullable=True, comment="资质认证列表，如 [{\"name\":..., \"sub\":...}]"
+    )
+    available_time_slots: Mapped[str | None] = mapped_column(
+        Text, nullable=True, comment="可排课时间段，JSON 数组格式"
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)

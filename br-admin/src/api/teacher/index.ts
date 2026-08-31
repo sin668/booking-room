@@ -113,3 +113,23 @@ export function toggleAdminTeacherStatus(id: number, status: string) {
     }
   );
 }
+
+export function getTeacherAvailableTimeSlots(teacherId: number) {
+  return Alova.Get<{ available_time_slots: any[] }>(
+    `/v1/admin/teachers/${teacherId}/available-time-slots`,
+    {
+      meta: ADMIN_NATIVE_META,
+      force: true,
+    }
+  );
+}
+
+export function updateTeacherAvailableTimeSlots(teacherId: number, data: { available_time_slots: any[] | null }) {
+  return Alova.Put(
+    `/v1/admin/teachers/${teacherId}/available-time-slots`,
+    data,
+    {
+      meta: ADMIN_NATIVE_META,
+    }
+  );
+}

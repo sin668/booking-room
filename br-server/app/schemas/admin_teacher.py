@@ -48,6 +48,11 @@ class AdminTeacherStatusUpdate(BaseModel):
     status: str = Field(..., pattern="^(active|inactive)$")
 
 
+class TeacherAvailableTimeSlotsUpdate(BaseModel):
+    """老师可排课时间段更新。"""
+    available_time_slots: list[dict[str, Any]] | None = None
+
+
 class AdminTeacherListItem(BaseModel):
     """老师列表项，兼容排课老师下拉（id/name/avatar/title）。"""
 
@@ -63,6 +68,7 @@ class AdminTeacherListItem(BaseModel):
     student_count: int = 0
     course_count: int = 0
     status: str = "active"
+    available_time_slots: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

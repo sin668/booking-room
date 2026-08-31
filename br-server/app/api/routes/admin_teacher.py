@@ -11,6 +11,7 @@ from app.schemas.admin_teacher import (
     AdminTeacherListResponse,
     AdminTeacherStatusUpdate,
     AdminTeacherUpdate,
+    TeacherAvailableTimeSlotsUpdate,
 )
 from app.services import admin_teacher_service
 
@@ -99,3 +100,24 @@ async def toggle_teacher_status(
     result = await admin_teacher_service.get_teacher_detail(db, teacher_id)
     assert result is not None
     return result
+
+
+@router.get("/{teacher_id}/available-time-slots", dependencies=[Depends(require_admin_permission("teacher:view"))])
+async def get_teacher_available_time_slots(teacher_id: int, db: AsyncSession = Depends(get_db)):
+    """获取老师可排课时间段。"""
+    slots = await admin_teacher_service.get_available_time_slots(db, teacher_id)
+    if slots is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="老师不存在")
+    return {"available_time_slots": slots}
+
+
+@router.put("/{teacher_id}/available-time-slots", dependencies=[Depends(require_admin_permission("teacher:update"))])
+async def update_teacher_available_time_slots(
+    teacher_id: int, data: TeacherAvailableTimeSlotsUpdate, db: AsyncSession = Depends(get_db)
+):
+    """更新老师可排课时间段。"""
+    success = await admin_teacher_service.update_available_time_slots(db, teacher_id, data.available_time_slots)
+    if not success:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="老师不存在")
+    await db.commit()
+    return {"message": "OK"}

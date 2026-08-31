@@ -23,11 +23,18 @@
         </template>
       </BasicTable>
     </n-card>
+    <TeacherScheduleModal
+      v-model:show="scheduleModalShow"
+      :teacher-id="currentTeacherId"
+      :teacher-name="currentTeacherName"
+      @success="reloadTable"
+    />
   </n-flex>
 </template>
 
 <script lang="ts" setup>
   import { h, ref } from 'vue';
+  import TeacherScheduleModal from './TeacherScheduleModal.vue';
   import { useRouter } from 'vue-router';
   import { NAvatar } from 'naive-ui';
   import { PlusOutlined } from '@vicons/antd';
@@ -45,6 +52,9 @@
 
   const router = useRouter();
   const actionRef = ref();
+  const scheduleModalShow = ref(false);
+  const currentTeacherId = ref<number | null>(null);
+  const currentTeacherName = ref('');
 
   const columns = [
     { title: 'ID', key: 'id', width: 60 },
@@ -86,7 +96,7 @@
   ];
 
   const actionColumn = {
-    width: 200,
+    width: 260,
     title: '操作',
     key: 'action',
     fixed: 'right' as const,
@@ -96,6 +106,14 @@
           {
             label: '编辑',
             onClick: () => editTeacher(record),
+          },
+          {
+            label: '可排课',
+            onClick: () => {
+              currentTeacherId.value = record.id;
+              currentTeacherName.value = record.name;
+              scheduleModalShow.value = true;
+            },
           },
           {
             label: record.status === 'active' ? '停用' : '启用',

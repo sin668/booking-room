@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from sqlalchemy import delete as sa_delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -199,3 +201,25 @@ async def toggle_status(db: AsyncSession, teacher_id: int, status: str) -> Teach
         return None
     teacher.status = status
     return teacher
+
+
+async def get_available_time_slots(db: AsyncSession, teacher_id: int) -> list | None:
+    """获取老师可排课时间段。"""
+    teacher = await db.get(Teacher, teacher_id)
+    if teacher is None:
+        return None
+    if teacher.available_time_slots:
+        return json.loads(teacher.available_time_slots)
+    return []
+
+
+async def update_available_time_slots(
+    db: AsyncSession, teacher_id: int, time_slots: list | None
+) -> bool:
+    """更新老师可排课时间段。"""
+    teacher = await db.get(Teacher, teacher_id)
+    if teacher is None:
+        return False
+    teacher.available_time_slots = json.dumps(time_slots, ensure_ascii=False) if time_slots is not None else None
+    await db.flush()
+    return True

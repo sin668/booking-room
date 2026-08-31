@@ -197,7 +197,7 @@
               <view
                 v-for="day in weekdayList"
                 :key="day.value"
-                :class="['weekday-item', { active: selectedWeekday === day.value }]"
+                :class="['weekday-item', { active: selectedWeekday === day.value, disabled: isWeekdayDisabled(day) }]"
                 @tap="onSelectWeekday(day)"
               >
                 <text class="weekday-name">{{ day.name }}</text>
@@ -520,16 +520,18 @@ export default {
       const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
       const today = new Date()
       const currentDay = today.getDay() || 7 // Convert Sunday (0) to 7
-      const startOffset = this.bookingType === 'custom' ? 3 : 0
+      const startOffset = this.bookingType === 'custom' ? 0 : 0
       const list = []
       for (let i = 0; i < 7; i++) {
-        const dayIndex = (currentDay + startOffset + i - 1) % 7
+        const dayIndex = (currentDay + i - 1) % 7
         const d = new Date(today)
-        d.setDate(today.getDate() + startOffset + i)
+        d.setDate(today.getDate() + i)
+        const fullDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         list.push({
           value: dayIndex + 1, // 1=Monday, 7=Sunday
           name: weekdays[dayIndex],
           date: `${d.getMonth() + 1}/${d.getDate()}`,
+          fullDate,
         })
       }
       return list
@@ -538,13 +540,22 @@ export default {
     timeSlots() {
       if (!this.teacherAvailableSlots || !this.teacherAvailableSlots.length) return []
       return this.teacherAvailableSlots.map(slot => {
-        const parts = slot.split('-')
+        // 支持对象格式 {weekday, time_slot} 和字符串格式 "08:00-10:00"
+        let timeSlotStr
+        if (typeof slot === 'object' && slot !== null) {
+          timeSlotStr = slot.time_slot || ''
+        } else if (typeof slot === 'string') {
+          timeSlotStr = slot
+        } else {
+          return null
+        }
+        const parts = timeSlotStr.split('-')
         return {
-          value: slot,
+          value: timeSlotStr,
           start: parts[0] || '',
           end: parts[1] || '',
         }
-      })
+      }).filter(Boolean)
     },
 
     hasAvailableTimeSlots() {
@@ -776,6 +787,16 @@ export default {
       // 使用 Asia/Shanghai 时区
       const shanghaiStr = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' })
       return shanghaiStr
+    },
+
+    isWeekdayDisabled(day) {
+      // 1V1私人定制：日期在最小可选日期之前的星期项禁用
+      if (this.bookingType !== 'custom') return false
+      const minDate = new Date(this.minStartDate)
+      minDate.setHours(0, 0, 0, 0)
+      const dayDate = new Date(day.fullDate)
+      dayDate.setHours(0, 0, 0, 0)
+      return dayDate < minDate
     },
 
     switchBookingType(type) {
@@ -1604,6 +1625,18 @@ function money(value) {
 
 .weekday-item.active .weekday-date {
   color: #fff;
+}
+
+.weekday-item.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+  background: #f5f5f5;
+  border-color: $border-soft;
+}
+
+.weekday-item.disabled .weekday-name,
+.weekday-item.disabled .weekday-date {
+  color: $text-muted;
 }
 
 /* Time slots grid */

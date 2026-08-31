@@ -640,6 +640,7 @@ class AdminCourseService:
         new_end_date = lesson_schedules[last_idx].lesson_date + timedelta(days=1)
         old_end_date = schedule.end_date
         schedule.end_date = new_end_date
+        schedule.schedule_status = self._compute_schedule_status(new_end_date)
         logger.info("[postpone] end_date 更新: %s -> %s", old_end_date, new_end_date)
 
         # 8. 刷新到数据库
@@ -730,6 +731,9 @@ class AdminCourseService:
         if all_slots and len(all_slots) >= len(course_lessons):
             last_slot_date = date.fromisoformat(all_slots[len(course_lessons) - 1]["date"])
             schedule.end_date = last_slot_date + timedelta(days=1)
+
+        # 同步课程状态（当前日期 > 结课日期 → completed，否则 in_progress）
+        schedule.schedule_status = self._compute_schedule_status(schedule.end_date)
 
     @staticmethod
     def _find_next_slot_after(

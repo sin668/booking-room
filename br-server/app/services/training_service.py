@@ -42,6 +42,7 @@ async def _get_first_schedule_for_courses(
         .where(
             CourseSchedule.course_id.in_(course_ids),
             CourseSchedule.schedule_type == "fixed",
+            CourseSchedule.schedule_status == "in_progress",
         )
         .order_by(CourseSchedule.course_id, CourseSchedule.created_at)
     )
@@ -106,6 +107,7 @@ async def list_training_rooms(
             and_(
                 Course.id == CourseSchedule.course_id,
                 CourseSchedule.schedule_type == "fixed",
+                CourseSchedule.schedule_status == "in_progress",
             ),
         )
         .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
@@ -180,6 +182,7 @@ async def get_training_room_detail(
             and_(
                 Course.id == CourseSchedule.course_id,
                 CourseSchedule.schedule_type == "fixed",
+                CourseSchedule.schedule_status == "in_progress",
             ),
         )
         .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
@@ -277,6 +280,7 @@ async def list_courses(
             and_(
                 Course.id == CourseSchedule.course_id,
                 CourseSchedule.schedule_type == "fixed",
+                CourseSchedule.schedule_status == "in_progress",
             ),
         )
         .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
@@ -322,6 +326,7 @@ async def get_course_detail(
             and_(
                 Course.id == CourseSchedule.course_id,
                 CourseSchedule.schedule_type == "fixed",
+                CourseSchedule.schedule_status == "in_progress",
             ),
         )
         .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
@@ -349,6 +354,7 @@ async def get_course_detail(
             and_(
                 Course.id == CourseSchedule.course_id,
                 CourseSchedule.schedule_type == "fixed",
+                CourseSchedule.schedule_status == "in_progress",
             ),
         )
         .where(

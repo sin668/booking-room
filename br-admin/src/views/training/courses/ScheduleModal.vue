@@ -574,7 +574,7 @@
     return `第${index + 1}讲：${title}`;
   }
 
-  /** 排课状态：优先使用后端计算的 schedule_status（当前日期 > 结课日期 → completed），前端兼容回退计算 */
+  /** 课程状态：优先使用后端计算的 schedule_status（当前日期 > 结课日期 → completed），前端兼容回退计算 */
   function isScheduleCompleted(row: ScheduleRecord): boolean {
     if (row.schedule_status) return row.schedule_status === 'completed';
     if (!row.end_date) return false;
@@ -612,7 +612,7 @@
     { title: '开始日期', key: 'start_date', width: 110 },
     { title: '结课日期', key: 'end_date', width: 110, render: (row: ScheduleRecord) => row.end_date || '-' },
     {
-      title: '排课状态',
+      title: '课程状态',
       key: 'schedule_status',
       width: 100,
       render(row: ScheduleRecord) {

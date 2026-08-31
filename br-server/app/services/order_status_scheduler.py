@@ -35,6 +35,7 @@ async def check_and_update_order_statuses() -> dict:
         "course_started": 0,
         "course_highlight_updated": 0,
         "course_completed": 0,
+        "schedule_completed": 0,
     }
 
     async with async_session() as session:
@@ -61,9 +62,37 @@ async def check_and_update_order_statuses() -> dict:
                 if settings.SCHEDULER_LOG_ENABLED:
                     logger.exception(f"Error processing booking {booking.id}")
 
+        # 将当前日期已超过结课日期的排课记录标记为已完成（维护 course_schedules.schedule_status）
+        try:
+            await _mark_completed_schedules(session, today, stats)
+        except Exception:
+            if settings.SCHEDULER_LOG_ENABLED:
+                logger.exception("Error marking completed schedules")
+
         await session.commit()
 
     return stats
+
+
+async def _mark_completed_schedules(session, today: date, stats: dict):
+    """将当前日期 > 结课日期的排课记录标记为已完成。
+
+    维护 course_schedules.schedule_status 字段，供 C 端按 in_progress 过滤固定班课。
+    """
+    result = await session.execute(
+        select(CourseSchedule).where(
+            and_(
+                CourseSchedule.schedule_status != "completed",
+                CourseSchedule.end_date.isnot(None),
+                CourseSchedule.end_date < today,
+            )
+        )
+    )
+    for schedule in result.scalars().all():
+        schedule.schedule_status = "completed"
+        stats["schedule_completed"] += 1
+        if settings.SCHEDULER_LOG_ENABLED:
+            logger.info(f"Course schedule {schedule.id}: in_progress → completed (end_date={schedule.end_date})")
 
 
 async def _process_seat_booking(session, booking: Booking, today: date, current_time, stats: dict):

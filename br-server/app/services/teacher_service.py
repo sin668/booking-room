@@ -47,8 +47,9 @@ async def get_teacher_detail(
         .outerjoin(CourseLesson, Course.id == CourseLesson.course_id)
         .where(
             CourseSchedule.teacher_id == teacher_id,
-            # 仅展示固定班课排课，定制课时不在 C 端老师简介页展示
+            # 仅展示固定班课且进行中的排课，定制课时/已完成排课不在 C 端老师简介页展示
             CourseSchedule.schedule_type == "fixed",
+            CourseSchedule.schedule_status == "in_progress",
             Course.status == "active",
         )
         .group_by(Course.id, CourseSchedule.id, StudyRoom.name)

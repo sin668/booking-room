@@ -69,6 +69,7 @@ class CourseBookingService:
                 and_(
                     Course.id == CourseSchedule.course_id,
                     CourseSchedule.schedule_type == "fixed",
+                    CourseSchedule.schedule_status == "in_progress",
                 ),
             )
             .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)

@@ -2000,8 +2000,8 @@
     "hash": "8670b6e0abb031b1ed022aa732fd4818"
   },
   "br-server/app/services/booking_service.py": {
-    "mtime": 1788159238101.9521,
-    "hash": "b61baf3f71220ac5a3204d6396f90f7a"
+    "mtime": 1788159468152.9978,
+    "hash": "838ff00310f694a0a6819aafb824ee3d"
   },
   "br-server/app/services/booking_verification_service.py": {
     "mtime": 1787809709638.8726,
@@ -4064,8 +4064,8 @@
     "hash": "dbfc6eff3d6d5f9eeb049078585b23ae"
   },
   ".graphify/GRAPH_REPORT.md": {
-    "mtime": 1787824547686.1187,
-    "hash": "a77f9e122c405e8c59ddf7eb2c5ceb23"
+    "mtime": 1788159269247.5564,
+    "hash": "4f6b18473aea1d387928dd4a9d4ee0e9"
   },
   ".graphify/studio/index.html": {
     "mtime": 1787642879172.1843,
@@ -4134,5 +4134,9 @@
   "br-server/alembic/versions/2026_08_31_1000-a1b2c3d4e5f6_add_schedule_type_to_course_schedules.py": {
     "mtime": 1788158994323.1628,
     "hash": "6fa4aec2d119a41a11bb1143cd8d763a"
+  },
+  ".graphify/2026-08-31/GRAPH_REPORT.md": {
+    "mtime": 1788159269081.0947,
+    "hash": "a77f9e122c405e8c59ddf7eb2c5ceb23"
   }
 }

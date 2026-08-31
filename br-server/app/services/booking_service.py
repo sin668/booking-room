@@ -933,21 +933,13 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
         db.add(wallet_transaction)
         await db.flush()
 
-        seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
-        room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one_or_none()
-        user_nickname = (await db.execute(select(User.nickname).where(User.id == uuid.UUID(booking.user_id)))).scalar_one_or_none()
-        return _build_admin_booking_response(booking, seat, room, user_nickname=user_nickname)
+        # 重新查询获取完整数据，避免 flush 后对象状态问题
+        return await admin_get_booking(db, booking_id)
 
     await cancel_booking(db, booking.id, uuid.UUID(booking.user_id))
     await db.refresh(booking)
 
-    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
-    room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one_or_none()
-    user_nickname = None
-    user_result = await db.execute(select(User.nickname).where(User.id == uuid.UUID(booking.user_id)))
-    user_nickname = user_result.scalar_one_or_none()
-
-    return _build_admin_booking_response(booking, seat, room, user_nickname=user_nickname)
+    return await admin_get_booking(db, booking_id)
 
 
 async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:

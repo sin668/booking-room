@@ -5,12 +5,12 @@
   "upstream": "origin/main",
   "mergeBase": "f174e700e5d12298805acc540e2945ed5c6a16c4",
   "firstSeenHead": "e78ec5ce99c5effd2deaf6d5ab2fcf05c052de53",
-  "lastSeenHead": "f174e700e5d12298805acc540e2945ed5c6a16c4",
+  "lastSeenHead": "2365213273851712e1e23688399799bab789f6cd",
   "lastAnalyzedHead": "f174e700e5d12298805acc540e2945ed5c6a16c4",
-  "stale": false,
-  "staleReason": null,
-  "staleSince": null,
-  "lifecycleEvent": null,
+  "stale": true,
+  "staleReason": "post-commit",
+  "staleSince": "2026-08-31T06:57:59.056Z",
+  "lifecycleEvent": "post-commit",
   "createdAt": "2026-08-25T07:26:07.711Z",
-  "updatedAt": "2026-08-31T06:54:29.266Z"
+  "updatedAt": "2026-08-31T06:57:59.056Z"
 }

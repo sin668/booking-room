@@ -180,6 +180,7 @@ class CourseScheduleResponse(BaseModel):
     full_package_price: float | None = None
     full_custom_price: float | None = None
     schedule_type: str = "fixed"
+    schedule_status: str = "in_progress"
     lesson_schedules: list[LessonScheduleResponse] = []
 
     model_config = ConfigDict(from_attributes=True)

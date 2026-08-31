@@ -167,18 +167,19 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
 def _update_highlight(booking: Booking, lessons, today: date, stats: dict, is_new_start: bool = False):
     """更新课时高亮
 
-    找到当前应该高亮的课时：第一个 lesson_date >= today 的课时
-    如果所有课时都已过去，高亮最后一门
+    找到当前应该高亮的课时：当前日期所在课时，
+    即最后一个 lesson_date <= today 的课时（当前日期落在该课时的时间范围内）。
+    若所有课时都未开始（理论上不会进入本函数），高亮第一课时。
     """
     target_lesson = None
     for lesson in lessons:
-        if lesson.lesson_date >= today:
+        if lesson.lesson_date <= today:
             target_lesson = lesson
+        else:
             break
 
     if target_lesson is None:
-        # 所有课时都已过去，高亮最后一门
-        target_lesson = lessons[-1]
+        target_lesson = lessons[0]
 
     if booking.highlighted_lesson_id != target_lesson.lesson_id:
         booking.highlighted_lesson_id = target_lesson.lesson_id

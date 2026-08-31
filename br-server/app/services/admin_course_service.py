@@ -3,6 +3,7 @@
 import json
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 import logging
 
@@ -437,6 +438,7 @@ class AdminCourseService:
                     full_package_price=float(s.full_package_price) if s.full_package_price else None,
                     full_custom_price=float(s.full_custom_price) if s.full_custom_price else None,
                     schedule_type=s.schedule_type,
+                    schedule_status=self._compute_schedule_status(s.end_date),
                     lesson_schedules=lesson_schedules,
                 )
             )
@@ -838,6 +840,14 @@ class AdminCourseService:
         return slots
 
     @staticmethod
+    def _compute_schedule_status(end_date) -> str:
+        """计算排课状态：当前日期 > 结课日期 → completed，否则 in_progress。"""
+        if end_date is None:
+            return "in_progress"
+        today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+        return "completed" if today > end_date else "in_progress"
+
+    @staticmethod
     async def _schedule_to_response(
         db: AsyncSession, schedule: CourseSchedule
     ) -> CourseScheduleResponse:
@@ -871,5 +881,6 @@ class AdminCourseService:
             full_package_price=float(schedule.full_package_price) if schedule.full_package_price else None,
             full_custom_price=float(schedule.full_custom_price) if schedule.full_custom_price else None,
             schedule_type=schedule.schedule_type,
+            schedule_status=AdminCourseService._compute_schedule_status(schedule.end_date),
             lesson_schedules=lesson_schedules,
         )

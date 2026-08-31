@@ -144,7 +144,7 @@
                 <text class="lesson-highlight-text">{{ getHighlightedLesson(order).lesson_title }}   {{ getHighlightedLesson(order).lesson_date }} {{ formatLessonStartTime(getHighlightedLesson(order).lesson_time_slot) }}上课</text>
               </view>
               <!-- Fallback: in_progress without highlighted_lesson_id, use nearest lesson -->
-              <view v-if="displayStatus(order) === 'in_progress' && !getHighlightedLesson(order)" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
+              <view v-if="displayStatus(order) === 'in_progress' && !getHighlightedLesson(order) && getNearestLesson(order)" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot lesson-icon-dot-active" />
                 </view>
@@ -360,10 +360,19 @@ export default {
     },
 
     getNearestLesson(order) {
+      // 回退高亮：当天所在课时，即最后一个 lesson_date <= today 的课时；无则为 null（不高亮）
       const schedules = order?.lesson_schedules
       if (!schedules || !schedules.length) return null
       const todayStr = this.getTodayStr()
-      return schedules.find(s => s.lesson_date >= todayStr) || schedules[schedules.length - 1]
+      let target = null
+      for (const s of schedules) {
+        if (s.lesson_date && s.lesson_date <= todayStr) {
+          target = s
+        } else {
+          break
+        }
+      }
+      return target
     },
 
     formatLessonStartTime(timeSlot) {

@@ -574,8 +574,9 @@
     return `第${index + 1}讲：${title}`;
   }
 
-  /** 排课状态：当前日期 > 结课日期 → 已完成，否则进行中（无结课日期默认进行中） */
+  /** 排课状态：优先使用后端计算的 schedule_status（当前日期 > 结课日期 → completed），前端兼容回退计算 */
   function isScheduleCompleted(row: ScheduleRecord): boolean {
+    if (row.schedule_status) return row.schedule_status === 'completed';
     if (!row.end_date) return false;
     const today = new Date();
     today.setHours(0, 0, 0, 0);

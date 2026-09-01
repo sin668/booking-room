@@ -3,7 +3,7 @@
 背景：同一课程下固定班课排课与定制排课可能引用相同 lesson_id（不同日期），
 旧代码按 course_id + lesson_ids 查询课时导致已开课的固定班课课时混入，
 把未到开课日期的定制订单误转为 confirmed。本测试复刻该数据形态，
-验证当前实现（schedule_id 精确查询 + 定制订单取 bookings.date 作为开课日期）
+验证当前实现（schedule_id 精确查询 + 开课日期统一取第一课时日期）
 不会再发生误转。
 """
 from datetime import date, time
@@ -61,10 +61,12 @@ def _make_base_data(db_session: AsyncSession) -> None:
         )
 
 
-def _make_custom_booking(db_session: AsyncSession, schedule_id: int | None) -> Booking:
+def _make_custom_booking(
+    db_session: AsyncSession, schedule_id: int | None, booking_date: date | None = None
+) -> Booking:
     booking = Booking(
         user_id=USER_ID, room_id=1,
-        date=date(2026, 9, 5), start_time=time(16, 0), end_time=time(18, 0),
+        date=booking_date or date(2026, 9, 5), start_time=time(16, 0), end_time=time(18, 0),
         status="pending", payment_status="paid", total_price=Decimal("20"),
         booking_type="course", course_id=2, schedule_type="custom",
         schedule_id=schedule_id, lesson_ids=[122, 123],
@@ -114,5 +116,26 @@ async def test_course_custom_booking_converts_on_start_date(db_session: AsyncSes
 
     await _process_course_booking(db_session, booking, date(2026, 9, 5), {})
 
+    assert booking.status == "confirmed"
+    assert booking.highlighted_lesson_id == 122
+
+
+@pytest.mark.asyncio
+async def test_course_custom_booking_start_date_follows_first_lesson_not_booking_date(
+    db_session: AsyncSession,
+):
+    """开课日期口径：定制订单与固定班课一致，以第一课时日期为准而非 bookings.date。
+
+    bookings.date 早于第一课时日期时，未到首课时日期保持 pending，
+    到达首课时日期才转 confirmed。
+    """
+    _make_base_data(db_session)
+    booking = _make_custom_booking(db_session, schedule_id=36, booking_date=date(2026, 9, 1))
+    await db_session.flush()
+
+    await _process_course_booking(db_session, booking, date(2026, 9, 4), {})
+    assert booking.status == "pending"
+
+    await _process_course_booking(db_session, booking, date(2026, 9, 5), {})
     assert booking.status == "confirmed"
     assert booking.highlighted_lesson_id == 122

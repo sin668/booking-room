@@ -3,7 +3,7 @@
 定时检查并更新所有已支付的待开始/进行中订单状态：
 - 自习室座位预约：pending → confirmed（当前时间 >= 开始时间），confirmed → completed（当前时间 >= 结束时间）
 - 培训课程预约：pending → confirmed（当前日期 >= 开课日期），confirmed 推进高亮课时，today > 最后一课时日期 → completed；
-  1V1 定制订单的开课日期取用户预约时选择的日期（bookings.date），固定班课取第一课时日期
+  开课日期统一取第一课时日期（first_lesson.lesson_date），定制订单与固定班课口径一致
 """
 import logging
 from datetime import datetime, date
@@ -105,7 +105,7 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
     """处理培训课程预约订单
 
     状态转换：
-    - pending + today >= 开课日期 → confirmed，高亮当前课时（1V1 定制订单开课日期取 bookings.date，固定班课取第一课时日期）
+    - pending + today >= 开课日期 → confirmed，高亮当前课时（开课日期统一取第一课时日期，定制订单与固定班课口径一致）
     - confirmed + today > 最后一课时日期 → completed
     - confirmed + 需要推进高亮 → 更新 highlighted_lesson_id
     """
@@ -151,11 +151,8 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
 
     first_lesson = lessons[0]
     last_lesson = lessons[-1]
-    # 开课日期：1V1 定制订单取用户预约时选择的日期（bookings.date），
-    # 与订单列表展示口径一致；固定班课以第一课时日期为准
+    # 开课日期统一以第一课时日期为准（定制订单与固定班课口径一致）
     start_date = first_lesson.lesson_date
-    if getattr(booking, "schedule_type", None) == "custom" and getattr(booking, "date", None):
-        start_date = booking.date
     if settings.SCHEDULER_LOG_ENABLED:
         logger.info(
             "[课程订单 %d] status=%s, today=%s | start_date=%s, first_lesson=%s, last_lesson=%s | highlighted=%s",

@@ -2,6 +2,7 @@
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.expression import Exists
 
 from app.models.city import City
 from app.models.course import Course
@@ -26,6 +27,24 @@ from app.schemas.teacher import TeacherResponse
 
 MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
+
+
+def _has_in_progress_fixed_schedule() -> Exists:
+    """构造存在性过滤：课程至少有一条进行中（in_progress）的固定班课排课。
+
+    C 端课程列表类查询统一口径：没有进行中固定班课排课的课程不展示。
+    """
+    return (
+        select(CourseSchedule.id)
+        .where(
+            CourseSchedule.course_id == Course.id,
+            CourseSchedule.schedule_type == "fixed",
+            CourseSchedule.schedule_status == "in_progress",
+        )
+        # 显式只关联 Course，避免外层查询同时 JOIN CourseSchedule 时被自动关联吞掉子查询 FROM
+        .correlate(Course)
+        .exists()
+    )
 
 
 async def _get_first_schedule_for_courses(
@@ -115,6 +134,8 @@ async def list_training_rooms(
             Course.room_id.in_(room_ids),
             Course.is_hot == True,  # noqa: E712
             Course.status == "active",
+            # 没有进行中固定班课排课的课程不展示为热门课程
+            _has_in_progress_fixed_schedule(),
         )
         .order_by(Course.room_id.asc(), Course.sort_order.asc(), Course.id.asc())
     )
@@ -186,7 +207,12 @@ async def get_training_room_detail(
             ),
         )
         .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
-        .where(Course.room_id == room_id, Course.status == "active")
+        .where(
+            Course.room_id == room_id,
+            Course.status == "active",
+            # 没有进行中固定班课排课的课程不展示（统计口径同步排除）
+            _has_in_progress_fixed_schedule(),
+        )
         .order_by(Course.sort_order)
     )
     rows = courses_result.all()
@@ -263,7 +289,11 @@ async def list_courses(
     page_size = min(page_size, MAX_PAGE_SIZE)
     offset = (page - 1) * page_size
 
-    filters = [Course.status == "active"]
+    filters = [
+        Course.status == "active",
+        # 没有进行中固定班课排课的课程不展示（分页总数同步排除）
+        _has_in_progress_fixed_schedule(),
+    ]
     if category is not None:
         filters.append(Course.category == category)
 
@@ -361,6 +391,8 @@ async def get_course_detail(
             Course.category == course.category,
             Course.id != course_id,
             Course.status == "active",
+            # 没有进行中固定班课排课的课程不展示为相关课程
+            _has_in_progress_fixed_schedule(),
         )
         .order_by(Course.sort_order.asc())
         .limit(6)

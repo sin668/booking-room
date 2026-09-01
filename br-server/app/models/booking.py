@@ -51,6 +51,10 @@ class Booking(Base):
     lesson_ids: Mapped[list[int] | None] = mapped_column(ARRAY(Integer), nullable=True)
     highlighted_lesson_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="当前高亮的课时ID（课程预约）")
     schedule_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    schedule_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("course_schedules.id"), nullable=True,
+        comment="订单关联的排课记录（固定班课排课 / 定制订单确认后创建的定制排课）",
+    )
     time_slots: Mapped[str | None] = mapped_column(
         Text, nullable=True,
         comment="1V1私人定制上课时间段，JSON 数组格式，如 [\"09:00-11:00\"]，对应 course_schedules.time_slots",

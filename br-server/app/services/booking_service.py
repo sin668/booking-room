@@ -468,6 +468,8 @@ async def list_bookings(
                 schedule_id_to_course = {s.id: s.course_id for s in schedule_list}
                 # schedule_id -> (schedule_type, schedule_status)，用于按订单类型选择课时记录
                 schedule_info_map = {s.id: (s.schedule_type, s.schedule_status) for s in schedule_list}
+                # lesson_schedule.id -> 所属 schedule_id，用于按订单关联的排课精确隔离课时
+                ls_to_schedule_id = {ls.id: ls.schedule_id for ls in lesson_schedules_list}
                 # Collect lesson_ids for title lookup
                 all_lesson_ids = {ls.lesson_id for ls in lesson_schedules_list}
                 lesson_title_map: dict[int, str] = {}
@@ -497,20 +499,28 @@ async def list_bookings(
                             )
                         )
                 # Store as booking_id -> filtered lesson_schedules (only lessons in booking.lesson_ids)
-                # 带上订单的 schedule_type 选择对应排课记录，并过滤仅保留进行中（in_progress）的排课课时，
-                # 避免同一课程下 fixed/custom 排课的相同 lesson_id 记录互相混入；
-                # 旧订单无 schedule_type 时不过滤类型，保持兼容。
+                # 优先按订单关联的排课记录（schedule_id）精确隔离课时，避免同一课程下
+                # 多个订单（固定班课/多个定制排课）的相同 lesson_id 记录互相混入；
+                # 旧订单无 schedule_id 时回退按 schedule_type + in_progress 过滤。
                 for b in bookings:
                     if getattr(b, "booking_type", None) == "course" and b.course_id and b.lesson_ids:
                         all_course_ls = lesson_schedule_by_course.get(b.course_id, [])
                         booked_lesson_ids = set(b.lesson_ids)
-                        b_schedule_type = getattr(b, "schedule_type", None)
-                        lesson_schedule_map[b.id] = [
-                            ls for ls in all_course_ls
-                            if ls.lesson_id in booked_lesson_ids
-                            and (b_schedule_type is None or ls.schedule_type == b_schedule_type)
-                            and ls.schedule_status == "in_progress"
-                        ]
+                        b_schedule_id = getattr(b, "schedule_id", None)
+                        if b_schedule_id:
+                            lesson_schedule_map[b.id] = [
+                                ls for ls in all_course_ls
+                                if ls.lesson_id in booked_lesson_ids
+                                and ls_to_schedule_id.get(ls.id) == b_schedule_id
+                            ]
+                        else:
+                            b_schedule_type = getattr(b, "schedule_type", None)
+                            lesson_schedule_map[b.id] = [
+                                ls for ls in all_course_ls
+                                if ls.lesson_id in booked_lesson_ids
+                                and (b_schedule_type is None or ls.schedule_type == b_schedule_type)
+                                and ls.schedule_status == "in_progress"
+                            ]
 
     # 查询课时标题 + fallback：当 lesson_schedules 中间表无记录时，从 lesson_ids + lesson_titles 构建基本条目
     for b in bookings:
@@ -1035,6 +1045,10 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
     )
     db.add(custom_schedule)
     await db.flush()
+
+    # 关联订单与定制排课记录，后续课时查询/状态推进均按此排课隔离，
+    # 避免同一课程下多个订单的课时数据互相混入
+    booking.schedule_id = custom_schedule.id
 
     # 创建课时记录：复用排课管理的取模循环分配 + 周次偏移算法计算每课时上课时间，
     # 结课日期 = 最后一个课时的上课日期 + 1 天（与 _save_lesson_schedules 一致）

@@ -218,18 +218,38 @@ async def list_available_coupons_for_booking(
     elif course_id is not None:
         from app.models.course import Course
         from app.models.course_schedule import CourseSchedule
-        
+        from sqlalchemy import and_
+
+        # 同一课程可能存在多条排课（固定班课 + 多个定制排课），
+        # 按预约类型选择对应排课，避免多行报错；取最早创建的一条保证价格稳定
+        sched_type = "custom" if booking_type == "custom" else "fixed"
         result = await db.execute(
             select(Course, CourseSchedule)
-            .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+            .outerjoin(
+                CourseSchedule,
+                and_(
+                    Course.id == CourseSchedule.course_id,
+                    CourseSchedule.schedule_type == sched_type,
+                ),
+            )
             .where(Course.id == course_id)
+            .order_by(CourseSchedule.created_at.asc())
         )
-        row = result.one_or_none()
+        row = result.first()
         if row is None:
             raise CouponNotFoundError("课程不存在")
         course, schedule = row
         # 课程价格作为原价（单课时价格，前端会根据选择课时数计算总价）
-        original_price = Decimal(str(schedule.price)) if schedule else Decimal("0")
+        # 定制预约使用定制单价，固定班课使用班课单价；无匹配排课时回退到另一类型
+        if schedule:
+            price_value = (
+                schedule.custom_price if sched_type == "custom" else schedule.price
+            )
+            if price_value is None or float(price_value) <= 0:
+                price_value = schedule.price if sched_type == "custom" else schedule.custom_price
+            original_price = Decimal(str(price_value or "0"))
+        else:
+            original_price = Decimal("0")
         seat = None  # 课程预约无座位
     else:
         raise CouponError("缺少必要参数：seat_id 或 course_id")

@@ -112,18 +112,32 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
         return
 
     # 查询该订单的课时安排（按 sort_order 排序）
-    # 通过 course_id 找到 course_schedules，再找 lesson_schedules，按 lesson_ids 过滤
-    result = await session.execute(
-        select(LessonSchedule)
-        .join(CourseSchedule, LessonSchedule.schedule_id == CourseSchedule.id)
-        .where(
-            and_(
-                CourseSchedule.course_id == booking.course_id,
-                LessonSchedule.lesson_id.in_(booking.lesson_ids),
+    # 优先按订单关联的排课记录（schedule_id）精确查询，避免同一课程下
+    # 多个排课（固定班课/多个定制排课）的相同 lesson_id 记录互相混入；
+    # 旧订单无 schedule_id 时回退按 course_id + lesson_ids 查询
+    if booking.schedule_id:
+        result = await session.execute(
+            select(LessonSchedule)
+            .where(
+                and_(
+                    LessonSchedule.schedule_id == booking.schedule_id,
+                    LessonSchedule.lesson_id.in_(booking.lesson_ids),
+                )
             )
+            .order_by(LessonSchedule.sort_order)
         )
-        .order_by(LessonSchedule.sort_order)
-    )
+    else:
+        result = await session.execute(
+            select(LessonSchedule)
+            .join(CourseSchedule, LessonSchedule.schedule_id == CourseSchedule.id)
+            .where(
+                and_(
+                    CourseSchedule.course_id == booking.course_id,
+                    LessonSchedule.lesson_id.in_(booking.lesson_ids),
+                )
+            )
+            .order_by(LessonSchedule.sort_order)
+        )
     lessons = result.scalars().all()
 
     if not lessons:

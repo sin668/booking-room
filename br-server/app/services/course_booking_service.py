@@ -449,6 +449,15 @@ class CourseBookingService:
         elif schedule is not None:
             booking_teacher_id = getattr(schedule, "teacher_id", None)
 
+        # 固定班课订单直接关联当前排课记录（定制订单在管理员确认创建定制排课后关联），
+        # 用于按订单维度隔离课时数据，支持同一课程下多个订单并存
+        booking_schedule_id = None
+        if data.booking_type != "custom":
+            if isinstance(schedule, dict):
+                booking_schedule_id = schedule.get("id")
+            elif schedule is not None:
+                booking_schedule_id = getattr(schedule, "id", None)
+
         booking = Booking(
             user_id=str(user_id),
             room_id=course["room_id"],
@@ -470,6 +479,7 @@ class CourseBookingService:
             course_id=course["id"],
             lesson_ids=data.lesson_ids,
             schedule_type=data.schedule_type,
+            schedule_id=booking_schedule_id,
             time_slots=booking_time_slots,
             teacher_id=booking_teacher_id,
         )

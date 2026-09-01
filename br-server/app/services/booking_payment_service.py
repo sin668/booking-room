@@ -281,11 +281,21 @@ class BookingPaymentService:
         now = datetime.now(ZoneInfo("Asia/Shanghai"))
         if booking.course_id:
             today = now.date()
-            schedule_result = await self._db.execute(
-                select(CourseSchedule.start_date)
-                .where(CourseSchedule.course_id == booking.course_id)
-                .limit(1)
-            )
+            # 优先按订单关联的排课记录取开课日期，同课程多排课时避免取错；
+            # 旧订单无 schedule_id 时回退按 course_id 查最早一条
+            if getattr(booking, "schedule_id", None):
+                schedule_result = await self._db.execute(
+                    select(CourseSchedule.start_date).where(
+                        CourseSchedule.id == booking.schedule_id
+                    )
+                )
+            else:
+                schedule_result = await self._db.execute(
+                    select(CourseSchedule.start_date)
+                    .where(CourseSchedule.course_id == booking.course_id)
+                    .order_by(CourseSchedule.created_at)
+                    .limit(1)
+                )
             start_date = schedule_result.scalar_one_or_none()
             if start_date is None:
                 return "confirmed"

@@ -642,7 +642,7 @@ async def cancel_booking(
         room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
         return _build_booking_response(booking, seat, room)
 
-    if booking.status != "confirmed":
+    if booking.status not in ("confirmed", "pending"):
         raise BookingCancellationNotAllowedError("该预约不可取消")
 
     if booking.payment_status != "paid":

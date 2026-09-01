@@ -220,7 +220,7 @@
               <text class="action-btn-text">查看课程</text>
             </view>
             <view
-              v-if="(order.can_cancel === true || order.status === 'pending_confirm') && order.payment_status !== 'pending'"
+              v-if="(order.can_cancel === true || order.status === 'pending_confirm') && order.payment_status !== 'pending' && !(isCourseBooking(order) && displayStatus(order) === 'pending_start')"
               :class="['action-btn', 'cancel-action-btn', { disabled: cancellingOrderId === order.id }]"
               @tap.stop="confirmCancelBooking(order)"
             >

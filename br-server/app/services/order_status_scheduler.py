@@ -2,7 +2,8 @@
 
 定时检查并更新所有已支付的待开始/进行中订单状态：
 - 自习室座位预约：pending → confirmed（当前时间 >= 开始时间），confirmed → completed（当前时间 >= 结束时间）
-- 培训课程预约：pending → confirmed（当前日期 >= 第一课时日期），confirmed 推进高亮课时，today > 最后一课时日期 → completed
+- 培训课程预约：pending → confirmed（当前日期 >= 开课日期），confirmed 推进高亮课时，today > 最后一课时日期 → completed；
+  1V1 定制订单的开课日期取用户预约时选择的日期（bookings.date），固定班课取第一课时日期
 """
 import logging
 from datetime import datetime, date
@@ -104,7 +105,7 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
     """处理培训课程预约订单
 
     状态转换：
-    - pending + today >= 第一课时日期 → confirmed，高亮当前课时
+    - pending + today >= 开课日期 → confirmed，高亮当前课时（1V1 定制订单开课日期取 bookings.date，固定班课取第一课时日期）
     - confirmed + today > 最后一课时日期 → completed
     - confirmed + 需要推进高亮 → 更新 highlighted_lesson_id
     """
@@ -127,15 +128,18 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
             .order_by(LessonSchedule.sort_order)
         )
     else:
+        fallback_conditions = [
+            CourseSchedule.course_id == booking.course_id,
+            LessonSchedule.lesson_id.in_(booking.lesson_ids),
+        ]
+        # 旧订单无 schedule_id 时，按订单排课类型过滤排课记录，
+        # 避免同课程 fixed/custom 排课的相同 lesson_id 记录互相混入
+        if booking.schedule_type:
+            fallback_conditions.append(CourseSchedule.schedule_type == booking.schedule_type)
         result = await session.execute(
             select(LessonSchedule)
             .join(CourseSchedule, LessonSchedule.schedule_id == CourseSchedule.id)
-            .where(
-                and_(
-                    CourseSchedule.course_id == booking.course_id,
-                    LessonSchedule.lesson_id.in_(booking.lesson_ids),
-                )
-            )
+            .where(and_(*fallback_conditions))
             .order_by(LessonSchedule.sort_order)
         )
     lessons = result.scalars().all()
@@ -147,17 +151,22 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
 
     first_lesson = lessons[0]
     last_lesson = lessons[-1]
+    # 开课日期：1V1 定制订单取用户预约时选择的日期（bookings.date），
+    # 与订单列表展示口径一致；固定班课以第一课时日期为准
+    start_date = first_lesson.lesson_date
+    if getattr(booking, "schedule_type", None) == "custom" and getattr(booking, "date", None):
+        start_date = booking.date
     if settings.SCHEDULER_LOG_ENABLED:
         logger.info(
-            "[课程订单 %d] status=%s, today=%s | first_lesson=%s, last_lesson=%s | highlighted=%s",
+            "[课程订单 %d] status=%s, today=%s | start_date=%s, first_lesson=%s, last_lesson=%s | highlighted=%s",
             booking.id, booking.status, today,
-            first_lesson.lesson_date, last_lesson.lesson_date,
+            start_date, first_lesson.lesson_date, last_lesson.lesson_date,
             booking.highlighted_lesson_id,
         )
 
     if booking.status == "pending":
-        # 待开始：检查当前日期是否 >= 第一课时的上课日期
-        if today >= first_lesson.lesson_date:
+        # 待开始：检查当前日期是否 >= 开课日期
+        if today >= start_date:
             booking.status = "confirmed"
             # 高亮当前课时（第一个 lesson_date >= today 的课时）
             _update_highlight(booking, lessons, today, stats, is_new_start=True)

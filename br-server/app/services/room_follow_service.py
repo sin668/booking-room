@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.city import City
@@ -84,6 +84,8 @@ async def list_followed_rooms(
 
     if follow_type == "course":
         # Course follows: join with courses table
+        # 只关联“进行中的固定班课”排课（schedule_type=fixed, schedule_status=in_progress），
+        # 与 br-app 其他课程页面过滤口径一致；无进行中排课的课程仍展示但无排课数据
         count = (
             await db.execute(
                 select(func.count())
@@ -100,7 +102,14 @@ async def list_followed_rooms(
         result = await db.execute(
             select(RoomFollow, Course, CourseSchedule)
             .join(Course, RoomFollow.room_id == Course.id)
-            .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
+            .outerjoin(
+                CourseSchedule,
+                and_(
+                    Course.id == CourseSchedule.course_id,
+                    CourseSchedule.schedule_type == "fixed",
+                    CourseSchedule.schedule_status == "in_progress",
+                ),
+            )
             .where(
                 RoomFollow.user_id == user_id,
                 RoomFollow.follow_type == "course",

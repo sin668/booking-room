@@ -154,8 +154,8 @@
                 </view>
                 <text class="lesson-highlight-text">{{ getNearestLesson(order).lesson_title }}   {{ getNearestLesson(order).lesson_date }} {{ formatLessonStartTime(getNearestLesson(order).lesson_time_slot) }}上课</text>
               </view>
-              <!-- Expand toggle for pending_start / pending_confirm orders (no highlight) -->
-              <view v-if="displayStatus(order) === 'pending_start' || displayStatus(order) === 'pending_confirm'" class="card-info-row lesson-expand-toggle" @tap.stop="toggleLessons(order)">
+              <!-- Expand toggle for pending_start orders (no highlight)；待确认订单不展示课时上课时间列表 -->
+              <view v-if="displayStatus(order) === 'pending_start'" class="card-info-row lesson-expand-toggle" @tap.stop="toggleLessons(order)">
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot" />
                 </view>
@@ -220,7 +220,7 @@
               <text class="action-btn-text">查看课程</text>
             </view>
             <view
-              v-if="order.can_cancel === true && order.payment_status !== 'pending'"
+              v-if="(order.can_cancel === true || order.status === 'pending_confirm') && order.payment_status !== 'pending'"
               :class="['action-btn', 'cancel-action-btn', { disabled: cancellingOrderId === order.id }]"
               @tap.stop="confirmCancelBooking(order)"
             >
@@ -518,9 +518,12 @@ export default {
         ? order.cancel_penalty_amount
         : order.penalty_amount
       const penaltyAmount = Number(penaltyValue || 0)
-      const content = penaltyAmount > 0
-        ? `取消后将扣款¥${this.formatMoney(penaltyValue)}，剩余退款将退回钱包，是否继续？`
-        : '取消后退款将退回钱包，是否继续？'
+      // 待确认订单（1V1私人定制）取消不扣款，全额退款
+      const content = order.status === 'pending_confirm'
+        ? '取消订单将全额退款退回钱包，是否继续？'
+        : penaltyAmount > 0
+          ? `取消后将扣款¥${this.formatMoney(penaltyValue)}，剩余退款将退回钱包，是否继续？`
+          : '取消后退款将退回钱包，是否继续？'
       uni.showModal({
         title: '取消预约',
         content,

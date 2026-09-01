@@ -180,17 +180,6 @@
             <text class="section-title">选择上课时间</text>
           </view>
 
-          <!-- Course start date picker -->
-          <view class="date-picker-section">
-            <view class="date-picker-label">课程开始日期</view>
-            <picker mode="date" :value="selectedStartDate" :start="minStartDate" :end="maxStartDate" @change="onDateChange">
-              <view class="date-picker-input">
-                <text class="date-picker-value">{{ selectedStartDate || '请选择日期' }}</text>
-                <text class="date-picker-arrow">›</text>
-              </view>
-            </picker>
-          </view>
-
           <!-- Weekday selector -->
           <scroll-view class="weekday-scroll" scroll-x :show-scrollbar="false">
             <view class="weekday-list">
@@ -433,7 +422,6 @@ export default {
       lessonScheduleMap: {},  // lesson_id -> date string (YYYY-MM-DD)
 
       // Custom schedule time picker
-      selectedStartDate: '',
       selectedWeekday: 1,
       selectedTimeSlot: '',
       teacherAvailableSlots: [],
@@ -531,9 +519,17 @@ export default {
           weekdayNum: dayIndex + 1, // 1=Monday, 7=Sunday
           name: weekdays[dayIndex],
           date: `${d.getMonth() + 1}/${d.getDate()}`,
+          dateValue: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
         })
       }
       return list
+    },
+
+    selectedWeekdayDate() {
+      // 选中星期几对应的日期（YYYY-MM-DD），作为定制订单下单基准日期，
+      // 服务端据此推算课时上课日期，管理员确认时以第一课时日期为开课日期
+      const day = this.weekdayList.find(d => d.weekdayNum === this.selectedWeekday)
+      return day ? day.dateValue : ''
     },
 
     teacherAvailableWeekdays() {
@@ -581,28 +577,6 @@ export default {
 
     hasAvailableTimeSlots() {
       return this.timeSlots.length > 0
-    },
-
-    minStartDate() {
-      // 1V1私人定制：最小可选日期为当前时间3天后
-      // 固定班课：最小可选日期为今天
-      const offset = this.bookingType === 'custom' ? 3 : 0
-      const d = new Date()
-      d.setDate(d.getDate() + offset)
-      const year = d.getFullYear()
-      const month = String(d.getMonth() + 1).padStart(2, '0')
-      const day = String(d.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
-    },
-
-    maxStartDate() {
-      // 1V1私人定制：最大可选日期为最小日期起一个月内
-      const minDate = new Date(this.minStartDate)
-      minDate.setMonth(minDate.getMonth() + 1)
-      const year = minDate.getFullYear()
-      const month = String(minDate.getMonth() + 1).padStart(2, '0')
-      const day = String(minDate.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
     },
 
     visibleLessons() {
@@ -766,10 +740,6 @@ export default {
       this.selectedTimeSlot = ''
     },
 
-    onDateChange(e) {
-      this.selectedStartDate = e.detail.value
-    },
-
     onSelectTimeSlot(slot) {
       this.selectedTimeSlot = slot.value
     },
@@ -822,7 +792,6 @@ export default {
       this.bookingType = type
       this.scheduleType = type
       // 切换预约类型时清除自定义时间选择
-      this.selectedStartDate = ''
       this.selectedTimeSlot = ''
       this.loadAvailableCoupons()
     },
@@ -878,9 +847,9 @@ export default {
           coupon_id: this.coupon?.id || null,
         }
         
-        // 如果是自定义预约，添加日期和时间段信息
+        // 如果是自定义预约，添加日期和时间段信息（日期取选中星期几对应的日期）
         if (this.scheduleType === 'custom') {
-          bookingData.start_date = this.selectedStartDate || null
+          bookingData.start_date = this.selectedWeekdayDate || null
           bookingData.time_slot = this.selectedTimeSlot || null
         }
         
@@ -1554,43 +1523,6 @@ function money(value) {
 }
 
 /* Custom schedule time picker */
-.date-picker-section {
-  margin-bottom: 20rpx;
-}
-
-.date-picker-label {
-  font-size: 24rpx;
-  color: $text-secondary;
-  margin-bottom: 12rpx;
-}
-
-.date-picker-input {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20rpx 24rpx;
-  background: $surface-soft;
-  border: 2rpx solid $border-soft;
-  border-radius: 16rpx;
-  transition: all 0.2s;
-}
-
-.date-picker-input:active {
-  border-color: $primary;
-  background: $primary-soft;
-}
-
-.date-picker-value {
-  font-size: 28rpx;
-  color: $text-primary;
-}
-
-.date-picker-arrow {
-  font-size: 32rpx;
-  color: $text-muted;
-  transform: rotate(90deg);
-}
-
 .weekday-scroll {
   margin-bottom: 16rpx;
 }

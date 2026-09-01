@@ -4,6 +4,7 @@ import pytest
 import uuid
 from datetime import UTC, date, datetime, timedelta, time
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -27,6 +28,7 @@ from app.services.booking_service import (
     admin_list_bookings,
     admin_get_booking,
     admin_cancel_booking,
+    admin_confirm_booking,
     cancel_booking,
     create_booking,
 )
@@ -645,3 +647,69 @@ async def test_admin_list_bookings_includes_booking_type_fields(db_session: Asyn
     assert item.booking_type == "course"
     assert item.schedule_type == "custom"
     assert item.time_slots == '[{"weekday": 3, "time_slot": "10:00-12:00"}]'
+
+
+@pytest.mark.asyncio
+async def test_admin_confirm_custom_booking_future_first_lesson_pending(db_session: AsyncSession):
+    """确认定制订单：第一课时日期在未来 → 待开始，且预约/开课日期取第一课时日期。"""
+    _make_room(db_session, 1)
+    _make_user(db_session)
+    _make_course_data(db_session)
+
+    today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+    base_date = today + timedelta(days=10)
+    # 第一课时日期 = 基准日期起第一个匹配 weekday=3 的日期
+    first_lesson_date = base_date + timedelta(days=(3 - base_date.isoweekday()) % 7)
+
+    booking = _make_course_booking(db_session, 1, schedule_id=None, status="pending_confirm")
+    booking.date = base_date
+    booking.lesson_ids = [1]
+    await db_session.flush()
+
+    result = await admin_confirm_booking(db_session, 1)
+
+    assert result.status == "pending"
+    booking_row = (
+        await db_session.execute(select(Booking).where(Booking.id == 1))
+    ).scalar_one()
+    # 预约日期回写为第一课时日期，并关联新建的定制排课
+    assert booking_row.date == first_lesson_date
+    assert booking_row.schedule_id is not None
+    schedule = (
+        await db_session.execute(
+            select(CourseSchedule).where(CourseSchedule.id == booking_row.schedule_id)
+        )
+    ).scalar_one()
+    # 开课日期同步为第一课时日期
+    assert schedule.start_date == first_lesson_date
+    lessons = (
+        await db_session.execute(
+            select(LessonSchedule).where(LessonSchedule.schedule_id == schedule.id)
+        )
+    ).scalars().all()
+    assert len(lessons) == 1
+    assert lessons[0].lesson_date == first_lesson_date
+
+
+@pytest.mark.asyncio
+async def test_admin_confirm_custom_booking_first_lesson_today_confirmed(db_session: AsyncSession):
+    """确认定制订单：第一课时日期 <= 今天 → 进行中（confirmed）。"""
+    _make_room(db_session, 1)
+    _make_user(db_session)
+    _make_course_data(db_session)
+
+    today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+    booking = _make_course_booking(db_session, 1, schedule_id=None, status="pending_confirm")
+    booking.date = today
+    # 时间段星期与基准日期一致 → 第一课时日期即今天
+    booking.time_slots = f'[{{"weekday": {today.isoweekday()}, "time_slot": "10:00-12:00"}}]'
+    booking.lesson_ids = [1]
+    await db_session.flush()
+
+    result = await admin_confirm_booking(db_session, 1)
+
+    assert result.status == "confirmed"
+    booking_row = (
+        await db_session.execute(select(Booking).where(Booking.id == 1))
+    ).scalar_one()
+    assert booking_row.date == today

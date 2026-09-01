@@ -1195,7 +1195,8 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
 async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
     """确认待确认订单，根据当前时间变更为“待开始”或“进行中”。
 
-    对于1V1定制课时，确认时才创建排课记录（course_schedules + lesson_schedules）。
+    对于1V1定制课时，确认时才创建排课记录（course_schedules + lesson_schedules），
+    并以已预约的第一课时日期作为预约日期和课程开课日期。
     """
     result = await db.execute(select(Booking).where(Booking.id == booking_id))
     booking = result.scalar_one_or_none()
@@ -1206,16 +1207,18 @@ async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdm
     if booking.status != "pending_confirm":
         raise BookingError("该预约不是待确认状态")
 
-    # 根据当前日期与预约日期（booking.date，对应 course_schedules.start_date）判断：
-    #   当前日期 >= 预约日期 → “进行中”(confirmed)
-    #   当前日期 < 预约日期  → “待开始”(pending)
     today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
-    booking_date = booking.date or today
-    booking.status = "confirmed" if booking_date <= today else "pending"
 
-    # 1V1定制课时：确认时才创建排课记录（course_schedules + lesson_schedules）
+    # 1V1定制课时：确认时先创建排课记录（course_schedules + lesson_schedules），
+    # 并把第一课时日期回写为预约日期（booking.date）与开课日期（course_schedules.start_date）
     if booking.booking_type == "course" and getattr(booking, "schedule_type", None) == "custom":
         await _create_custom_schedule_on_confirm(db, booking)
+
+    # 根据当前日期与开课日期（booking.date）判断：
+    #   当前日期 >= 开课日期 → “进行中”(confirmed)
+    #   当前日期 < 开课日期  → “待开始”(pending)
+    booking_date = booking.date or today
+    booking.status = "confirmed" if booking_date <= today else "pending"
 
     await db.flush()
 
@@ -1227,9 +1230,12 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
     """管理员确认1V1定制订单时，创建定制排课记录和课时记录。
 
     排课数据来源：
-    - start_date ← booking.date
+    - start_date ← 第一课时日期（按取模循环分配算法计算，初始基准为 booking.date）
     - time_slots ← booking.time_slots（无则从 start_time/end_time 重建）
     - teacher_id ← booking.teacher_id
+
+    创建完成后把第一课时日期回写为预约日期（booking.date）与开课日期
+    （course_schedules.start_date），供确认状态判断与订单列表展示使用。
     """
     import json
 
@@ -1284,6 +1290,7 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
     else:
         all_slots = []
 
+    first_lesson_date = None
     last_lesson_date = None
     for idx, lesson_id in enumerate(lesson_ids):
         if idx < len(all_slots):
@@ -1293,6 +1300,8 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
         else:
             slot_date = lesson_date
             slot_time = slots[0]["time_slot"] if slots else ""
+        if first_lesson_date is None:
+            first_lesson_date = slot_date
         last_lesson_date = slot_date
         lesson_schedule = LessonSchedule(
             schedule_id=custom_schedule.id,
@@ -1302,6 +1311,11 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
             sort_order=idx,
         )
         db.add(lesson_schedule)
+
+    if first_lesson_date is not None:
+        # 第一课时日期作为预约日期和课程开课日期（与固定班课口径一致）
+        custom_schedule.start_date = first_lesson_date
+        booking.date = first_lesson_date
 
     if last_lesson_date is not None:
         custom_schedule.end_date = last_lesson_date + timedelta(days=1)

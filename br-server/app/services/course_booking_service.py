@@ -177,27 +177,35 @@ class CourseBookingService:
         booking_type: str,
         lesson_ids: list[int],
         total_lessons: int,
+        selected_count: int | None = None,
     ) -> dict:
         """价格计算。
 
         从排课表获取价格信息：
         - fixed: len(lesson_ids) × schedule.price
         - custom: len(lesson_ids) × schedule.custom_price
-        - full_package: 当 len(lesson_ids) == total_lessons 且 schedule.full_package_price 存在
+        - 全套优惠: 选择课时数（含免费试听课时）== total_lessons 且对应全套价存在时，
+          fixed 用 schedule.full_package_price，custom 用 schedule.full_custom_price
 
         返回 {original_price, discount_amount, unit_price, total_price}
         """
         lesson_count = len(lesson_ids)
+        # 用户选择的课时总数（含免费试听课时），用于判断是否选择全套；
+        # lesson_ids 为计费课时（已排除试听），含试听时两者不一致
+
+        total_selected = selected_count if selected_count is not None else lesson_count
 
         # 从排课表获取价格（支持 dict 和 ORM 对象两种形式）
         if isinstance(schedule, dict):
             price_val = schedule.get("price")
             custom_price_val = schedule.get("custom_price")
             full_package_price_val = schedule.get("full_package_price")
+            full_custom_price_val = schedule.get("full_custom_price")
         else:
             price_val = schedule.price if schedule else None
             custom_price_val = schedule.custom_price if schedule else None
-            full_package_price_val = schedule.full_package_price if schedule and schedule.full_package_price is not None else None
+            full_package_price_val = schedule.full_package_price if schedule else None
+            full_custom_price_val = schedule.full_custom_price if schedule else None
 
         price = Decimal(str(price_val)) if price_val else Decimal("0")
         custom_price = Decimal(str(custom_price_val)) if custom_price_val else Decimal("0")
@@ -206,29 +214,44 @@ class CourseBookingService:
             if full_package_price_val is not None
             else None
         )
+        full_custom_price = (
+            Decimal(str(full_custom_price_val))
+            if full_custom_price_val is not None
+            else None
+        )
 
-        # 检查是否满足全包条件
+        # 全套价与基准单价按预约类型区分：定制用定制价，固定班课用班课价
+        if booking_type == "custom":
+            unit_price_base = custom_price
+            full_price = full_custom_price
+        else:
+            unit_price_base = price
+            full_price = full_package_price
+
+        # 检查是否满足全包条件（选择全部课时 + 对应全套价存在）
         if (
-            lesson_count == total_lessons
-            and full_package_price is not None
-            and full_package_price > Decimal("0")
+            total_selected == total_lessons
+            and full_price is not None
+            and full_price > Decimal("0")
         ):
-            standard_total = price * lesson_count
-            original_price = full_package_price
-            discount_amount = standard_total - full_package_price
+            standard_total = unit_price_base * lesson_count
+            original_price = standard_total
+            discount_amount = standard_total - full_price
             if discount_amount < Decimal("0"):
                 discount_amount = Decimal("0")
-            unit_price = full_package_price / lesson_count if lesson_count > 0 else Decimal("0")
+            unit_price = full_price / lesson_count if lesson_count > 0 else Decimal("0")
+            total_price = full_price
         elif booking_type == "fixed":
             unit_price = price
             original_price = unit_price * lesson_count
             discount_amount = Decimal("0")
+            total_price = original_price
         else:  # custom
             unit_price = custom_price
             original_price = unit_price * lesson_count
             discount_amount = Decimal("0")
+            total_price = original_price
 
-        total_price = original_price - discount_amount
         if total_price < Decimal("0"):
             total_price = Decimal("0")
 
@@ -353,7 +376,8 @@ class CourseBookingService:
             }
         else:
             price_info = self.calculate_price(
-                course, schedule, data.booking_type, paid_lesson_ids, total_lessons
+                course, schedule, data.booking_type, paid_lesson_ids, total_lessons,
+                selected_count=len(data.lesson_ids),
             )
         original_price = price_info["original_price"]
         discount_amount = price_info["discount_amount"]

@@ -40,6 +40,21 @@ def _make_course(
     return course
 
 
+def _make_schedule(
+    price=80.0,
+    custom_price=0.0,
+    full_package_price=None,
+    full_custom_price=None,
+) -> dict:
+    """构造排课价格 dict（与 get_course_with_lessons 返回结构一致）。"""
+    return {
+        "price": price,
+        "custom_price": custom_price,
+        "full_package_price": full_package_price,
+        "full_custom_price": full_custom_price,
+    }
+
+
 def _make_lesson(lesson_id: int, course_id: int = 1, title: str = "课时") -> CourseLesson:
     lesson = MagicMock(spec=CourseLesson)
     lesson.id = lesson_id
@@ -58,7 +73,8 @@ class TestCourseBookingPricing:
         """固定班课：3 课时 × ¥80 = ¥240。"""
         course = _make_course(price=80.0)
         result = self.service.calculate_price(
-            course, booking_type="fixed", lesson_ids=[1, 2, 3], total_lessons=12,
+            course, _make_schedule(price=80.0), booking_type="fixed",
+            lesson_ids=[1, 2, 3], total_lessons=12,
         )
         assert result["original_price"] == Decimal("240.00")
         assert result["discount_amount"] == Decimal("0.00")
@@ -69,7 +85,8 @@ class TestCourseBookingPricing:
         """1V1 定制：2 课时 × ¥200 = ¥400。"""
         course = _make_course(price=80.0, custom_price=200.0)
         result = self.service.calculate_price(
-            course, booking_type="custom", lesson_ids=[1, 2], total_lessons=12,
+            course, _make_schedule(price=80.0, custom_price=200.0),
+            booking_type="custom", lesson_ids=[1, 2], total_lessons=12,
         )
         assert result["original_price"] == Decimal("400.00")
         assert result["discount_amount"] == Decimal("0.00")
@@ -78,15 +95,16 @@ class TestCourseBookingPricing:
 
     def test_full_package_pricing(self):
         """全套优惠：12 课时，price=80, full_package_price=860
-        → original_price=860, discount_amount=100。"""
+        → original_price=960（标准价）, discount_amount=100, total=860。"""
         course = _make_course(price=80.0, full_package_price=860.0)
         lesson_ids = list(range(1, 13))  # 12 lessons
         result = self.service.calculate_price(
-            course, booking_type="fixed", lesson_ids=lesson_ids, total_lessons=12,
+            course, _make_schedule(price=80.0, full_package_price=860.0),
+            booking_type="fixed", lesson_ids=lesson_ids, total_lessons=12,
         )
-        assert result["original_price"] == Decimal("860.00")
+        assert result["original_price"] == Decimal("960.00")
         assert result["discount_amount"] == Decimal("100.00")  # 12*80 - 860 = 100
-        assert result["total_price"] == Decimal("760.00")
+        assert result["total_price"] == Decimal("860.00")
 
     def test_partial_selection_no_full_package(self):
         """部分选择不触发全套优惠：10/12 课时
@@ -94,7 +112,9 @@ class TestCourseBookingPricing:
         course = _make_course(price=80.0, full_package_price=860.0)
         lesson_ids = list(range(1, 11))  # 10 of 12
         result = self.service.calculate_price(
-            course, booking_type="fixed", lesson_ids=lesson_ids, total_lessons=12,
+            course, _make_schedule(price=80.0, full_package_price=860.0),
+            booking_type="fixed", lesson_ids=lesson_ids, total_lessons=12,
+            selected_count=10,
         )
         assert result["original_price"] == Decimal("800.00")
         assert result["discount_amount"] == Decimal("0.00")
@@ -105,7 +125,8 @@ class TestCourseBookingPricing:
         course = _make_course(price=80.0, full_package_price=None)
         lesson_ids = list(range(1, 13))
         result = self.service.calculate_price(
-            course, booking_type="fixed", lesson_ids=lesson_ids, total_lessons=12,
+            course, _make_schedule(price=80.0, full_package_price=None),
+            booking_type="fixed", lesson_ids=lesson_ids, total_lessons=12,
         )
         assert result["original_price"] == Decimal("960.00")
         assert result["discount_amount"] == Decimal("0.00")
@@ -116,9 +137,10 @@ class TestCourseBookingPricing:
         course = _make_course(price=80.0, full_package_price=1000.0)
         lesson_ids = list(range(1, 13))
         result = self.service.calculate_price(
-            course, booking_type="fixed", lesson_ids=lesson_ids, total_lessons=12,
+            course, _make_schedule(price=80.0, full_package_price=1000.0),
+            booking_type="fixed", lesson_ids=lesson_ids, total_lessons=12,
         )
-        assert result["original_price"] == Decimal("1000.00")
+        assert result["original_price"] == Decimal("960.00")
         assert result["discount_amount"] == Decimal("0.00")
         assert result["total_price"] == Decimal("1000.00")
 
@@ -126,10 +148,57 @@ class TestCourseBookingPricing:
         """单课时固定班课。"""
         course = _make_course(price=80.0)
         result = self.service.calculate_price(
-            course, booking_type="fixed", lesson_ids=[1], total_lessons=12,
+            course, _make_schedule(price=80.0), booking_type="fixed",
+            lesson_ids=[1], total_lessons=12,
         )
         assert result["original_price"] == Decimal("80.00")
         assert result["total_price"] == Decimal("80.00")
+
+    def test_custom_full_package_uses_full_custom_price(self):
+        """1V1 定制全套用 full_custom_price（而非 full_package_price），
+        基准单价用 custom_price。"""
+        course = _make_course(price=80.0, custom_price=120.0)
+        lesson_ids = list(range(1, 13))  # 12 计费课时
+        result = self.service.calculate_price(
+            course,
+            _make_schedule(price=80.0, custom_price=120.0,
+                           full_package_price=720.0, full_custom_price=1200.0),
+            booking_type="custom", lesson_ids=lesson_ids, total_lessons=12,
+            selected_count=12,
+        )
+        assert result["original_price"] == Decimal("1440.00")  # 12*120
+        assert result["discount_amount"] == Decimal("240.00")  # 1440 - 1200
+        assert result["total_price"] == Decimal("1200.00")
+
+    def test_fixed_full_package_with_free_preview_lesson(self):
+        """固定班课全套含免费试听课时：选择全部 12 课时（含 1 节试听），
+        计费课时 11，仍应触发全套优惠（回归订单 94 场景）。"""
+        course = _make_course(price=55.0, full_package_price=500.0)
+        lesson_ids = list(range(1, 12))  # 11 计费课时
+        result = self.service.calculate_price(
+            course, _make_schedule(price=55.0, full_package_price=500.0),
+            booking_type="fixed", lesson_ids=lesson_ids, total_lessons=12,
+            selected_count=12,
+        )
+        assert result["original_price"] == Decimal("605.00")  # 11*55
+        assert result["discount_amount"] == Decimal("105.00")  # 605 - 500
+        assert result["total_price"] == Decimal("500.00")
+
+    def test_custom_full_package_with_free_preview_lesson(self):
+        """1V1 定制全套含免费试听课时：选择全部 12 课时（含 1 节试听），
+        计费课时 11，应触发定制全套优惠（回归订单 93 场景）。"""
+        course = _make_course(price=80.0, custom_price=120.0)
+        lesson_ids = list(range(1, 12))  # 11 计费课时
+        result = self.service.calculate_price(
+            course,
+            _make_schedule(price=80.0, custom_price=120.0,
+                           full_package_price=720.0, full_custom_price=1200.0),
+            booking_type="custom", lesson_ids=lesson_ids, total_lessons=12,
+            selected_count=12,
+        )
+        assert result["original_price"] == Decimal("1320.00")  # 11*120
+        assert result["discount_amount"] == Decimal("120.00")  # 1320 - 1200
+        assert result["total_price"] == Decimal("1200.00")
 
 
 # SQLite 不支持 PostgreSQL ARRAY 类型，DB 测试需要真实 PG 环境

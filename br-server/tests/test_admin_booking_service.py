@@ -594,6 +594,45 @@ async def test_admin_cancel_course_pending_booking_keeps_shared_schedule(
 
 
 @pytest.mark.asyncio
+async def test_admin_cancel_course_pending_booking_keeps_fixed_schedule(
+    db_session: AsyncSession,
+):
+    """固定班课（schedule_type=fixed）订单取消时不得删除 fixed 排课与课时记录。"""
+    _make_room(db_session, 1)
+    _make_user(db_session)
+    course, schedule = _make_course_data(db_session)
+    schedule.schedule_type = "fixed"
+    booking = _make_course_booking(db_session, 1)
+    booking.schedule_type = "fixed"
+    booking.time_slots = None
+    booking.teacher_id = None
+    await db_session.flush()
+
+    result = await admin_cancel_booking(db_session, 1)
+
+    assert result.status == "cancelled"
+    assert result.refund_amount == Decimal("20.00")
+    # fixed 排课与课时记录必须保留，仅清空订单外键引用
+    kept_schedule = (
+        await db_session.execute(select(CourseSchedule).where(CourseSchedule.id == 1))
+    ).scalar_one_or_none()
+    assert kept_schedule is not None
+    assert kept_schedule.schedule_type == "fixed"
+    assert len(
+        (
+            await db_session.execute(
+                select(LessonSchedule).where(LessonSchedule.schedule_id == 1)
+            )
+        ).scalars().all()
+    ) == 1
+    booking_row = (
+        await db_session.execute(select(Booking).where(Booking.id == 1))
+    ).scalar_one()
+    # 非 custom 排课不做任何清理，订单引用保持不变（与共享排课早退行为一致）
+    assert booking_row.schedule_id == 1
+
+
+@pytest.mark.asyncio
 async def test_admin_list_bookings_includes_booking_type_fields(db_session: AsyncSession):
     _make_room(db_session, 1)
     _make_user(db_session)

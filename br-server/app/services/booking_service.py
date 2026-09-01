@@ -1083,11 +1083,20 @@ async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminDe
 async def _cleanup_course_booking_schedule(db: AsyncSession, schedule_id: int | None) -> None:
     """删除订单专属排课记录及其课时记录。
 
-    仅当不存在其他非取消订单引用该排课时才删除（共享的固定班课排课保留）；
+    仅删除定制排课（schedule_type='custom'）；固定班课（'fixed'）排课为课程共享资源，
+    即使无其他订单引用也一律保留。同时仅当不存在其他非取消订单引用该排课时才删除；
     删除前先清空 bookings.schedule_id 外键引用，避免 FK 约束报错。
     使用显式 SQL 删除，不触发 ORM relationship 懒加载。
     """
     if schedule_id is None:
+        return
+
+    schedule_type = (
+        await db.execute(
+            select(CourseSchedule.schedule_type).where(CourseSchedule.id == schedule_id)
+        )
+    ).scalar_one_or_none()
+    if schedule_type is None or schedule_type != "custom":
         return
 
     other_refs = (
@@ -1111,7 +1120,7 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
     """Cancel any booking with the same refund settlement as user cancellation.
 
     待开始订单（pending_confirm / 课程预约 pending）：已支付全额退款不扣手续费，
-    课程预约额外删除订单专属的排课与课时记录。
+    课程预约额外删除订单专属的定制排课（custom）与课时记录，固定班课排课保留。
     """
     result = await db.execute(select(Booking).where(Booking.id == booking_id))
     booking = result.scalar_one_or_none()
@@ -1168,7 +1177,7 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
             db.add(wallet_transaction)
         await db.flush()
 
-        # 课程预约：删除订单专属的排课与课时记录（共享排课保留）
+        # 课程预约：删除订单专属的定制排课与课时记录（固定班课/共享排课保留）
         if is_course_pending_start:
             await _cleanup_course_booking_schedule(db, schedule_id)
 

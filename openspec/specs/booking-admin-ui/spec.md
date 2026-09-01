@@ -59,7 +59,7 @@ br-admin 列表页 SHALL 仅对**课程预约类型**（`booking_type='course'`�
 
 #### Scenario: Cancel pending course booking
 - **WHEN** 管理员点击课程预约"待开始"订单的取消按钮并确认
-- **THEN** 调用取消接口，订单状态变为"已取消"，全额退款并删除订单专属排课记录，列表刷新，显示成功提示
+- **THEN** 调用取消接口，订单状态变为"已取消"，全额退款并删除订单专属的定制（custom）排课记录，固定班课（fixed）排课保留，列表刷新，显示成功提示
 
 #### Scenario: Seat booking has no cancel button
 - **WHEN** 订单为自习室预约类型（任意状态）

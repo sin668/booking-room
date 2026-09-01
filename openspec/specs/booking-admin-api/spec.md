@@ -47,7 +47,7 @@
 - **THEN** 返回 HTTP 404
 
 ### Requirement: Cancel booking admin API
-系统 SHALL 提供 `POST /api/v1/admin/bookings/{booking_id}/cancel` 接口，允许管理员取消任意用户的订单。`confirmed` 状态订单按通用取消策略取消；`pending_confirm` 已支付订单全额退款取消；课程预约（`booking_type='course'`）且状态为 `pending`/`pending_confirm` 的订单，已支付时全额退款、恢复优惠券、写退款流水，并删除该订单专属的 `course_schedules` 与 `lesson_schedules` 记录（排课仍被其他非取消订单共享时保留排课）。
+系统 SHALL 提供 `POST /api/v1/admin/bookings/{booking_id}/cancel` 接口，允许管理员取消任意用户的订单。`confirmed` 状态订单按通用取消策略取消；`pending_confirm` 已支付订单全额退款取消；课程预约（`booking_type='course'`）且状态为 `pending`/`pending_confirm` 的订单，已支付时全额退款、恢复优惠券、写退款流水，并仅删除该订单专属的 `schedule_type='custom'`（定制）的 `course_schedules` 与对应 `lesson_schedules` 记录；`schedule_type='fixed'`（固定班课）排课为课程共享资源，即使无其他订单引用也一律保留；排课仍被其他非取消订单共享时同样保留。
 
 #### Scenario: Successful cancellation
 - **WHEN** 管理员发送 `POST /api/v1/admin/bookings/1/cancel`，该订单状态为 "confirmed"
@@ -60,6 +60,10 @@
 #### Scenario: Cancel pending course booking with shared schedule
 - **WHEN** 管理员取消的课程订单关联的排课仍被其他非取消订单引用
 - **THEN** 订单状态变为 "cancelled" 并全额退款，但排课与课时记录保留
+
+#### Scenario: Cancel pending fixed course booking keeps fixed schedule
+- **WHEN** 管理员取消的课程订单关联的排课 `schedule_type` 为 "fixed"，且无其他订单引用
+- **THEN** 订单状态变为 "cancelled" 并全额退款，但 `course_schedules` 与 `lesson_schedules` 记录保留不删除
 
 #### Scenario: Cancel already cancelled booking
 - **WHEN** 管理员发送 `POST /api/v1/admin/bookings/1/cancel`，该订单状态已为 "cancelled"

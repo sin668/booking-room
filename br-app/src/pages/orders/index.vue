@@ -454,8 +454,8 @@ export default {
       ) {
         return 'pending_start'
       }
-      // 课程预约：已确认且已开课 → 进行中
-      if (order.status === 'confirmed' && order.booking_type === 'course' && order.started === true) {
+      // 课程预约：已确认即已开课 → 进行中（后端仅当开课日期到达才会置为 confirmed）
+      if (order.status === 'confirmed' && order.booking_type === 'course') {
         return 'in_progress'
       }
       // 座位预约：已确认且时段已开始 → 进行中

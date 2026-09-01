@@ -3,7 +3,7 @@ import uuid
 from datetime import date, time
 from decimal import Decimal
 
-from sqlalchemy import and_, extract, func, select
+from sqlalchemy import and_, extract, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
@@ -168,90 +168,103 @@ async def get_monthly_summary(
     year = month.year
     month_num = month.month
 
-    month_condition = and_(
+    # 1. Seat bookings: filter by Booking.date (creation date = usage date for seats)
+    seat_condition = and_(
         Booking.user_id == str(user_id),
-        Booking.status.in_(["completed", "confirmed"]),  # Only studied records
+        Booking.status.in_(["completed", "confirmed"]),
+        Booking.booking_type != "course",
         extract("year", Booking.date) == year,
         extract("month", Booking.date) == month_num,
     )
+    seat_result = await db.execute(select(Booking).where(seat_condition))
+    seat_bookings = seat_result.scalars().all()
 
-    result = await db.execute(select(Booking).where(month_condition))
-    month_bookings = result.scalars().all()
+    # 2. Course bookings: get ALL studied course bookings, then filter by lesson_date in Python
+    course_condition = and_(
+        Booking.user_id == str(user_id),
+        Booking.status.in_(["completed", "confirmed"]),
+        Booking.booking_type == "course",
+    )
+    course_result = await db.execute(select(Booking).where(course_condition))
+    course_bookings = course_result.scalars().all()
 
-    # Studied stats: need to expand course bookings into lessons
+    # Studied stats
     monthly_hours = 0.0
     monthly_bookings = 0
     studied_dates: list[date] = []
 
-    for b in month_bookings:
-        if getattr(b, "booking_type", None) == "course" and b.lesson_ids:
-            # Course booking: expand into individual lessons
-            lesson_schedule_result = await db.execute(
-                select(LessonSchedule).where(
-                    LessonSchedule.schedule_id == b.course_id,
-                    LessonSchedule.lesson_id.in_(b.lesson_ids),
-                )
+    # Seat bookings: use booking date/time directly
+    for b in seat_bookings:
+        hours = _calculate_hours(b.start_time, b.end_time)
+        monthly_hours += hours
+        monthly_bookings += 1
+        studied_dates.append(b.date)
+
+    # Course bookings: expand into lessons, filter by target month
+    for b in course_bookings:
+        if not b.lesson_ids or not b.schedule_id:
+            continue
+        lesson_schedule_result = await db.execute(
+            select(LessonSchedule).where(
+                LessonSchedule.schedule_id == b.schedule_id,
+                LessonSchedule.lesson_id.in_(b.lesson_ids),
             )
-            lesson_schedules = lesson_schedule_result.scalars().all()
+        )
+        lesson_schedules = lesson_schedule_result.scalars().all()
 
-            for ls in lesson_schedules:
-                # Only count completed lessons (lesson_date < today)
-                if _is_lesson_completed(ls.lesson_date):
-                    monthly_bookings += 1
-                    studied_dates.append(ls.lesson_date)
-                    # Calculate hours from time slot
-                    parts = ls.lesson_time_slot.split("-") if ls.lesson_time_slot else []
-                    try:
-                        st = time.fromisoformat(parts[0].strip()) if len(parts) >= 1 else b.start_time
-                        et = time.fromisoformat(parts[1].strip()) if len(parts) >= 2 else b.end_time
-                    except (ValueError, IndexError):
-                        st = b.start_time
-                        et = b.end_time
-                    hours = _calculate_hours(st, et)
-                    monthly_hours += hours
-        else:
-            # Seat booking: use booking's date/time directly
-            hours = _calculate_hours(b.start_time, b.end_time)
-            monthly_hours += hours
+        for ls in lesson_schedules:
+            # Only count completed lessons in the target month
+            if not _is_lesson_completed(ls.lesson_date):
+                continue
+            if ls.lesson_date.year != year or ls.lesson_date.month != month_num:
+                continue
             monthly_bookings += 1
-            studied_dates.append(b.date)
+            studied_dates.append(ls.lesson_date)
+            parts = ls.lesson_time_slot.split("-") if ls.lesson_time_slot else []
+            try:
+                st = time.fromisoformat(parts[0].strip()) if len(parts) >= 1 else b.start_time
+                et = time.fromisoformat(parts[1].strip()) if len(parts) >= 2 else b.end_time
+            except (ValueError, IndexError):
+                st = b.start_time
+                et = b.end_time
+            monthly_hours += _calculate_hours(st, et)
 
-    # No upcoming bookings to track
+    # Total hours (all-time studied, excluding future lessons)
+    total_hours = 0.0
 
-    # Total hours (all-time studied: completed + confirmed, excluding future lessons)
-    total_result = await db.execute(
+    # Seat bookings: all-time
+    all_seat_result = await db.execute(
         select(Booking).where(
             and_(
                 Booking.user_id == str(user_id),
                 Booking.status.in_(["completed", "confirmed"]),
+                Booking.booking_type != "course",
             )
         )
     )
-    all_bookings = total_result.scalars().all()
-    total_hours = 0.0
-    for b in all_bookings:
-        if getattr(b, "booking_type", None) == "course" and b.lesson_ids:
-            # Course booking: expand into lessons
-            lesson_schedule_result = await db.execute(
-                select(LessonSchedule).where(
-                    LessonSchedule.schedule_id == b.course_id,
-                    LessonSchedule.lesson_id.in_(b.lesson_ids),
-                )
+    for b in all_seat_result.scalars().all():
+        total_hours += _calculate_hours(b.start_time, b.end_time)
+
+    # Course bookings: all-time completed lessons
+    for b in course_bookings:
+        if not b.lesson_ids or not b.schedule_id:
+            continue
+        lesson_schedule_result = await db.execute(
+            select(LessonSchedule).where(
+                LessonSchedule.schedule_id == b.schedule_id,
+                LessonSchedule.lesson_id.in_(b.lesson_ids),
             )
-            lesson_schedules = lesson_schedule_result.scalars().all()
-            for ls in lesson_schedules:
-                if _is_lesson_completed(ls.lesson_date):
-                    parts = ls.lesson_time_slot.split("-") if ls.lesson_time_slot else []
-                    try:
-                        st = time.fromisoformat(parts[0].strip()) if len(parts) >= 1 else b.start_time
-                        et = time.fromisoformat(parts[1].strip()) if len(parts) >= 2 else b.end_time
-                    except (ValueError, IndexError):
-                        st = b.start_time
-                        et = b.end_time
-                    total_hours += _calculate_hours(st, et)
-        else:
-            # Seat booking
-            total_hours += _calculate_hours(b.start_time, b.end_time)
+        )
+        for ls in lesson_schedule_result.scalars().all():
+            if _is_lesson_completed(ls.lesson_date):
+                parts = ls.lesson_time_slot.split("-") if ls.lesson_time_slot else []
+                try:
+                    st = time.fromisoformat(parts[0].strip()) if len(parts) >= 1 else b.start_time
+                    et = time.fromisoformat(parts[1].strip()) if len(parts) >= 2 else b.end_time
+                except (ValueError, IndexError):
+                    st = b.start_time
+                    et = b.end_time
+                total_hours += _calculate_hours(st, et)
 
     _, days_in_month = calendar.monthrange(year, month_num)
     studied_set = set(studied_dates)
@@ -289,42 +302,27 @@ async def list_study_records(
     await _sync_user_booking_completions(db, user_id)
 
     page_size = min(page_size, MAX_PAGE_SIZE)
-    offset = (page - 1) * page_size
 
-    conditions = [
+    # Fetch ALL studied bookings (no month filter at SQL level)
+    # because course booking's Booking.date != lesson dates
+    base_conditions = [
         Booking.user_id == str(user_id),
-        Booking.status.in_(["completed", "confirmed"]),  # Only studied records
+        Booking.status.in_(["completed", "confirmed"]),
     ]
-    if month is not None:
-        conditions.append(extract("year", Booking.date) == month.year)
-        conditions.append(extract("month", Booking.date) == month.month)
-
-    # Status filter removed: only show studied (completed+confirmed) records
-
-    where_clause = and_(*conditions)
-
-    count_result = await db.execute(
-        select(func.count()).select_from(Booking).where(where_clause)
-    )
-    total = count_result.scalar_one()
-
-    # Sort: studied by date desc, upcoming by date asc
-    order_clause = Booking.date.desc() if status != "upcoming" else Booking.date.asc()
+    base_where = and_(*base_conditions)
 
     result = await db.execute(
         select(Booking)
-        .where(where_clause)
-        .order_by(order_clause, Booking.start_time.desc())
-        .offset(offset)
-        .limit(page_size)
+        .where(base_where)
+        .order_by(Booking.date.desc(), Booking.start_time.desc())
     )
-    bookings = result.scalars().all()
+    all_bookings = result.scalars().all()
 
     # Build maps for seat/room/course lookups
-    seat_ids = {b.seat_id for b in bookings if b.seat_id}
-    room_ids = {b.room_id for b in bookings}
+    seat_ids = {b.seat_id for b in all_bookings if b.seat_id}
+    room_ids = {b.room_id for b in all_bookings}
     course_ids = {
-        b.course_id for b in bookings
+        b.course_id for b in all_bookings
         if getattr(b, "booking_type", None) == "course" and b.course_id
     }
 
@@ -348,7 +346,7 @@ async def list_study_records(
     lesson_map: dict[int, CourseLesson] = {}
 
     course_bookings = [
-        b for b in bookings
+        b for b in all_bookings
         if getattr(b, "booking_type", None) == "course" and b.lesson_ids
     ]
     if course_bookings:
@@ -360,7 +358,6 @@ async def list_study_records(
             all_lesson_ids.update(lids)
 
         if all_lesson_ids:
-            # Query lesson_schedules
             ls_result = await db.execute(
                 select(LessonSchedule)
                 .where(LessonSchedule.lesson_id.in_(all_lesson_ids))
@@ -368,27 +365,24 @@ async def list_study_records(
             )
             all_ls = ls_result.scalars().all()
 
-            # Build lesson_id -> lesson_schedule mapping
             ls_by_lesson_id: dict[int, LessonSchedule] = {}
             for ls in all_ls:
                 ls_by_lesson_id[ls.lesson_id] = ls
 
-            # Group by booking_id
             for bid, lids in booking_lesson_ids.items():
                 booking_ls = [ls_by_lesson_id[lid] for lid in lids if lid in ls_by_lesson_id]
                 booking_ls.sort(key=lambda x: (x.lesson_date, x.sort_order))
                 if booking_ls:
                     lesson_schedule_map[bid] = booking_ls
 
-            # Query lesson titles and durations
             lessons_result = await db.execute(
                 select(CourseLesson).where(CourseLesson.id.in_(all_lesson_ids))
             )
             lesson_map = {l.id: l for l in lessons_result.scalars().all()}
 
-    # Build record items
-    items: list[StudyRecordItem] = []
-    for b in bookings:
+    # Build record items (all, before month filter)
+    all_items: list[StudyRecordItem] = []
+    for b in all_bookings:
         record_status = "completed" if _is_studied(b.status) else "upcoming"
         booking_type = getattr(b, "booking_type", None) or "seat"
 
@@ -398,16 +392,27 @@ async def list_study_records(
             course_items = _build_course_lesson_records(
                 b, course_name, ls_list, lesson_map, record_status
             )
-            items.extend(course_items)
+            all_items.extend(course_items)
         else:
             seat = seat_map.get(b.seat_id)
             room = room_map.get(b.room_id)
             if seat is None or room is None:
                 continue
-            items.append(_build_seat_record(b, seat, room, record_status))
+            all_items.append(_build_seat_record(b, seat, room, record_status))
 
-    # Sort all records by date desc (most recent first), then by start_time desc
-    items.sort(key=lambda x: (x.date, x.start_time), reverse=True)
+    # Sort all records by date desc, then start_time desc
+    all_items.sort(key=lambda x: (x.date, x.start_time), reverse=True)
+
+    # Apply month filter in Python (based on record's actual date)
+    if month is not None:
+        all_items = [
+            item for item in all_items
+            if item.date.year == month.year and item.date.month == month.month
+        ]
+
+    total = len(all_items)
+    offset = (page - 1) * page_size
+    items = all_items[offset:offset + page_size]
 
     return StudyRecordListResponse(
         items=items,

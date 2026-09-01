@@ -559,6 +559,10 @@ async def list_bookings(
             resp.lesson_titles = lesson_map.get(b.id)
             resp.schedule = course_schedule_map.get(b.course_id) if b.course_id else None
             start_d = course_start_date_map.get(b.course_id) if b.course_id else None
+            # 1V1 定制订单的开课日期取用户预约时选择的日期（bookings.date），
+            # 避免同一课程下固定班课排课的开课日期混淆定制订单展示
+            if getattr(b, "schedule_type", None) == "custom" and getattr(b, "date", None):
+                start_d = b.date
             resp.start_date = start_d.isoformat() if start_d else None
             end_d = course_end_date_map.get(b.course_id) if b.course_id else None
             resp.end_date = end_d.isoformat() if end_d else None

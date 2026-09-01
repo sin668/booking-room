@@ -64,8 +64,8 @@
     "hash": "2f247e102c4e5a248797999734b81605"
   },
   "br-admin/src/api/course/index.ts": {
-    "mtime": 1788162366796.6008,
-    "hash": "75351566ceb05b8b4eb046fe96488d07"
+    "mtime": 1788168996128.394,
+    "hash": "b74677199b2c25e9e1d7b28aebc6b66a"
   },
   "br-admin/src/api/dashboard/console.ts": {
     "mtime": 1776990443267.854,
@@ -1052,8 +1052,8 @@
     "hash": "19e6614300a0195631bd4df320b5056b"
   },
   "br-admin/src/views/training/courses/ScheduleModal.vue": {
-    "mtime": 1788162380620.4192,
-    "hash": "01b7e566a7442550faee738f4f8c9f5b"
+    "mtime": 1788171077820.2544,
+    "hash": "582f0fa50a1c3ef7b053ab5ddb4c5e5f"
   },
   "br-admin/src/views/training/courses/edit.vue": {
     "mtime": 1787047514575.0073,
@@ -1288,8 +1288,8 @@
     "hash": "1149d1379e8012e9633b940ad50515da"
   },
   "br-app/src/pages/orders/index.vue": {
-    "mtime": 1788151136998.177,
-    "hash": "6b1701dcf089b8149bc5cea5aa5ade1b"
+    "mtime": 1788168909910.2073,
+    "hash": "bb04727c3cbb164436b0e0afd174a022"
   },
   "br-app/src/pages/profile/index.vue": {
     "mtime": 1787822613747.8076,
@@ -1704,8 +1704,8 @@
     "hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "br-server/app/core/config.py": {
-    "mtime": 1787814029083.8984,
-    "hash": "7ef59c20d7bf7fb44e09ab44a22dc5b5"
+    "mtime": 1788171657178.9363,
+    "hash": "3ba4bbcf0a2a657ec2a4698626517694"
   },
   "br-server/app/core/database.py": {
     "mtime": 1776324762660.4163,
@@ -1736,8 +1736,8 @@
     "hash": "40e4b92d6e2de15a53ad9f558ad107b3"
   },
   "br-server/app/main.py": {
-    "mtime": 1787814044473.7815,
-    "hash": "399acb9caaa833af24ec3bb3cbde7fc3"
+    "mtime": 1788171688778.017,
+    "hash": "28711ce17da03ce38049915fa710b5be"
   },
   "br-server/app/models/__init__.py": {
     "mtime": 1787709468605.0068,
@@ -1784,8 +1784,8 @@
     "hash": "65ed60d45ef2db3523a83c7c670e62e1"
   },
   "br-server/app/models/course_schedule.py": {
-    "mtime": 1788158702246.964,
-    "hash": "3f62785440ee89377f5d0c3b8e722b14"
+    "mtime": 1788170890564.4492,
+    "hash": "52b62e7ba6bbd7cafc49932b70a104ab"
   },
   "br-server/app/models/notification.py": {
     "mtime": 1779937996282.8442,
@@ -1848,8 +1848,8 @@
     "hash": "fc0dc96031f6916e4f5b15d276003c80"
   },
   "br-server/app/schemas/admin_course.py": {
-    "mtime": 1788162366793.272,
-    "hash": "34ced07883857bf78379ab983798cc38"
+    "mtime": 1788168944863.8386,
+    "hash": "6ee9f61200ff8e1ea2790f7900377aab"
   },
   "br-server/app/schemas/admin_menu.py": {
     "mtime": 1779102594400.559,
@@ -1956,8 +1956,8 @@
     "hash": "fb71a2df9d768df1f1129aa718e47c86"
   },
   "br-server/app/services/admin_course_service.py": {
-    "mtime": 1787729043232.8826,
-    "hash": "cd021397d5dd19a1f6e743c2b4064855"
+    "mtime": 1788170952041.148,
+    "hash": "e6d5d70772a4f5578aafae1aa4bc8373"
   },
   "br-server/app/services/admin_menu_service.py": {
     "mtime": 1787104765460.2695,
@@ -2000,8 +2000,8 @@
     "hash": "8670b6e0abb031b1ed022aa732fd4818"
   },
   "br-server/app/services/booking_service.py": {
-    "mtime": 1788162351979.7178,
-    "hash": "b96af79bf43b5fd6cd325d69296f0e12"
+    "mtime": 1788170937791.8252,
+    "hash": "73b75ed1c4ecacd1c96eb1e5e531e134"
   },
   "br-server/app/services/booking_verification_service.py": {
     "mtime": 1787809709638.8726,
@@ -2020,8 +2020,8 @@
     "hash": "332fc1e9f639e958551fa41f757eae5f"
   },
   "br-server/app/services/course_booking_service.py": {
-    "mtime": 1788164593889.0422,
-    "hash": "2f5f469ccc57f4b62ae2a32558fe055c"
+    "mtime": 1788171042237.74,
+    "hash": "52ca0610ab67280699b7427feefa7599"
   },
   "br-server/app/services/jwt_service.py": {
     "mtime": 1780389451472.2483,
@@ -2064,12 +2064,12 @@
     "hash": "4823c3a2913e70075713ac7a289ff3bc"
   },
   "br-server/app/services/teacher_service.py": {
-    "mtime": 1787109923821.9468,
-    "hash": "2594c96fdf2c8dce7519a83e8351c6d8"
+    "mtime": 1788170986765.6885,
+    "hash": "93e76677d2b3fbd8d480855131fb53a1"
   },
   "br-server/app/services/training_service.py": {
-    "mtime": 1788164593890.0054,
-    "hash": "759ad516a43f4b573f2818a9621de173"
+    "mtime": 1788171030026.5476,
+    "hash": "1c596aa584a221bec03c3e6ecd56f850"
   },
   "br-server/app/services/upload_service.py": {
     "mtime": 1787121050187.993,
@@ -4064,8 +4064,8 @@
     "hash": "dbfc6eff3d6d5f9eeb049078585b23ae"
   },
   ".graphify/GRAPH_REPORT.md": {
-    "mtime": 1788164593819.7104,
-    "hash": "b80ded814e3507d48ef8054cdea84e79"
+    "mtime": 1788171222303.6055,
+    "hash": "14c37e2d0602c1cf6d2ca21b05c3b7fa"
   },
   ".graphify/studio/index.html": {
     "mtime": 1787642879172.1843,
@@ -4120,8 +4120,8 @@
     "hash": "9298dac222f783bf018f767aa3b60a3a"
   },
   "br-server/app/services/order_status_scheduler.py": {
-    "mtime": 1788137206023.0583,
-    "hash": "bceed8c0842c4d64d878bb28e5355550"
+    "mtime": 1788171656614.1697,
+    "hash": "9438be287d2a40804e3d51d726587ad6"
   },
   "br-admin/src/views/training/teachers/TeacherScheduleModal.vue": {
     "mtime": 1788139762264.279,
@@ -4136,11 +4136,19 @@
     "hash": "6fa4aec2d119a41a11bb1143cd8d763a"
   },
   ".graphify/2026-08-31/GRAPH_REPORT.md": {
-    "mtime": 1788164593757.707,
-    "hash": "2d4dc0e811276f203b303fd58184582a"
+    "mtime": 1788171222151.5186,
+    "hash": "8a0bc04e43caa35699392ee405b0de39"
   },
   "br-server/alembic/versions/2026_08_31_1100-b9c0d1e2f3a4_add_time_slots_teacher_to_bookings.py": {
     "mtime": 1788162305888.8708,
     "hash": "c933a57090763afb097ac53e34378756"
+  },
+  "br-server/alembic/versions/2026_08_31_1500-d4e5f6a7b8c9_add_schedule_status_to_course_schedules.py": {
+    "mtime": 1788170908539.1572,
+    "hash": "b6802246a7147e47dcae147bd6c6118a"
+  },
+  "br-server/app/services/schedule_status_scheduler.py": {
+    "mtime": 1788171637079.232,
+    "hash": "a0fff7e0dd4961f8ab21ccf9eeaeb8f1"
   }
 }

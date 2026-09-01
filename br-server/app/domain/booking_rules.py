@@ -37,7 +37,7 @@ def can_cancel_paid_booking(
     start_time: time,
     now: datetime,
 ) -> bool:
-    if status != "confirmed" or payment_status != "paid":
+    if status not in ("confirmed", "pending") or payment_status != "paid":
         return False
     return not has_booking_started(
         booking_date=booking_date,

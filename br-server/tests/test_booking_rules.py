@@ -37,6 +37,30 @@ def test_can_cancel_paid_booking_requires_confirmed_paid_and_not_started():
     assert result is True
 
 
+def test_can_cancel_paid_booking_allows_pending_paid_not_started():
+    result = can_cancel_paid_booking(
+        status="pending",
+        payment_status="paid",
+        booking_date=date(2026, 5, 30),
+        start_time=time(10, 0),
+        now=datetime(2026, 5, 30, 9, 0),
+    )
+
+    assert result is True
+
+
+def test_can_cancel_paid_booking_rejects_pending_paid_started():
+    result = can_cancel_paid_booking(
+        status="pending",
+        payment_status="paid",
+        booking_date=date(2026, 5, 30),
+        start_time=time(9, 0),
+        now=datetime(2026, 5, 30, 9, 0),
+    )
+
+    assert result is False
+
+
 def test_can_cancel_paid_booking_rejects_started_booking():
     result = can_cancel_paid_booking(
         status="confirmed",

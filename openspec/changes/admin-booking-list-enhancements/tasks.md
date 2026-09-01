@@ -18,4 +18,4 @@
 ## 验证与提交
 
 - [x] 10. 后端运行 `pytest tests/test_admin_booking_service.py tests/test_admin_booking_api.py -q`；前端执行构建（`pnpm build`）确认无错误
-- [ ] 11. 提交代码并推送 GitHub（main 分支），提交信息 `tweak: ...`
+- [x] 11. 提交代码并推送 GitHub（main 分支），提交信息 `tweak: ...`

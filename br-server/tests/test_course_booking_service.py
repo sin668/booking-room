@@ -1,15 +1,27 @@
 """Unit tests for CourseBookingService."""
 
 import uuid
+from datetime import datetime, timedelta
 from decimal import Decimal
 from unittest.mock import MagicMock
+from zoneinfo import ZoneInfo
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
+from app.models.lesson_schedule import LessonSchedule
+from app.models.study_room import StudyRoom
+from app.models.teacher import Teacher
+from app.models.user import User
+from app.schemas.course_booking import CourseBookingCreate
 from app.services.course_booking_service import CourseBookingService
+
+USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
 
 # SQLite 不支持 PostgreSQL ARRAY 类型（Booking.lesson_ids），
 # 需要真实 PG 数据库才能运行集成测试。
@@ -295,3 +307,80 @@ class TestCourseBookingValidation:
         assert result["course"].name == "课程X"
         assert result["total_lessons_count"] == 3
         assert len(result["lessons"]) == 3
+
+
+class TestFixedBookingStartDateAndTimeSlots:
+    """固定班课下单：预约日期/开课日期取已预约第一课时日期，时段复制排课记录。"""
+
+    async def _setup_fixed_course(self, db_session: AsyncSession, first_lesson_date):
+        """创建固定班课完整数据：教室/用户/课程/老师/排课/2 个课时及课时排课。"""
+        second_lesson_date = first_lesson_date + timedelta(days=7)
+        db_session.add(StudyRoom(id=1, name="Room", address="Addr", status="open"))
+        db_session.add(User(
+            id=USER_ID, phone="18800000001", nickname="Course User",
+            password_hash="hash", balance=Decimal("1000.00"),
+        ))
+        db_session.add(Course(id=1, room_id=1, name="固定班课", category="training", status="active"))
+        db_session.add(Teacher(id=1, name="张老师"))
+        db_session.add(CourseSchedule(
+            id=1, course_id=1, teacher_id=1,
+            start_date=first_lesson_date - timedelta(days=30),
+            time_slots='[{"weekday": 5, "time_slot": "08:00-10:00"}]',
+            price=Decimal("80.00"), schedule_type="fixed",
+        ))
+        db_session.add(CourseLesson(id=1, course_id=1, title="第1课", sort_order=1))
+        db_session.add(CourseLesson(id=2, course_id=1, title="第2课", sort_order=2))
+        db_session.add(LessonSchedule(
+            schedule_id=1, lesson_id=1, lesson_date=first_lesson_date,
+            lesson_time_slot="08:00-10:00", sort_order=0,
+        ))
+        db_session.add(LessonSchedule(
+            schedule_id=1, lesson_id=2, lesson_date=second_lesson_date,
+            lesson_time_slot="08:00-10:00", sort_order=1,
+        ))
+        await db_session.flush()
+
+    async def _create_fixed_booking(self, db_session: AsyncSession) -> Booking:
+        service = CourseBookingService()
+        result = await service.create_course_booking(
+            USER_ID,
+            CourseBookingCreate(
+                course_id=1, booking_type="fixed", lesson_ids=[1, 2],
+                schedule_type="fixed", payment_method="balance",
+            ),
+            db_session,
+        )
+        return (
+            await db_session.execute(select(Booking).where(Booking.id == result.booking_id))
+        ).scalar_one()
+
+    @pytest.mark.asyncio
+    async def test_fixed_booking_future_first_lesson_pending(self, db_session: AsyncSession):
+        """第一课时在未来 → 待开始；预约日期=第一课时日期；时段复制排课；不改排课表。"""
+        today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+        first_date = today + timedelta(days=10)
+        await self._setup_fixed_course(db_session, first_date)
+
+        booking = await self._create_fixed_booking(db_session)
+
+        assert booking.status == "pending"
+        assert booking.date == first_date
+        assert booking.time_slots == '[{"weekday": 5, "time_slot": "08:00-10:00"}]'
+        assert booking.schedule_id == 1
+        # 排课表记录不被修改（start_date 保持原值）
+        schedule = (
+            await db_session.execute(select(CourseSchedule).where(CourseSchedule.id == 1))
+        ).scalar_one()
+        assert schedule.start_date == first_date - timedelta(days=30)
+
+    @pytest.mark.asyncio
+    async def test_fixed_booking_first_lesson_today_confirmed(self, db_session: AsyncSession):
+        """第一课时日期 <= 今天 → 进行中（confirmed）。"""
+        today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+        await self._setup_fixed_course(db_session, today)
+
+        booking = await self._create_fixed_booking(db_session)
+
+        assert booking.status == "confirmed"
+        assert booking.date == today
+        assert booking.time_slots == '[{"weekday": 5, "time_slot": "08:00-10:00"}]'

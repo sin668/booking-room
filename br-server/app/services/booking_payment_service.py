@@ -21,7 +21,6 @@ from app.domain.payment_rules import (
     next_payment_check_delay,
 )
 from app.models.booking import Booking
-from app.models.course_schedule import CourseSchedule
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.models.user import User
@@ -161,8 +160,13 @@ class BookingPaymentService:
         if booking.payment_status != "pending":
             raise BookingPaymentAlreadyProcessedError("Booking payment already processed")
 
-        # 课程预约根据开课日期决定状态：已开课 → confirmed，未开课 → pending
-        paid_status = await self._determine_course_booking_status(booking)
+        # 课程预约根据开课日期决定状态：已开课 → confirmed，未开课 → pending；
+        # 定制订单保持待确认状态，开课口径在管理员确认时才回写生效，且待确认订单可取消退款，
+        # 不应被支付回调提前推进状态；座位预约直接按 _determine_course_booking_status 判断
+        if booking.status == "pending_confirm":
+            paid_status = "pending_confirm"
+        else:
+            paid_status = await self._determine_course_booking_status(booking)
         booking.status = paid_status
         booking.payment_status = "paid"
         booking.transaction_id = notify.get("transaction_id")
@@ -271,9 +275,9 @@ class BookingPaymentService:
     async def _determine_course_booking_status(self, booking: Booking) -> str:
         """课程预约根据开课日期返回状态，座位预约根据预约时段开始时间返回状态。
 
-        课程预约:
-          start_date <= 今天 → "confirmed"（进行中）
-          start_date > 今天  → "pending"（待开始）
+        课程预约（开课日期统一取第一课时日期，下单时已回写至 booking.date）:
+          booking.date <= 今天 → "confirmed"（进行中）
+          booking.date > 今天  → "pending"（待开始）
         座位预约:
           now < booking.date + booking.start_time → "pending"（待开始）
           now >= booking.date + booking.start_time → "confirmed"（进行中）
@@ -281,25 +285,9 @@ class BookingPaymentService:
         now = datetime.now(ZoneInfo("Asia/Shanghai"))
         if booking.course_id:
             today = now.date()
-            # 优先按订单关联的排课记录取开课日期，同课程多排课时避免取错；
-            # 旧订单无 schedule_id 时回退按 course_id 查最早一条
-            if getattr(booking, "schedule_id", None):
-                schedule_result = await self._db.execute(
-                    select(CourseSchedule.start_date).where(
-                        CourseSchedule.id == booking.schedule_id
-                    )
-                )
-            else:
-                schedule_result = await self._db.execute(
-                    select(CourseSchedule.start_date)
-                    .where(CourseSchedule.course_id == booking.course_id)
-                    .order_by(CourseSchedule.created_at)
-                    .limit(1)
-                )
-            start_date = schedule_result.scalar_one_or_none()
-            if start_date is None:
+            if booking.date is None:
                 return "confirmed"
-            return "confirmed" if start_date <= today else "pending"
+            return "confirmed" if booking.date <= today else "pending"
         # 座位预约：根据预约日期+时段开始时间判断
         if booking.date and booking.start_time:
             start_t = booking.start_time

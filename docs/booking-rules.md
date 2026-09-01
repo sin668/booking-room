@@ -31,14 +31,15 @@
 | `schedule_id` | 订单级排课隔离外键（→ `course_schedules.id`），同课程多订单各关联各的排课 |
 | `lesson_ids` | 订单所选课时 ID 列表 |
 | `highlighted_lesson_id` | 进行中订单当前高亮的课时（定时任务推进） |
-| `date` | 座位预约=预约日期；定制课程=用户选择的开课日期 |
+| `date` | 座位预约=预约日期；课程订单（固定/定制）=已预约第一课时日期（即开课日期，定制在管理员确认时回写） |
+| `time_slots` | 课程订单上课时段（JSON，如 `[{"weekday": 5, "time_slot": "08:00-10:00"}]`）；固定班课下单时从 `course_schedules.time_slots` 复制，定制在确认时生成；管理端按“周几 HH:MM-HH:MM”格式展示 |
 
 ### 1.4 虚拟状态（前端展示口径，不落库）
 
 | 虚拟状态 | 匹配条件 |
 |---|---|
 | 待开始 `pending_start` | `status IN ('pending','pending_confirm')` 且 `payment_status='paid'` |
-| 进行中 `in_progress` | 课程：`status='confirmed'` 且 `started=true`（开课日期 ≤ 今天）；座位：`confirmed` 且当前时间 ≥ 开始时刻 |
+| 进行中 `in_progress` | 课程：`status='confirmed'`（后端仅当开课日期到达才置 confirmed，故 confirmed 即进行中）；座位：`confirmed` 且当前时间 ≥ 开始时刻 |
 | 待确认 `pending_confirm` | `status='pending_confirm'`（1V1 定制） |
 
 ---
@@ -59,21 +60,23 @@
 1. 校验课程/课时/优惠券 → 计价 → 余额检查。
 2. 初始状态：
    - **1V1 定制（custom）**：`pending_confirm`（待确认），需管理员确认。
-   - **固定班课（fixed）**：排课 `start_date > 今天` → `pending`（待开始）；`start_date ≤ 今天` → `confirmed`（进行中）。
-3. 排课关联：固定班课下单时即写入 `booking.schedule_id`；定制订单此时 `schedule_id` 为空。
-4. 支付：余额支付立即扣款并写 `wallet_transactions`（type=`consume`）；微信支付创建预支付单，`next_payment_check_at = 1 分钟后`。
+   - **固定班课（fixed）**：开课日期统一取**已预约第一课时日期**（不修改 `course_schedules`/`lesson_schedules` 记录）：`第一课时日期 > 今天` → `pending`（待开始）；`第一课时日期 ≤ 今天` → `confirmed`（进行中）。
+3. 字段回写：固定班课下单时把第一课时日期写入 `booking.date`，并复制排课的 `time_slots` 到 `booking.time_slots`。
+4. 排课关联：固定班课下单时即写入 `booking.schedule_id`；定制订单此时 `schedule_id` 为空。
+5. 支付：余额支付立即扣款并写 `wallet_transactions`（type=`consume`）；微信支付创建预支付单，`next_payment_check_at = 1 分钟后`。
 
 ### 2.3 支付完成后的状态
 
-- **微信支付回调 / 主动查询成功**：`payment_status='paid'`；课程订单再次按开课日期判断：`start_date ≤ 今天 → confirmed`，否则 `pending`；座位订单保持原状态等待定时任务推进。
+- **微信支付回调 / 主动查询成功**：`payment_status='paid'`；课程订单按 `booking.date`（即开课日期）判断：`≤ 今天 → confirmed`，否则 `pending`；定制订单保持 `pending_confirm`（开课口径在管理员确认时才生效）；座位订单按预约时段开始时间判断。
 - **支付失败（对账确认）**：`status='cancelled'` + `payment_status='failed'`。
 
 ### 2.4 管理员确认定制订单（`admin_confirm_booking`）
 
 仅针对 `pending_confirm` 订单：
 
-1. 比较 `booking.date` 与今天：`预约日期 ≤ 今天 → confirmed`，否则 `pending`。
-2. 定制订单此时创建专属排课：`course_schedules`（`schedule_type='custom'`，`start_date=booking.date`）+ `lesson_schedules`（取模循环分配 + 周次偏移算法计算每课时日期），并回写 `booking.schedule_id`。
+1. 创建定制专属排课：`course_schedules`（`schedule_type='custom'`）+ `lesson_schedules`（取模循环分配 + 周次偏移算法计算每课时日期），并回写 `booking.schedule_id`。
+2. 把**第一课时日期**回写为 `booking.date`（预约日期）与 `course_schedules.start_date`（开课日期）。
+3. 比较开课日期与今天：`开课日期 ≤ 今天 → confirmed`，否则 `pending`。
 
 ---
 

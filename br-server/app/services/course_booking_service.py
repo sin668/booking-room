@@ -1,7 +1,7 @@
 """课程预约服务层。"""
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
@@ -412,22 +412,25 @@ class CourseBookingService:
             if Decimal(str(user.balance)) < total_price:
                 raise WalletBalanceInsufficientError("余额不足")
 
-        # 6. 根据预约类型和开课日期判断订单状态
+        # 6. 根据预约类型和开课日期判断订单状态（开课日期统一取已预约第一课时日期）
         #    1V1私人定制(custom) → pending_confirm（待确认），需管理员确认
         #    固定班课(fixed):
-        #      start_date <= 今天 → confirmed（进行中）
-        #      start_date > 今天  → pending（待开始）
+        #      第一课时日期 <= 今天 → confirmed（进行中）
+        #      第一课时日期 > 今天  → pending（待开始）
         today = datetime.now(CHINA_TIMEZONE).date()
+        first_lesson_date = None
+        if data.booking_type != "custom" and isinstance(schedule, dict):
+            # 从排课的课时列表中取已预约第一课时的日期（不修改排课表记录）
+            selected_lesson_id_set = set(data.lesson_ids)
+            for ls in schedule.get("lesson_schedules") or []:
+                if ls.get("lesson_id") in selected_lesson_id_set and ls.get("lesson_date"):
+                    first_lesson_date = date.fromisoformat(ls["lesson_date"])
+                    break
+
         if data.booking_type == "custom":
             initial_status = "pending_confirm"
         else:
-            if isinstance(schedule, dict):
-                start_date_str = schedule.get("start_date")
-                from datetime import date as date_type
-                start_date = date_type.fromisoformat(start_date_str) if start_date_str else None
-            else:
-                start_date = getattr(schedule, "start_date", None) if schedule else None
-            if start_date is not None and start_date > today:
+            if first_lesson_date is not None and first_lesson_date > today:
                 initial_status = "pending"
             else:
                 initial_status = "confirmed"
@@ -441,6 +444,22 @@ class CourseBookingService:
         booking_start_time = datetime.now(CHINA_TIMEZONE).time()
         booking_end_time = datetime.now(CHINA_TIMEZONE).time()
         booking_time_slots = None
+        if data.booking_type != "custom":
+            # 固定班课：预约日期取已预约第一课时日期（与开课日期口径一致），
+            # 时段复制排课记录的 time_slots，供管理端按"周几 HH:MM-HH:MM"格式展示；
+            # 不更新 course_schedules / lesson_schedules 表记录
+            if first_lesson_date is not None:
+                booking_date = first_lesson_date
+            if isinstance(schedule, dict):
+                raw_time_slots = schedule.get("time_slots")
+            else:
+                raw_time_slots = getattr(schedule, "time_slots", None) if schedule else None
+            if raw_time_slots:
+                if isinstance(raw_time_slots, str):
+                    booking_time_slots = raw_time_slots
+                else:
+                    import json
+                    booking_time_slots = json.dumps(raw_time_slots, ensure_ascii=False)
         if data.booking_type == "custom":
             from datetime import time as time_type
             if data.start_date:

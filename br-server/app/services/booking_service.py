@@ -466,6 +466,8 @@ async def list_bookings(
                 lesson_schedules_list = list(ls_result.scalars().all())
                 # Build course_id -> schedule_id mapping
                 schedule_id_to_course = {s.id: s.course_id for s in schedule_list}
+                # schedule_id -> (schedule_type, schedule_status)，用于按订单类型选择课时记录
+                schedule_info_map = {s.id: (s.schedule_type, s.schedule_status) for s in schedule_list}
                 # Collect lesson_ids for title lookup
                 all_lesson_ids = {ls.lesson_id for ls in lesson_schedules_list}
                 lesson_title_map: dict[int, str] = {}
@@ -481,6 +483,7 @@ async def list_bookings(
                     if cid is not None:
                         if cid not in lesson_schedule_by_course:
                             lesson_schedule_by_course[cid] = []
+                        sched_type, sched_status = schedule_info_map.get(ls.schedule_id, (None, None))
                         lesson_schedule_by_course[cid].append(
                             LessonScheduleBrief(
                                 id=ls.id,
@@ -489,15 +492,24 @@ async def list_bookings(
                                 lesson_time_slot=ls.lesson_time_slot,
                                 lesson_title=lesson_title_map.get(ls.lesson_id),
                                 sort_order=ls.sort_order,
+                                schedule_type=sched_type,
+                                schedule_status=sched_status,
                             )
                         )
                 # Store as booking_id -> filtered lesson_schedules (only lessons in booking.lesson_ids)
+                # 带上订单的 schedule_type 选择对应排课记录，并过滤仅保留进行中（in_progress）的排课课时，
+                # 避免同一课程下 fixed/custom 排课的相同 lesson_id 记录互相混入；
+                # 旧订单无 schedule_type 时不过滤类型，保持兼容。
                 for b in bookings:
                     if getattr(b, "booking_type", None) == "course" and b.course_id and b.lesson_ids:
                         all_course_ls = lesson_schedule_by_course.get(b.course_id, [])
                         booked_lesson_ids = set(b.lesson_ids)
+                        b_schedule_type = getattr(b, "schedule_type", None)
                         lesson_schedule_map[b.id] = [
-                            ls for ls in all_course_ls if ls.lesson_id in booked_lesson_ids
+                            ls for ls in all_course_ls
+                            if ls.lesson_id in booked_lesson_ids
+                            and (b_schedule_type is None or ls.schedule_type == b_schedule_type)
+                            and ls.schedule_status == "in_progress"
                         ]
 
     # 查询课时标题 + fallback：当 lesson_schedules 中间表无记录时，从 lesson_ids + lesson_titles 构建基本条目
@@ -546,6 +558,8 @@ async def list_bookings(
             resp.lesson_schedules = lesson_schedule_map.get(b.id) or []
             # highlighted_lesson_id
             resp.highlighted_lesson_id = getattr(b, "highlighted_lesson_id", None)
+            # 订单课时类型（fixed 固定班课 / custom 1V1 定制），前端据此展示"定制"标签
+            resp.schedule_type = getattr(b, "schedule_type", None)
             # 设置教师信息
             if b.course_id and b.course_id in course_teacher_map:
                 teacher_id = course_teacher_map[b.course_id]

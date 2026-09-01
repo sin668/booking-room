@@ -44,6 +44,8 @@ class LessonScheduleBrief(BaseModel):
     lesson_time_slot: str
     lesson_title: str | None = None
     sort_order: int = 0
+    schedule_type: str | None = None
+    schedule_status: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -98,6 +100,7 @@ class BookingResponse(BaseModel):
     started: bool | None = None
     lesson_schedules: list[LessonScheduleBrief] | None = None
     highlighted_lesson_id: int | None = None
+    schedule_type: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

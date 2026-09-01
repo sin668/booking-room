@@ -105,6 +105,10 @@
                 </view>
               </view>
               <text class="info-text">{{ order.teacher_name ? order.teacher_name + ' 老师' : '待分配老师' }}</text>
+              <!-- 1V1 私人定制订单标签 -->
+              <view v-if="order.schedule_type === 'custom'" class="custom-tag">
+                <text class="custom-tag-text">定制</text>
+              </view>
             </view>
             <!-- Start date row (only for pending start) -->
             <view v-if="isOrderPendingStart(order) && startDateText(order)" class="card-info-row">
@@ -907,6 +911,19 @@ export default {
   display: flex;
   align-items: center;
   margin-bottom: 14rpx;
+}
+
+/* 1V1 私人定制标签（老师行右上角） */
+.custom-tag {
+  margin-left: auto;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  background: rgba(156, 39, 176, 0.1);
+}
+
+.custom-tag-text {
+  font-size: 22rpx;
+  color: #8E24AA;
 }
 
 .info-icon {

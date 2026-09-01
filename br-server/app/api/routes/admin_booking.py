@@ -5,7 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import require_admin_permission
 from app.core.database import get_db
-from app.schemas.booking import BookingAdminListResponse, BookingAdminResponse
+from app.schemas.booking import (
+    BookingAdminDetailResponse,
+    BookingAdminListResponse,
+    BookingAdminResponse,
+)
 from app.services import booking_service
 
 router = APIRouter(prefix="/api/v1/admin/bookings", tags=["admin-bookings"])
@@ -26,8 +30,8 @@ async def list_bookings(
     )
 
 
-@router.get("/{booking_id}", response_model=BookingAdminResponse, dependencies=[Depends(require_admin_permission("booking:view"))])
-async def get_booking(booking_id: int, db: AsyncSession = Depends(get_db)) -> BookingAdminResponse:
+@router.get("/{booking_id}", response_model=BookingAdminDetailResponse, dependencies=[Depends(require_admin_permission("booking:view"))])
+async def get_booking(booking_id: int, db: AsyncSession = Depends(get_db)) -> BookingAdminDetailResponse:
     try:
         return await booking_service.admin_get_booking(db, booking_id)
     except booking_service.BookingNotFoundError:

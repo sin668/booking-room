@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta, time
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.booking_rules import (
@@ -13,6 +13,7 @@ from app.domain.booking_rules import (
     should_mark_booking_completed,
 )
 from app.models.booking import Booking
+from app.models.coupon import Coupon, UserCoupon
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
@@ -24,6 +25,14 @@ from app.models.user import User
 from app.models.wallet import WalletTransaction
 from app.repositories.booking_repository import BookingRepository
 from app.schemas.booking import (
+    AdminCouponBrief,
+    AdminCourseBrief,
+    AdminLessonScheduleItem,
+    AdminRefundTransaction,
+    AdminScheduleBrief,
+    AdminTeacherBrief,
+    AdminUserBrief,
+    BookingAdminDetailResponse,
     BookingAdminListResponse,
     BookingAdminResponse,
     BookingCreate,
@@ -818,6 +827,9 @@ def _build_admin_booking_response(
         penalty_amount=booking.penalty_amount,
         refund_amount=booking.refund_amount,
         cancel_policy=booking.cancel_policy,
+        booking_type=booking.booking_type,
+        schedule_type=getattr(booking, "schedule_type", None),
+        time_slots=getattr(booking, "time_slots", None),
         created_at=booking.created_at,
         updated_at=booking.updated_at,
         seat=SeatBrief.model_validate(seat) if seat is not None else None,
@@ -873,10 +885,18 @@ async def admin_list_bookings(
     seat_map = {s.id: s for s in seats_result.scalars().all()} if seats_result else {}
     room_map = {r.id: r for r in rooms_result.scalars().all()} if rooms_result else {}
 
-    # 查询用户昵称
+    # 查询用户昵称（仅对合法 UUID 的 user_id 查询，避免非法值导致参数绑定错误）
     user_nickname_map: dict[str, str] = {}
-    if user_ids:
-        users_result = await db.execute(select(User.id, User.nickname).where(User.id.in_(user_ids)))
+    valid_user_uuids: list[uuid.UUID] = []
+    for uid in user_ids:
+        try:
+            valid_user_uuids.append(uuid.UUID(uid))
+        except (ValueError, AttributeError, TypeError):
+            continue
+    if valid_user_uuids:
+        users_result = await db.execute(
+            select(User.id, User.nickname).where(User.id.in_(valid_user_uuids))
+        )
         user_nickname_map = {str(row[0]): row[1] for row in users_result.all()}
 
     items: list[BookingAdminResponse] = []
@@ -896,8 +916,12 @@ async def admin_list_bookings(
     )
 
 
-async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
-    """Get any booking detail (admin view)."""
+async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminDetailResponse:
+    """Get any booking detail (admin view) with related-table aggregation.
+
+    手动逐表查询并用纯 Pydantic 组装响应，不返回带懒加载 relationship 的 ORM 对象，
+    避免 async session 外触发 MissingGreenlet。
+    """
     result = await db.execute(select(Booking).where(Booking.id == booking_id))
     booking = result.scalar_one_or_none()
 
@@ -906,15 +930,189 @@ async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminRe
 
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one_or_none()
-    user_nickname = None
-    user_result = await db.execute(select(User.nickname).where(User.id == uuid.UUID(booking.user_id)))
-    user_nickname = user_result.scalar_one_or_none()
 
-    return _build_admin_booking_response(booking, seat, room, user_nickname=user_nickname)
+    # user_id 可能不是合法 UUID（历史/异常数据），解析失败时仅展示 user_id
+    user_row = None
+    try:
+        user_uuid = uuid.UUID(booking.user_id)
+    except (ValueError, AttributeError, TypeError):
+        user_uuid = None
+    if user_uuid is not None:
+        user_row = (
+            await db.execute(
+                select(User.id, User.nickname, User.phone, User.avatar).where(
+                    User.id == user_uuid
+                )
+            )
+        ).one_or_none()
+    user_brief = (
+        AdminUserBrief(
+            id=booking.user_id,
+            nickname=user_row[1],
+            phone=user_row[2],
+            avatar=user_row[3],
+        )
+        if user_row is not None
+        else None
+    )
+
+    # 课程关联信息（仅课程预约订单）
+    course_brief: AdminCourseBrief | None = None
+    teacher_brief: AdminTeacherBrief | None = None
+    schedule_brief: AdminScheduleBrief | None = None
+    lesson_items: list[AdminLessonScheduleItem] = []
+
+    if booking.course_id:
+        course = (
+            await db.execute(select(Course).where(Course.id == booking.course_id))
+        ).scalar_one_or_none()
+        if course is not None:
+            course_brief = AdminCourseBrief(id=course.id, name=course.name, category=course.category)
+
+    schedule: CourseSchedule | None = None
+    if getattr(booking, "schedule_id", None):
+        schedule = (
+            await db.execute(
+                select(CourseSchedule).where(CourseSchedule.id == booking.schedule_id)
+            )
+        ).scalar_one_or_none()
+        if schedule is not None:
+            schedule_brief = AdminScheduleBrief(
+                id=schedule.id,
+                start_date=schedule.start_date,
+                end_date=schedule.end_date,
+                schedule_type=schedule.schedule_type,
+                schedule_status=schedule.schedule_status,
+                time_slots=schedule.time_slots,
+            )
+
+    teacher_id = getattr(booking, "teacher_id", None) or (
+        schedule.teacher_id if schedule is not None else None
+    )
+    if teacher_id:
+        teacher = (await db.execute(select(Teacher).where(Teacher.id == teacher_id))).scalar_one_or_none()
+        if teacher is not None:
+            teacher_brief = AdminTeacherBrief(id=teacher.id, name=teacher.name, avatar=teacher.avatar)
+
+    if schedule is not None:
+        lesson_rows = (
+            await db.execute(
+                select(LessonSchedule, CourseLesson.title)
+                .outerjoin(CourseLesson, CourseLesson.id == LessonSchedule.lesson_id)
+                .where(LessonSchedule.schedule_id == schedule.id)
+                .order_by(LessonSchedule.sort_order, LessonSchedule.id)
+            )
+        ).all()
+        for ls, lesson_title in lesson_rows:
+            lesson_items.append(
+                AdminLessonScheduleItem(
+                    id=ls.id,
+                    lesson_id=ls.lesson_id,
+                    lesson_title=lesson_title,
+                    lesson_date=ls.lesson_date,
+                    lesson_time_slot=ls.lesson_time_slot,
+                    sort_order=ls.sort_order,
+                )
+            )
+
+    # 优惠券信息（booking.coupon_id 指向 user_coupons）
+    coupon_brief: AdminCouponBrief | None = None
+    if booking.coupon_id:
+        user_coupon_row = (
+            await db.execute(
+                select(UserCoupon, Coupon)
+                .join(Coupon, Coupon.id == UserCoupon.coupon_id)
+                .where(UserCoupon.id == booking.coupon_id)
+            )
+        ).one_or_none()
+        if user_coupon_row is not None:
+            user_coupon, coupon = user_coupon_row
+            coupon_brief = AdminCouponBrief(
+                user_coupon_id=user_coupon.id,
+                coupon_id=coupon.id,
+                name=coupon.name,
+                type=coupon.type,
+                discount_amount=coupon.discount_amount,
+                discount_percent=coupon.discount_percent,
+            )
+
+    # 退款流水（取消退款后写入的 booking_refund 记录）
+    refund_brief: AdminRefundTransaction | None = None
+    refund_row = (
+        await db.execute(
+            select(WalletTransaction).where(
+                WalletTransaction.booking_id == booking.id,
+                WalletTransaction.type == "booking_refund",
+            )
+        )
+    ).scalars().first()
+    if refund_row is not None:
+        refund_brief = AdminRefundTransaction(
+            id=refund_row.id,
+            amount=Decimal(str(refund_row.amount)),
+            balance_after=Decimal(str(refund_row.balance_after)) if refund_row.balance_after is not None else None,
+            payment_method=refund_row.payment_method,
+            created_at=refund_row.created_at,
+        )
+
+    base = _build_admin_booking_response(
+        booking,
+        seat,
+        room,
+        user_nickname=user_row[1] if user_row is not None else None,
+    )
+    return BookingAdminDetailResponse(
+        **base.model_dump(),
+        lesson_ids=getattr(booking, "lesson_ids", None),
+        highlighted_lesson_id=getattr(booking, "highlighted_lesson_id", None),
+        schedule_id=getattr(booking, "schedule_id", None),
+        teacher_id=getattr(booking, "teacher_id", None),
+        prepay_id=booking.prepay_id,
+        transaction_id=booking.transaction_id,
+        payment_check_count=booking.payment_check_count,
+        user=user_brief,
+        course=course_brief,
+        teacher=teacher_brief,
+        schedule=schedule_brief,
+        lesson_schedules=lesson_items,
+        coupon=coupon_brief,
+        refund_transaction=refund_brief,
+    )
+
+
+async def _cleanup_course_booking_schedule(db: AsyncSession, schedule_id: int | None) -> None:
+    """删除订单专属排课记录及其课时记录。
+
+    仅当不存在其他非取消订单引用该排课时才删除（共享的固定班课排课保留）；
+    删除前先清空 bookings.schedule_id 外键引用，避免 FK 约束报错。
+    使用显式 SQL 删除，不触发 ORM relationship 懒加载。
+    """
+    if schedule_id is None:
+        return
+
+    other_refs = (
+        await db.execute(
+            select(func.count())
+            .select_from(Booking)
+            .where(Booking.schedule_id == schedule_id, Booking.status != "cancelled")
+        )
+    ).scalar_one()
+    if other_refs > 0:
+        return
+
+    await db.execute(
+        update(Booking).where(Booking.schedule_id == schedule_id).values(schedule_id=None)
+    )
+    await db.execute(delete(LessonSchedule).where(LessonSchedule.schedule_id == schedule_id))
+    await db.execute(delete(CourseSchedule).where(CourseSchedule.id == schedule_id))
 
 
 async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdminResponse:
-    """Cancel any booking with the same refund settlement as user cancellation."""
+    """Cancel any booking with the same refund settlement as user cancellation.
+
+    待开始订单（pending_confirm / 课程预约 pending）：已支付全额退款不扣手续费，
+    课程预约额外删除订单专属的排课与课时记录。
+    """
     result = await db.execute(select(Booking).where(Booking.id == booking_id))
     booking = result.scalar_one_or_none()
 
@@ -924,44 +1122,59 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
     if booking.status == "cancelled":
         raise BookingAlreadyCancelledError("该预约已取消")
 
-    # pending_confirm 订单：管理员取消，全额退款不扣手续费
-    if booking.status == "pending_confirm" and booking.payment_status == "paid":
-        user_result = await db.execute(
-            select(User).where(User.id == uuid.UUID(booking.user_id))
-        )
-        user = user_result.scalar_one_or_none()
-        if user is None:
-            raise BookingError("User not found")
-
-        refund_amount = Decimal(str(booking.total_price))
-        user.balance = (Decimal(str(user.balance)) + refund_amount).quantize(Decimal("0.01"))
-
+    # 待开始订单：管理员取消，已支付全额退款不扣手续费（不使用行锁，避免嵌套锁冲突）
+    is_course_pending_start = booking.booking_type == "course" and booking.status in (
+        "pending",
+        "pending_confirm",
+    )
+    if booking.status == "pending_confirm" or is_course_pending_start:
+        schedule_id = getattr(booking, "schedule_id", None)
         now = booking_now(settings.BOOKING_TIMEZONE)
         booking.status = "cancelled"
         booking.cancelled_at = now
-        booking.penalty_amount = Decimal("0")
-        booking.refund_amount = refund_amount
-        booking.cancel_policy = "full_refund"
-        await coupon_service.restore_user_coupon_for_booking(db, booking)
 
-        wallet_transaction = WalletTransaction(
-            user_id=booking.user_id,
-            type="booking_refund",
-            amount=refund_amount,
-            bonus_amount=Decimal("0.00"),
-            balance_after=Decimal(str(user.balance)),
-            order_id=str(uuid.uuid4()),
-            status="completed",
-            payment_method=booking.payment_method,
-            payment_provider=booking.payment_provider or booking.payment_method,
-            payment_status="paid",
-            paid_at=now,
-            booking_id=booking.id,
-        )
-        db.add(wallet_transaction)
+        if booking.payment_status == "paid":
+            try:
+                user_uuid = uuid.UUID(booking.user_id)
+            except (ValueError, AttributeError, TypeError):
+                raise BookingError("User not found")
+            user_result = await db.execute(select(User).where(User.id == user_uuid))
+            user = user_result.scalar_one_or_none()
+            if user is None:
+                raise BookingError("User not found")
+
+            refund_amount = Decimal(str(booking.total_price))
+            user.balance = (Decimal(str(user.balance)) + refund_amount).quantize(Decimal("0.01"))
+
+            booking.penalty_amount = Decimal("0")
+            booking.refund_amount = refund_amount
+            booking.cancel_policy = "full_refund"
+            await coupon_service.restore_user_coupon_for_booking(db, booking)
+
+            wallet_transaction = WalletTransaction(
+                user_id=booking.user_id,
+                type="booking_refund",
+                amount=refund_amount,
+                bonus_amount=Decimal("0.00"),
+                balance_after=Decimal(str(user.balance)),
+                order_id=str(uuid.uuid4()),
+                status="completed",
+                payment_method=booking.payment_method,
+                payment_provider=booking.payment_provider or booking.payment_method,
+                payment_status="paid",
+                paid_at=now,
+                booking_id=booking.id,
+            )
+            db.add(wallet_transaction)
         await db.flush()
 
-        # 重新查询获取完整数据，避免 flush 后对象状态问题
+        # 课程预约：删除订单专属的排课与课时记录（共享排课保留）
+        if is_course_pending_start:
+            await _cleanup_course_booking_schedule(db, schedule_id)
+
+        # 排课清理使用了原生 SQL，内存中 ORM 对象可能已过期，重新查询获取完整数据，
+        # 避免 flush 后对象状态问题（参照 BUG-26 教训）
+        db.expire_all()
         return await admin_get_booking(db, booking_id)
 
     await cancel_booking(db, booking.id, uuid.UUID(booking.user_id))

@@ -10,8 +10,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.core.database import Base
 from app.models.booking import Booking
 from app.models.coupon import Coupon, UserCoupon
+from app.models.course import Course
+from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
+from app.models.lesson_schedule import LessonSchedule
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
+from app.models.teacher import Teacher
 from app.models.user import User
 from app.models.wallet import WalletTransaction
 from app.schemas.booking import BookingCreate
@@ -400,3 +405,204 @@ async def test_admin_cancel_booking_already_cancelled(db_session: AsyncSession):
 async def test_admin_cancel_booking_not_found(db_session: AsyncSession):
     with pytest.raises(BookingNotFoundError):
         await admin_cancel_booking(db_session, 999)
+
+
+# --- 详情聚合与课程预约取消（admin-booking-list-enhancements）---
+
+
+def _make_course_data(db: AsyncSession):
+    """创建课程/老师/定制排课/课时测试数据，返回 (course, schedule)。"""
+    course = Course(
+        id=1, room_id=1, name="高考冲刺班", category="training", status="active"
+    )
+    teacher = Teacher(id=1, name="张老师")
+    db.add(course)
+    db.add(teacher)
+    schedule = CourseSchedule(
+        id=1,
+        course_id=1,
+        teacher_id=1,
+        start_date=date(2026, 5, 10),
+        time_slots='[{"weekday": 3, "time_slot": "10:00-12:00"}]',
+        price=Decimal("20.00"),
+        custom_price=Decimal("20.00"),
+        schedule_type="custom",
+    )
+    db.add(schedule)
+    lesson = CourseLesson(id=1, course_id=1, title="第1课")
+    db.add(lesson)
+    db.add(
+        LessonSchedule(
+            schedule_id=1,
+            lesson_id=1,
+            lesson_date=date(2026, 5, 13),
+            lesson_time_slot="10:00-12:00",
+            sort_order=0,
+        )
+    )
+    return course, schedule
+
+
+def _make_course_booking(
+    db: AsyncSession,
+    booking_id: int = 1,
+    schedule_id: int | None = 1,
+    status: str = "pending",
+    payment_status: str = "paid",
+):
+    now = datetime(2026, 5, 1, 10, 0, 0)
+    booking = Booking(
+        id=booking_id,
+        seat_id=None,
+        user_id=str(USER_ID),
+        room_id=1,
+        date=date(2026, 5, 10),
+        start_time=time(10, 0),
+        end_time=time(12, 0),
+        status=status,
+        payment_status=payment_status,
+        total_price=Decimal("20.00"),
+        booking_type="course",
+        course_id=1,
+        schedule_type="custom",
+        schedule_id=schedule_id,
+        time_slots='[{"weekday": 3, "time_slot": "10:00-12:00"}]',
+        teacher_id=1,
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(booking)
+    return booking
+
+
+@pytest.mark.asyncio
+async def test_admin_get_booking_detail_aggregates_related_tables(db_session: AsyncSession):
+    _make_room(db_session, 1)
+    _make_user(db_session)
+    _make_course_data(db_session)
+    _make_course_booking(db_session, 1)
+    await db_session.flush()
+
+    result = await admin_get_booking(db_session, 1)
+
+    assert result.booking_type == "course"
+    assert result.schedule_type == "custom"
+    assert result.time_slots == '[{"weekday": 3, "time_slot": "10:00-12:00"}]'
+    assert result.user is not None
+    assert result.user.nickname == "Booking User"
+    assert result.user.phone == "18800009999"
+    assert result.course is not None and result.course.name == "高考冲刺班"
+    assert result.teacher is not None and result.teacher.name == "张老师"
+    assert result.schedule is not None and result.schedule.schedule_type == "custom"
+    assert len(result.lesson_schedules) == 1
+    assert result.lesson_schedules[0].lesson_title == "第1课"
+
+
+@pytest.mark.asyncio
+async def test_admin_get_booking_detail_includes_refund_transaction(db_session: AsyncSession):
+    _make_room(db_session, 1)
+    _make_user(db_session)
+    _make_course_data(db_session)
+    _make_course_booking(db_session, 1)
+    await db_session.flush()
+
+    await admin_cancel_booking(db_session, 1)
+    result = await admin_get_booking(db_session, 1)
+
+    assert result.status == "cancelled"
+    assert result.refund_transaction is not None
+    assert result.refund_transaction.amount == Decimal("20.00")
+
+
+@pytest.mark.asyncio
+async def test_admin_cancel_course_pending_booking_full_refund_and_schedule_deleted(
+    db_session: AsyncSession,
+):
+    _make_room(db_session, 1)
+    _make_user(db_session, balance=Decimal("0.00"))
+    _make_course_data(db_session)
+    _make_course_booking(db_session, 1)
+    await db_session.flush()
+
+    result = await admin_cancel_booking(db_session, 1)
+
+    assert result.status == "cancelled"
+    assert result.refund_amount == Decimal("20.00")
+    assert result.penalty_amount == Decimal("0.00")
+    assert result.cancel_policy == "full_refund"
+    balance = (
+        await db_session.execute(select(User.balance).where(User.id == USER_ID))
+    ).scalar_one()
+    assert Decimal(str(balance)) == Decimal("20.00")
+
+    # 订单专属排课与课时记录被删除，外键引用清空
+    booking_row = (
+        await db_session.execute(select(Booking).where(Booking.id == 1))
+    ).scalar_one()
+    assert booking_row.schedule_id is None
+    assert (
+        await db_session.execute(select(CourseSchedule).where(CourseSchedule.id == 1))
+    ).scalar_one_or_none() is None
+    assert (
+        await db_session.execute(
+            select(LessonSchedule).where(LessonSchedule.schedule_id == 1)
+        )
+    ).scalars().all() == []
+
+    transaction = (
+        await db_session.execute(
+            select(WalletTransaction).where(
+                WalletTransaction.booking_id == 1,
+                WalletTransaction.type == "booking_refund",
+            )
+        )
+    ).scalar_one()
+    assert transaction.amount == Decimal("20.00")
+
+
+@pytest.mark.asyncio
+async def test_admin_cancel_course_pending_booking_keeps_shared_schedule(
+    db_session: AsyncSession,
+):
+    _make_room(db_session, 1)
+    _make_user(db_session)
+    _make_course_data(db_session)
+    _make_course_booking(db_session, 1)
+    # 另一个非取消订单引用同一排课（共享场景）
+    _make_course_booking(db_session, 2, status="confirmed")
+    await db_session.flush()
+
+    result = await admin_cancel_booking(db_session, 1)
+
+    assert result.status == "cancelled"
+    assert result.refund_amount == Decimal("20.00")
+    # 共享排课与课时保留，仅取消订单的引用被清空
+    assert (
+        await db_session.execute(select(CourseSchedule).where(CourseSchedule.id == 1))
+    ).scalar_one_or_none() is not None
+    assert len(
+        (
+            await db_session.execute(
+                select(LessonSchedule).where(LessonSchedule.schedule_id == 1)
+            )
+        ).scalars().all()
+    ) == 1
+    other = (
+        await db_session.execute(select(Booking).where(Booking.id == 2))
+    ).scalar_one()
+    assert other.schedule_id == 1
+
+
+@pytest.mark.asyncio
+async def test_admin_list_bookings_includes_booking_type_fields(db_session: AsyncSession):
+    _make_room(db_session, 1)
+    _make_user(db_session)
+    _make_course_data(db_session)
+    _make_course_booking(db_session, 1)
+    await db_session.flush()
+
+    result = await admin_list_bookings(db_session)
+    item = result.items[0]
+    assert item.booking_type == "course"
+    assert item.schedule_type == "custom"
+    assert item.time_slots == '[{"weekday": 3, "time_slot": "10:00-12:00"}]'

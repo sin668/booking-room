@@ -14,6 +14,7 @@
         :striped="true"
       />
     </n-card>
+    <BookingDetailModal ref="detailModalRef" />
   </n-flex>
 </template>
 
@@ -26,8 +27,10 @@
   import { toBasicTableResult } from '@/api/contracts/admin';
   import { normalizeDateRange } from '@/views/business/shared/formSchemaBuilders';
   import { buildBookingSearchSchemas, buildBookingTableColumns } from './builders';
+  import BookingDetailModal from './BookingDetailModal.vue';
 
   const actionRef = ref();
+  const detailModalRef = ref();
   const adminBusinessStore = useAdminBusiness();
   const columns = buildBookingTableColumns();
 
@@ -64,10 +67,12 @@
   };
 
   function handleCancel(record: BookingItem) {
-    const isPendingConfirm = record.status === 'pending_confirm';
-    const content = isPendingConfirm
-      ? '确定要取消该订单吗？取消后将全额退款，不扣费。'
-      : '确定要取消该订单吗？取消后不可恢复。';
+    const isCoursePendingStart =
+      record.booking_type === 'course' &&
+      (record.status === 'pending' || record.status === 'pending_confirm');
+    const content = isCoursePendingStart
+      ? '确定要取消该课程预约订单吗？取消后将全额退款，并删除对应的排课与课时记录。'
+      : '确定要取消该订单吗？取消后将全额退款，不扣费。';
     window['$dialog'].warning({
       title: '确认取消',
       content,
@@ -104,13 +109,7 @@
   }
 
   function handleView(record: BookingItem) {
-    window['$dialog'].info({
-      title: '订单详情',
-      content: `订单 #${record.id}：${record.room?.name || '-'} / ${
-        record.seat?.seat_number || '-'
-      } / ${record.date} ${record.start_time}~${record.end_time}`,
-      positiveText: '确定',
-    });
+    detailModalRef.value?.showModal(record.id);
   }
 
   const actionColumn = reactive({
@@ -134,7 +133,11 @@
           auth: ['booking:cancel'],
         });
       }
-      if (record.status === 'pending' || record.status === 'pending_confirm') {
+      // 仅课程预约的待开始订单展示取消按钮（自习室订单不提供取消操作）
+      if (
+        record.booking_type === 'course' &&
+        (record.status === 'pending' || record.status === 'pending_confirm')
+      ) {
         actions.push({
           label: '取消',
           onClick: handleCancel.bind(null, record),

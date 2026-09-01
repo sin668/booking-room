@@ -157,6 +157,9 @@ class BookingAdminResponse(BaseModel):
     penalty_amount: Decimal = Decimal("0.00")
     refund_amount: Decimal = Decimal("0.00")
     cancel_policy: str | None = None
+    booking_type: str = "seat"
+    schedule_type: str | None = None
+    time_slots: str | None = None
     created_at: datetime
     updated_at: datetime
     seat: SeatBrief | None = None
@@ -170,3 +173,90 @@ class BookingAdminListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class AdminUserBrief(BaseModel):
+    """订单详情-用户信息。"""
+
+    id: str
+    nickname: str | None = None
+    phone: str | None = None
+    avatar: str | None = None
+
+
+class AdminCourseBrief(BaseModel):
+    """订单详情-课程信息。"""
+
+    id: int
+    name: str
+    category: str
+
+
+class AdminTeacherBrief(BaseModel):
+    """订单详情-授课老师信息。"""
+
+    id: int
+    name: str
+    avatar: str | None = None
+
+
+class AdminScheduleBrief(BaseModel):
+    """订单详情-排课记录信息。"""
+
+    id: int
+    start_date: date | None = None
+    end_date: date | None = None
+    schedule_type: str
+    schedule_status: str
+    time_slots: str | None = None
+
+
+class AdminLessonScheduleItem(BaseModel):
+    """订单详情-课时安排条目。"""
+
+    id: int
+    lesson_id: int
+    lesson_title: str | None = None
+    lesson_date: date | None = None
+    lesson_time_slot: str
+    sort_order: int = 0
+
+
+class AdminCouponBrief(BaseModel):
+    """订单详情-优惠券信息。"""
+
+    user_coupon_id: int
+    coupon_id: int
+    name: str | None = None
+    type: str | None = None
+    discount_amount: Decimal | None = None
+    discount_percent: int | None = None
+
+
+class AdminRefundTransaction(BaseModel):
+    """订单详情-退款流水信息。"""
+
+    id: UUID
+    amount: Decimal
+    balance_after: Decimal | None = None
+    payment_method: str | None = None
+    created_at: datetime | None = None
+
+
+class BookingAdminDetailResponse(BookingAdminResponse):
+    """管理员订单详情：订单字段 + 关联表聚合信息。"""
+
+    lesson_ids: list[int] | None = None
+    highlighted_lesson_id: int | None = None
+    schedule_id: int | None = None
+    teacher_id: int | None = None
+    prepay_id: str | None = None
+    transaction_id: str | None = None
+    payment_check_count: int = 0
+    user: AdminUserBrief | None = None
+    course: AdminCourseBrief | None = None
+    teacher: AdminTeacherBrief | None = None
+    schedule: AdminScheduleBrief | None = None
+    lesson_schedules: list[AdminLessonScheduleItem] = []
+    coupon: AdminCouponBrief | None = None
+    refund_transaction: AdminRefundTransaction | None = None

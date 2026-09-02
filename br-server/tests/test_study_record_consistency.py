@@ -3,7 +3,8 @@
 覆盖修复点：
 1. 记录列表按订单自己的 schedule_id 关联课时，杜绝同一 lesson_id 跨排课混入
 2. 无课时排课数据的课程订单在列表与统计两侧口径一致（均不计入）
-3. 统计学习时长与单条记录时长按四舍五入保留两位小数，上方统计 = 下方记录之和
+3. 课程时长按 duration_minutes（课程资料元数据）统计，与下方记录展示的“XX分钟”同源
+4. 统计学习时长与单条记录时长按四舍五入保留两位小数，上方统计 = 下方记录之和
 """
 
 import uuid
@@ -48,7 +49,9 @@ async def seed_study_data(db_session: AsyncSession):
     db_session.add(course)
     await db_session.flush()
 
-    lesson = CourseLesson(course_id=course.id, title="第1课", duration_minutes=90, sort_order=1)
+    # duration_minutes=85（下方展示“85分钟”），排课时段故意设为 90 分钟，
+    # 验证时长统计按 duration_minutes（85/60=1.42h）而非 time_slot（1.5h）
+    lesson = CourseLesson(course_id=course.id, title="第1课", duration_minutes=85, sort_order=1)
     db_session.add(lesson)
     await db_session.flush()
 
@@ -113,8 +116,8 @@ class TestSummaryMatchesRecords:
         record_sum = round(sum(item.hours for item in records.items), 2)
         assert records.total == 2
         assert summary.monthly_hours == record_sum
-        # 0.8333 + 1.5 = 2.3333 → 2.33
-        assert summary.monthly_hours == 2.33
+        # 0.83(座位 50 分钟) + 1.42(课程 duration_minutes=85) = 2.25
+        assert summary.monthly_hours == 2.25
 
     @pytest.mark.asyncio
     async def test_records_use_booking_own_schedule(self, db_session: AsyncSession, seed_study_data):
@@ -127,7 +130,8 @@ class TestSummaryMatchesRecords:
         item = course_items[0]
         assert item.lesson_date == date(2026, 8, 10)
         assert item.lesson_time_slot == "10:00-11:30"
-        assert item.hours == 1.5
+        # 时长按 duration_minutes=85 统计，不按 time_slot（90 分钟）
+        assert item.hours == 1.42
 
     @pytest.mark.asyncio
     async def test_hours_rounded_to_two_decimals(self, db_session: AsyncSession, seed_study_data):
@@ -139,7 +143,7 @@ class TestSummaryMatchesRecords:
         assert seat_item.hours == 0.83
 
         summary = await get_monthly_summary(db_session, USER_ID, MONTH)
-        assert summary.total_hours == 2.33
+        assert summary.total_hours == 2.25
 
     @pytest.mark.asyncio
     async def test_course_booking_without_lesson_schedules_hidden(

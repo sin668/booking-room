@@ -3,7 +3,7 @@ import uuid
 from datetime import date, time
 from decimal import Decimal
 
-from sqlalchemy import and_, extract, select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
@@ -126,7 +126,12 @@ def _build_course_lesson_records(
         except (ValueError, IndexError):
             et = booking.end_time
 
-        hours = round(_calculate_hours(st, et), 2)
+        # 课程时长按课程资料的 duration_minutes 统计（与下方记录展示的“XX分钟”同源），
+        # 无 duration_minutes 时回退按排课时段计算；四舍五入保留两位小数
+        if duration_minutes:
+            hours = round(duration_minutes / 60, 2)
+        else:
+            hours = round(_calculate_hours(st, et), 2)
 
         items.append(StudyRecordItem(
             id=ls.id,
@@ -148,151 +153,14 @@ def _build_course_lesson_records(
     return items
 
 
-async def get_monthly_summary(
-    db: AsyncSession, user_id: uuid.UUID, month: date
-) -> StudyRecordSummaryResponse:
-    # Sync in-progress completions first
-    await _sync_user_booking_completions(db, user_id)
+async def _collect_studied_items(
+    db: AsyncSession, user_id: uuid.UUID
+) -> list[StudyRecordItem]:
+    """构建用户全部已学习记录条目（按日期倒序）。
 
-    year = month.year
-    month_num = month.month
-
-    # 1. Seat bookings: filter by Booking.date (creation date = usage date for seats)
-    seat_condition = and_(
-        Booking.user_id == str(user_id),
-        Booking.status.in_(["completed", "confirmed"]),
-        Booking.booking_type != "course",
-        extract("year", Booking.date) == year,
-        extract("month", Booking.date) == month_num,
-    )
-    seat_result = await db.execute(select(Booking).where(seat_condition))
-    seat_bookings = seat_result.scalars().all()
-
-    # 2. Course bookings: get ALL studied course bookings, then filter by lesson_date in Python
-    course_condition = and_(
-        Booking.user_id == str(user_id),
-        Booking.status.in_(["completed", "confirmed"]),
-        Booking.booking_type == "course",
-    )
-    course_result = await db.execute(select(Booking).where(course_condition))
-    course_bookings = course_result.scalars().all()
-
-    # Studied stats
-    monthly_hours = 0.0
-    monthly_bookings = 0
-    studied_dates: list[date] = []
-
-    # Seat bookings: use booking date/time directly
-    for b in seat_bookings:
-        hours = _calculate_hours(b.start_time, b.end_time)
-        monthly_hours += hours
-        monthly_bookings += 1
-        studied_dates.append(b.date)
-
-    # Course bookings: expand into lessons, filter by target month
-    for b in course_bookings:
-        if not b.lesson_ids or not b.schedule_id:
-            continue
-        lesson_schedule_result = await db.execute(
-            select(LessonSchedule).where(
-                LessonSchedule.schedule_id == b.schedule_id,
-                LessonSchedule.lesson_id.in_(b.lesson_ids),
-            )
-        )
-        lesson_schedules = lesson_schedule_result.scalars().all()
-
-        for ls in lesson_schedules:
-            # Only count completed lessons in the target month
-            if not _is_lesson_completed(ls.lesson_date):
-                continue
-            if ls.lesson_date.year != year or ls.lesson_date.month != month_num:
-                continue
-            monthly_bookings += 1
-            studied_dates.append(ls.lesson_date)
-            parts = ls.lesson_time_slot.split("-") if ls.lesson_time_slot else []
-            try:
-                st = time.fromisoformat(parts[0].strip()) if len(parts) >= 1 else b.start_time
-                et = time.fromisoformat(parts[1].strip()) if len(parts) >= 2 else b.end_time
-            except (ValueError, IndexError):
-                st = b.start_time
-                et = b.end_time
-            monthly_hours += _calculate_hours(st, et)
-
-    # Total hours (all-time studied, excluding future lessons)
-    total_hours = 0.0
-
-    # Seat bookings: all-time
-    all_seat_result = await db.execute(
-        select(Booking).where(
-            and_(
-                Booking.user_id == str(user_id),
-                Booking.status.in_(["completed", "confirmed"]),
-                Booking.booking_type != "course",
-            )
-        )
-    )
-    for b in all_seat_result.scalars().all():
-        total_hours += _calculate_hours(b.start_time, b.end_time)
-
-    # Course bookings: all-time completed lessons
-    for b in course_bookings:
-        if not b.lesson_ids or not b.schedule_id:
-            continue
-        lesson_schedule_result = await db.execute(
-            select(LessonSchedule).where(
-                LessonSchedule.schedule_id == b.schedule_id,
-                LessonSchedule.lesson_id.in_(b.lesson_ids),
-            )
-        )
-        for ls in lesson_schedule_result.scalars().all():
-            if _is_lesson_completed(ls.lesson_date):
-                parts = ls.lesson_time_slot.split("-") if ls.lesson_time_slot else []
-                try:
-                    st = time.fromisoformat(parts[0].strip()) if len(parts) >= 1 else b.start_time
-                    et = time.fromisoformat(parts[1].strip()) if len(parts) >= 2 else b.end_time
-                except (ValueError, IndexError):
-                    st = b.start_time
-                    et = b.end_time
-                total_hours += _calculate_hours(st, et)
-
-    _, days_in_month = calendar.monthrange(year, month_num)
-    studied_set = set(studied_dates)
-    calendar_mark = [
-        CalendarMark(
-            date=date(year, month_num, day),
-            studied=(date(year, month_num, day) in studied_set),
-            upcoming=False,  # No upcoming records shown
-        )
-        for day in range(1, days_in_month + 1)
-    ]
-
-    max_streak = _calculate_streak_days(studied_dates)
-
-    return StudyRecordSummaryResponse(
-        # 统计学习时长按四舍五入保留两位小数，与下方已学习记录的时长口径一致
-        monthly_hours=round(monthly_hours, 2),
-        monthly_bookings=monthly_bookings,
-        max_streak_days=max_streak,
-        total_hours=round(total_hours, 2),
-        calendar_mark=calendar_mark,
-        monthly_upcoming_hours=0.0,
-        monthly_upcoming_count=0,
-    )
-
-
-async def list_study_records(
-    db: AsyncSession,
-    user_id: uuid.UUID,
-    page: int = 1,
-    page_size: int = DEFAULT_PAGE_SIZE,
-    month: date | None = None,
-    status: str | None = None,
-) -> StudyRecordListResponse:
-    # Sync in-progress completions first
-    await _sync_user_booking_completions(db, user_id)
-
-    page_size = min(page_size, MAX_PAGE_SIZE)
-
+    列表与统计共用同一口径：get_monthly_summary 直接基于这些条目聚合，
+    保证上方统计 = 下方已学习记录时长之和。
+    """
     # Fetch ALL studied bookings (no month filter at SQL level)
     # because course booking's Booking.date != lesson dates
     base_conditions = [
@@ -407,6 +275,74 @@ async def list_study_records(
 
     # Sort all records by date desc, then start_time desc
     all_items.sort(key=lambda x: (x.date, x.start_time), reverse=True)
+
+    return all_items
+
+
+async def get_monthly_summary(
+    db: AsyncSession, user_id: uuid.UUID, month: date
+) -> StudyRecordSummaryResponse:
+    """基于与记录列表完全相同的条目聚合统计，保证上方统计 = 下方记录时长之和。
+
+    课程时长按 duration_minutes（课程资料元数据）口径，座位时长按预约起止时段口径，
+    均在条目构建时四舍五入保留两位小数。
+    """
+    # Sync in-progress completions first
+    await _sync_user_booking_completions(db, user_id)
+
+    year = month.year
+    month_num = month.month
+
+    all_items = await _collect_studied_items(db, user_id)
+
+    monthly_items = [
+        item for item in all_items
+        if item.date.year == year and item.date.month == month_num
+    ]
+
+    monthly_hours = round(sum(item.hours for item in monthly_items), 2)
+    monthly_bookings = len(monthly_items)
+    studied_dates = [item.date for item in monthly_items]
+    total_hours = round(sum(item.hours for item in all_items), 2)
+
+    _, days_in_month = calendar.monthrange(year, month_num)
+    studied_set = set(studied_dates)
+    calendar_mark = [
+        CalendarMark(
+            date=date(year, month_num, day),
+            studied=(date(year, month_num, day) in studied_set),
+            upcoming=False,  # No upcoming records shown
+        )
+        for day in range(1, days_in_month + 1)
+    ]
+
+    max_streak = _calculate_streak_days(studied_dates)
+
+    return StudyRecordSummaryResponse(
+        monthly_hours=monthly_hours,
+        monthly_bookings=monthly_bookings,
+        max_streak_days=max_streak,
+        total_hours=total_hours,
+        calendar_mark=calendar_mark,
+        monthly_upcoming_hours=0.0,
+        monthly_upcoming_count=0,
+    )
+
+
+async def list_study_records(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    page: int = 1,
+    page_size: int = DEFAULT_PAGE_SIZE,
+    month: date | None = None,
+    status: str | None = None,
+) -> StudyRecordListResponse:
+    # Sync in-progress completions first
+    await _sync_user_booking_completions(db, user_id)
+
+    page_size = min(page_size, MAX_PAGE_SIZE)
+
+    all_items = await _collect_studied_items(db, user_id)
 
     # Apply month filter in Python (based on record's actual date)
     if month is not None:

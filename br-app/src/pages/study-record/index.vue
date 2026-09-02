@@ -8,7 +8,7 @@
     <template v-else>
       <view class="summary-card">
         <view class="stat-item">
-          <text class="stat-value">{{ summary.monthly_hours }}h</text>
+          <text class="stat-value">{{ formatStatHours(summary.monthly_hours) }}h</text>
           <text class="stat-label">本月学习时长</text>
         </view>
         <view class="stat-item">
@@ -20,7 +20,7 @@
           <text class="stat-label">连续学习</text>
         </view>
         <view class="stat-item">
-          <text class="stat-value">{{ summary.total_hours }}h</text>
+          <text class="stat-value">{{ formatStatHours(summary.total_hours) }}h</text>
           <text class="stat-label">累计学习时长</text>
         </view>
       </view>
@@ -215,6 +215,12 @@ function formatLessonStartTime(timeSlot) {
 function formatLessonPrice(price) {
   if (price == null) return ''
   return Number(price).toFixed(2)
+}
+
+function formatStatHours(hours) {
+  // 统计学习时长统一四舍五入保留两位小数展示
+  const n = Number(hours)
+  return Number.isFinite(n) ? n.toFixed(2) : '0.00'
 }
 
 async function fetchSummary() {

@@ -66,7 +66,8 @@ def _build_seat_record(
     booking: Booking, seat: Seat | None, room: StudyRoom | None, status: str
 ) -> StudyRecordItem:
     """Build a study record item for a seat booking."""
-    hours = _calculate_hours(booking.start_time, booking.end_time)
+    # 四舍五入保留两位小数，与 summary 统计口径一致
+    hours = round(_calculate_hours(booking.start_time, booking.end_time), 2)
     seat_zone_label = _ZONE_LABELS.get(seat.zone, seat.zone) if seat and seat.zone else None
     return StudyRecordItem(
         id=booking.id,
@@ -94,19 +95,7 @@ def _build_course_lesson_records(
     items: list[StudyRecordItem] = []
     lesson_count = len(lesson_schedules)
     if lesson_count == 0:
-        # Fallback: no lesson_schedules, show as single record
-        hours = _calculate_hours(booking.start_time, booking.end_time)
-        items.append(StudyRecordItem(
-            id=booking.id,
-            record_type="course",
-            status=status,
-            course_name=course_name,
-            date=booking.date,
-            start_time=booking.start_time,
-            end_time=booking.end_time,
-            hours=hours,
-            total_price=booking.total_price,
-        ))
+        # 无课时排课数据时不展示记录，与 summary 统计口径一致（summary 同样跳过该订单）
         return items
 
     # Calculate per-lesson price
@@ -137,7 +126,7 @@ def _build_course_lesson_records(
         except (ValueError, IndexError):
             et = booking.end_time
 
-        hours = _calculate_hours(st, et)
+        hours = round(_calculate_hours(st, et), 2)
 
         items.append(StudyRecordItem(
             id=ls.id,
@@ -280,10 +269,11 @@ async def get_monthly_summary(
     max_streak = _calculate_streak_days(studied_dates)
 
     return StudyRecordSummaryResponse(
-        monthly_hours=round(monthly_hours, 1),
+        # 统计学习时长按四舍五入保留两位小数，与下方已学习记录的时长口径一致
+        monthly_hours=round(monthly_hours, 2),
         monthly_bookings=monthly_bookings,
         max_streak_days=max_streak,
-        total_hours=round(total_hours, 1),
+        total_hours=round(total_hours, 2),
         calendar_mark=calendar_mark,
         monthly_upcoming_hours=0.0,
         monthly_upcoming_count=0,
@@ -351,29 +341,44 @@ async def list_study_records(
     ]
     if course_bookings:
         all_lesson_ids: set[int] = set()
+        schedule_ids: set[int] = set()
         booking_lesson_ids: dict[int, list[int]] = {}
         for b in course_bookings:
             lids = list(b.lesson_ids) if b.lesson_ids else []
             booking_lesson_ids[b.id] = lids
             all_lesson_ids.update(lids)
+            if b.schedule_id:
+                schedule_ids.add(b.schedule_id)
 
-        if all_lesson_ids:
+        if all_lesson_ids and schedule_ids:
+            # 限定订单自己的 schedule_id，与 summary 统计的查询口径一致，
+            # 避免同一 lesson_id 跨排课混入其它订单/排课的记录
             ls_result = await db.execute(
                 select(LessonSchedule)
-                .where(LessonSchedule.lesson_id.in_(all_lesson_ids))
+                .where(
+                    LessonSchedule.schedule_id.in_(schedule_ids),
+                    LessonSchedule.lesson_id.in_(all_lesson_ids),
+                )
                 .order_by(LessonSchedule.sort_order)
             )
             all_ls = ls_result.scalars().all()
 
-            ls_by_lesson_id: dict[int, LessonSchedule] = {}
+            # (schedule_id, lesson_id) 复合键，避免跨排课互相覆盖
+            ls_by_key: dict[tuple[int, int], LessonSchedule] = {}
             for ls in all_ls:
-                ls_by_lesson_id[ls.lesson_id] = ls
+                ls_by_key[(ls.schedule_id, ls.lesson_id)] = ls
 
-            for bid, lids in booking_lesson_ids.items():
-                booking_ls = [ls_by_lesson_id[lid] for lid in lids if lid in ls_by_lesson_id]
+            for b in course_bookings:
+                if not b.schedule_id:
+                    continue
+                booking_ls = [
+                    ls_by_key[(b.schedule_id, lid)]
+                    for lid in booking_lesson_ids[b.id]
+                    if (b.schedule_id, lid) in ls_by_key
+                ]
                 booking_ls.sort(key=lambda x: (x.lesson_date, x.sort_order))
                 if booking_ls:
-                    lesson_schedule_map[bid] = booking_ls
+                    lesson_schedule_map[b.id] = booking_ls
 
             lessons_result = await db.execute(
                 select(CourseLesson).where(CourseLesson.id.in_(all_lesson_ids))

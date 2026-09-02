@@ -1,3 +1,4 @@
+import { h } from 'vue';
 import type { BasicColumn } from '../../../components/Table';
 import type { BusinessOption } from '../../business/shared/options';
 import { BOOKING_STATUS_OPTIONS, BOOKING_STATUS_TAGS } from '../../business/shared/options';
@@ -124,10 +125,26 @@ export function buildBookingTableColumns(): BasicColumn<BookingItem>[] {
       title: '课时',
       key: 'lesson_titles',
       width: 200,
-      ellipsis: { tooltip: true },
       render(record) {
         if (!record.lesson_titles || record.lesson_titles.length === 0) return '-';
-        return record.lesson_titles.join('，');
+        const text = record.lesson_titles.join('，');
+        return h(
+          'div',
+          {
+            title: text,
+            style: {
+              display: '-webkit-box',
+              '-webkit-line-clamp': '2',
+              '-webkit-box-orient': 'vertical',
+              overflow: 'hidden',
+              'text-overflow': 'ellipsis',
+              'word-break': 'break-all',
+              'line-height': '1.4',
+              'max-height': '2.8em',
+            },
+          },
+          text,
+        );
       },
     },
     { title: '预约日期', key: 'date', width: 110 },

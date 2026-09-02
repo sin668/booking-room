@@ -96,7 +96,7 @@ export function buildBookingTableColumns(): BasicColumn<BookingItem>[] {
       },
     },
     {
-      title: '自习室名称',
+      title: '学习室',
       key: 'room_name',
       width: 140,
       render(record) {
@@ -109,6 +109,25 @@ export function buildBookingTableColumns(): BasicColumn<BookingItem>[] {
       width: 100,
       render(record) {
         return record.seat?.seat_number || '-';
+      },
+    },
+    {
+      title: '课程',
+      key: 'course_name',
+      width: 140,
+      ellipsis: { tooltip: true },
+      render(record) {
+        return record.course_name || '-';
+      },
+    },
+    {
+      title: '课时',
+      key: 'lesson_titles',
+      width: 200,
+      ellipsis: { tooltip: true },
+      render(record) {
+        if (!record.lesson_titles || record.lesson_titles.length === 0) return '-';
+        return record.lesson_titles.join('，');
       },
     },
     { title: '预约日期', key: 'date', width: 110 },

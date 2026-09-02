@@ -19,6 +19,8 @@ export interface BookingItem {
   booking_type?: string;
   schedule_type?: string | null;
   time_slots?: string | null;
+  course_name?: string | null;
+  lesson_titles?: string[] | null;
   seat: {
     id: number;
     seat_number: string;

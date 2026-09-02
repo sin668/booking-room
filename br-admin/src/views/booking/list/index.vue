@@ -10,7 +10,7 @@
         :request="loadDataTable"
         :row-key="(row: BookingItem) => row.id"
         :actionColumn="actionColumn"
-        :scroll-x="1300"
+        :scroll-x="1640"
         :striped="true"
       />
     </n-card>

@@ -160,6 +160,8 @@ class BookingAdminResponse(BaseModel):
     booking_type: str = "seat"
     schedule_type: str | None = None
     time_slots: str | None = None
+    course_name: str | None = None
+    lesson_titles: list[str] | None = None
     created_at: datetime
     updated_at: datetime
     seat: SeatBrief | None = None

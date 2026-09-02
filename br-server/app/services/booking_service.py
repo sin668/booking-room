@@ -803,7 +803,8 @@ async def pay_pending_booking(
 
 
 def _build_admin_booking_response(
-    booking: Booking, seat: Seat | None, room: StudyRoom | None, user_nickname: str | None = None
+    booking: Booking, seat: Seat | None, room: StudyRoom | None, user_nickname: str | None = None,
+    course_name: str | None = None, lesson_titles: list[str] | None = None,
 ) -> BookingAdminResponse:
     return BookingAdminResponse(
         id=booking.id,
@@ -830,6 +831,8 @@ def _build_admin_booking_response(
         booking_type=booking.booking_type,
         schedule_type=getattr(booking, "schedule_type", None),
         time_slots=getattr(booking, "time_slots", None),
+        course_name=course_name,
+        lesson_titles=lesson_titles,
         created_at=booking.created_at,
         updated_at=booking.updated_at,
         seat=SeatBrief.model_validate(seat) if seat is not None else None,
@@ -899,12 +902,32 @@ async def admin_list_bookings(
         )
         user_nickname_map = {str(row[0]): row[1] for row in users_result.all()}
 
+    # 查询课程名称和课时标题
+    course_map: dict[int, str] = {}  # course_id -> course_name
+    lesson_title_by_booking: dict[int, list[str]] = {}  # booking_id -> lesson_titles
+    course_bookings = [b for b in bookings if getattr(b, "booking_type", None) == "course"]
+    if course_bookings:
+        course_ids = {b.course_id for b in course_bookings if b.course_id is not None}
+        if course_ids:
+            courses_result = await db.execute(select(Course).where(Course.id.in_(course_ids)))
+            for c in courses_result.scalars().all():
+                course_map[c.id] = c.name
+        # 查询课时标题
+        for b in course_bookings:
+            if b.lesson_ids:
+                lessons_result = await db.execute(
+                    select(CourseLesson.title).where(CourseLesson.id.in_(b.lesson_ids))
+                )
+                lesson_title_by_booking[b.id] = list(lessons_result.scalars().all())
+
     items: list[BookingAdminResponse] = []
     for b in bookings:
         items.append(
             _build_admin_booking_response(
                 b, seat_map.get(b.seat_id), room_map.get(b.room_id),
                 user_nickname=user_nickname_map.get(b.user_id),
+                course_name=course_map.get(b.course_id) if getattr(b, "course_id", None) else None,
+                lesson_titles=lesson_title_by_booking.get(b.id),
             )
         )
 

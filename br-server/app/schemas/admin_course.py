@@ -179,6 +179,7 @@ class CourseScheduleResponse(BaseModel):
     custom_price: float
     full_package_price: float | None = None
     full_custom_price: float | None = None
+    paid_amount: float | None = None
     schedule_type: str = "fixed"
     schedule_status: str = "in_progress"
     lesson_schedules: list[LessonScheduleResponse] = []

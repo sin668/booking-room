@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta, time
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import and_, delete, func, select, update
+from sqlalchemy import and_, case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.booking_rules import (
@@ -1256,6 +1256,8 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
     - start_date ← 第一课时日期（按取模循环分配算法计算，初始基准为 booking.date）
     - time_slots ← booking.time_slots（无则从 start_time/end_time 重建）
     - teacher_id ← booking.teacher_id
+    - custom_price ← 课程固定班课排课的定制每课时价格
+    - paid_amount ← booking.total_price（订单已支付金额）
 
     创建完成后把第一课时日期回写为预约日期（booking.date）与开课日期
     （course_schedules.start_date），供确认状态判断与订单列表展示使用。
@@ -1288,6 +1290,28 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
         slots = [{"weekday": lesson_date.isoweekday(), "time_slot": time_slot}]
     time_slots_json = json.dumps(slots, ensure_ascii=False)
 
+    # 定制每课时价格取自课程的固定班课排课（C 端下单时的计价来源：
+    # 优先进行中的一条，按创建时间取最早），
+    # 订单已支付总额单独记入 paid_amount，避免把总额误当作每课时价格
+    source_result = await db.execute(
+        select(CourseSchedule)
+        .where(
+            CourseSchedule.course_id == booking.course_id,
+            CourseSchedule.schedule_type == "fixed",
+        )
+        .order_by(
+            case((CourseSchedule.schedule_status == "in_progress", 0), else_=1),
+            CourseSchedule.created_at.asc(),
+        )
+        .limit(1)
+    )
+    source_schedule = source_result.scalar_one_or_none()
+    per_lesson_price = (
+        Decimal(str(source_schedule.custom_price))
+        if source_schedule and source_schedule.custom_price
+        else Decimal("0")
+    )
+
     # 创建定制排课记录（授课老师取自订单记录）
     custom_schedule = CourseSchedule(
         course_id=booking.course_id,
@@ -1295,7 +1319,8 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
         start_date=lesson_date,
         time_slots=time_slots_json,
         price=Decimal("0"),
-        custom_price=Decimal(str(booking.total_price)) if booking.total_price else Decimal("0"),
+        custom_price=per_lesson_price,
+        paid_amount=Decimal(str(booking.total_price)) if booking.total_price else Decimal("0"),
         schedule_type="custom",
     )
     db.add(custom_schedule)

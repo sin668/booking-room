@@ -221,6 +221,8 @@ export interface ScheduleRecord {
   custom_price: number;
   full_package_price?: number | null;
   full_custom_price?: number | null;
+  /** 已支付金额：定制订单确认时从订单实付总额记入 */
+  paid_amount?: number | null;
   schedule_type?: string;
   schedule_status?: string;
 }

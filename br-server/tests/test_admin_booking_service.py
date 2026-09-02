@@ -713,3 +713,56 @@ async def test_admin_confirm_custom_booking_first_lesson_today_confirmed(db_sess
         await db_session.execute(select(Booking).where(Booking.id == 1))
     ).scalar_one()
     assert booking_row.date == today
+
+
+@pytest.mark.asyncio
+async def test_admin_confirm_custom_booking_records_paid_amount_separately(
+    db_session: AsyncSession,
+):
+    """确认定制订单：已支付金额记入 paid_amount，定制每课时价格取课程固定班课排课。
+
+    回归 br-admin /booking/list “确认”按钮把订单实付总额误写入
+    course_schedules.custom_price（定制每课时价格）的问题。
+    """
+    _make_room(db_session, 1)
+    _make_user(db_session)
+    _make_course_data(db_session)
+    # 课程固定班课排课：C 端下单计价来源，定制每课时价格与订单实付总额明显不同
+    db_session.add(
+        CourseSchedule(
+            id=2,
+            course_id=1,
+            teacher_id=1,
+            start_date=date(2026, 5, 10),
+            time_slots='[{"weekday": 3, "time_slot": "10:00-12:00"}]',
+            price=Decimal("80.00"),
+            custom_price=Decimal("120.00"),
+            schedule_type="fixed",
+            schedule_status="in_progress",
+        )
+    )
+
+    today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+    booking = _make_course_booking(db_session, 1, schedule_id=None, status="pending_confirm")
+    booking.date = today
+    # 时间段星期与基准日期一致 → 第一课时日期即今天
+    booking.time_slots = f'[{{"weekday": {today.isoweekday()}, "time_slot": "10:00-12:00"}}]'
+    booking.lesson_ids = [1]
+    booking.total_price = Decimal("360.00")
+    await db_session.flush()
+
+    await admin_confirm_booking(db_session, 1)
+
+    booking_row = (
+        await db_session.execute(select(Booking).where(Booking.id == 1))
+    ).scalar_one()
+    schedule = (
+        await db_session.execute(
+            select(CourseSchedule).where(CourseSchedule.id == booking_row.schedule_id)
+        )
+    ).scalar_one()
+    assert schedule.schedule_type == "custom"
+    # 已支付金额 = 订单实付总额
+    assert schedule.paid_amount == Decimal("360.00")
+    # 定制每课时价格 = 课程固定班课排课的定制价，不再是订单实付总额
+    assert schedule.custom_price == Decimal("120.00")

@@ -33,6 +33,10 @@ class CourseSchedule(Base):
     custom_price: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     full_package_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     full_custom_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    paid_amount: Mapped[float | None] = mapped_column(
+        Numeric(10, 2), nullable=True,
+        comment="已支付金额：定制订单确认时从订单 total_price 记入，与定制每课时价格区分",
+    )
     schedule_type: Mapped[str] = mapped_column(
         String(20), default="fixed", nullable=False,
         comment="排课类型: fixed=固定班课, custom=定制课时",

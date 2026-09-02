@@ -663,6 +663,17 @@
       },
     },
     {
+      // 已支付金额：定制订单确认时由订单实付总额记入，与定制每课时价格区分
+      title: '已支付金额',
+      key: 'paid_amount',
+      width: 120,
+      render(row: ScheduleRecord) {
+        return row.paid_amount
+          ? h(NTag, { type: 'success', size: 'small', bordered: false }, () => `¥${row.paid_amount}`)
+          : '-';
+      },
+    },
+    {
       title: '上课时间',
       key: 'time_slots',
       width: 250,

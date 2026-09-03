@@ -264,26 +264,6 @@ import { cancelCourseBooking } from '@/api/courseBooking'
 import { BOOKING_TABS, SEAT_ZONE_LABELS } from '@/constants/booking'
 import { formatBookingStatus, formatCourseEndDate, formatCourseSchedule, formatCourseStartDate, formatHourCount, formatMoney } from '@/utils/formatters'
 
-const TABS = [
-  { label: '全部', value: 'all' },
-  { label: '已确认', value: 'confirmed' },
-  { label: '已取消', value: 'cancelled' },
-  { label: '已完成', value: 'completed' },
-]
-
-const STATUS_MAP = {
-  pending: '待确认',
-  confirmed: '已确认',
-  cancelled: '已取消',
-  completed: '已完成',
-}
-
-const ZONE_MAP = {
-  quiet: '静音区',
-  keyboard: '键盘区',
-  vip: 'VIP区',
-}
-
 const PAGE_SIZE = 20
 const SCHEDULE_TRUNCATE_THRESHOLD = 12
 

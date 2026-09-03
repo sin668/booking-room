@@ -56,11 +56,11 @@
           <!-- Top row: title + status badge -->
           <view class="card-header">
             <view class="store-title-wrap">
-              <view :class="['status-dot', `dot-${displayStatus(order)}`]" />
+              <view :class="['status-dot', `dot-${order.status}`]" />
               <text v-if="isCourseBooking(order)" class="store-name">{{ order.course_name || '课程预约' }}</text>
               <text v-else class="store-name">{{ order.room ? order.room.name : '未知门店' }}</text>
             </view>
-            <view :class="['status-badge', `badge-${displayStatus(order)}`]">
+            <view :class="['status-badge', `badge-${order.status}`]">
               <text class="status-badge-text">{{ statusLabel(order) }}</text>
             </view>
           </view>
@@ -141,21 +141,21 @@
             <!-- Lesson row: nearest lesson + expandable list (in_progress / pending_start) -->
             <template v-if="order.status !== 'completed' && order.lesson_schedules && order.lesson_schedules.length">
               <!-- Highlight lesson row: only for in_progress orders with highlighted_lesson_id -->
-              <view v-if="displayStatus(order) === 'in_progress' && getHighlightedLesson(order)" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
+              <view v-if="order.status === 'in_progress' && getHighlightedLesson(order)" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot lesson-icon-dot-active" />
                 </view>
                 <text class="lesson-highlight-text">{{ getHighlightedLesson(order).lesson_title }}   {{ getHighlightedLesson(order).lesson_date }} {{ formatLessonStartTime(getHighlightedLesson(order).lesson_time_slot) }}上课</text>
               </view>
               <!-- Fallback: in_progress without highlighted_lesson_id, use nearest lesson -->
-              <view v-if="displayStatus(order) === 'in_progress' && !getHighlightedLesson(order) && getNearestLesson(order)" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
+              <view v-if="order.status === 'in_progress' && !getHighlightedLesson(order) && getNearestLesson(order)" class="card-info-row lesson-highlight-row" @tap.stop="toggleLessons(order)">
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot lesson-icon-dot-active" />
                 </view>
                 <text class="lesson-highlight-text">{{ getNearestLesson(order).lesson_title }}   {{ getNearestLesson(order).lesson_date }} {{ formatLessonStartTime(getNearestLesson(order).lesson_time_slot) }}上课</text>
               </view>
               <!-- Expand toggle for pending_start orders (no highlight)；待确认订单不展示课时上课时间列表 -->
-              <view v-if="displayStatus(order) === 'pending_start'" class="card-info-row lesson-expand-toggle" @tap.stop="toggleLessons(order)">
+              <view v-if="order.status === 'pending_start'" class="card-info-row lesson-expand-toggle" @tap.stop="toggleLessons(order)">
                 <view class="info-icon lesson-icon">
                   <view class="lesson-icon-dot" />
                 </view>
@@ -206,21 +206,21 @@
               </text>
             </view>
             <view
-              v-if="(order.status === 'confirmed' || displayStatus(order) === 'pending_start') && order.payment_status !== 'pending' && !isCourseBooking(order)"
+              v-if="(order.status === 'in_progress' || order.status === 'pending_start') && order.payment_status !== 'pending' && !isCourseBooking(order)"
               class="action-btn"
               @tap="viewSeat(order)"
             >
               <text class="action-btn-text">查看座位</text>
             </view>
             <view
-              v-if="(order.status === 'confirmed' || order.status === 'in_progress' || displayStatus(order) === 'pending_start' || displayStatus(order) === 'pending_confirm') && order.payment_status !== 'pending' && isCourseBooking(order)"
+              v-if="(order.status === 'in_progress' || order.status === 'pending_start' || order.status === 'pending_confirm') && order.payment_status !== 'pending' && isCourseBooking(order)"
               class="action-btn"
               @tap="viewCourse(order)"
             >
               <text class="action-btn-text">查看课程</text>
             </view>
             <view
-              v-if="(order.can_cancel === true || order.status === 'pending_confirm') && order.payment_status !== 'pending' && !(isCourseBooking(order) && displayStatus(order) === 'pending_start')"
+              v-if="(order.can_cancel === true || order.status === 'pending_confirm') && order.payment_status !== 'pending' && !(isCourseBooking(order) && order.status === 'pending_start')"
               :class="['action-btn', 'cancel-action-btn', { disabled: cancellingOrderId === order.id }]"
               @tap.stop="confirmCancelBooking(order)"
             >
@@ -261,7 +261,7 @@
 <script>
 import { cancelBookingOrder, fetchBookingsPage } from '@/services/bookingPageService'
 import { cancelCourseBooking } from '@/api/courseBooking'
-import { BOOKING_TABS, SEAT_ZONE_LABELS } from '@/constants/booking'
+import { BOOKING_TABS, PAYMENT_STATUS_LABELS, SEAT_ZONE_LABELS } from '@/constants/booking'
 import { formatBookingStatus, formatCourseEndDate, formatCourseSchedule, formatCourseStartDate, formatHourCount, formatMoney } from '@/utils/formatters'
 
 const PAGE_SIZE = 20
@@ -308,14 +308,14 @@ export default {
     },
 
     isOrderStarted(order) {
-      return order.status === 'in_progress' || (order.status === 'confirmed' && order.started === true)
+      return order.status === 'in_progress'
     },
 
     isOrderPendingStart(order) {
-      if (order.status === 'confirmed' && !order.started) return true
+      if (order.status === 'in_progress' && !order.started) return true
       // 待开始（已支付但预约未开始）
       if (
-        order.status === 'pending' &&
+        order.status === 'pending_start' &&
         order.payment_status === 'paid'
       ) return true
       // 待确认（1V1私人定制已支付待管理员确认）
@@ -421,42 +421,13 @@ export default {
       this.loadOrders()
     },
 
-    displayStatus(order) {
-      if (!order) return order?.status || ''
-      // 1V1私人定制待确认 → 待确认
-      if (order.status === 'pending_confirm') {
-        return 'pending_confirm'
-      }
-      // 已支付但预约未开始 → 待开始
-      if (
-        order.status === 'pending' &&
-        order.payment_status === 'paid'
-      ) {
-        return 'pending_start'
-      }
-      // 课程预约：已确认即已开课 → 进行中（后端仅当开课日期到达才会置为 confirmed）
-      if (order.status === 'confirmed' && order.booking_type === 'course') {
-        return 'in_progress'
-      }
-      // 座位预约：已确认且时段已开始 → 进行中
-      if (order.status === 'confirmed' && order.booking_type !== 'course' && order.date && order.start_time) {
-        const now = new Date()
-        const bookingStart = new Date(order.date + 'T' + order.start_time + ':00')
-        if (now >= bookingStart) {
-          return 'in_progress'
-        }
-      }
-      return order.status
-    },
-
     statusLabel(order) {
       if (!order) return ''
-      const ds = this.displayStatus(order)
-      // 自习室预约订单的已确认状态统一显示“进行中”
-      if (!this.isCourseBooking(order) && ds === 'confirmed') {
-        return '进行中'
+      // Q13/F23：未支付的待开始订单显示「待支付」，保留原 BOOKING_STATUS_LABELS.pending 承载的支付域语义
+      if (order.status === 'pending_start' && order.payment_status !== 'paid') {
+        return PAYMENT_STATUS_LABELS.pending
       }
-      return formatBookingStatus(ds)
+      return formatBookingStatus(order.status)
     },
 
     isCourseBooking(order) {
@@ -799,16 +770,6 @@ export default {
   flex-shrink: 0;
 }
 
-.dot-confirmed {
-  background: $success;
-  box-shadow: 0 0 0 8rpx rgba(7, 193, 96, 0.1);
-}
-
-.dot-pending {
-  background: #FFB800;
-  box-shadow: 0 0 0 8rpx rgba(255, 184, 0, 0.12);
-}
-
 .dot-cancelled {
   background: $danger;
   box-shadow: 0 0 0 8rpx rgba(255, 107, 107, 0.1);
@@ -837,22 +798,6 @@ export default {
 
 .status-badge-text {
   font-size: 22rpx;
-}
-
-.badge-confirmed {
-  background: rgba(7, 193, 96, 0.1);
-}
-
-.badge-confirmed .status-badge-text {
-  color: $success;
-}
-
-.badge-pending {
-  background: rgba(255, 184, 0, 0.12);
-}
-
-.badge-pending .status-badge-text {
-  color: #B77900;
 }
 
 .badge-cancelled {

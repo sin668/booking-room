@@ -24,6 +24,7 @@ from app.schemas.course_booking import (
 )
 from app.services import coupon_service
 from app.core.config import settings
+from app.utils.time_slots import build_time_slots_from_date
 from app.utils.timezone import CHINA_TIMEZONE, booking_now
 
 
@@ -470,11 +471,9 @@ class CourseBookingService:
                     pass
             if data.time_slot:
                 # 与课程排课 time_slots 格式一致：[{"weekday": N, "time_slot": "HH:MM-HH:MM"}]
-                # weekday 从用户选择的开课日期推算（isoweekday: 1=周一, 7=周日）
-                weekday = booking_date.isoweekday()
-                booking_time_slots = json.dumps(
-                    [{"weekday": weekday, "time_slot": data.time_slot}],
-                    ensure_ascii=False,
+                # weekday 从开课日期推算（isoweekday），构造收敛至 build_time_slots_from_date（§3.1）
+                booking_time_slots = build_time_slots_from_date(
+                    booking_date=booking_date, time_slot=data.time_slot
                 )
 
         # 授课老师取自课程排课记录（course_schedules.teacher_id）

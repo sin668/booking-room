@@ -59,6 +59,7 @@ from app.services.booking_cancellation_policy import (
     booking_now,
     calculate_cancellation_policy,
 )
+from app.utils.time_slots import parse_time_slots, rebuild_from_time_range
 
 MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
@@ -1275,22 +1276,25 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
     from app.services.admin_course_service import AdminCourseService
 
     lesson_date = booking.date or today
-    time_slots_json = getattr(booking, "time_slots", None)
-    slots: list[dict] = []
-    if time_slots_json:
-        try:
-            parsed = json.loads(time_slots_json)
-            if isinstance(parsed, list):
-                for item in parsed:
-                    if isinstance(item, dict):
-                        slots.append(item)
-                    elif isinstance(item, str):
-                        slots.append({"weekday": lesson_date.isoweekday(), "time_slot": item})
-        except (json.JSONDecodeError, TypeError):
-            slots = []
-    if not slots and booking.start_time and booking.end_time:
-        time_slot = f"{booking.start_time.strftime('%H:%M')}-{booking.end_time.strftime('%H:%M')}"
-        slots = [{"weekday": lesson_date.isoweekday(), "time_slot": time_slot}]
+    # 解析/重建收敛至 app.utils.time_slots（§3.1）：parse_time_slots 容错解析 3 种历史格式，
+    # 无数据时 rebuild_from_time_range 从 start_time/end_time 重建单一时段；weekday 缺省（历史
+    # 纯字符串数组格式，§14）按第一课时日期回填 isoweekday，输出与旧逻辑逐字节一致。
+    parsed_slots = parse_time_slots(getattr(booking, "time_slots", None))
+    if not parsed_slots and booking.start_time and booking.end_time:
+        parsed_slots = parse_time_slots(
+            rebuild_from_time_range(
+                booking_date=lesson_date,
+                start_time=booking.start_time,
+                end_time=booking.end_time,
+            )
+        )
+    slots: list[dict] = [
+        {
+            "weekday": ts.weekday if ts.weekday is not None else lesson_date.isoweekday(),
+            "time_slot": f"{ts.start}-{ts.end}",
+        }
+        for ts in parsed_slots
+    ]
     time_slots_json = json.dumps(slots, ensure_ascii=False)
 
     # 定制每课时价格取自课程的固定班课排课（C 端下单时的计价来源：

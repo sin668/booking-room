@@ -137,7 +137,7 @@ base-ref: 6582eb0268f658b75bcd2030e959d709a21e712d
   - `bash <verification>/redlist.sh <输出前缀>` → 生成 `<输出前缀>.txt`（每行一个测试 ID，已排序去重）与 `<输出前缀>.ts`（ISO 格式的 Asia/Shanghai 采集时刻）；stdout 打印 pytest 汇总行、采集时刻、条目数。退出码 0 表示采集成功（**与测试是否全绿无关**）。
   - `python3 <verification>/compare_redlist.py <基线前缀> <候选前缀>` → 退出码 0 = 集合恒等（含挂钟等价），1 = 不恒等；stdout 打印 `PASS`/`FAIL` 与逐项差集。
 
-- [ ] **Step 1: 写采集脚本**
+- [x] **Step 1: 写采集脚本**
 
 创建 `openspec/changes/booking-order-lifecycle-refactor/verification/redlist.sh`：
 
@@ -178,7 +178,7 @@ wc -l < "$OUT.txt"
 rm -f "$LOG"
 ```
 
-- [ ] **Step 2: 写比对脚本**
+- [x] **Step 2: 写比对脚本**
 
 创建 `openspec/changes/booking-order-lifecycle-refactor/verification/compare_redlist.py`：
 
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [ ] **Step 3: 采集基线并验证脚本可用**
+- [x] **Step 3: 采集基线并验证脚本可用**
 
 Run:
 ```bash
@@ -280,7 +280,7 @@ bash redlist.sh redlist-baseline
 ```
 Expected: 汇总行为 `15 failed, 750 passed, 16 skipped, ... errors`（11:00 前）或 `14 failed, 751 passed, ...`（11:00 后）；`redlist-baseline.txt` 相应为 **96** 或 **95** 行；`redlist-baseline.ts` 为当前 Asia/Shanghai 时刻。
 
-- [ ] **Step 4: 自比对，验证比对脚本判 PASS**
+- [x] **Step 4: 自比对，验证比对脚本判 PASS**
 
 Run:
 ```bash
@@ -289,7 +289,7 @@ echo "EXIT=$?"
 ```
 Expected: `PASS 红名单集合恒等（归一化后 95 项）`，`EXIT=0`。归一化后恒为 95 项——这正是 Design Doc §11.1 记录的基线规模。
 
-- [ ] **Step 5: 负向验证比对脚本能抓到回归**
+- [x] **Step 5: 负向验证比对脚本能抓到回归**
 
 Run:
 ```bash
@@ -302,7 +302,7 @@ Expected: `FAIL 红名单集合不恒等` + `[新增回归]   tests/test_fake.py
 
 > 这一步是必要的：未经验证的比对脚本会让后续 5 个 Phase 的验收全部失效。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -332,7 +332,7 @@ test_issue_verification_token_for_future_booking_returns_token
 
 **为什么可以删（实测依据）**：`cleanup_unpaid_bookings` 生产代码零引用，唯一引用是 `tests/test_booking_cleanup.py:14` 的 `from app.services.booking_cleanup_service import cleanup_unpaid_bookings`。该服务实现「15 分钟未支付自动取消 + 恢复优惠券」，删除意味着**明确不引入**该行为；未支付订单的收敛由既有 `BookingPaymentService.reconcile_pending_payments()`（微信支付对账）承担。用户已在 Q4 确认「无消费方的一律删除」。
 
-- [ ] **Step 1: 复核零生产引用**
+- [x] **Step 1: 复核零生产引用**
 
 Run:
 ```bash
@@ -342,7 +342,7 @@ grep -rn "booking_cleanup_service\|cleanup_unpaid_bookings" tests/ --include='*.
 ```
 Expected: 第一条**无输出**（`app/` 内零引用）；第二条只输出 `tests/test_booking_cleanup.py:14` 一处。若有其它输出，**停止**并重新评估。
 
-- [ ] **Step 2: 删除两个文件**
+- [x] **Step 2: 删除两个文件**
 
 Run:
 ```bash
@@ -351,7 +351,7 @@ git rm app/services/booking_cleanup_service.py tests/test_booking_cleanup.py
 ```
 Expected: `rm 'app/services/booking_cleanup_service.py'` 与 `rm 'tests/test_booking_cleanup.py'` 两行。
 
-- [ ] **Step 3: 验证无悬空引用且测试可收集**
+- [x] **Step 3: 验证无悬空引用且测试可收集**
 
 Run:
 ```bash
@@ -361,7 +361,7 @@ grep -rn "booking_cleanup_service\|cleanup_unpaid_bookings" app/ tests/ --includ
 ```
 Expected: grep 无输出；collect-only 末尾无 `error`， collected 数比删除前少 4（`test_booking_cleanup.py` 有 4 个测试）。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -384,7 +384,7 @@ git commit -m "refactor: 删除零引用的 booking_cleanup_service，明确不�
 
 **为什么可以删（实测依据）**：`BookingUseCases` 是 7 行、4 个 `staticmethod` 透传别名（`create_booking` / `list_bookings` / `get_booking` / `cancel_booking` → `app.services.booking_service` 同名函数）。生产零引用；唯一引用 `tests/test_booking_use_cases.py:1,4` 且只断言 `callable()`，不验证任何行为。
 
-- [ ] **Step 1: 复核零生产引用**
+- [x] **Step 1: 复核零生产引用**
 
 Run:
 ```bash
@@ -393,7 +393,7 @@ grep -rn "booking_use_cases\|BookingUseCases\|app\.application\|from app import 
 ```
 Expected: 只输出 `app/application/booking_use_cases.py` 自身定义行与 `tests/test_booking_use_cases.py:1,4`。`app/` 内除定义文件外**无其它命中**。
 
-- [ ] **Step 2: 删除文件与目录**
+- [x] **Step 2: 删除文件与目录**
 
 Run:
 ```bash
@@ -403,7 +403,7 @@ rm -rf app/application/__pycache__ && rmdir app/application 2>/dev/null; ls -d a
 ```
 Expected: 三条 `rm '...'`；最后 `ls` 输出 `ls: app/application: No such file or directory`。
 
-- [ ] **Step 3: 验证应用仍可导入**
+- [x] **Step 3: 验证应用仍可导入**
 
 Run:
 ```bash
@@ -412,7 +412,7 @@ cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/bo
 ```
 Expected: `app import OK <路由数>`，无 `ModuleNotFoundError`。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -433,7 +433,7 @@ git commit -m "refactor: 删除 app/application 透传层（4 个 staticmethod �
 
 **为什么改名（实测依据 F10）**：`main.py:69` 的 `_cleanup_unpaid_bookings_job` 实际调用的是 `BookingPaymentService.reconcile_pending_payments()`，日志写「[微信支付对账定时任务]」，与函数名完全不符。`app.state.booking_cleanup_scheduler` 承载的是全部 3 个 job（支付对账 + 订单状态推进 + 排课状态推进），非仅 cleanup。
 
-- [ ] **Step 1: 确认改动点只有 4 处**
+- [x] **Step 1: 确认改动点只有 4 处**
 
 Run:
 ```bash
@@ -442,7 +442,7 @@ grep -rn "_cleanup_unpaid_bookings_job\|booking_cleanup_scheduler" app/ tests/ -
 ```
 Expected: 恰好 4 行，全在 `app/main.py`：`:69`、`:100`、`:195`、`:217`。`tests/` 内**无命中**（改名不会破坏测试）。
 
-- [ ] **Step 2: 改函数名（3 处）**
+- [x] **Step 2: 改函数名（3 处）**
 
 在 `br-server/app/main.py` 中：
 
@@ -467,7 +467,7 @@ async def _payment_reconciliation_job() -> None:
 
 > `seconds=settings.BOOKING_CLEANUP_INTERVAL_SECONDS` **保持不变**——环境变量名保留（Global Constraints）。
 
-- [ ] **Step 3: 改 app.state 名（1 处）**
+- [x] **Step 3: 改 app.state 名（1 处）**
 
 `:217`：
 ```python
@@ -476,7 +476,7 @@ async def _payment_reconciliation_job() -> None:
 
 > `:254-255` 的 shutdown 用的是局部变量 `scheduler`（`if scheduler is not None: scheduler.shutdown(wait=False)`），**不读 `app.state`**，因此无需同步改动。已实测确认。
 
-- [ ] **Step 4: 验证无残留 + 应用可导入**
+- [x] **Step 4: 验证无残留 + 应用可导入**
 
 Run:
 ```bash
@@ -489,7 +489,7 @@ print('rename OK', callable(_payment_reconciliation_job))"
 ```
 Expected: 第一条 grep **无输出**（退出码 1）；第二条输出 4 行（`:69`、`:100`、`:195`、`:217`）；python 输出 `rename OK True`。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -509,7 +509,7 @@ BOOKING_CLEANUP_INTERVAL_SECONDS 环境变量名保留不变。"
 - Consumes: 无
 - Produces: `course_booking_service` 模块顶部有 `import json`；`_create_booking_record` 内不再有函数级 import。
 
-- [ ] **Step 1: 确认函数内 import 只有 1 处**
+- [x] **Step 1: 确认函数内 import 只有 1 处**
 
 Run:
 ```bash
@@ -519,7 +519,7 @@ sed -n '1,20p' app/services/course_booking_service.py
 ```
 Expected: 只有 `:481` 一处缩进形式的 `import json`；顶部 import 区无 `import json`。
 
-- [ ] **Step 2: 顶部加 import，删除函数内 import**
+- [x] **Step 2: 顶部加 import，删除函数内 import**
 
 在 `br-server/app/services/course_booking_service.py` 顶部 import 区（`:1` 起，与其它标准库 import 同组，按字母序放在最前）加入：
 ```python
@@ -540,7 +540,7 @@ import json
 
 > 本 Task 只提 import，**不改** `json.dumps` 的构造逻辑。Phase 2 的 Task 2.5 会把整块替换为 `build_time_slots_from_date()`。
 
-- [ ] **Step 3: 验证**
+- [x] **Step 3: 验证**
 
 Run:
 ```bash
@@ -553,7 +553,7 @@ print('json at module level:', hasattr(m, 'json'))"
 ```
 Expected: `grep -c` 输出 `0`（无缩进形式的 import）；python 输出 `json at module level: True`；pytest 汇总行的 passed 数与本 Task 前一致（无新增失败）。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -571,7 +571,7 @@ git commit -m "refactor: course_booking_service 的 import json 提到模块顶�
 
 **为什么可以删（实测依据 F24）**：三个常量各自只有定义处 1 次 grep 命中，零消费方。页面 `:293` 实际用 `tabs: BOOKING_TABS`（导入自 `@/constants/booking`），`:494` 用 `SEAT_ZONE_LABELS[seat.zone]`。附带消灭 `STATUS_MAP.pending = '待确认'` 与 `BOOKING_STATUS_LABELS.pending = '待支付'` 的**互相矛盾文案**。
 
-- [ ] **Step 1: 逐个实测零消费方**
+- [x] **Step 1: 逐个实测零消费方**
 
 Run:
 ```bash
@@ -583,7 +583,7 @@ done
 ```
 Expected: `TABS` 只有 `src/pages/orders/index.vue:267`（定义处）1 行——注意 `BOOKING_TABS` 因 `\b` 词边界不会误命中；`STATUS_MAP` 只有 `:274`；`ZONE_MAP` 只有 `:281`。若任一常量出现第 2 处命中，**停止**并重新评估。
 
-- [ ] **Step 2: 删除三个常量**
+- [x] **Step 2: 删除三个常量**
 
 在 `br-app/src/pages/orders/index.vue` 中删除 `:267-285` 整块，使 `:265` 的 import 之后直接接 `PAGE_SIZE`：
 
@@ -596,7 +596,7 @@ const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
 > `import { BOOKING_TABS, SEAT_ZONE_LABELS } from '@/constants/booking'`（`:264`）**保留**，它们才是真实消费的对象。
 
-- [ ] **Step 3: 验证已删且构建通过**
+- [x] **Step 3: 验证已删且构建通过**
 
 Run:
 ```bash
@@ -607,7 +607,7 @@ npm run build:h5 2>&1 | tail -8
 ```
 Expected: 第一条 grep **无输出**（退出码 1）；第二条输出 `:264` import、`tabs: BOOKING_TABS`、`SEAT_ZONE_LABELS[seat.zone]` 等命中；构建**成功**（末尾无 `ERROR`/`Build failed`，输出产物体积汇总）。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -627,7 +627,7 @@ git commit -m "refactor: 删除 br-app 订单页 3 个零消费方常量 TABS/ST
 - Consumes: Task 0.1 的 `redlist.sh` / `compare_redlist.py`、`redlist-baseline.*`
 - Produces: Phase 1 的验收结论（记录在提交信息与后续验证报告中）
 
-- [ ] **Step 1: 采集 Phase 1 红名单**
+- [x] **Step 1: 采集 Phase 1 红名单**
 
 Run:
 ```bash
@@ -636,7 +636,7 @@ bash redlist.sh redlist-phase1
 ```
 Expected: 汇总行 passed 数 = 基线 passed 数 **减 5**（Task 1.1 删 4 个测试 + Task 1.2 删 1 个测试）；红名单条目数 = 基线条目数 **减 0**（被删的 5 个测试原本都是绿的，不在红名单里）。
 
-- [ ] **Step 2: 比对**
+- [x] **Step 2: 比对**
 
 Run:
 ```bash
@@ -646,7 +646,7 @@ Expected: `PASS 红名单集合恒等（归一化后 95 项）`，`EXIT=0`。
 
 若 `FAIL`：逐项读差集。`[新增回归]` 说明 Phase 1 引入了破坏（最可能是 Task 1.3 改名漏了引用），回到对应 Task 修复后重跑本 Task。`[被意外修好]` 同样要查——删除死代码不该修好任何既有红灯。
 
-- [ ] **Step 3: grep 守卫（已删标识符无残留）**
+- [x] **Step 3: grep 守卫（已删标识符无残留）**
 
 Run:
 ```bash
@@ -657,7 +657,7 @@ echo "全部守卫退出码应为 1（无命中）"
 ```
 Expected: 两条 grep 均**无输出**。
 
-- [ ] **Step 4: 清理临时红名单文件（不提交）**
+- [x] **Step 4: 清理临时红名单文件（不提交）**
 
 Run:
 ```bash
@@ -698,7 +698,7 @@ Expected: `git status` 对该目录无输出（基线文件已在 Task 0.1 提�
 
 **为什么（实测依据 §2.3 / §3.1 / F4 / F19 / F21）**：`app/utils/` 当前不存在（F4，已实测确认）。订单链路内有 3 个同语义「当前业务本地时间」实现（`booking_cancellation_policy.booking_now` 返 naive、`course_booking_service._now_naive` 返 naive、`booking_verification_service._booking_now` 返 aware），全仓 `CHINA_TIMEZONE` 有 6 处重复定义 + 1 处等价变体。领域纯函数要求 `now`/`today` 为 naive，故必须先建唯一时区源，否则 aware 孤岛与 naive 调用点共用纯函数会抛 `TypeError: can't compare offset-naive and offset-aware datetimes`。
 
-- [ ] **Step 1: 写 test_timezone.py 失败测试**
+- [x] **Step 1: 写 test_timezone.py 失败测试**
 
 创建 `br-server/tests/test_timezone.py`：
 
@@ -738,12 +738,12 @@ def test_ensure_booking_timezone_aware_input_converts():
     assert result.tzinfo == CHINA_TIMEZONE and result.hour == 10  # UTC 02:00 -> 沪 10:00
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor/br-server && /opt/miniconda3/envs/booking-room/bin/python -m pytest tests/test_timezone.py -q --tb=line -p no:cacheprovider 2>&1 | tail -5`
 Expected: 收集错误，`ModuleNotFoundError: No module named 'app.utils'`。
 
-- [ ] **Step 3: 建 utils 包与 timezone.py**
+- [x] **Step 3: 建 utils 包与 timezone.py**
 
 先读现状确认 `ensure_booking_timezone` 语义与之逐条一致（该模块覆盖率 100%，任何偏差立刻红灯）：
 
@@ -784,7 +784,7 @@ def ensure_booking_timezone(value: datetime) -> datetime:
 
 > 若 Step 3 读到的 `_ensure_booking_timezone` 现状与上述实现不一致（例如对 aware 输入不做 `astimezone` 而是直接 `replace`），**以现状为准**改写 `ensure_booking_timezone` 并同步调整 `test_ensure_booking_timezone_aware_input_converts` 的断言——本 Task 是提升既有实现，不是重新设计。
 
-- [ ] **Step 4: 写 test_time_slots.py 失败测试**
+- [x] **Step 4: 写 test_time_slots.py 失败测试**
 
 创建 `br-server/tests/test_time_slots.py`：
 
@@ -841,7 +841,7 @@ def test_rebuild_from_time_range_roundtrip():
 
 > `build_from_date` / `rebuild` 的期望 weekday 由 `d.isoweekday()` 派生，不硬编码具体星期，避免计划书写时的星期口算错误。
 
-- [ ] **Step 5: 建 time_slots.py**
+- [x] **Step 5: 建 time_slots.py**
 
 先读现状两处重复实现，`rebuild_from_time_range` 的输出格式必须与 `booking_service.py:1270-1291` 现状逐字节一致：
 
@@ -924,12 +924,12 @@ def rebuild_from_time_range(*, booking_date: date | None, start_time, end_time) 
 
 > 若 Step 5 读到的 `booking_service.py:1270-1291` 重建分支输出的键名/结构与上述不同（例如用 `start`/`end` 拆分键而非 `time_slot`），**以现状为准**改写 `rebuild_from_time_range` 并同步 `test_rebuild_from_time_range_roundtrip`——重构必须保持输出契约不变。
 
-- [ ] **Step 6: 运行新测试全绿**
+- [x] **Step 6: 运行新测试全绿**
 
 Run: `cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor/br-server && /opt/miniconda3/envs/booking-room/bin/python -m pytest tests/test_timezone.py tests/test_time_slots.py -q --tb=short -p no:cacheprovider 2>&1 | tail -6`
 Expected: 全部 PASS，0 failed / 0 error。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -961,7 +961,7 @@ time_slots 兼容 3 种历史格式、解析失败静默容错。仅新增，未
 
 **为什么（实测依据 §2.1 / §2.2 / §2.4.1 / §2.5 / §2.6 / Q9）**：`models/booking.py:11-19` 与 `schemas/booking.py:10-18` 是**完全相同的两份** `PaymentMethod`/`PaymentStatus` 定义，收敛为单一事实源 + re-export，保留既有导入路径不断链（Q9）。8 个纯函数的真值表已逐处实测（见下方各函数 docstring 引用的行号），抽取是**等价替换**而非行为变更（§2.5）。
 
-- [ ] **Step 1: 写 test_booking_status.py 失败测试**
+- [x] **Step 1: 写 test_booking_status.py 失败测试**
 
 创建 `br-server/tests/test_booking_status.py`：
 
@@ -1076,12 +1076,12 @@ def test_filter_other_one_condition():
     assert len(build_status_filter_conditions(Booking.status, Booking.payment_status, "completed")) == 1
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor/br-server && /opt/miniconda3/envs/booking-room/bin/python -m pytest tests/test_booking_status.py -q --tb=line -p no:cacheprovider 2>&1 | tail -4`
 Expected: 收集错误，`ModuleNotFoundError: No module named 'app.domain.booking_status'`。
 
-- [ ] **Step 3: 建 domain/booking_status.py**
+- [x] **Step 3: 建 domain/booking_status.py**
 
 创建 `br-server/app/domain/booking_status.py`：
 
@@ -1219,7 +1219,7 @@ def build_status_filter_conditions(status_column, payment_status_column, status:
     return [status_column == status]
 ```
 
-- [ ] **Step 4: models/schemas 枚举改 re-export（收敛双份定义，Q9）**
+- [x] **Step 4: models/schemas 枚举改 re-export（收敛双份定义，Q9）**
 
 `br-server/app/models/booking.py:11-19`：删除本地 `PaymentMethod`/`PaymentStatus` 两份 `class` 定义，改为一行 re-export（保留 `from app.models.booking import PaymentStatus` 等既有导入路径不断链）：
 ```python
@@ -1234,7 +1234,7 @@ from app.domain.booking_status import PaymentStatus as PaymentStatusEnum  # noqa
 
 > `models/booking.py:32` 的 `default="confirmed"` **本 Task 不动**（留到 Phase 4 Task 4.1 随枚举值翻转一起改为 `BookingStatus.PENDING_START`），以保证 Phase 2「零行为面变化」。`schemas/booking.py:16` 的 `payment_status='pending'`（trap #1）是**支付域默认值，不改**。
 
-- [ ] **Step 5: 运行新测试 + 依赖方向校验**
+- [x] **Step 5: 运行新测试 + 依赖方向校验**
 
 Run:
 ```bash
@@ -1245,7 +1245,7 @@ grep -n "import" app/domain/booking_status.py | grep -E "app.models|app.schemas|
 ```
 Expected: 新测试全 PASS；grep 无命中（领域层不依赖 models/schemas/services）；python 输出 `re-export OK paid paid`。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -1272,7 +1272,7 @@ models/schemas 改 re-export 保留导入路径不断链。纯结构重构，行
 
 **为什么（实测依据 §2.4.2 / §4.1 #7 / Q12）**：核销是订单生命周期终点，其状态判定重复 4 处（`booking_verification_service.py:189-192,255-258,275-281,353-356`）+ 窗口内/外状态判定 1 处（`:264`）。`verification_rules.py` 已承载 token 签发/解码且覆盖率 100%，**复用该既有领域模块，不新建文件**。`is_verifiable` 的真实语义**不是**「仅 `in_progress` 可核销」，而是含「`pending_start` 且已支付」分支（F22）。
 
-- [ ] **Step 1: 追加核销域失败测试**
+- [x] **Step 1: 追加核销域失败测试**
 
 在 `br-server/tests/test_booking_status.py` **末尾追加**（import 区补 `from app.domain.verification_rules import is_verifiable, resolve_verification_status`）：
 
@@ -1299,12 +1299,12 @@ def test_verification_status_after_end_completed():
     assert resolve_verification_status(now=datetime(2026, 9, 3, 13, 0), end_at=datetime(2026, 9, 3, 12, 0)) == BookingStatus.COMPLETED
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor/br-server && /opt/miniconda3/envs/booking-room/bin/python -m pytest tests/test_booking_status.py -q --tb=line -p no:cacheprovider 2>&1 | tail -4`
 Expected: FAIL，`ImportError: cannot import name 'is_verifiable'`。
 
-- [ ] **Step 3: 在 verification_rules.py 新增 2 个纯函数**
+- [x] **Step 3: 在 verification_rules.py 新增 2 个纯函数**
 
 先读现状确认导入区与既有函数风格：`sed -n '1,20p' app/domain/verification_rules.py`。在 `br-server/app/domain/verification_rules.py` 顶部 import 区加入 `from app.domain.booking_status import BookingStatus, PaymentStatus`（若尚未导入 `datetime` 一并补上），并追加：
 
@@ -1326,12 +1326,12 @@ def resolve_verification_status(*, now, end_at) -> BookingStatus:
 
 > 依赖方向：`verification_rules` 与 `booking_status` 同属 `domain/`，同层 import 合法；仍**不得** import models/schemas/services。
 
-- [ ] **Step 4: 运行新测试全绿 + 既有核销测试不回归**
+- [x] **Step 4: 运行新测试全绿 + 既有核销测试不回归**
 
 Run: `cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor/br-server && /opt/miniconda3/envs/booking-room/bin/python -m pytest tests/test_booking_status.py tests/test_booking_verification_service.py -q --tb=short -p no:cacheprovider 2>&1 | tail -6`
 Expected: `test_booking_status.py` 全 PASS；`test_booking_verification_service.py` 的通过/失败构成与本 Task 前**一致**（本 Task 只新增领域函数，未接线服务，核销服务测试结果不应变化）。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -1354,7 +1354,7 @@ git commit -m "feat: verification_rules 新增 is_verifiable/resolve_verificatio
 
 > **红线（挂钟敏感项就在这里）**：`_select_nearest_booking`（`:383-413`）的三档排序逻辑**绝对不动**——`test_issue_verification_token_for_future_booking_returns_token` 的挂钟敏感性正源于此。`:267` 的幂等保护（窗口内已核销 → 抛「预约已核销」）语义**原样保留**（§2.4.2）。本 Task 只替换状态判定表达式，不改任何查询/排序/分支结构。
 
-- [ ] **Step 1: 定位全部改动点**
+- [x] **Step 1: 定位全部改动点**
 
 Run:
 ```bash
@@ -1363,7 +1363,7 @@ grep -n '"confirmed"\|"pending"\|"completed"\|_booking_now\|can_verify\|new_stat
 ```
 Expected: 命中集中在 `:189-192`（`can_verify` 复合判定）、`:255-258`（拒绝判定）、`:264`（`new_status = "confirmed" if now <= end_at else "completed"`）、`:275-281`（条件 UPDATE）、`:353-356`（第二处查询）、`:449`（`_booking_now` 定义）。逐处阅读上下文后再改。
 
-- [ ] **Step 2: 复合判定改调 is_verifiable**
+- [x] **Step 2: 复合判定改调 is_verifiable**
 
 把 `:189-192,255-258,275-281,353-356` 四处的「`status`/`payment_status` 复合布尔判定」替换为 `is_verifiable(status=booking.status, payment_status=booking.payment_status)`（各处按现状变量名传参）。**保留**每处原有的分支后果（返回 token / 抛特定错误 / 条件 UPDATE 的 WHERE），只把布尔表达式换成函数调用。示例（`:189-192` 的 `can_verify`）：
 ```python
@@ -1372,7 +1372,7 @@ from app.domain.verification_rules import is_verifiable, resolve_verification_st
 can_verify = is_verifiable(status=booking.status, payment_status=booking.payment_status)
 ```
 
-- [ ] **Step 3: 窗口状态判定改调 resolve_verification_status（边界降级）**
+- [x] **Step 3: 窗口状态判定改调 resolve_verification_status（边界降级）**
 
 `:264` 的 `new_status = "confirmed" if now <= end_at else "completed"` 改为：
 ```python
@@ -1382,13 +1382,13 @@ new_status = resolve_verification_status(
 ```
 > `now` 与 `end_at` **必须成对降级**（同为 naive），否则领域函数内 `now <= end_at` 抛 `TypeError`。若二者本就同为 aware 且同时区，直接传入亦可比较；本计划统一按 §2.3 在边界降级为 naive，与全局契约一致。`new_status` 随后写入 `booking.status` 时，其值为枚举成员 `.value`（Phase 2 仍是旧字面量 `"confirmed"`/`"completed"`），落库不变。
 
-- [ ] **Step 4: _booking_now 改为 import（内部 aware 用法保留）**
+- [x] **Step 4: _booking_now 改为 import（内部 aware 用法保留）**
 
 `:449` 的 `_booking_now()` 定义删除，模块顶部改 `from app.utils.timezone import booking_now`。原 `_booking_now()` 的 2 处调用点（`:201,260`）改为 `booking_now(settings.BOOKING_TIMEZONE)`——但注意原 `_booking_now` 返 **aware**，而 `utils.booking_now` 返 **naive**。因此这 2 处若下游需要 aware，必须包一层 `ensure_booking_timezone(booking_now(settings.BOOKING_TIMEZONE))` 保持 aware 语义。
 
 > **先读后改**：`sed -n '195,265p' app/services/booking_verification_service.py` 确认 `:201,260` 两处 `_booking_now()` 的下游是否需要 aware。本服务内部一律 aware，故这 2 处应保持 aware：用 `ensure_booking_timezone(booking_now(settings.BOOKING_TIMEZONE))`，或保留模块内一个薄封装 `_booking_now = lambda: ensure_booking_timezone(booking_now(settings.BOOKING_TIMEZONE))`。目标是**消除重复的时区定义**，但**不改变本服务的 aware 内部语义**。
 
-- [ ] **Step 5: 验证核销服务测试构成不变（挂钟感知）**
+- [x] **Step 5: 验证核销服务测试构成不变（挂钟感知）**
 
 Run:
 ```bash
@@ -1398,7 +1398,7 @@ TZ=Asia/Shanghai date '+现在沪时=%H:%M（<=11:00 则敏感项应红，>11:00
 ```
 Expected: 除挂钟敏感项 `test_issue_verification_token_for_future_booking_returns_token` 按当前时刻应有的红/绿外，其余核销测试**全绿且构成与本 Task 前一致**。若出现**新的**核销失败，说明边界降级或 is_verifiable 接线有误，**停止**并按 systematic-debugging 排查（不得改 `_select_nearest_booking`）。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -1434,7 +1434,7 @@ _ensure_booking_timezone 用法不变；_select_nearest_booking 三档排序与�
 
 > **红线（§10 陷阱 #2/#3，绝对不动）**：`:531` 的 `lesson_schedules.schedule_status`、`:1303` 的 `course_schedules.schedule_status` 属**排课域**，其 `"in_progress"` 与订单状态无关，本 Task 与 Phase 4 均**不得触碰**（grep 守卫 #2/#3 保护）。
 
-- [ ] **Step 1: 追加领域函数导入**
+- [x] **Step 1: 追加领域函数导入**
 
 在 `booking_service.py` 顶部导入区追加（`booking_now` 已在 `:48` 从 `booking_cancellation_policy` 导入，勿重复）：
 ```python
@@ -1456,7 +1456,7 @@ cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/bo
 ```
 Expected: 打印 `IMPORT_OK`，无 `ImportError`。
 
-- [ ] **Step 2: 座位下单 initial_status 改调 resolve_seat_status（判定点 #1，:284-290）**
+- [x] **Step 2: 座位下单 initial_status 改调 resolve_seat_status（判定点 #1，:284-290）**
 
 把：
 ```python
@@ -1481,7 +1481,7 @@ Expected: 打印 `IMPORT_OK`，无 `ImportError`。
 ```
 **等价性**：`resolve_seat_status` 为 `now >= combine(date,start) → IN_PROGRESS("confirmed")`，否则 `PENDING_START("pending")`，与旧 `now < booking_start → "pending" else "confirmed"` 逐值一致；微信分支旧代码无条件 `"pending"`，即 `PENDING_START.value`（§14「微信支付创建座位预约 → 无条件 PENDING_START」）。`:299 status=initial_status` 不变（仍是 str）。
 
-- [ ] **Step 3: 虚拟状态筛选改调 build_status_filter_conditions（:350-365）**
+- [x] **Step 3: 虚拟状态筛选改调 build_status_filter_conditions（:350-365）**
 
 把：
 ```python
@@ -1511,7 +1511,7 @@ Expected: 打印 `IMPORT_OK`，无 `ImportError`。
 ```
 **保留 `is_in_progress_filter`**：`:371 if is_in_progress_filter:` 的课程后置过滤仍需用它。**删除 `is_pending_start_filter`**：仅在被替换的 conditions 块用到（先 `grep -n is_pending_start_filter app/services/booking_service.py` 确认只剩本块 2 处命中再删）。`build_status_filter_conditions` 展开与旧三分支逐条一致（§2.6）：`None→[]`、`"in_progress"→[status==IN_PROGRESS.value, payment==PAID.value]`、`"pending_start"→[status.in_([PENDING_START.value, PENDING_CONFIRM.value]), payment==PAID.value]`、其它→`[status==status]`。
 
-- [ ] **Step 4: 双 pending 未支付取消改调 is_unpaid_cancellable（:644）**
+- [x] **Step 4: 双 pending 未支付取消改调 is_unpaid_cancellable（:644）**
 
 把 `if booking.payment_status == "pending" and booking.status == "pending":` 改为：
 ```python
@@ -1519,7 +1519,7 @@ Expected: 打印 `IMPORT_OK`，无 `ImportError`。
 ```
 **等价性**：`is_unpaid_cancellable` = `status == PENDING_START and payment_status == PENDING`，Phase 2 展开即双 `"pending"`，与旧判定同形（分支体 `:645-652` 不变）。
 
-- [ ] **Step 5: 取消前置判定改调 is_cancellable（:654-658，保留两段式错误消息）**
+- [x] **Step 5: 取消前置判定改调 is_cancellable（:654-658，保留两段式错误消息）**
 
 把：
 ```python
@@ -1539,7 +1539,7 @@ Expected: 打印 `IMPORT_OK`，无 `ImportError`。
 ```
 > **陷阱说明（务必按此写，不得简化为单一 raise）**：旧代码是**两段独立 raise**，消息不同（「该预约不可取消」/「未支付预约不可取消」），且**状态检查在前**。若直接 `if not is_cancellable(...): raise BookingCancellationNotAllowedError("该预约不可取消")` 会**丢失「未支付预约不可取消」消息**并在「状态非法且未支付」时改变抛出的消息 → 用户可见行为变更。上面的写法用 `is_cancellable` 消除与 `booking_rules.py:40` 的重复布尔（§4.1 line 275 意图），同时在分支内**先判状态、再判支付**，逐一复刻旧的两段消息与优先级。
 
-- [ ] **Step 6: 支付前置判定改调 is_payable（:744）**
+- [x] **Step 6: 支付前置判定改调 is_payable（:744）**
 
 把 `if booking.status != "pending" or booking.payment_status != "pending":` 改为：
 ```python
@@ -1547,7 +1547,7 @@ Expected: 打印 `IMPORT_OK`，无 `ImportError`。
 ```
 **等价性**：`is_payable` = `status == PENDING_START and payment_status == PENDING`；`not is_payable` = `status != "pending" or payment != "pending"`（Phase 2），与旧判定德摩根等价（分支体 `:745 raise` 不变）。
 
-- [ ] **Step 7: 余额支付座位状态改调 resolve_seat_status（判定点 #2，:760-764）**
+- [x] **Step 7: 余额支付座位状态改调 resolve_seat_status（判定点 #2，:760-764）**
 
 把：
 ```python
@@ -1566,7 +1566,7 @@ Expected: 打印 `IMPORT_OK`，无 `ImportError`。
 ```
 **等价性**：同 Step 2。`:765 booking.payment_status = "paid"` 等后续赋值不变。
 
-- [ ] **Step 8: is_course_pending_start 改调 is_full_refund_cancellation（:1158-1162）**
+- [x] **Step 8: is_course_pending_start 改调 is_full_refund_cancellation（:1158-1162）**
 
 把：
 ```python
@@ -1585,7 +1585,7 @@ Expected: 打印 `IMPORT_OK`，无 `ImportError`。
 ```
 **等价性**：`is_full_refund_cancellation` = `booking_type == "course" and status in (PENDING_START, PENDING_CONFIRM)`，Phase 2 展开即 `("pending", "pending_confirm")`。该判定与 br-admin `views/booking/list/index.vue:72,139` 是同一规则的前后端两份实现（§4.1 line 277），语义契约在 Phase 6 写入 `docs/booking-rules.md`。
 
-- [ ] **Step 9: admin_confirm_booking 定制订单确认改调 resolve_course_status（判定点 #3，:1230-1244）**
+- [x] **Step 9: admin_confirm_booking 定制订单确认改调 resolve_course_status（判定点 #3，:1230-1244）**
 
 把 `:1230` 的 guard 与 `:1244` 的状态解析改为：
 ```python
@@ -1599,7 +1599,7 @@ Expected: 打印 `IMPORT_OK`，无 `ImportError`。
 ```
 **等价性**：`resolve_course_status` 为 `first_lesson_date <= today → IN_PROGRESS("confirmed")`，否则 `PENDING_START("pending")`，与旧 `"confirmed" if booking_date <= today else "pending"` 一致；`booking_date` 已在 `:1243` 用 `or today` 兜底故非 `None`（不触发 `None→IN_PROGRESS` 兜底分支，但即便触发也与旧 `booking.date or today` 语义殊途同归）。`:1235-1238` 的 `_create_custom_schedule_on_confirm` 调用、`:1246 flush`、`:1249` 重查均不变。
 
-- [ ] **Step 10: 运行 booking 相关测试，核对红名单恒等**
+- [x] **Step 10: 运行 booking 相关测试，核对红名单恒等**
 
 Run:
 ```bash
@@ -1615,7 +1615,7 @@ bash openspec/changes/booking-order-lifecycle-refactor/verification/redlist.sh >
 ```
 Expected: `REDLIST IDENTICAL`（挂钟敏感项按当前时刻规则豁免）。若出现新增/消失项，**停止**并按 systematic-debugging 定位是哪个判定点接线有误。
 
-- [ ] **Step 11: 提交**
+- [x] **Step 11: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -1642,7 +1642,7 @@ is_course_pending_start → is_full_refund_cancellation；虚拟筛选 → build
 
 > **本 Task 不碰时区常量**：`booking_payment_service` 内的 `ZoneInfo("Asia/Shanghai")` 内联与 `course_booking_service:26 CHINA_TIMEZONE` / `:49 _now_naive` 的**常量收敛留到 Phase 3**（line 110）。本 Task 只在座位分支需要 naive `now` 时调 `booking_now`，其余时区写法不动。
 
-- [ ] **Step 1: booking_payment_service 追加导入并确认 settings**
+- [x] **Step 1: booking_payment_service 追加导入并确认 settings**
 
 Run 确认 `settings` 是否已导入：
 ```bash
@@ -1656,7 +1656,7 @@ from app.domain.booking_status import BookingStatus, resolve_course_status, reso
 from app.utils.timezone import booking_now
 ```
 
-- [ ] **Step 2: _determine_course_booking_status 改为分派领域函数（:275-299）**
+- [x] **Step 2: _determine_course_booking_status 改为分派领域函数（:275-299）**
 
 把整个方法体改为：
 ```python
@@ -1684,7 +1684,7 @@ from app.utils.timezone import booking_now
 - 座位分支：旧 `if booking.date and booking.start_time:` 内处理 `str` 型 `start_time`（`strptime("%H:%M")`）+ `"confirmed" if now >= booking_start else "pending"`，否则 `return "confirmed"` ⇔ `resolve_seat_status`（`None→IN_PROGRESS("confirmed")`、`now>=combine→IN_PROGRESS`、`<→PENDING_START`、`start_time` 为 `str` 时内部 `strptime`）。两边 `now` 同为上海本地时间（旧 aware / 新 naive，但 `combine` 同步 naive，比较结果一致）。
 - 调用点 `:169` `paid_status = await self._determine_course_booking_status(booking)` 与 `:316` 不变（仍得到 `str`）。`:166-168` 的 `pending_confirm` 直通分支属字面量，留 Phase 4。
 
-- [ ] **Step 3: course_booking_service 追加导入**
+- [x] **Step 3: course_booking_service 追加导入**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor/br-server
@@ -1696,7 +1696,7 @@ from app.domain.booking_status import BookingStatus, resolve_course_status
 ```
 （`today` 仍用既有 `datetime.now(CHINA_TIMEZONE).date()`，不引入 `booking_now`，避免提前碰时区常量。）
 
-- [ ] **Step 4: 固定班课下单三分支改调 resolve_course_status（:430-436）**
+- [x] **Step 4: 固定班课下单三分支改调 resolve_course_status（:430-436）**
 
 把：
 ```python
@@ -1719,7 +1719,7 @@ from app.domain.booking_status import BookingStatus, resolve_course_status
 ```
 **等价性**：旧 `else` 为 `first_lesson_date > today → "pending"`，否则（`<= today` 或 `None`）`"confirmed"` ⇔ `resolve_course_status`（`None→IN_PROGRESS("confirmed")`、`first<=today→IN_PROGRESS("confirmed")`、`first>today→PENDING_START("pending")`）。`custom → PENDING_CONFIRM.value("pending_confirm")`。`:420-428` 的 `today` / `first_lesson_date` 推导、`:511 status=initial_status` 均不变。
 
-- [ ] **Step 5: booking_cancellation_policy.booking_now 改 re-export（:25-26）**
+- [x] **Step 5: booking_cancellation_policy.booking_now 改 re-export（:25-26）**
 
 先确认现状与消费方：
 ```bash
@@ -1735,7 +1735,7 @@ from app.utils.timezone import booking_now  # noqa: F401  # re-export：booking_
 - 若上步 grep 确认 `ZoneInfo` 在本文件**仅剩导入行**一处命中，则删除 `:6 from zoneinfo import ZoneInfo`（避免未用导入）；`DEFAULT_BOOKING_TIMEZONE`（`:10`）若仍被其它文件引用则保留，否则可保留为无害常量。
 - 无循环导入：`app.utils.timezone` 不反导入 `booking_cancellation_policy`。
 
-- [ ] **Step 6: 运行支付/课程/取消策略测试 + 红名单比对**
+- [x] **Step 6: 运行支付/课程/取消策略测试 + 红名单比对**
 
 Run:
 ```bash
@@ -1752,7 +1752,7 @@ bash openspec/changes/booking-order-lifecycle-refactor/verification/redlist.sh >
 ```
 Expected: `REDLIST IDENTICAL`。若 `test_booking_cancellation_policy.py` 新红，优先怀疑 re-export 后 `booking_now()` 默认时区或签名不一致。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/booking-order-lifecycle-refactor
@@ -1774,7 +1774,7 @@ booking_cancellation_policy.booking_now → re-export app.utils.timezone.booking
 - Consumes: Task 2.1–2.6 全部产物
 - Produces: Phase 2 完成判定——全量红名单与基线集合恒等，且枚举值仍为旧字面量
 
-- [ ] **Step 1: 确认枚举值仍为旧字面量（Phase 2 不变量）**
+- [x] **Step 1: 确认枚举值仍为旧字面量（Phase 2 不变量）**
 
 Run:
 ```bash
@@ -1783,7 +1783,7 @@ cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/bo
 ```
 Expected: 输出 `pending confirmed pending_confirm completed cancelled`——确认 Phase 2 枚举值**仍为旧字面量**（`PENDING_START="pending"`、`IN_PROGRESS="confirmed"`）。若输出新词表，说明误提前做了 Phase 4，**停止**回滚。
 
-- [ ] **Step 2: 全量测试 + 红名单集合恒等比对**
+- [x] **Step 2: 全量测试 + 红名单集合恒等比对**
 
 Run:
 ```bash
@@ -1794,7 +1794,7 @@ bash openspec/changes/booking-order-lifecycle-refactor/verification/redlist.sh >
 ```
 Expected: `REDLIST IDENTICAL`。这是 Phase 2（§13 Step 2）的核心验收判据：结构重构零行为变更。
 
-- [ ] **Step 3: 新增领域测试全绿**
+- [x] **Step 3: 新增领域测试全绿**
 
 Run:
 ```bash
@@ -1803,7 +1803,7 @@ cd /Users/linhuanbin/BrianDocs/Workspace/work/yc-work/booking-room/.worktrees/bo
 ```
 Expected: Task 2.1–2.3 新增的领域/工具测试**全绿**（它们不在基线红名单内，属新增绿灯，不破坏集合恒等）。
 
-- [ ] **Step 4: 标记 Phase 2 完成（无代码提交）**
+- [x] **Step 4: 标记 Phase 2 完成（无代码提交）**
 
 Phase 2 验收通过后，无需额外提交（前 6 个 Task 已各自提交）。在本计划文件将 Phase 2 各 Task 的 `- [ ]` 勾选为 `- [x]`，并记录红名单比对输出截图/文本至 change 目录：
 ```bash
@@ -1838,17 +1838,17 @@ git commit -m "chore: 归档 Phase 2 红名单比对证据（结构重构零行�
 - **`main.py:113-122` 日志格式串不动**（§5.2）。
 
 **Steps（精简）：**
-- [ ] **Step 1**：按 **Design §5.2 伪代码逐字采用**，把 `_process_seat_booking:89-101` 改为 `resolve_seat_transition` 驱动、`_process_course_booking:164-184` 改为 `resolve_course_transition` 驱动（`new_status is not None` 时写 `booking.status = transition.new_status.value` + `stats[transition.stat_key] += 1`；`COMPLETED` 时清 `highlighted_lesson_id`；`IN_PROGRESS or highlight_only` 时调 `_update_highlight`）。
-- [ ] **Step 2**：简化 `_update_highlight`——删除 `is_new_start` 参数与死分支 `elif is_new_start: stats["course_started"] += 1`（F5），保留 target_lesson 查找与 `highlighted_lesson_id != target` 时的 `course_highlight_updated += 1`；docstring 改为正确口径。
-- [ ] **Step 3**：`:168` 注释对齐实现；`:28-30` 时区入口改 `booking_now`，`:58` 调用改传 `now`，`_process_seat_booking` 签名与 `:79` 同步调整。
-- [ ] **Step 4**：`test_order_status_scheduler_course.py` 顶部加 `_empty_stats()` helper（返回 6 键全 0 dict），把 `:89,104,117,136,139` 的 5 处 `{}` 换成 `_empty_stats()`；test #3（`converts_on_start_date`）用命名 `stats` 变量并补 `assert stats["course_started"] == 1`（§11.2 Q6 回归断言，Phase 3 枚举值仍旧字面量故断 `booking.status == "confirmed"`）。
+- [x] **Step 1**：按 **Design §5.2 伪代码逐字采用**，把 `_process_seat_booking:89-101` 改为 `resolve_seat_transition` 驱动、`_process_course_booking:164-184` 改为 `resolve_course_transition` 驱动（`new_status is not None` 时写 `booking.status = transition.new_status.value` + `stats[transition.stat_key] += 1`；`COMPLETED` 时清 `highlighted_lesson_id`；`IN_PROGRESS or highlight_only` 时调 `_update_highlight`）。
+- [x] **Step 2**：简化 `_update_highlight`——删除 `is_new_start` 参数与死分支 `elif is_new_start: stats["course_started"] += 1`（F5），保留 target_lesson 查找与 `highlighted_lesson_id != target` 时的 `course_highlight_updated += 1`；docstring 改为正确口径。
+- [x] **Step 3**：`:168` 注释对齐实现；`:28-30` 时区入口改 `booking_now`，`:58` 调用改传 `now`，`_process_seat_booking` 签名与 `:79` 同步调整。
+- [x] **Step 4**：`test_order_status_scheduler_course.py` 顶部加 `_empty_stats()` helper（返回 6 键全 0 dict），把 `:89,104,117,136,139` 的 5 处 `{}` 换成 `_empty_stats()`；test #3（`converts_on_start_date`）用命名 `stats` 变量并补 `assert stats["course_started"] == 1`（§11.2 Q6 回归断言，Phase 3 枚举值仍旧字面量故断 `booking.status == "confirmed"`）。
 ```python
 def _empty_stats() -> dict:
     return {"total_scanned": 0, "seat_started": 0, "seat_completed": 0,
             "course_started": 0, "course_highlight_updated": 0, "course_completed": 0}
 ```
-- [ ] **Step 5**：验证——`pytest tests/test_order_status_scheduler_course.py -q` 全绿（含新增 `course_started` 断言）；再跑全量红名单比对（`redlist.sh` + `compare_redlist.py`），期望 `REDLIST IDENTICAL`。
-- [ ] **Step 6**：提交 `refactor: scheduler 改调 transition 纯函数 + course_started 计数修正（§5.2/Q6）`，正文说明 5 处 `{}` 测试原子修复、双路径保留、日志格式串不动。
+- [x] **Step 5**：验证——`pytest tests/test_order_status_scheduler_course.py -q` 全绿（含新增 `course_started` 断言）；再跑全量红名单比对（`redlist.sh` + `compare_redlist.py`），期望 `REDLIST IDENTICAL`。
+- [x] **Step 6**：提交 `refactor: scheduler 改调 transition 纯函数 + course_started 计数修正（§5.2/Q6）`，正文说明 5 处 `{}` 测试原子修复、双路径保留、日志格式串不动。
 
 ### Task 3.2: 全仓时区实现收敛（§2.3 / line 110 / §10 guard #7）
 
@@ -1863,9 +1863,9 @@ def _empty_stats() -> dict:
 - `wallet/coupon/activity` 属订单链路外域，改动仅为常量导入替换；红名单比对兜底任何意外。
 
 **Steps（精简）：**
-- [ ] **Step 1**：逐个把 6 处 `CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")` 替换为导入；`_now_naive()` 定义删除、调用点改 `booking_now(settings.BOOKING_TIMEZONE)`（先 `grep _now_naive` 确认调用点）。
-- [ ] **Step 2**：验证 §10 **guard #7**——`grep -rn 'def booking_now\|def _booking_now\|def _now_naive' br-server/app --include='*.py'` **只剩 `app/utils/timezone.py` 一处**；`grep -rn 'CHINA_TIMEZONE = ZoneInfo' br-server/app` 只剩 `app/utils/timezone.py`。
-- [ ] **Step 3**：全量红名单比对 `REDLIST IDENTICAL`；提交 `refactor: 时区实现收敛至 app.utils.timezone 单一事实源（§2.3）`。
+- [x] **Step 1**：逐个把 6 处 `CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")` 替换为导入；`_now_naive()` 定义删除、调用点改 `booking_now(settings.BOOKING_TIMEZONE)`（先 `grep _now_naive` 确认调用点）。
+- [x] **Step 2**：验证 §10 **guard #7**——`grep -rn 'def booking_now\|def _booking_now\|def _now_naive' br-server/app --include='*.py'` **只剩 `app/utils/timezone.py` 一处**；`grep -rn 'CHINA_TIMEZONE = ZoneInfo' br-server/app` 只剩 `app/utils/timezone.py`。
+- [x] **Step 3**：全量红名单比对 `REDLIST IDENTICAL`；提交 `refactor: 时区实现收敛至 app.utils.timezone 单一事实源（§2.3）`。
 
 ### Task 3.3: time_slots 公用方法接线（§3.1）
 
@@ -1881,15 +1881,15 @@ def _empty_stats() -> dict:
 - **不迁移**（§3.1 Non-Goals）：`admin_course_service._find_next_slot_after`、老师排课域的 time_slots 处理。
 
 **Steps（精简）：**
-- [ ] **Step 1**：`course_booking_service:478-486` 改 `booking_time_slots = build_time_slots_from_date(booking_date=booking_date, time_slot=data.time_slot)`，删 `:481 import json`。
-- [ ] **Step 2**：`booking_service:1267-1291` 改为 `parse_time_slots` + weekday backfill + 空则 `rebuild_from_time_range`，保持 dump 输出不变。
-- [ ] **Step 3**：验证——`pytest tests/test_time_slots.py tests/test_course_booking_service.py -q` + 定制订单确认相关测试全绿；全量红名单比对 `REDLIST IDENTICAL`；提交 `refactor: time_slots 构造/解析收敛至 app.utils.time_slots（§3.1）`。
+- [x] **Step 1**：`course_booking_service:478-486` 改 `booking_time_slots = build_time_slots_from_date(booking_date=booking_date, time_slot=data.time_slot)`，删 `:481 import json`。
+- [x] **Step 2**：`booking_service:1267-1291` 改为 `parse_time_slots` + weekday backfill + 空则 `rebuild_from_time_range`，保持 dump 输出不变。
+- [x] **Step 3**：验证——`pytest tests/test_time_slots.py tests/test_course_booking_service.py -q` + 定制订单确认相关测试全绿；全量红名单比对 `REDLIST IDENTICAL`；提交 `refactor: time_slots 构造/解析收敛至 app.utils.time_slots（§3.1）`。
 
 ### Task 3.4: Phase 3 验收
 
-- [ ] **Step 1**：确认枚举值仍旧字面量（`python -c "...BookingStatus.PENDING_START.value..."` 输出 `pending`）。
-- [ ] **Step 2**：全量 `pytest` + 红名单集合恒等比对；确认 §11.2 新增断言（`course_started` 自增、双路径各一例）通过。
-- [ ] **Step 3**：归档证据 `redlist-after-phase3.txt` 并提交 `chore: 归档 Phase 3 红名单比对证据`。
+- [x] **Step 1**：确认枚举值仍旧字面量（`python -c "...BookingStatus.PENDING_START.value..."` 输出 `pending`）。
+- [x] **Step 2**：全量 `pytest` + 红名单集合恒等比对；确认 §11.2 新增断言（`course_started` 自增、双路径各一例）通过。
+- [x] **Step 3**：归档证据 `redlist-after-phase3.txt` 并提交 `chore: 归档 Phase 3 红名单比对证据`。
 
 ---
 
@@ -1918,11 +1918,11 @@ def _empty_stats() -> dict:
 - **None 兜底与边界运算符（`<=`/`>=`）已在 Phase 2 固化到纯函数**，翻转值不影响判定逻辑。
 
 **Steps（精简）：**
-- [ ] **Step 1**：翻转 `booking_status.py` 中 `PENDING_START` / `IN_PROGRESS` 两个枚举值（仅此两行）。
-- [ ] **Step 2**：后端残留裸字面量→枚举引用：`grep -rn '"pending"\|"confirmed"' br-server/app --include='*.py'` 逐处判定**订单域 vs 跨域**（订单域→枚举；`payment_status`/`schedule_status`/alembic→不动），覆盖 `booking_rules:40,51`、`models:32`、`schemas`、`routes` Literal、各服务比较点（§9.1 表）。
-- [ ] **Step 3**：24 测试文件 151 处状态字面量→新词表（`grep -rln '"pending"\|"confirmed"' br-server/tests` 驱动，逐文件排除 `payment_status`/`schedule_status` 断言）。
-- [ ] **Step 4**：验证——§10 **guard #1/#2/#4** 全绿；全量 `pytest` + 红名单集合恒等（`REDLIST IDENTICAL`）；`python -c "...PENDING_START.value..."` 输出 `pending_start`。
-- [ ] **Step 5**：**单一原子提交**（`feat!: 订单状态词表切换 pending→pending_start、confirmed→in_progress（BREAKING）`），正文标注枚举+后端字面量+151 测试字面量同提交、跨域值未动。
+- [x] **Step 1**：翻转 `booking_status.py` 中 `PENDING_START` / `IN_PROGRESS` 两个枚举值（仅此两行）。
+- [x] **Step 2**：后端残留裸字面量→枚举引用：`grep -rn '"pending"\|"confirmed"' br-server/app --include='*.py'` 逐处判定**订单域 vs 跨域**（订单域→枚举；`payment_status`/`schedule_status`/alembic→不动），覆盖 `booking_rules:40,51`、`models:32`、`schemas`、`routes` Literal、各服务比较点（§9.1 表）。
+- [x] **Step 3**：24 测试文件 151 处状态字面量→新词表（`grep -rln '"pending"\|"confirmed"' br-server/tests` 驱动，逐文件排除 `payment_status`/`schedule_status` 断言）。
+- [x] **Step 4**：验证——§10 **guard #1/#2/#4** 全绿；全量 `pytest` + 红名单集合恒等（`REDLIST IDENTICAL`）；`python -c "...PENDING_START.value..."` 输出 `pending_start`。
+- [x] **Step 5**：**单一原子提交**（`feat!: 订单状态词表切换 pending→pending_start、confirmed→in_progress（BREAKING）`），正文标注枚举+后端字面量+151 测试字面量同提交、跨域值未动。
 
 ### Task 4.2: br-admin 6 处 3 文件（§9.3）
 
@@ -1931,8 +1931,8 @@ def _empty_stats() -> dict:
 **关键陷阱：**`options.ts:86 WALLET_STATUS_TAGS.pending`（label「待处理」）**不在重命名范围**（guard #3）；`views/booking/list/builders.ts:formatTimeSlots` 保留（§3.2）。
 
 **Steps（精简）：**
-- [ ] **Step 1**：按 §9.3 表改 6 处；guard #3 `grep -n 'pending' options.ts` 确认 `WALLET_STATUS_TAGS.pending` 未变。
-- [ ] **Step 2**：`cd br-admin && pnpm install && pnpm run build`（§11.3：worktree 中 node_modules 缺失）构建通过；提交 `refactor(br-admin): 订单状态词表同步 pending_start/in_progress（§9.3）`。
+- [x] **Step 1**：按 §9.3 表改 6 处；guard #3 `grep -n 'pending' options.ts` 确认 `WALLET_STATUS_TAGS.pending` 未变。
+- [x] **Step 2**：`cd br-admin && pnpm install && pnpm run build`（§11.3：worktree 中 node_modules 缺失）构建通过；提交 `refactor(br-admin): 订单状态词表同步 pending_start/in_progress（§9.3）`。
 
 ### Task 4.3: br-app 订单域 12 处 4 文件（§9.2）
 
@@ -1945,15 +1945,15 @@ def _empty_stats() -> dict:
 - **`:223`** 改 `!(isCourseBooking(order) && order.status === 'pending_start')`，与长期记忆「仅管理端可取消课程待开始订单」一致（§9.2）。
 
 **Steps（精简）：**
-- [ ] **Step 1**：`constants/booking.js` 新增 `PAYMENT_STATUS_LABELS`；`orders/index.vue` 按 §9.2 表删 `displayStatus`、加 Q13 前置分支、收敛 `isOrderStarted`/`isOrderPendingStart`、删 3 死代码常量、改取消按钮 `v-if`；`verify-booking` `statusText` 字面量改新词表（内联时间窗口判定与后端 `resolve_verification_status` 同口径）。
-- [ ] **Step 2**：guard #5（`accountSecurity.js:7 'pending'` 未动）、guard #6（`orders/index.vue` 不再含 `displayStatus`/`TABS`/`STATUS_MAP`/`ZONE_MAP`）全绿。
-- [ ] **Step 3**：`cd br-app && npm run build:h5` 构建通过；提交 `refactor(br-app): 订单状态词表同步 + 删 displayStatus 死代码 + Q13 待支付前置分支（§9.2）`。
+- [x] **Step 1**：`constants/booking.js` 新增 `PAYMENT_STATUS_LABELS`；`orders/index.vue` 按 §9.2 表删 `displayStatus`、加 Q13 前置分支、收敛 `isOrderStarted`/`isOrderPendingStart`、删 3 死代码常量、改取消按钮 `v-if`；`verify-booking` `statusText` 字面量改新词表（内联时间窗口判定与后端 `resolve_verification_status` 同口径）。
+- [x] **Step 2**：guard #5（`accountSecurity.js:7 'pending'` 未动）、guard #6（`orders/index.vue` 不再含 `displayStatus`/`TABS`/`STATUS_MAP`/`ZONE_MAP`）全绿。
+- [x] **Step 3**：`cd br-app && npm run build:h5` 构建通过；提交 `refactor(br-app): 订单状态词表同步 + 删 displayStatus 死代码 + Q13 待支付前置分支（§9.2）`。
 
 ### Task 4.4: Phase 4 验收（§10 7 守卫全绿 + 红名单恒等）
 
-- [ ] **Step 1**：逐条跑 **Design §10 的 7 条 grep 守卫**，全绿（#1 payment_status 未波及、#2 schedule_status in_progress 未动、#3 WALLET_STATUS_TAGS.pending 未动、#4 br-server app/ 无裸订单状态字面量、#5 br-app 审核/钱包域未动、#6 orders 无 4 死标识符、#7 时区实现已收敛）。
-- [ ] **Step 2**：全量 `pytest` + 红名单集合恒等（`REDLIST IDENTICAL`）；br-admin `pnpm run build` + br-app `npm run build:h5` 两端构建通过。
-- [ ] **Step 3**：归档证据 `redlist-after-phase4.txt` + grep 守卫输出，提交 `chore: 归档 Phase 4 验收证据（grep 守卫全绿 + 红名单恒等）`。
+- [x] **Step 1**：逐条跑 **Design §10 的 7 条 grep 守卫**，全绿（#1 payment_status 未波及、#2 schedule_status in_progress 未动、#3 WALLET_STATUS_TAGS.pending 未动、#4 br-server app/ 无裸订单状态字面量、#5 br-app 审核/钱包域未动、#6 orders 无 4 死标识符、#7 时区实现已收敛）。
+- [x] **Step 2**：全量 `pytest` + 红名单集合恒等（`REDLIST IDENTICAL`）；br-admin `pnpm run build` + br-app `npm run build:h5` 两端构建通过。
+- [x] **Step 3**：归档证据 `redlist-after-phase4.txt` + grep 守卫输出，提交 `chore: 归档 Phase 4 验收证据（grep 守卫全绿 + 红名单恒等）`。
 
 ---
 
@@ -1974,9 +1974,9 @@ def _empty_stats() -> dict:
 - **幂等**：WHERE 只命中旧值，重跑无副作用（支持新旧混存后收敛）。**方言中立**：纯 SQL UPDATE 在 PostgreSQL（生产）与 SQLite（测试）均可执行。**零 DDL**：`status` 为裸 `String(20)`，无 enum/CHECK，新值最长 13 字符（F7）。
 
 **Steps（精简）：**
-- [ ] **Step 1**：`cd br-server && alembic revision -m "rename booking status"` 生成骨架，填 `down_revision='f6a7b8c9d0e1'`，按 §8.1 写 `upgrade`/`downgrade`（各 2 条 `op.execute` UPDATE，显式限定 `status` 列）。
-- [ ] **Step 2**：离线渲染核对（§8.4）——`alembic upgrade f6a7b8c9d0e1:<new> --sql` 与 `alembic downgrade <new>:f6a7b8c9d0e1 --sql`，核对生成 SQL **只 UPDATE `status` 列**、不含 `payment_status`；`alembic heads` 确认单一 head。
-- [ ] **Step 3**：提交 `feat(alembic): 订单状态数据迁移 pending→pending_start、confirmed→in_progress（§8.1）`，正文标注幂等/方言中立/零 DDL/不碰 payment_status。
+- [x] **Step 1**：`cd br-server && alembic revision -m "rename booking status"` 生成骨架，填 `down_revision='f6a7b8c9d0e1'`，按 §8.1 写 `upgrade`/`downgrade`（各 2 条 `op.execute` UPDATE，显式限定 `status` 列）。
+- [x] **Step 2**：离线渲染核对（§8.4）——`alembic upgrade f6a7b8c9d0e1:<new> --sql` 与 `alembic downgrade <new>:f6a7b8c9d0e1 --sql`，核对生成 SQL **只 UPDATE `status` 列**、不含 `payment_status`；`alembic heads` 确认单一 head。
+- [x] **Step 3**：提交 `feat(alembic): 订单状态数据迁移 pending→pending_start、confirmed→in_progress（§8.1）`，正文标注幂等/方言中立/零 DDL/不碰 payment_status。
 
 ### Task 5.2: 管理端会话有效期后端（§7.2 项 1/2/3/5）
 
@@ -1992,9 +1992,9 @@ def _empty_stats() -> dict:
 - **取 7 天**：满足用户「至少三天以上」，与前端现状 `7*24*60*60` 对齐；管理端无 refresh 链路，不存在 access>refresh 倒挂。
 
 **Steps（精简）：**
-- [ ] **Step 1**：按 §7.2 表改 4 处（config 新增键、`admin_auth_service.py:41` exp、`admin_auth.py:30` expires_in、`.env.example`）。
-- [ ] **Step 2**：验证——管理端登录响应 `expires_in == 604800`；`grep -rn 'ACCESS_TOKEN_EXPIRE_MINUTES' br-server/app` 确认 C 端 4 处引用未动；全量 `pytest` 红名单恒等。
-- [ ] **Step 3**：提交 `feat(admin-auth): 管理端会话有效期 15 分钟→7 天（ADMIN_ACCESS_TOKEN_EXPIRE_DAYS，§7.2）`。
+- [x] **Step 1**：按 §7.2 表改 4 处（config 新增键、`admin_auth_service.py:41` exp、`admin_auth.py:30` expires_in、`.env.example`）。
+- [x] **Step 2**：验证——管理端登录响应 `expires_in == 604800`；`grep -rn 'ACCESS_TOKEN_EXPIRE_MINUTES' br-server/app` 确认 C 端 4 处引用未动；全量 `pytest` 红名单恒等。
+- [x] **Step 3**：提交 `feat(admin-auth): 管理端会话有效期 15 分钟→7 天（ADMIN_ACCESS_TOKEN_EXPIRE_DAYS，§7.2）`。
 
 ### Task 5.3: br-admin 前端 expires_in 读取（§7.2 项 4）
 
@@ -2003,14 +2003,14 @@ def _empty_stats() -> dict:
 **关键陷阱（§7.1）：** 前端**非瓶颈**（`user.ts:69` 已存 7 天、`Storage.ts:32,49` 证实 7 天内不丢弃，`expires_in=900` 前端根本没读）；本项是需求②「单一事实源」在会话有效期上的应用——有效期由后端单点定义，前端不再持有第二份常量。兜底防 `expires_in` 缺失时退回默认值。
 
 **Steps（精简）：**
-- [ ] **Step 1**：`user.ts:69,95` 改读 `result.expires_in`（`?? 7*24*60*60` 兜底）。
-- [ ] **Step 2**：`cd br-admin && pnpm install && pnpm run build`（§11.3：worktree node_modules 缺失需先 install）构建通过；提交 `refactor(br-admin): 会话有效期改读后端 expires_in（单一事实源，§7.2）`。
+- [x] **Step 1**：`user.ts:69,95` 改读 `result.expires_in`（`?? 7*24*60*60` 兜底）。
+- [x] **Step 2**：`cd br-admin && pnpm install && pnpm run build`（§11.3：worktree node_modules 缺失需先 install）构建通过；提交 `refactor(br-admin): 会话有效期改读后端 expires_in（单一事实源，§7.2）`。
 
 ### Task 5.4: Phase 5 验收 + 发布顺序固化
 
-- [ ] **Step 1**：alembic 双向离线渲染 SQL 核对（只触 `status` 列）+ `alembic heads` 单一 head（§8.4）。
-- [ ] **Step 2**：br-admin `pnpm run build` + br-app `npm run build:h5` 两端构建通过；全量 `pytest` 红名单集合恒等（迁移不影响 fresh SQLite 测试）。
-- [ ] **Step 3**：将 §8.2「停服优先」发布 6 步（备份→**停全部后端进程**→`alembic upgrade head`→启新后端核对单进程→发布两端→验证 `SELECT DISTINCT status` 无旧值）与 §8.3 回滚序写入交付说明；提交 `chore: 归档 Phase 5 验收证据（迁移离线渲染 + 两端构建 + 发布顺序）`。
+- [x] **Step 1**：alembic 双向离线渲染 SQL 核对（只触 `status` 列）+ `alembic heads` 单一 head（§8.4）。
+- [x] **Step 2**：br-admin `pnpm run build` + br-app `npm run build:h5` 两端构建通过；全量 `pytest` 红名单集合恒等（迁移不影响 fresh SQLite 测试）。
+- [x] **Step 3**：将 §8.2「停服优先」发布 6 步（备份→**停全部后端进程**→`alembic upgrade head`→启新后端核对单进程→发布两端→验证 `SELECT DISTINCT status` 无旧值）与 §8.3 回滚序写入交付说明；提交 `chore: 归档 Phase 5 验收证据（迁移离线渲染 + 两端构建 + 发布顺序）`。
 
 ---
 
@@ -2028,8 +2028,8 @@ def _empty_stats() -> dict:
 **关键陷阱：**`api.md` 须明确「DB 真实状态词表翻转，但 `?status=` API 契约稳定」（§2.6 虚拟状态是稳定契约）；`booking-rules.md` 路径易错（`docs/` 根）。
 
 **Steps（精简）：**
-- [ ] **Step 1**：更新 3 文档（booking-rules 词表+判定口径、api 枚举值+虚拟状态契约+expires_in、bug-fixed 追加缺陷条目）。
-- [ ] **Step 2**：交叉核对文档与 Design §2/§4/§7 一致；提交 `docs: 同步订单状态词表与生命周期规则（booking-rules/api/bug-fixed）`。
+- [x] **Step 1**：更新 3 文档（booking-rules 词表+判定口径、api 枚举值+虚拟状态契约+expires_in、bug-fixed 追加缺陷条目）。
+- [x] **Step 2**：交叉核对文档与 Design §2/§4/§7 一致；提交 `docs: 同步订单状态词表与生命周期规则（booking-rules/api/bug-fixed）`。
 
 ### Task 6.2: delta spec 回写 + tasks.md 基线数修正
 
@@ -2042,24 +2042,24 @@ def _empty_stats() -> dict:
 - delta spec 重点核对：`booking-status-domain`（词表值 `pending_start`/`in_progress`）、`admin-auth-api`（`expires_in=604800`）、`booking-verification-api`（Q12 核销域）。
 
 **Steps（精简）：**
-- [ ] **Step 1**：核对 9 delta spec 与实现一致（重点上列 3 个），不一致处回写。
-- [ ] **Step 2**：tasks.md line 12 与 line 78 的「95」→「96」，并注明挂钟敏感项按 BASELINE.md 边界规则复核。
-- [ ] **Step 3**：提交 `docs(openspec): delta spec 回写 + tasks 基线数 95→96 修正（对齐 BASELINE.md）`。
+- [x] **Step 1**：核对 9 delta spec 与实现一致（重点上列 3 个），不一致处回写。
+- [x] **Step 2**：tasks.md line 12 与 line 78 的「95」→「96」，并注明挂钟敏感项按 BASELINE.md 边界规则复核。
+- [x] **Step 3**：提交 `docs(openspec): delta spec 回写 + tasks 基线数 95→96 修正（对齐 BASELINE.md）`。
 
 ### Task 6.3: 长期记忆更新（§15，实现落地后执行）
 
 > 记忆更新必须在词表翻转落地**后**执行，否则记忆与实际不符。
 
 **Steps（精简）：**
-- [ ] **Step 1**：更新记忆「订单虚拟状态 pending_start 的过滤模式与实现规范」（§15.1）——`in_progress` 实测为 `status='in_progress'`（新词表）`AND payment_status='paid'` + 课程附加 `CourseSchedule.start_date <= today`、座位**不做**二次过滤（原记忆误记 `started=true` / `now >= date+end_time`）。
-- [ ] **Step 2**：修正记忆「Admin 预约列表时段列格式化规范」第 3 种格式（§15.2）——实测兼容 `["HH:MM-HH:MM"]` 纯字符串数组与 `{weekday,start,end}` 拆分格式（原记忆误记 `[{start,end}]` 无星期）。
-- [ ] **Step 3**：§15.3（F11 跨端同名参数语义不一致）、§15.4（95 项既有红灯为独立测试债务）确认为已知遗留、不在本 change 范围（已记录于 Design/tasks，无需新增记忆）。
+- [x] **Step 1**：更新记忆「订单虚拟状态 pending_start 的过滤模式与实现规范」（§15.1）——`in_progress` 实测为 `status='in_progress'`（新词表）`AND payment_status='paid'` + 课程附加 `CourseSchedule.start_date <= today`、座位**不做**二次过滤（原记忆误记 `started=true` / `now >= date+end_time`）。
+- [x] **Step 2**：修正记忆「Admin 预约列表时段列格式化规范」第 3 种格式（§15.2）——实测兼容 `["HH:MM-HH:MM"]` 纯字符串数组与 `{weekday,start,end}` 拆分格式（原记忆误记 `[{start,end}]` 无星期）。
+- [x] **Step 3**：§15.3（F11 跨端同名参数语义不一致）、§15.4（95 项既有红灯为独立测试债务）确认为已知遗留、不在本 change 范围（已记录于 Design/tasks，无需新增记忆）。
 
 ### Task 6.4: 全量收尾验收 + comet verify 交接
 
-- [ ] **Step 1**：全量 `pytest tests/ -q --tb=no` + 红名单集合恒等（**96 项**，挂钟敏感项按 BASELINE.md 边界规则复核）。
-- [ ] **Step 2**：§10 7 守卫全绿复跑；br-admin `pnpm run build` + br-app `npm run build:h5` 两端构建通过。
-- [ ] **Step 3**：确认 tasks.md 全部 checkbox 完成、9 delta spec 与实现一致、3 文档同步；本 change 6 Phase 全部完成 → 交接 **comet-verify** 阶段。
+- [x] **Step 1**：全量 `pytest tests/ -q --tb=no` + 红名单集合恒等（**96 项**，挂钟敏感项按 BASELINE.md 边界规则复核）。
+- [x] **Step 2**：§10 7 守卫全绿复跑；br-admin `pnpm run build` + br-app `npm run build:h5` 两端构建通过。
+- [x] **Step 3**：确认 tasks.md 全部 checkbox 完成、9 delta spec 与实现一致、3 文档同步；本 change 6 Phase 全部完成 → 交接 **comet-verify** 阶段。
 
 ---
 

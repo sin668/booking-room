@@ -66,7 +66,7 @@ if not _app_logger.handlers:
     _app_logger.propagate = False
 
 
-async def _cleanup_unpaid_bookings_job() -> None:
+async def _payment_reconciliation_job() -> None:
     async with async_session() as session:
         try:
             wechat_client = (
@@ -97,7 +97,7 @@ async def _booking_payment_reconciliation_loop() -> None:
     while True:
         await asyncio.sleep(settings.BOOKING_CLEANUP_INTERVAL_SECONDS)
         try:
-            await _cleanup_unpaid_bookings_job()
+            await _payment_reconciliation_job()
         except Exception:
             # The job logs failures. Keep the loop alive for later retries.
             pass
@@ -192,7 +192,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     if AsyncIOScheduler is not None:
         scheduler = AsyncIOScheduler()
         scheduler.add_job(
-            _cleanup_unpaid_bookings_job,
+            _payment_reconciliation_job,
             "interval",
             seconds=settings.BOOKING_CLEANUP_INTERVAL_SECONDS,
         )
@@ -214,7 +214,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             replace_existing=True,
         )
         scheduler.start()
-        app.state.booking_cleanup_scheduler = scheduler
+        app.state.scheduler = scheduler
         logger.info(
             "Booking payment reconciliation scheduler started: interval=%s seconds",
             settings.BOOKING_CLEANUP_INTERVAL_SECONDS,

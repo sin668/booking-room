@@ -1,5 +1,6 @@
 """课程预约服务层。"""
 
+import json
 import uuid
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -121,7 +122,6 @@ class CourseBookingService:
 
         # 将老师的可排课时间段附加到 teacher 信息中
         if teacher and teacher.available_time_slots:
-            import json
             try:
                 course_dict["teacher"]["available_time_slots"] = json.loads(teacher.available_time_slots)
             except (json.JSONDecodeError, TypeError):
@@ -458,7 +458,6 @@ class CourseBookingService:
                 if isinstance(raw_time_slots, str):
                     booking_time_slots = raw_time_slots
                 else:
-                    import json
                     booking_time_slots = json.dumps(raw_time_slots, ensure_ascii=False)
         if data.booking_type == "custom":
             from datetime import time as time_type
@@ -478,7 +477,6 @@ class CourseBookingService:
             if data.time_slot:
                 # 与课程排课 time_slots 格式一致：[{"weekday": N, "time_slot": "HH:MM-HH:MM"}]
                 # weekday 从用户选择的开课日期推算（isoweekday: 1=周一, 7=周日）
-                import json
                 weekday = booking_date.isoweekday()
                 booking_time_slots = json.dumps(
                     [{"weekday": weekday, "time_slot": data.time_slot}],
@@ -729,7 +727,6 @@ class CourseBookingService:
             
             if time_slot:
                 # 将时间段添加到 time_slots 中（JSON 数组）
-                import json
                 existing_slots = []
                 if schedule.time_slots:
                     try:

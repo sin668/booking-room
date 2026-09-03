@@ -3,7 +3,7 @@
 ### Requirement: Admin login API
 系统 SHALL 提供 `POST /api/v1/admin/auth/login` 接口，允许用户使用手机号或用户名 + 密码登录管理后台。用户数据从统一的 `users` 表中查询，不再按 `user_type` 过滤。请求体中 `phone` 和 `username` 至少提供一个。
 
-管理端访问令牌的有效期 SHALL 由独立配置项 `ADMIN_ACCESS_TOKEN_EXPIRE_DAYS` 控制（默认 7 天，最小 3 天），不复用 C 端的 `ACCESS_TOKEN_EXPIRE_MINUTES`（默认 15 分钟）。响应字段 `expires_in` SHALL 等于 `ADMIN_ACCESS_TOKEN_EXPIRE_DAYS * 86400` 秒，作为管理端会话有效期的唯一权威来源；br-admin 前端 SHALL 读取该字段决定本地令牌存储时长，不得持有第二份硬编码有效期常量。
+管理端访问令牌的有效期 SHALL 由独立配置项 `ADMIN_ACCESS_TOKEN_EXPIRE_DAYS` 控制（默认 7 天，最小 3 天），不复用 C 端的 `ACCESS_TOKEN_EXPIRE_MINUTES`（默认 15 分钟）。响应字段 `expires_in` SHALL 等于 `ADMIN_ACCESS_TOKEN_EXPIRE_DAYS * 86400` 秒，作为管理端会话有效期的唯一权威来源；br-admin 前端 SHALL 以登录响应的 `expires_in` 决定本地令牌存储时长，登录路径 SHALL NOT 持有与之竞争的独立硬编码有效期常量；仅当响应缺失该字段时（如 `/me` 端点返回的 `AdminUserInfo` 不含 `expires_in`），前端 MAY 退回一个防御性默认值作为兜底。
 
 #### Scenario: Successful admin login with username
 - **WHEN** 用户提交正确的 `username` 和 `password`（phone 为空）

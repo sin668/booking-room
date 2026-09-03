@@ -9,7 +9,7 @@
 - [x] 1.2 审查 `order_status_scheduler` / `schedule_status_scheduler` / `booking_payment_service.reconcile_pending_payments` 三个定时任务的职责边界与重复逻辑（**已完成**：职责分离保持不变，见 §5.1）
 - [x] 1.3 清单化重复代码：开课日期比较、`time_slots` 解析与格式化、状态 → 展示文案映射（**已完成**：`time_slots` 拆为数据契约层/展示文案层，见 §3.2；时区重复 5 个函数 + 6 处常量，见 §2.3）
 - [x] 1.4 清单化失效无用代码，逐项给出保留/删除结论与依据（**已完成**：15 项清单，见 §6）
-- [x] 1.5 记录测试基线：`14 failed / 751 passed / 16 skipped / 81 errors`（114.44s），按 **11 个文件归组** 95 项既有红灯（**已完成**：实测 100% 与订单生命周期无关，见 F2）
+- [x] 1.5 记录测试基线：build 阶段实测 `15 failed / 750 passed / 16 skipped / 81 errors`（≤11:00 挂钟桶）= **96 项**既有红灯（`verification/redlist-baseline.txt`），按 **12 个文件归组**（**已完成**：实测 100% 与订单生命周期无关，见 F2；Design Doc §11.1 记 `14 failed / 751 passed` = 95 项系 >11:00 挂钟桶，差的 1 项为挂钟敏感核销域测试，按 `verification/BASELINE.md` 边界规则复核）
 
 ## 2. 订单状态词表单一事实源
 
@@ -75,7 +75,7 @@
 - [ ] 8.4 新增 `tests/test_time_slots.py`：3 种历史格式、解析失败容错、重建分支
 - [ ] 8.5 既有 `tests/test_order_status_scheduler*.py` 新增断言：`course_started` 在 `pending_start → in_progress` 转移时自增
 - [ ] 8.6 补齐 API 集成测试（下单/支付/确认/取消/列表筛选，覆盖新状态取值契约）
-- [ ] 8.7 **验收：全量 `pytest tests/ -q --tb=no` 的 FAILED/ERROR 测试 ID 集合与基线 95 项集合完全相同**（逐项比对，非仅数量不增）
+- [ ] 8.7 **验收：全量 `pytest tests/ -q --tb=no` 的 FAILED/ERROR 测试 ID 集合与基线 96 项集合完全相同**（逐项比对，非仅数量不增；挂钟敏感项按 `verification/BASELINE.md` 边界规则归一化，`compare_redlist.py` 自动从两集合扣除该项后比对）
 - [ ] 8.8 运行 §10 的 **7 条 grep 守卫**全绿（6 类跨域陷阱 + 4 个已删标识符 + 时区实现收敛）
 - [ ] 8.9 前端构建：br-admin `pnpm install && pnpm run build`、br-app `npm run build:h5`
 

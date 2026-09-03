@@ -16,7 +16,7 @@ async def test_has_time_conflict_returns_true_for_overlapping_confirmed_booking(
         date=date(2026, 5, 30),
         start_time=time(9, 0),
         end_time=time(11, 0),
-        status="confirmed",
+        status="in_progress",
         payment_status="paid",
         original_price=Decimal("10.00"),
         discount_amount=Decimal("0.00"),

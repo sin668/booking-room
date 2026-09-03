@@ -35,7 +35,7 @@ from app.services.wechat_pay_client import WechatPayClient
 
 router = APIRouter(prefix="/api/v1/bookings", tags=["bookings"])
 
-_BOOKING_STATUS = Literal["confirmed", "cancelled", "completed", "in_progress", "pending_start", "pending_confirm"]
+_BOOKING_STATUS = Literal["cancelled", "completed", "in_progress", "pending_start", "pending_confirm"]
 
 
 def _build_wechat_client():

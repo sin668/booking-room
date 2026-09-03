@@ -241,7 +241,7 @@ class TestAvailableCouponsForBooking:
                 date=date(2026, 4, 30),
                 start_time=time(8, 0),
                 end_time=time(10, 0),
-                status="confirmed",
+                status="in_progress",
                 total_price=Decimal("30.00"),
             )
         )
@@ -334,7 +334,7 @@ class TestAvailableCouponsForBooking:
                     date=date(2026, 4, 29),
                     start_time=time(8, 0),
                     end_time=time(10, 0),
-                    status="confirmed",
+                    status="in_progress",
                     total_price=Decimal("30.00"),
                 ),
                 Booking(

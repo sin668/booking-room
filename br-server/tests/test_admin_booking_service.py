@@ -97,7 +97,7 @@ def _make_booking(
     room_id: int = 1,
     user_id: str = "user-1",
     booking_date: date = date(2026, 5, 1),
-    status: str = "confirmed",
+    status: str = "in_progress",
 ):
     now = datetime(2026, 5, 1, 10, 0, 0)
     booking = Booking(
@@ -252,7 +252,7 @@ async def test_cancel_booking_service_restores_used_coupon(db_session: AsyncSess
         1,
         str(USER_ID),
         booking_date=date.today() + timedelta(days=1),
-        status="confirmed",
+        status="in_progress",
     )
     booking.original_price = Decimal("20.00")
     booking.discount_amount = Decimal("3.00")
@@ -293,14 +293,14 @@ async def test_admin_list_bookings_normal_pagination(db_session: AsyncSession):
 async def test_admin_list_bookings_filter_by_status(db_session: AsyncSession):
     _make_room(db_session, 1)
     _make_seat(db_session, 1, 1)
-    _make_booking(db_session, 1, 1, 1, "user-1", status="confirmed")
+    _make_booking(db_session, 1, 1, 1, "user-1", status="in_progress")
     _make_booking(db_session, 2, 1, 1, "user-2", status="cancelled")
-    _make_booking(db_session, 3, 1, 1, "user-3", status="confirmed")
+    _make_booking(db_session, 3, 1, 1, "user-3", status="in_progress")
     await db_session.flush()
 
-    result = await admin_list_bookings(db_session, status="confirmed")
+    result = await admin_list_bookings(db_session, status="in_progress")
     assert result.total == 2
-    assert all(b.status == "confirmed" for b in result.items)
+    assert all(b.status == "in_progress" for b in result.items)
 
 
 @pytest.mark.asyncio
@@ -373,7 +373,7 @@ async def test_admin_cancel_booking(db_session: AsyncSession):
         1,
         str(USER_ID),
         booking_date=date.today() + timedelta(days=3),
-        status="confirmed",
+        status="in_progress",
     )
     await db_session.flush()
 
@@ -449,7 +449,7 @@ def _make_course_booking(
     db: AsyncSession,
     booking_id: int = 1,
     schedule_id: int | None = 1,
-    status: str = "pending",
+    status: str = "pending_start",
     payment_status: str = "paid",
 ):
     now = datetime(2026, 5, 1, 10, 0, 0)
@@ -571,7 +571,7 @@ async def test_admin_cancel_course_pending_booking_keeps_shared_schedule(
     _make_course_data(db_session)
     _make_course_booking(db_session, 1)
     # 另一个非取消订单引用同一排课（共享场景）
-    _make_course_booking(db_session, 2, status="confirmed")
+    _make_course_booking(db_session, 2, status="in_progress")
     await db_session.flush()
 
     result = await admin_cancel_booking(db_session, 1)
@@ -668,7 +668,7 @@ async def test_admin_confirm_custom_booking_future_first_lesson_pending(db_sessi
 
     result = await admin_confirm_booking(db_session, 1)
 
-    assert result.status == "pending"
+    assert result.status == "pending_start"
     booking_row = (
         await db_session.execute(select(Booking).where(Booking.id == 1))
     ).scalar_one()
@@ -708,7 +708,7 @@ async def test_admin_confirm_custom_booking_first_lesson_today_confirmed(db_sess
 
     result = await admin_confirm_booking(db_session, 1)
 
-    assert result.status == "confirmed"
+    assert result.status == "in_progress"
     booking_row = (
         await db_session.execute(select(Booking).where(Booking.id == 1))
     ).scalar_one()

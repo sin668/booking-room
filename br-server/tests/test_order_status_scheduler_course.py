@@ -77,7 +77,7 @@ def _make_custom_booking(
     booking = Booking(
         user_id=USER_ID, room_id=1,
         date=booking_date or date(2026, 9, 5), start_time=time(16, 0), end_time=time(18, 0),
-        status="pending", payment_status="paid", total_price=Decimal("20"),
+        status="pending_start", payment_status="paid", total_price=Decimal("20"),
         booking_type="course", course_id=2, schedule_type="custom",
         schedule_id=schedule_id, lesson_ids=[122, 123],
     )
@@ -98,7 +98,7 @@ async def test_course_custom_booking_not_converted_before_start_date(db_session:
 
     await _process_course_booking(db_session, booking, date(2026, 9, 1), _empty_stats())
 
-    assert booking.status == "pending"
+    assert booking.status == "pending_start"
     assert booking.highlighted_lesson_id is None
 
 
@@ -113,7 +113,7 @@ async def test_course_custom_booking_fallback_keeps_pending_via_schedule_type_fi
 
     await _process_course_booking(db_session, booking, date(2026, 9, 1), _empty_stats())
 
-    assert booking.status == "pending"
+    assert booking.status == "pending_start"
     assert booking.highlighted_lesson_id is None
 
 
@@ -127,7 +127,7 @@ async def test_course_custom_booking_converts_on_start_date(db_session: AsyncSes
     stats = _empty_stats()
     await _process_course_booking(db_session, booking, date(2026, 9, 5), stats)
 
-    assert booking.status == "confirmed"
+    assert booking.status == "in_progress"
     assert booking.highlighted_lesson_id == 122
     assert stats["course_started"] == 1
 
@@ -146,8 +146,8 @@ async def test_course_custom_booking_start_date_follows_first_lesson_not_booking
     await db_session.flush()
 
     await _process_course_booking(db_session, booking, date(2026, 9, 4), _empty_stats())
-    assert booking.status == "pending"
+    assert booking.status == "pending_start"
 
     await _process_course_booking(db_session, booking, date(2026, 9, 5), _empty_stats())
-    assert booking.status == "confirmed"
+    assert booking.status == "in_progress"
     assert booking.highlighted_lesson_id == 122

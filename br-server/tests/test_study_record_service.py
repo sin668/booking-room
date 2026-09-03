@@ -110,7 +110,7 @@ class TestGetMonthlySummary:
     async def test_confirmed_bookings_counted_as_studied(self, db_session: AsyncSession, seed_data):
         """confirmed (in_progress) bookings are counted as 已学习, same as completed."""
         seat, room = seed_data["seat"], seed_data["room"]
-        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(9, 0), time(12, 0), status="confirmed")
+        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(9, 0), time(12, 0), status="in_progress")
 
         result = await get_monthly_summary(db_session, USER_ID, date(2026, 5, 1))
 
@@ -195,8 +195,8 @@ class TestListStudyRecords:
     async def test_list_excludes_non_studied(self, db_session: AsyncSession, seed_data):
         seat, room = seed_data["seat"], seed_data["room"]
         await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(9, 0), time(12, 0), status="completed")
-        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 2), time(9, 0), time(12, 0), status="confirmed")
-        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 3), time(9, 0), time(12, 0), status="pending")
+        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 2), time(9, 0), time(12, 0), status="in_progress")
+        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 3), time(9, 0), time(12, 0), status="pending_start")
         await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 4), time(9, 0), time(12, 0), status="cancelled")
 
         result = await list_study_records(db_session, USER_ID)

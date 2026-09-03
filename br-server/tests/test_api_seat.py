@@ -70,7 +70,7 @@ class TestSeatAPI:
             date=date(2026, 5, 1),
             start_time=time(9, 0),
             end_time=time(11, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=30.00,
         ))
         await db_session.flush()
@@ -123,7 +123,7 @@ class TestSeatAPI:
             date=date(2026, 5, 1),
             start_time=time(8, 0),
             end_time=time(10, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=30.00,
         ))
         await db_session.flush()

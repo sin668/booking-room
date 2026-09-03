@@ -48,7 +48,7 @@ async def check_and_update_order_statuses() -> dict:
             select(Booking).where(
                 and_(
                     Booking.payment_status == "paid",
-                    Booking.status.in_(["pending", "confirmed"]),
+                    Booking.status.in_([BookingStatus.PENDING_START.value, BookingStatus.IN_PROGRESS.value]),
                     Booking.booking_type.in_(["seat", "course"]),
                 )
             )

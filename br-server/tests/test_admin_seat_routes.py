@@ -265,7 +265,7 @@ async def test_admin_delete_seat_with_booking(admin_client, db_session):
         date=date(2026, 5, 10),
         start_time=time(9, 0),
         end_time=time(12, 0),
-        status="confirmed",
+        status="in_progress",
         total_price=Decimal("18.00"),
     )
     db_session.add(booking)

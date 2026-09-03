@@ -58,7 +58,7 @@ async def booking_payment_seed(db_session: AsyncSession):
         date=date(2026, 5, 1),
         start_time=time(9, 0),
         end_time=time(12, 0),
-        status="confirmed",
+        status="in_progress",
         original_price=Decimal("45.00"),
         discount_amount=Decimal("0.00"),
         total_price=Decimal("45.00"),
@@ -156,7 +156,7 @@ async def test_process_wechat_notify_marks_booking_paid(
     result = await service.process_wechat_notify(headers={}, body=b"{}")
 
     assert result == {"code": "SUCCESS", "message": "success"}
-    assert booking_payment_seed.booking.status == "confirmed"
+    assert booking_payment_seed.booking.status == "in_progress"
     assert booking_payment_seed.booking.payment_status == "paid"
     assert booking_payment_seed.booking.transaction_id == "txn-123"
     assert booking_payment_seed.booking.paid_at is not None
@@ -226,7 +226,7 @@ async def test_reconcile_pending_payments_schedules_first_second_and_third_queri
     booking_payment_seed,
 ):
     now = datetime(2026, 5, 1, 10, 0, 0)
-    booking_payment_seed.booking.status = "pending"
+    booking_payment_seed.booking.status = "pending_start"
     booking_payment_seed.booking.payment_check_count = 0
     booking_payment_seed.booking.next_payment_check_at = now - timedelta(seconds=1)
     await db_session.flush()
@@ -241,7 +241,7 @@ async def test_reconcile_pending_payments_schedules_first_second_and_third_queri
     count = await service.reconcile_pending_payments(now=now)
 
     assert count == 1
-    assert booking_payment_seed.booking.status == "pending"
+    assert booking_payment_seed.booking.status == "pending_start"
     assert booking_payment_seed.booking.payment_status == "pending"
     assert booking_payment_seed.booking.payment_check_count == 1
     assert booking_payment_seed.booking.next_payment_check_at == now + timedelta(minutes=3)
@@ -266,7 +266,7 @@ async def test_reconcile_pending_payments_picks_up_pending_booking_without_next_
     booking_payment_seed,
 ):
     now = datetime(2026, 5, 1, 10, 0, 0)
-    booking_payment_seed.booking.status = "pending"
+    booking_payment_seed.booking.status = "pending_start"
     booking_payment_seed.booking.payment_check_count = 0
     booking_payment_seed.booking.next_payment_check_at = None
     await db_session.flush()
@@ -291,7 +291,7 @@ async def test_reconcile_pending_payments_confirms_successful_wechat_query(
     booking_payment_seed,
 ):
     now = datetime(2026, 5, 1, 10, 0, 0)
-    booking_payment_seed.booking.status = "pending"
+    booking_payment_seed.booking.status = "pending_start"
     booking_payment_seed.booking.payment_check_count = 0
     booking_payment_seed.booking.next_payment_check_at = now - timedelta(seconds=1)
     await db_session.flush()
@@ -311,7 +311,7 @@ async def test_reconcile_pending_payments_confirms_successful_wechat_query(
     count = await service.reconcile_pending_payments(now=now)
 
     assert count == 1
-    assert booking_payment_seed.booking.status == "confirmed"
+    assert booking_payment_seed.booking.status == "in_progress"
     assert booking_payment_seed.booking.payment_status == "paid"
     assert booking_payment_seed.booking.transaction_id == "txn-query-123"
     assert booking_payment_seed.booking.paid_at is not None
@@ -323,7 +323,7 @@ async def test_reconcile_pending_payments_cancels_immediate_failed_wechat_state(
     booking_payment_seed,
 ):
     now = datetime(2026, 5, 1, 10, 0, 0)
-    booking_payment_seed.booking.status = "pending"
+    booking_payment_seed.booking.status = "pending_start"
     booking_payment_seed.booking.payment_check_count = 0
     booking_payment_seed.booking.next_payment_check_at = now - timedelta(seconds=1)
     await db_session.flush()

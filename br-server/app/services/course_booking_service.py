@@ -620,7 +620,7 @@ class CourseBookingService:
             raise BookingAlreadyCancelledError("该预约已取消")
 
         # 待支付状态直接取消
-        if booking.payment_status == "pending" and booking.status == "pending":
+        if booking.payment_status == "pending" and booking.status == BookingStatus.PENDING_START.value:
             now = booking_now(settings.BOOKING_TIMEZONE)
             booking.status = "cancelled"
             booking.cancelled_at = now
@@ -633,9 +633,9 @@ class CourseBookingService:
             }
 
         # 已支付状态取消 - 需要退款
-        # 支持 confirmed（进行中）、pending + paid（待开始已支付）、pending_confirm + paid（待确认已支付）
-        if booking.status not in ("confirmed",) and not (
-            booking.status == "pending" and booking.payment_status == "paid"
+        # 支持 in_progress（进行中）、pending_start + paid（待开始已支付）、pending_confirm + paid（待确认已支付）
+        if booking.status not in (BookingStatus.IN_PROGRESS.value,) and not (
+            booking.status == BookingStatus.PENDING_START.value and booking.payment_status == "paid"
         ) and not (
             booking.status == "pending_confirm" and booking.payment_status == "paid"
         ):

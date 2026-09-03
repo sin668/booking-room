@@ -135,7 +135,7 @@ async def _sync_user_booking_completions(
     result = await db.execute(
         select(Booking).where(
             Booking.user_id == str(user_id),
-            Booking.status == "confirmed",
+            Booking.status == BookingStatus.IN_PROGRESS.value,
             Booking.payment_status == "paid",
             Booking.booking_type != "course",
         )

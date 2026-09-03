@@ -49,7 +49,7 @@ async def seed_data(db_session: AsyncSession):
         date=date.today() + timedelta(days=3),
         start_time=time(9, 0),
         end_time=time(11, 0),
-        status="confirmed",
+        status="in_progress",
         total_price=Decimal("20.00"),
     )
     cancelled = Booking(
@@ -101,11 +101,11 @@ class TestAdminListBookings:
 
     @pytest.mark.asyncio
     async def test_filter_by_status(self, client: AsyncClient, seed_data):
-        resp = await client.get("/api/v1/admin/bookings?status=confirmed")
+        resp = await client.get("/api/v1/admin/bookings?status=in_progress")
         assert resp.status_code == 200
         data = resp.json()
         assert data["total"] == 1
-        assert data["items"][0]["status"] == "confirmed"
+        assert data["items"][0]["status"] == "in_progress"
 
     @pytest.mark.asyncio
     async def test_list_with_null_seat_course_booking(
@@ -122,7 +122,7 @@ class TestAdminListBookings:
             date=date.today(),
             start_time=time(10, 0),
             end_time=time(12, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("100.00"),
             booking_type="course",
         )

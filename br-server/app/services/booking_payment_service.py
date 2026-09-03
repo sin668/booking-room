@@ -12,7 +12,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.domain.booking_status import resolve_course_status, resolve_seat_status
+from app.domain.booking_status import BookingStatus, resolve_course_status, resolve_seat_status
 from app.domain.payment_rules import (
     PAYMENT_QUERY_DELAYS,
     is_failed_trade_state,
@@ -185,7 +185,7 @@ class BookingPaymentService:
         result = await self._db.execute(
             select(Booking)
             .where(
-                Booking.status == "pending",
+                Booking.status == BookingStatus.PENDING_START.value,
                 Booking.payment_status == "pending",
                 Booking.payment_provider == "wechat",
                 or_(
@@ -277,7 +277,7 @@ class BookingPaymentService:
         """课程预约按开课日期、座位预约按时段开始时间返回状态（分派领域纯函数）。
 
         课程（开课日期取第一课时，下单时已回写至 booking.date）:
-          first_lesson_date <= today → IN_PROGRESS("confirmed")；> today → PENDING_START("pending")；None → IN_PROGRESS
+          first_lesson_date <= today → IN_PROGRESS("in_progress")；> today → PENDING_START("pending_start")；None → IN_PROGRESS
         座位:
           now >= date+start_time → IN_PROGRESS；< → PENDING_START；date/start_time 为 None → IN_PROGRESS
         """

@@ -16,6 +16,7 @@ from sqlalchemy import and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
+from app.domain.booking_status import BookingStatus
 from app.models.booking import Booking
 from app.models.coupon import Coupon, UserCoupon
 from app.models.user import User
@@ -221,7 +222,7 @@ class UserSecurityService:
         if await self._exists(
             Booking,
             Booking.user_id == user_id,
-            Booking.status.in_(["pending", "confirmed"]),
+            Booking.status.in_([BookingStatus.PENDING_START.value, BookingStatus.IN_PROGRESS.value]),
         ):
             risks.append(
                 DeactivationRiskReason(

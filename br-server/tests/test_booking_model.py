@@ -22,7 +22,7 @@ class TestBookingDefaults:
         db_session.add(booking)
         await db_session.commit()
         result = await db_session.get(Booking, booking.id)
-        assert result.status == "confirmed"
+        assert result.status == "in_progress"
 
 
 class TestBookingRequiredFields:

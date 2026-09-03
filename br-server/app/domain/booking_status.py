@@ -2,7 +2,7 @@
 
 契约：本模块所有纯函数的 now/today 参数一律为 naive 的 Asia/Shanghai 本地时间；
 本模块不依赖 models / schemas / services 三层，也不做 tzinfo 处理。
-Phase 2 期间枚举成员值仍为旧字面量，Phase 4 Task 4.1 统一翻转。
+枚举成员值即订单状态新词表（Task 4.1 已翻转）；写库/查询绑定统一走 .value。
 """
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ from enum import Enum
 
 class BookingStatus(str, Enum):
     PENDING_CONFIRM = "pending_confirm"
-    PENDING_START = "pending"      # Phase 4 翻转为 "pending_start"
-    IN_PROGRESS = "confirmed"      # Phase 4 翻转为 "in_progress"
+    PENDING_START = "pending_start"
+    IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
@@ -117,7 +117,7 @@ def build_status_filter_conditions(status_column, payment_status_column, status:
     """C 端 list_bookings 派生口径（§2.6，Q5 行为零变更）。
 
     status 是 C 端 API 的「虚拟状态」查询参数，取值 "in_progress"/"pending_start" 是稳定的
-    API 契约，与枚举成员的值无关（Phase 2 枚举值仍旧字面量，Phase 4 翻转后二者恰好重合）。
+    API 契约；Task 4.1 翻转后枚举值与虚拟状态取值恰好重合，筛选分派逻辑不变。
     """
     if status is None:
         return []

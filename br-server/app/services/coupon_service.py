@@ -4,7 +4,6 @@ import uuid
 from datetime import date, datetime, time
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, NamedTuple
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,7 +38,7 @@ class BookingCouponCalculation(NamedTuple):
     user_coupon: UserCoupon
 
 
-CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")
+from app.utils.timezone import CHINA_TIMEZONE
 
 
 def _now() -> datetime:

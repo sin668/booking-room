@@ -5,7 +5,7 @@ Requires DATABASE_URL env var to be set.
 """
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -23,7 +23,7 @@ from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.models.user import User
 
-CHINA_TIMEZONE = timezone(timedelta(hours=8))
+from app.utils.timezone import CHINA_TIMEZONE
 
 
 def _china_now_naive() -> datetime:

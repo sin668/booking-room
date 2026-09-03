@@ -1,7 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +9,7 @@ from app.models.activity import ActivityCoupon
 from app.models.coupon import Coupon, UserCoupon
 from app.schemas.coupon_admin import AdminCouponListResponse, AdminCouponResponse
 
-CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")
+from app.utils.timezone import CHINA_TIMEZONE
 
 
 def _now_for_db() -> datetime:

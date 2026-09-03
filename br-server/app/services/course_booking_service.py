@@ -4,7 +4,6 @@ import json
 import uuid
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,8 +23,8 @@ from app.schemas.course_booking import (
     CourseBookingResponse,
 )
 from app.services import coupon_service
-
-CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")
+from app.core.config import settings
+from app.utils.timezone import CHINA_TIMEZONE, booking_now
 
 
 class CourseBookingError(ValueError):
@@ -46,11 +45,6 @@ class CouponUnavailableError(CourseBookingError):
 
 class WalletBalanceInsufficientError(CourseBookingError):
     pass
-
-
-def _now_naive() -> datetime:
-    """返回当前 Asia/Shanghai 时区的 naive datetime。"""
-    return datetime.now(CHINA_TIMEZONE).replace(tzinfo=None)
 
 
 class CourseBookingService:
@@ -515,7 +509,7 @@ class CourseBookingService:
             payment_status="paid" if balance_payment else "pending",
             payment_provider=None if balance_payment else data.payment_method,
             payment_check_count=0,
-            next_payment_check_at=None if balance_payment else _now_naive() + timedelta(minutes=1),
+            next_payment_check_at=None if balance_payment else booking_now(settings.BOOKING_TIMEZONE) + timedelta(minutes=1),
             booking_type="course",
             course_id=course["id"],
             lesson_ids=data.lesson_ids,
@@ -628,7 +622,7 @@ class CourseBookingService:
 
         # 待支付状态直接取消
         if booking.payment_status == "pending" and booking.status == "pending":
-            now = _now_naive()
+            now = booking_now(settings.BOOKING_TIMEZONE)
             booking.status = "cancelled"
             booking.cancelled_at = now
             await coupon_service.restore_user_coupon_for_booking(db, booking)
@@ -665,7 +659,7 @@ class CourseBookingService:
             Decimal(str(user.balance)) + refund_amount
         ).quantize(Decimal("0.01"))
 
-        now = _now_naive()
+        now = booking_now(settings.BOOKING_TIMEZONE)
         booking.status = "cancelled"
         booking.cancelled_at = now
         booking.refund_amount = refund_amount

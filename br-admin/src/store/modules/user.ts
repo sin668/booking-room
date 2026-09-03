@@ -6,6 +6,9 @@ import { ResultEnum } from '@/enums/httpEnum';
 import { getUserInfo as getUserInfoApi, login, type AdminUserInfo } from '@/api/system/user';
 import { storage } from '@/utils/Storage';
 
+// 会话有效期兜底默认值（秒）：优先读后端 login 响应的 expires_in（单一事实源，§7.2），缺失时退回 7 天
+const DEFAULT_SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
+
 export type UserInfoType = AdminUserInfo & {
   username: string;
 };
@@ -66,7 +69,7 @@ export const useUserStore = defineStore({
     async login(params: any) {
       const result = await login(params);
       const token = result.access_token;
-      const ex = 7 * 24 * 60 * 60;
+      const ex = result.expires_in ?? DEFAULT_SESSION_TTL_SECONDS;
       storage.set(ACCESS_TOKEN, token, ex);
       storage.set(CURRENT_USER, result, ex);
       storage.set(IS_SCREENLOCKED, false);
@@ -91,7 +94,7 @@ export const useUserStore = defineStore({
       this.setUserInfo(result as UserInfoType);
       this.setNickname(nickname);
       this.setAvatar(result.avatar || '');
-      storage.set(CURRENT_USER, result, 7 * 24 * 60 * 60);
+      storage.set(CURRENT_USER, result, DEFAULT_SESSION_TTL_SECONDS);
       return result;
     },
 

@@ -1,22 +1,11 @@
 from datetime import datetime
-from enum import Enum
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Text, Time, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-
-
-class PaymentMethod(str, Enum):
-    balance = "balance"
-    wechat = "wechat"
-
-
-class PaymentStatus(str, Enum):
-    pending = "pending"
-    paid = "paid"
-    failed = "failed"
+from app.domain.booking_status import PaymentMethod, PaymentStatus  # noqa: F401
 
 
 class Booking(Base):

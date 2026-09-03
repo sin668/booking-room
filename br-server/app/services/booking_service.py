@@ -264,7 +264,7 @@ async def create_booking(
         total_price = coupon_result.payable_amount
         user_coupon = coupon_result.user_coupon
 
-    balance_payment = data.payment_method == PaymentMethodEnum.balance
+    balance_payment = data.payment_method == PaymentMethodEnum.BALANCE
     user = None
     total_price = total_price.quantize(Decimal("0.01"))
 
@@ -746,7 +746,7 @@ async def pay_pending_booking(
 
     total_price = Decimal(str(booking.total_price)).quantize(Decimal("0.01"))
 
-    if payment_method == PaymentMethodEnum.balance:
+    if payment_method == PaymentMethodEnum.BALANCE:
         user_result = await db.execute(
             select(User).where(User.id == user_id).with_for_update()
         )

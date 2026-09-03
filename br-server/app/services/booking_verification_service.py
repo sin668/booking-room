@@ -9,6 +9,7 @@ from sqlalchemy import and_, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.domain.booking_status import BookingStatus, PaymentStatus
 from app.domain.verification_rules import (
     COMPACT_TOKEN_VERSION,
     TOKEN_TTL_SECONDS,
@@ -16,6 +17,8 @@ from app.domain.verification_rules import (
     InvalidVerificationToken,
     create_compact_verification_token,
     decode_compact_verification_token,
+    is_verifiable,
+    resolve_verification_status,
 )
 from app.models.booking import Booking
 from app.models.seat import Seat
@@ -186,9 +189,8 @@ def _build_booking_summary(
         end_time=booking.end_time,
         total_price=booking.total_price,
         status=booking.status,
-        can_verify=(
-            booking.status == "confirmed"
-            or (booking.status == "pending" and booking.payment_status == "paid")
+        can_verify=is_verifiable(
+            status=booking.status, payment_status=booking.payment_status
         ),
     )
 
@@ -250,21 +252,21 @@ async def confirm_verification(
     payload = _decode_verification_token(token, datetime.now(UTC))
     booking, seat, room, user = await _load_payload_booking(db, payload)
 
-    if booking.status == "completed":
+    if booking.status == BookingStatus.COMPLETED:
         raise BookingAlreadyVerifiedError("预约已核销")
-    if booking.status not in ("confirmed", "pending") or (
-        booking.status == "pending" and booking.payment_status != "paid"
-    ):
+    if not is_verifiable(status=booking.status, payment_status=booking.payment_status):
         raise BookingNotVerifiableError("预约状态不可核销")
 
     now = _booking_now()
     end_at = datetime.combine(
         booking.date, booking.end_time, tzinfo=_booking_timezone()
     )
-    new_status = "confirmed" if now <= end_at else "completed"
+    new_status = resolve_verification_status(
+        now=now.replace(tzinfo=None), end_at=end_at.replace(tzinfo=None)
+    )
 
     # 幂等保护：已核销的 confirmed 预约不可重复核销
-    if booking.status == "confirmed" and new_status == "confirmed":
+    if booking.status == BookingStatus.IN_PROGRESS and new_status == BookingStatus.IN_PROGRESS:
         raise BookingAlreadyVerifiedError("预约已核销")
 
     update_result = await db.execute(
@@ -273,18 +275,18 @@ async def confirm_verification(
             Booking.id == payload.booking_id,
             Booking.user_id == booking.user_id,
             or_(
-                Booking.status == "confirmed",
+                Booking.status == BookingStatus.IN_PROGRESS.value,
                 and_(
-                    Booking.status == "pending",
-                    Booking.payment_status == "paid",
+                    Booking.status == BookingStatus.PENDING_START.value,
+                    Booking.payment_status == PaymentStatus.PAID.value,
                 ),
             ),
         )
-        .values(status=new_status)
+        .values(status=new_status.value)
     )
     if update_result.rowcount != 1:
         refreshed = await _load_booking_for_status(db, payload)
-        if refreshed.status == "completed":
+        if refreshed.status == BookingStatus.COMPLETED:
             raise BookingAlreadyVerifiedError("预约已核销")
         raise BookingNotVerifiableError("预约状态不可核销")
 
@@ -350,10 +352,10 @@ async def _load_verifiable_booking_rows(
         .where(
             Booking.user_id == str(user_id),
             or_(
-                Booking.status == "confirmed",
+                Booking.status == BookingStatus.IN_PROGRESS.value,
                 and_(
-                    Booking.status == "pending",
-                    Booking.payment_status == "paid",
+                    Booking.status == BookingStatus.PENDING_START.value,
+                    Booking.payment_status == PaymentStatus.PAID.value,
                 ),
             ),
         )

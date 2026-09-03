@@ -5,7 +5,6 @@ from __future__ import annotations
 import inspect
 import uuid
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from decimal import Decimal
 from typing import Any
 
@@ -13,6 +12,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.domain.booking_status import resolve_course_status, resolve_seat_status
 from app.domain.payment_rules import (
     PAYMENT_QUERY_DELAYS,
     is_failed_trade_state,
@@ -32,6 +32,7 @@ from app.services.wechat_pay_client import (
     WechatPayRequestError,
     WechatPaySignatureError,
 )
+from app.utils.timezone import booking_now
 
 
 class BookingPaymentError(ValueError):
@@ -273,30 +274,23 @@ class BookingPaymentService:
         return parsed.replace(tzinfo=None)
 
     async def _determine_course_booking_status(self, booking: Booking) -> str:
-        """课程预约根据开课日期返回状态，座位预约根据预约时段开始时间返回状态。
+        """课程预约按开课日期、座位预约按时段开始时间返回状态（分派领域纯函数）。
 
-        课程预约（开课日期统一取第一课时日期，下单时已回写至 booking.date）:
-          booking.date <= 今天 → "confirmed"（进行中）
-          booking.date > 今天  → "pending"（待开始）
-        座位预约:
-          now < booking.date + booking.start_time → "pending"（待开始）
-          now >= booking.date + booking.start_time → "confirmed"（进行中）
+        课程（开课日期取第一课时，下单时已回写至 booking.date）:
+          first_lesson_date <= today → IN_PROGRESS("confirmed")；> today → PENDING_START("pending")；None → IN_PROGRESS
+        座位:
+          now >= date+start_time → IN_PROGRESS；< → PENDING_START；date/start_time 为 None → IN_PROGRESS
         """
-        now = datetime.now(ZoneInfo("Asia/Shanghai"))
         if booking.course_id:
-            today = now.date()
-            if booking.date is None:
-                return "confirmed"
-            return "confirmed" if booking.date <= today else "pending"
-        # 座位预约：根据预约日期+时段开始时间判断
-        if booking.date and booking.start_time:
-            start_t = booking.start_time
-            if isinstance(start_t, str):
-                start_t = datetime.strptime(start_t, "%H:%M").time()
-            booking_start = datetime.combine(booking.date, start_t)
-            booking_start = booking_start.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
-            return "confirmed" if now >= booking_start else "pending"
-        return "confirmed"
+            return resolve_course_status(
+                today=booking_now(settings.BOOKING_TIMEZONE).date(),
+                first_lesson_date=booking.date,
+            ).value
+        return resolve_seat_status(
+            now=booking_now(settings.BOOKING_TIMEZONE),
+            booking_date=booking.date,
+            start_time=booking.start_time,
+        ).value
 
     def _decimal_to_cents(self, value: Decimal) -> int:
         return money_to_cents(value)

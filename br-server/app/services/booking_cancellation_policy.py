@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from decimal import Decimal, ROUND_HALF_UP
-from zoneinfo import ZoneInfo
+
+from app.utils.timezone import booking_now  # noqa: F401  # re-export：booking_now 单一事实源已迁至 app.utils.timezone
 
 
 MONEY = Decimal("0.01")
@@ -20,10 +21,6 @@ class CancellationPolicyResult:
 
 def booking_start_datetime(booking_date: date, start_time: time) -> datetime:
     return datetime.combine(booking_date, start_time)
-
-
-def booking_now(timezone: str = DEFAULT_BOOKING_TIMEZONE) -> datetime:
-    return datetime.now(ZoneInfo(timezone)).replace(tzinfo=None)
 
 
 def calculate_cancellation_policy(

@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.booking_status import BookingStatus, resolve_course_status
 from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
@@ -428,12 +429,11 @@ class CourseBookingService:
                     break
 
         if data.booking_type == "custom":
-            initial_status = "pending_confirm"
+            initial_status = BookingStatus.PENDING_CONFIRM.value
         else:
-            if first_lesson_date is not None and first_lesson_date > today:
-                initial_status = "pending"
-            else:
-                initial_status = "confirmed"
+            initial_status = resolve_course_status(
+                today=today, first_lesson_date=first_lesson_date
+            ).value
 
         # 7. 创建 Booking 记录
         #    1V1定制：将用户选择的日期和时间段存入 booking 记录，供管理员确认时使用

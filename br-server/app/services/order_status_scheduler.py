@@ -7,7 +7,6 @@
 """
 import logging
 from datetime import datetime, date
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import select, and_
 from app.models.booking import Booking
@@ -15,6 +14,12 @@ from app.models.lesson_schedule import LessonSchedule
 from app.models.course_schedule import CourseSchedule
 from app.core.database import async_session
 from app.core.config import settings
+from app.domain.booking_status import (
+    BookingStatus,
+    resolve_course_transition,
+    resolve_seat_transition,
+)
+from app.utils.timezone import booking_now
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +30,8 @@ async def check_and_update_order_statuses() -> dict:
 
     返回: {"seat_started": N, "seat_completed": N, "course_started": N, "course_highlight_updated": N, "course_completed": N}
     """
-    now = datetime.now(ZoneInfo("Asia/Shanghai"))
+    now = booking_now(settings.BOOKING_TIMEZONE)
     today = now.date()
-    current_time = now.time()
 
     stats = {
         "total_scanned": 0,
@@ -55,7 +59,7 @@ async def check_and_update_order_statuses() -> dict:
         for booking in bookings:
             try:
                 if booking.booking_type == "seat":
-                    await _process_seat_booking(session, booking, today, current_time, stats)
+                    await _process_seat_booking(session, booking, now, stats)
                 elif booking.booking_type == "course":
                     await _process_course_booking(session, booking, today, stats)
             except Exception:
@@ -67,18 +71,15 @@ async def check_and_update_order_statuses() -> dict:
     return stats
 
 
-async def _process_seat_booking(session, booking: Booking, today: date, current_time, stats: dict):
-    """处理自习室座位预约订单
+async def _process_seat_booking(session, booking: Booking, now: datetime, stats: dict):
+    """处理自习室座位预约订单（状态推进分派 resolve_seat_transition 纯函数）
 
     状态转换：
     - pending + now >= date+start_time → confirmed（进行中）
     - confirmed + now >= date+end_time → completed（已完成）
     """
-    booking_start = datetime.combine(booking.date, booking.start_time)
-    booking_end = datetime.combine(booking.date, booking.end_time)
-    now = datetime.combine(today, current_time)
-
     if settings.SCHEDULER_LOG_ENABLED:
+        booking_start = datetime.combine(booking.date, booking.start_time)
         logger.info(
             "[自习室订单 %d] status=%s, date=%s, start=%s, end=%s | now=%s | start_cmp=%s",
             booking.id, booking.status, booking.date, booking.start_time, booking.end_time,
@@ -86,19 +87,21 @@ async def _process_seat_booking(session, booking: Booking, today: date, current_
             "now >= booking_start" if now >= booking_start else "now < booking_start",
         )
 
-    if booking.status == "pending" and now >= booking_start:
-        # 待开始 → 进行中
-        booking.status = "confirmed"
-        stats["seat_started"] += 1
+    transition = resolve_seat_transition(
+        status=booking.status,
+        now=now,
+        booking_date=booking.date,
+        start_time=booking.start_time,
+        end_time=booking.end_time,
+    )
+    if transition.new_status is not None:
+        booking.status = transition.new_status.value
+        stats[transition.stat_key] += 1
         if settings.SCHEDULER_LOG_ENABLED:
-            logger.info("Seat booking %d: pending → confirmed (started)", booking.id)
-
-    elif booking.status == "confirmed" and now >= booking_end:
-        # 进行中 → 已完成
-        booking.status = "completed"
-        stats["seat_completed"] += 1
-        if settings.SCHEDULER_LOG_ENABLED:
-            logger.info("Seat booking %d: confirmed → completed (ended)", booking.id)
+            if transition.stat_key == "seat_started":
+                logger.info("Seat booking %d: pending → confirmed (started)", booking.id)
+            else:
+                logger.info("Seat booking %d: confirmed → completed (ended)", booking.id)
 
 
 async def _process_course_booking(session, booking: Booking, today: date, stats: dict):
@@ -161,35 +164,36 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
             booking.highlighted_lesson_id,
         )
 
-    if booking.status == "pending":
-        # 待开始：检查当前日期是否 >= 开课日期
-        if today >= start_date:
-            booking.status = "confirmed"
-            # 高亮当前课时（第一个 lesson_date >= today 的课时）
-            _update_highlight(booking, lessons, today, stats, is_new_start=True)
-            if settings.SCHEDULER_LOG_ENABLED:
-                logger.info(f"Course booking {booking.id}: pending → confirmed, highlighting lesson")
-
-    elif booking.status == "confirmed":
-        # 进行中：检查是否需要推进高亮或完成
-        if today > last_lesson.lesson_date:
+    transition = resolve_course_transition(
+        status=booking.status,
+        today=today,
+        first_lesson_date=start_date,
+        last_lesson_date=last_lesson.lesson_date,
+    )
+    if transition.new_status is not None:
+        booking.status = transition.new_status.value
+        stats[transition.stat_key] += 1
+        if transition.new_status == BookingStatus.COMPLETED:
             # 当前日期超过最后一门课时的日期 → 已完成
-            booking.status = "completed"
             booking.highlighted_lesson_id = None
-            stats["course_completed"] += 1
             if settings.SCHEDULER_LOG_ENABLED:
                 logger.info(f"Course booking {booking.id}: confirmed → completed (all lessons done)")
-        else:
-            # 检查是否需要推进高亮
-            _update_highlight(booking, lessons, today, stats, is_new_start=False)
+        elif settings.SCHEDULER_LOG_ENABLED:
+            logger.info(f"Course booking {booking.id}: pending → confirmed, highlighting lesson")
+    if transition.new_status == BookingStatus.IN_PROGRESS or transition.highlight_only:
+        # 高亮当前课时（最后一个 lesson_date <= today 的课时）
+        _update_highlight(booking, lessons, today, stats)
 
 
-def _update_highlight(booking: Booking, lessons, today: date, stats: dict, is_new_start: bool = False):
+def _update_highlight(booking: Booking, lessons, today: date, stats: dict):
     """更新课时高亮
 
     找到当前应该高亮的课时：当前日期所在课时，
     即最后一个 lesson_date <= today 的课时（当前日期落在该课时的时间范围内）。
     若所有课时都未开始（理论上不会进入本函数），高亮第一课时。
+
+    仅负责高亮推进与 course_highlight_updated 计数；course_started 计数已由
+    _process_course_booking 在 PENDING_START → IN_PROGRESS 转移成功时显式自增（§5.2 Q6 修正）。
     """
     target_lesson = None
     for lesson in lessons:
@@ -203,9 +207,6 @@ def _update_highlight(booking: Booking, lessons, today: date, stats: dict, is_ne
 
     if booking.highlighted_lesson_id != target_lesson.lesson_id:
         booking.highlighted_lesson_id = target_lesson.lesson_id
-        if not is_new_start:
-            stats["course_highlight_updated"] += 1
-            if settings.SCHEDULER_LOG_ENABLED:
-                logger.info(f"Course booking {booking.id}: highlight moved to lesson {target_lesson.lesson_id}")
-    elif is_new_start:
-        stats["course_started"] += 1
+        stats["course_highlight_updated"] += 1
+        if settings.SCHEDULER_LOG_ENABLED:
+            logger.info(f"Course booking {booking.id}: highlight moved to lesson {target_lesson.lesson_id}")

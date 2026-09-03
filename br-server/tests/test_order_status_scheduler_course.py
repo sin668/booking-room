@@ -23,6 +23,16 @@ from app.services.order_status_scheduler import _process_course_booking
 USER_ID = "11111111-1111-1111-1111-111111111111"
 
 
+def _empty_stats() -> dict:
+    """返回 6 键全 0 的 stats dict。
+
+    §5.2 Q6 修正后，pending_start → in_progress 转移会显式自增 course_started，
+    故测试须传真实 6 键 dict 而非 {}（否则 KeyError）。
+    """
+    return {"total_scanned": 0, "seat_started": 0, "seat_completed": 0,
+            "course_started": 0, "course_highlight_updated": 0, "course_completed": 0}
+
+
 def _make_base_data(db_session: AsyncSession) -> None:
     db_session.add(StudyRoom(id=1, name="测试自习室", address="测试地址", status="open"))
     db_session.add(Course(id=2, room_id=1, name="测试课程", category="training", status="active"))
@@ -86,7 +96,7 @@ async def test_course_custom_booking_not_converted_before_start_date(db_session:
     booking = _make_custom_booking(db_session, schedule_id=36)
     await db_session.flush()
 
-    await _process_course_booking(db_session, booking, date(2026, 9, 1), {})
+    await _process_course_booking(db_session, booking, date(2026, 9, 1), _empty_stats())
 
     assert booking.status == "pending"
     assert booking.highlighted_lesson_id is None
@@ -101,7 +111,7 @@ async def test_course_custom_booking_fallback_keeps_pending_via_schedule_type_fi
     booking = _make_custom_booking(db_session, schedule_id=None)
     await db_session.flush()
 
-    await _process_course_booking(db_session, booking, date(2026, 9, 1), {})
+    await _process_course_booking(db_session, booking, date(2026, 9, 1), _empty_stats())
 
     assert booking.status == "pending"
     assert booking.highlighted_lesson_id is None
@@ -114,10 +124,12 @@ async def test_course_custom_booking_converts_on_start_date(db_session: AsyncSes
     booking = _make_custom_booking(db_session, schedule_id=36)
     await db_session.flush()
 
-    await _process_course_booking(db_session, booking, date(2026, 9, 5), {})
+    stats = _empty_stats()
+    await _process_course_booking(db_session, booking, date(2026, 9, 5), stats)
 
     assert booking.status == "confirmed"
     assert booking.highlighted_lesson_id == 122
+    assert stats["course_started"] == 1
 
 
 @pytest.mark.asyncio
@@ -133,9 +145,9 @@ async def test_course_custom_booking_start_date_follows_first_lesson_not_booking
     booking = _make_custom_booking(db_session, schedule_id=36, booking_date=date(2026, 9, 1))
     await db_session.flush()
 
-    await _process_course_booking(db_session, booking, date(2026, 9, 4), {})
+    await _process_course_booking(db_session, booking, date(2026, 9, 4), _empty_stats())
     assert booking.status == "pending"
 
-    await _process_course_booking(db_session, booking, date(2026, 9, 5), {})
+    await _process_course_booking(db_session, booking, date(2026, 9, 5), _empty_stats())
     assert booking.status == "confirmed"
     assert booking.highlighted_lesson_id == 122

@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     ADMIN_DEFAULT_USERNAME: str = "admin"
     ADMIN_DEFAULT_PASSWORD: str = ""
     ADMIN_DEFAULT_EMAIL: str = ""
+    # 管理端会话有效期（独立于共用的 ACCESS_TOKEN_EXPIRE_MINUTES=15，避免拉长 C 端 br-app 令牌；§7.2）
+    ADMIN_ACCESS_TOKEN_EXPIRE_DAYS: int = 7
     ENVIRONMENT: str = "development"
 
     # Booking verification

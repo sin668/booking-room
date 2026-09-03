@@ -27,7 +27,7 @@ async def login(
     _admin, token = await AdminAuthService(db, settings).login(data.phone, data.username, data.password)
     return AdminTokenResponse(
         access_token=token,
-        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        expires_in=settings.ADMIN_ACCESS_TOKEN_EXPIRE_DAYS * 86400,
     )
 
 

@@ -15,6 +15,7 @@ from app.domain.booking_status import (
     resolve_seat_status,
     resolve_seat_transition,
 )
+from app.domain.verification_rules import is_verifiable, resolve_verification_status
 from app.models.booking import Booking
 
 
@@ -106,3 +107,25 @@ def test_filter_pending_start_two_conditions():
     assert len(build_status_filter_conditions(Booking.status, Booking.payment_status, "pending_start")) == 2
 def test_filter_other_one_condition():
     assert len(build_status_filter_conditions(Booking.status, Booking.payment_status, "completed")) == 1
+
+
+# is_verifiable（booking_verification_service.py:189-192 复合判定）
+def test_verifiable_in_progress_unpaid_true():
+    assert is_verifiable(status=BookingStatus.IN_PROGRESS, payment_status=PaymentStatus.PENDING) is True
+def test_verifiable_in_progress_paid_true():
+    assert is_verifiable(status=BookingStatus.IN_PROGRESS, payment_status=PaymentStatus.PAID) is True
+def test_verifiable_pending_start_paid_true():
+    assert is_verifiable(status=BookingStatus.PENDING_START, payment_status=PaymentStatus.PAID) is True
+def test_verifiable_pending_start_unpaid_false():
+    assert is_verifiable(status=BookingStatus.PENDING_START, payment_status=PaymentStatus.PENDING) is False
+def test_verifiable_completed_false():
+    assert is_verifiable(status=BookingStatus.COMPLETED, payment_status=PaymentStatus.PAID) is False
+
+
+# resolve_verification_status（booking_verification_service.py:264；now <= end_at 含等号）
+def test_verification_status_before_end_in_progress():
+    assert resolve_verification_status(now=datetime(2026, 9, 3, 10, 0), end_at=datetime(2026, 9, 3, 12, 0)) == BookingStatus.IN_PROGRESS
+def test_verification_status_at_end_in_progress():
+    assert resolve_verification_status(now=datetime(2026, 9, 3, 12, 0), end_at=datetime(2026, 9, 3, 12, 0)) == BookingStatus.IN_PROGRESS
+def test_verification_status_after_end_completed():
+    assert resolve_verification_status(now=datetime(2026, 9, 3, 13, 0), end_at=datetime(2026, 9, 3, 12, 0)) == BookingStatus.COMPLETED

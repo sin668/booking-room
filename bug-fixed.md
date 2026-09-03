@@ -737,6 +737,60 @@ if booking.status != "confirmed":
 
 ---
 
+## BUG-27: 订单状态定时任务 `course_started` 计数分支永不可达（死分支）
+
+### 报错信息
+订单状态定时任务的统计日志中 `course_started` 恒为 0：课程订单从「待开始」推进到「进行中」时，该计数不自增。
+
+### 根本原因
+`order_status_scheduler._update_highlight` 的 `elif is_new_start: stats["course_started"] += 1` 分支永不可达——`highlighted_lesson_id` 在订单创建时从不赋值（恒为 `None`），当 `is_new_start=True` 时 `None != target_lesson.lesson_id` 必为真，控制流必进前一个 `if` 分支，`elif` 成为死代码（F5）。
+
+### 解决方案
+将状态推进判定下沉为领域层 transition 纯函数，`stats[transition.stat_key] += 1` 由转移类型统一驱动计数；`total_scanned`/`seat_started`/`seat_completed`/`course_started`/`course_highlight_updated`/`course_completed` 六个键名保持不变（避免 `main.py` 日志与既有断言破裂）。新增回归断言：`pending_start → in_progress` 转移时 `course_started` 自增。
+
+**文件**: `br-server/app/services/order_status_scheduler.py`, `br-server/app/domain/booking_status.py`
+
+**提交**: `4c731d1`
+
+---
+
+## BUG-28: 删除 `BOOKING_STATUS_LABELS.pending` 致未支付订单标签从「待支付」退化为「待开始」
+
+### 报错信息
+潜在缺陷（重构中识别，未上线）：br-app 订单页若直接删除 `BOOKING_STATUS_LABELS.pending = '待支付'`，未支付的座位订单标签会从「待支付」退化为「待开始」，用户无法区分「待支付」与「已支付待开始」。
+
+### 根本原因
+支付域语义（`payment_status='pending'` = 待支付）被错误挂在订单状态词表键 `BOOKING_STATUS_LABELS.pending` 上（同键双义，F23）。词表翻转要求剥离该支付域键，但直接删除会造成用户可见文案倒退，与「行为零变更」冲突。
+
+### 解决方案
+新增 `PAYMENT_STATUS_LABELS` 承载「待支付」语义，并在 `statusLabel()` 增加 `payment_status === 'pending'` 前置分支返回 `PAYMENT_STATUS_LABELS.pending`，先于订单状态判定；`BOOKING_STATUS_LABELS` 剥离支付域键（含死键 `confirmed: '已预约'`，F25）。用户可见文案零变更。
+
+**文件**: `br-app/src/constants/booking.js`, `br-app/src/pages/orders/index.vue`
+
+**提交**: `54a8e0e`
+
+---
+
+## BUG-29: 订单链路时区实现分裂（naive/aware 混用）存在比较崩溃隐患
+
+### 报错信息
+```
+TypeError: can't compare offset-naive and offset-aware datetimes
+```
+领域纯函数若被 aware 与 naive 两类调用点共用，比较业务本地时间时会抛此异常。
+
+### 根本原因
+订单链路内存在 3 个同语义但仅 2 个同名的业务本地时间实现：`booking_cancellation_policy.booking_now`（naive）、`course_booking_service._now_naive`（naive）、`booking_verification_service._booking_now`（**aware**，唯一孤岛）；模块级 `CHINA_TIMEZONE` 常量 6 处重复定义 + 1 处等价变体（`seed_data.py` 用 `timezone(timedelta(hours=8))`）。全仓 `replace(tzinfo=None)` 达 12 处，表明 naive 是压倒性主流（F19/F21）。
+
+### 解决方案
+新建 `app/utils/timezone.py` 作为单一事实源：统一 `booking_now()` 返回 naive 的 `settings.BOOKING_TIMEZONE` 本地时间、`CHINA_TIMEZONE` 常量、`ensure_booking_timezone()` aware 归一化工具。订单链路内 3 个旧定义改为 import；`booking_verification_service` 作为 aware 孤岛保留内部 aware 用法，仅在调用领域函数时于边界 `.replace(tzinfo=None)` 降级一次。链路外 3 个函数按 Non-Goals 只改导入源、不改返回语义。
+
+**文件**: `br-server/app/utils/timezone.py`（新建）, `br-server/app/services/booking_cancellation_policy.py`, `br-server/app/services/course_booking_service.py`, `br-server/app/services/booking_verification_service.py`
+
+**提交**: `d9c257b`
+
+---
+
 ## 修改文件汇总
 
 | 文件 | BUG |
@@ -782,3 +836,9 @@ if booking.status != "confirmed":
 | `br-admin/src/utils/http/alova/index.ts` | #25 |
 | `br-admin/src/api/course/index.ts` | #25 |
 | `br-server/app/services/booking_service.py` | #26 |
+| `br-server/app/services/order_status_scheduler.py` | #27 |
+| `br-server/app/domain/booking_status.py` | #27 |
+| `br-app/src/constants/booking.js` | #28 |
+| `br-app/src/pages/orders/index.vue` | #28 |
+| `br-server/app/utils/timezone.py` | #29 (新建) |
+| `br-server/app/services/booking_verification_service.py` | #29 |

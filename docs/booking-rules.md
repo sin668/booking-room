@@ -3,7 +3,7 @@
 > 本文档总结订单从下单到"已完成/已取消"的完整规则、状态流转，以及后端定时任务的职责与状态变更逻辑。
 > 依据代码：`br-server/app/services/`（booking_service、course_booking_service、booking_payment_service、order_status_scheduler、schedule_status_scheduler、booking_cancellation_policy）、`br-server/app/main.py`。
 > 时区约定：所有日期/时间比较统一使用 **Asia/Shanghai**。
-> **状态词表（已翻转，BREAKING）**：DB `status` 真实值由旧 `pending`/`confirmed` 统一为 `pending_start`/`in_progress`，与前端展示态、`?status=` API 查询契约同名。`payment_status`（支付域，含 `pending`=待支付）与 `course_schedules.schedule_status`（排课域，含 `in_progress`）是**跨域同名值，与订单 status 无关，不随本次翻转改变**。
+> **状态词表（已翻转，BREAKING）**：DB `status` 真实值由旧 `pending`/`confirmed` 统一为 `pending_start`/`in_progress`，与前端展示态、`?status=` API 查询契约同名。`payment_status`（支付域，含 `pending`=待支付）与 `course_schedules.schedule_status`（排课域，含 `pending_start`/`in_progress`/`completed`）是**跨域同名值，与订单 status 无关，不随本次翻转改变**；其 `pending_start`/`in_progress` 判定与订单域复用同一批公用方法（`resolve_course_status` / `resolve_course_transition`）。
 
 ---
 
@@ -81,7 +81,8 @@
 
 1. 创建定制专属排课：`course_schedules`（`schedule_type='custom'`）+ `lesson_schedules`（取模循环分配 + 周次偏移算法计算每课时日期），并回写 `booking.schedule_id`。
 2. 把**第一课时日期**回写为 `booking.date`（预约日期）与 `course_schedules.start_date`（开课日期）。
-3. 比较开课日期与今天：`开课日期 ≤ 今天 → in_progress`，否则 `pending_start`。
+3. 比较开课日期与今天（复用公用方法 `resolve_course_status`）：`开课日期 ≤ 今天 → in_progress`，否则 `pending_start`。
+4. 该判定结果**同时写入订单 `booking.status` 与定制排课 `course_schedules.schedule_status`**（后者经 `AdminCourseService._compute_schedule_status`，内部同样复用 `resolve_course_status`）——使「排课管理」列表与「预约列表」的待开始/进行中口径完全一致。
 
 ---
 
@@ -200,9 +201,18 @@ pending_confirm / pending_start ──(取消)──► cancelled（待开始全
 ### 5.3 排课状态定时任务（`schedule_status_scheduler`）
 
 - **频率**：每天一次，`SCHEDULE_STATUS_CHECK_TIME`（默认 00:00，Asia/Shanghai）。
-- **逻辑**：扫描 `course_schedules.schedule_status='in_progress'` 的排课，`今天 > end_date`（结课日期）→ `completed`。
+- **扫描范围**：`course_schedules.schedule_status IN ('pending_start','in_progress')` 的排课。
+- **逻辑**：复用订单域公用方法 `resolve_course_transition`（与 `order_status_scheduler`、预约确认同源）推进状态——排课 `start_date` 对应「第一课时日期」、`end_date` 对应「结课日期」：
+
+| 当前状态 | 条件 | 变更为 |
+|---|---|---|
+| `pending_start` | `今天 ≥ start_date`（开课日期） | `in_progress`（进行中） |
+| `in_progress` | `今天 > end_date`（结课日期） | `completed`（已完成） |
+
+- 两步推进语义与订单域一致：`pending_start` 且已超结课日期时先转 `in_progress`，下一次扫描再转 `completed`（正常运行时调度器每天扫描，`pending_start` 只在开课当天转 `in_progress`，此时未超结课）。
+- **固定班课（`fixed`）恒为 `in_progress`/`completed`**：`_effective_start_date` 对 fixed 返回 `None`，`resolve_course_status(None)` 恒为 `in_progress`，保证 C 端「仅 fixed + in_progress 可预约/展示」不被未开课课程破坏；仅**定制排课（`custom`）**会出现 `pending_start`（历史数据由迁移 `b4e7a1c9d3f6` 回填）。
 - 只改排课记录状态，不改订单状态。
-- 注意：此处 `schedule_status='in_progress'` 属**排课域**，与订单 `status='in_progress'` 同名但不同义，是跨域同名值，不受订单词表翻转影响。
+- 注意：`schedule_status` 属**排课域**，与订单 `status` 同名但不同义，是跨域同名值，不受订单词表翻转影响。
 
 ---
 

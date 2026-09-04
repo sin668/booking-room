@@ -43,7 +43,7 @@ class CourseSchedule(Base):
     )
     schedule_status: Mapped[str] = mapped_column(
         String(20), default="in_progress", nullable=False,
-        comment="课程状态: in_progress=进行中, completed=已完成",
+        comment="课程状态: pending_start=待开始, in_progress=进行中, completed=已完成",
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

@@ -153,14 +153,14 @@ def _parse_schedule_status_check_time() -> tuple[int, int]:
 
 
 async def _schedule_status_check_job() -> None:
-    """排课状态定时检查任务：扫描进行中排课，当前日期 > 结课日期 → 已完成"""
+    """排课状态定时检查任务：扫描待开始/进行中排课，今天 >= 开课日期 → 进行中，当前日期 > 结课日期 → 已完成"""
     from app.services.schedule_status_scheduler import check_and_update_schedule_statuses
     try:
         stats = await check_and_update_schedule_statuses()
         if settings.SCHEDULER_LOG_ENABLED:
             logger.info(
-                "[排课状态定时任务] 扫描 %d 条进行中排课，标记完成 %d 条",
-                stats["total_scanned"], stats["schedule_completed"],
+                "[排课状态定时任务] 扫描 %d 条待处理排课，转进行中 %d 条，标记完成 %d 条",
+                stats["total_scanned"], stats["schedule_started"], stats["schedule_completed"],
             )
     except Exception:
         logger.exception("Schedule status check job failed")

@@ -1375,7 +1375,8 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
     if last_lesson_date is not None:
         custom_schedule.end_date = last_lesson_date + timedelta(days=1)
 
-    # 同步课程状态（当前日期 > 结课日期 → completed，否则 in_progress）
+    # 同步排课状态：定制排课按开课日期判定（复用 resolve_course_status，与订单状态同源）：
+    # 第一课时在未来 → pending_start（待开始），已到开课日期 → in_progress，超结课日期 → completed
     custom_schedule.schedule_status = AdminCourseService._compute_schedule_status(
-        custom_schedule.end_date
+        custom_schedule.start_date, custom_schedule.end_date
     )

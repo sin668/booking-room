@@ -17,6 +17,7 @@ from app.models.course_schedule import CourseSchedule
 from app.models.lesson_schedule import LessonSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
+from app.domain.booking_status import resolve_course_status
 from app.schemas.admin_course import (
     AdminCourseCreate,
     AdminCourseDetailResponse,
@@ -440,7 +441,7 @@ class AdminCourseService:
                     full_custom_price=float(s.full_custom_price) if s.full_custom_price else None,
                     paid_amount=float(s.paid_amount) if s.paid_amount else None,
                     schedule_type=s.schedule_type,
-                    schedule_status=self._compute_schedule_status(s.end_date),
+                    schedule_status=self._compute_schedule_status(self._effective_start_date(s), s.end_date),
                     lesson_schedules=lesson_schedules,
                 )
             )
@@ -665,7 +666,7 @@ class AdminCourseService:
         new_end_date = lesson_schedules[last_idx].lesson_date + timedelta(days=1)
         old_end_date = schedule.end_date
         schedule.end_date = new_end_date
-        schedule.schedule_status = self._compute_schedule_status(new_end_date)
+        schedule.schedule_status = self._compute_schedule_status(self._effective_start_date(schedule), new_end_date)
         logger.info("[postpone] end_date 更新: %s -> %s", old_end_date, new_end_date)
 
         # 8. 刷新到数据库
@@ -757,8 +758,8 @@ class AdminCourseService:
             last_slot_date = date.fromisoformat(all_slots[len(course_lessons) - 1]["date"])
             schedule.end_date = last_slot_date + timedelta(days=1)
 
-        # 同步课程状态（当前日期 > 结课日期 → completed，否则 in_progress）
-        schedule.schedule_status = self._compute_schedule_status(schedule.end_date)
+        # 同步课程状态（固定班课恒 in_progress/completed；定制排课按开课日期可为 pending_start）
+        schedule.schedule_status = self._compute_schedule_status(self._effective_start_date(schedule), schedule.end_date)
 
     @staticmethod
     def _find_next_slot_after(
@@ -869,12 +870,29 @@ class AdminCourseService:
         return slots
 
     @staticmethod
-    def _compute_schedule_status(end_date) -> str:
-        """计算排课状态：当前日期 > 结课日期 → completed，否则 in_progress。"""
-        if end_date is None:
-            return "in_progress"
+    def _effective_start_date(schedule: CourseSchedule) -> date | None:
+        """排课状态判定的开课日期口径。
+
+        - 定制排课（custom）：用真实 start_date，支持 pending_start（跟随订单开课语义）
+        - 固定班课（fixed）：返回 None，恒为 in_progress/completed，保证 C 端
+          「仅 fixed + in_progress 可预约/展示」的口径不被未开课课程破坏。
+        """
+        return schedule.start_date if schedule.schedule_type == "custom" else None
+
+    @staticmethod
+    def _compute_schedule_status(start_date, end_date) -> str:
+        """计算排课状态（复用订单域公用方法 resolve_course_status，与预约确认同源）：
+
+        - 当前日期 > 结课日期(end_date) → completed（已完成）
+        - 否则按开课日期(start_date)判定：开课日期 > 今天 → pending_start（待开始）；
+          开课日期 <= 今天 或 无开课日期 → in_progress（进行中）
+
+        固定班课存储/展示传 start_date=None（见 _effective_start_date），恒不为 pending_start。
+        """
         today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
-        return "completed" if today > end_date else "in_progress"
+        if end_date is not None and today > end_date:
+            return "completed"
+        return resolve_course_status(today=today, first_lesson_date=start_date).value
 
     @staticmethod
     async def _schedule_to_response(
@@ -911,6 +929,6 @@ class AdminCourseService:
             full_custom_price=float(schedule.full_custom_price) if schedule.full_custom_price else None,
             paid_amount=float(schedule.paid_amount) if schedule.paid_amount else None,
             schedule_type=schedule.schedule_type,
-            schedule_status=AdminCourseService._compute_schedule_status(schedule.end_date),
+            schedule_status=AdminCourseService._compute_schedule_status(AdminCourseService._effective_start_date(schedule), schedule.end_date),
             lesson_schedules=lesson_schedules,
         )

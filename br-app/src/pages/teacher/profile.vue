@@ -435,7 +435,9 @@ export default {
 
 .hero-info {
   position: absolute;
-  bottom: 0;
+  /* 上移整个头像/认证讲师/头衔称号区块，避免被下方 stats-card（margin-top:-56rpx，z-index:10）
+     遮挡住底部的头衔称号（hero-sub）。56rpx 与卡片上拉量对齐，内容底边恰好越过卡片顶边。 */
+  bottom: 40rpx;
   left: 0;
   right: 0;
   padding: 28rpx;

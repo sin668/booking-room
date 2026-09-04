@@ -272,6 +272,7 @@
   import type { FormInst, FormRules } from 'naive-ui';
   import { NButton, NTag } from 'naive-ui';
   import { TimeOutline, AddOutline, CloseOutline } from '@vicons/ionicons5';
+  import { BOOKING_STATUS_TAGS } from '@/views/business/shared/options';
   import {
     getTeacherList,
     getCourseSchedules,
@@ -616,12 +617,11 @@
       key: 'schedule_status',
       width: 100,
       render(row: ScheduleRecord) {
-        const completed = isScheduleCompleted(row);
-        return h(
-          NTag,
-          { type: completed ? 'success' : 'warning', size: 'small', bordered: false },
-          () => (completed ? '已完成' : '进行中')
-        );
+        // 复用预约列表共享状态标签配置（与预约列表口径一致）：待开始/进行中/已完成
+        const status =
+          row.schedule_status || (isScheduleCompleted(row) ? 'completed' : 'in_progress');
+        const cfg = BOOKING_STATUS_TAGS[status] || { label: status, type: 'default' as const };
+        return h(NTag, { type: cfg.type, size: 'small', bordered: false }, () => cfg.label);
       },
     },
     {

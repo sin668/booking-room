@@ -682,6 +682,8 @@ async def test_admin_confirm_custom_booking_future_first_lesson_pending(db_sessi
     ).scalar_one()
     # 开课日期同步为第一课时日期
     assert schedule.start_date == first_lesson_date
+    # 定制排课状态跟随开课日期：第一课时在未来 → 待开始（与订单状态同源，复用 resolve_course_status）
+    assert schedule.schedule_status == "pending_start"
     lessons = (
         await db_session.execute(
             select(LessonSchedule).where(LessonSchedule.schedule_id == schedule.id)
@@ -713,6 +715,13 @@ async def test_admin_confirm_custom_booking_first_lesson_today_confirmed(db_sess
         await db_session.execute(select(Booking).where(Booking.id == 1))
     ).scalar_one()
     assert booking_row.date == today
+    # 第一课时即今天 → 定制排课进行中（与订单状态同源）
+    schedule = (
+        await db_session.execute(
+            select(CourseSchedule).where(CourseSchedule.id == booking_row.schedule_id)
+        )
+    ).scalar_one()
+    assert schedule.schedule_status == "in_progress"
 
 
 @pytest.mark.asyncio

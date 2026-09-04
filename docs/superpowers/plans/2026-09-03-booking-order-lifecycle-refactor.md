@@ -2,6 +2,7 @@
 change: booking-order-lifecycle-refactor
 design-doc: docs/superpowers/specs/2026-09-03-booking-order-lifecycle-refactor-design.md
 base-ref: 6582eb0268f658b75bcd2030e959d709a21e712d
+archived-with: 2026-09-04-booking-order-lifecycle-refactor
 ---
 
 # 订单生命周期重构 Implementation Plan

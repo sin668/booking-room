@@ -2,6 +2,8 @@
 comet_change: booking-order-lifecycle-refactor
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-09-04-booking-order-lifecycle-refactor
+status: final
 ---
 
 # 订单生命周期重构技术设计

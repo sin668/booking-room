@@ -7,9 +7,10 @@ from zoneinfo import ZoneInfo
 
 import logging
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
@@ -510,17 +511,40 @@ class AdminCourseService:
 
         return await self._schedule_to_response(db, schedule)
 
-    async def delete_schedule(self, db: AsyncSession, schedule_id: int) -> bool:
-        """删除排课记录。"""
+    async def delete_schedule(self, db: AsyncSession, schedule_id: int) -> str:
+        """删除排课记录及其对应的课时上课时间记录。
+
+        准入规则：
+        - 排课不存在 → "not_found"
+        - 存在非取消状态的关联订单 → "has_active_bookings"（拒绝删除）
+        - 无关联订单，或关联订单全部已取消 → "ok"
+
+        删除前先清空剩余（已取消）订单的 schedule_id 外键引用，避免 FK 约束报错；
+        课时上课时间记录（lesson_schedules）随排课一并删除。
+        使用显式 SQL 删除，不触发 ORM relationship 懒加载。
+        """
         result = await db.execute(
             select(CourseSchedule).where(CourseSchedule.id == schedule_id)
         )
         schedule = result.scalar_one_or_none()
         if not schedule:
-            return False
-        await db.delete(schedule)
+            return "not_found"
+
+        active_refs = await db.scalar(
+            select(func.count())
+            .select_from(Booking)
+            .where(Booking.schedule_id == schedule_id, Booking.status != "cancelled")
+        )
+        if active_refs and active_refs > 0:
+            return "has_active_bookings"
+
+        await db.execute(
+            update(Booking).where(Booking.schedule_id == schedule_id).values(schedule_id=None)
+        )
+        await db.execute(delete(LessonSchedule).where(LessonSchedule.schedule_id == schedule_id))
+        await db.execute(delete(CourseSchedule).where(CourseSchedule.id == schedule_id))
         await db.flush()
-        return True
+        return "ok"
 
     # ── 课时延期 ──────────────────────────────────────────────────
 

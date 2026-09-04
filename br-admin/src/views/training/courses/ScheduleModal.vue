@@ -981,7 +981,7 @@
     if (!props.courseId) return;
     window['$dialog']?.warning({
       title: '确认删除',
-      content: '确定要删除这条排课记录吗？',
+      content: '确定要删除这条排课记录吗？删除后对应的课时上课时间记录也将一并移除。',
       positiveText: '确定',
       negativeText: '取消',
       onPositiveClick: async () => {
@@ -991,18 +991,20 @@
         try {
           await deleteCourseSchedule(props.courseId!, row.id);
           window['$message']?.success('删除成功');
+          await loadSchedules();
+          emit('success');
         } catch (err) {
-          // 404 表示记录已被删除（重复触发场景），静默刷新列表，不弹重复错误提示
+          // 后端 detail（如「排课记录不存在」「该排课存在未取消的预约订单，无法删除」）
+          // 已由 Alova 全局响应拦截器统一弹出，此处不再重复提示「删除失败」。
+          // 记录已消失（不存在）时刷新列表；被拒绝删除（存在未取消订单）时保持列表不变。
           const msg = String((err as Error)?.message || '');
-          if (!msg.includes('不存在')) {
-            window['$message']?.error('删除失败');
-            return;
+          if (msg.includes('不存在')) {
+            await loadSchedules();
+            emit('success');
           }
         } finally {
           deleting.value = false;
         }
-        await loadSchedules();
-        emit('success');
       },
     });
   }

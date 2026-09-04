@@ -241,11 +241,20 @@ async def delete_schedule(
     schedule_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """删除排课记录。"""
+    """删除排课记录及其对应的课时上课时间记录。
+
+    仅当排课无关联订单、或关联订单全部已取消时允许删除；
+    存在未取消订单时返回 409，禁止删除。
+    """
     service = AdminCourseService()
-    success = await service.delete_schedule(db, schedule_id)
-    if not success:
+    result = await service.delete_schedule(db, schedule_id)
+    if result == "not_found":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="排课记录不存在")
+    if result == "has_active_bookings":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="该排课存在未取消的预约订单，无法删除",
+        )
     await db.commit()
     return {"message": "删除成功"}
 

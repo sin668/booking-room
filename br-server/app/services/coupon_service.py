@@ -4,11 +4,11 @@ import uuid
 from datetime import date, datetime, time
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, NamedTuple
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.booking_status import BookingStatus
 from app.models.booking import Booking
 from app.models.coupon import Coupon, UserCoupon
 from app.models.seat import Seat
@@ -39,7 +39,7 @@ class BookingCouponCalculation(NamedTuple):
     user_coupon: UserCoupon
 
 
-CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")
+from app.utils.timezone import CHINA_TIMEZONE
 
 
 def _now() -> datetime:
@@ -169,7 +169,7 @@ async def _has_booking_history(db: AsyncSession, user_id: str) -> bool:
     statement = select(
         exists().where(
             Booking.user_id == user_id,
-            Booking.status.in_(["confirmed", "completed"]),
+            Booking.status.in_([BookingStatus.IN_PROGRESS.value, BookingStatus.COMPLETED.value]),
         )
     )
     return bool(await db.scalar(statement))

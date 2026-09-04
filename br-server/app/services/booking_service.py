@@ -44,11 +44,22 @@ from app.schemas.booking import (
     SeatBrief,
 )
 from app.core.config import settings
+from app.domain.booking_status import (
+    BookingStatus,
+    build_status_filter_conditions,
+    is_cancellable,
+    is_full_refund_cancellation,
+    is_payable,
+    is_unpaid_cancellable,
+    resolve_course_status,
+    resolve_seat_status,
+)
 from app.services import coupon_service
 from app.services.booking_cancellation_policy import (
     booking_now,
     calculate_cancellation_policy,
 )
+from app.utils.time_slots import parse_time_slots, rebuild_from_time_range
 
 MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
@@ -124,7 +135,7 @@ async def _sync_user_booking_completions(
     result = await db.execute(
         select(Booking).where(
             Booking.user_id == str(user_id),
-            Booking.status == "confirmed",
+            Booking.status == BookingStatus.IN_PROGRESS.value,
             Booking.payment_status == "paid",
             Booking.booking_type != "course",
         )
@@ -264,7 +275,7 @@ async def create_booking(
         total_price = coupon_result.payable_amount
         user_coupon = coupon_result.user_coupon
 
-    balance_payment = data.payment_method == PaymentMethodEnum.balance
+    balance_payment = data.payment_method == PaymentMethodEnum.BALANCE
     user = None
     total_price = total_price.quantize(Decimal("0.01"))
 
@@ -281,13 +292,14 @@ async def create_booking(
         user.balance = Decimal(str(user.balance)) - total_price
 
     # 根据预约开始时间判断初始状态：当前时间 < date+start_time → pending（待开始），否则 → confirmed
-    now = datetime.now(ZoneInfo("Asia/Shanghai"))
     if balance_payment:
-        booking_start = datetime.combine(data.date, data.start_time)
-        booking_start = booking_start.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
-        initial_status = "pending" if now < booking_start else "confirmed"
+        initial_status = resolve_seat_status(
+            now=booking_now(settings.BOOKING_TIMEZONE),
+            booking_date=data.date,
+            start_time=data.start_time,
+        ).value
     else:
-        initial_status = "pending"
+        initial_status = BookingStatus.PENDING_START.value
 
     booking = Booking(
         seat_id=data.seat_id,
@@ -349,20 +361,12 @@ async def list_bookings(
 
     # Handle virtual statuses
     is_in_progress_filter = status == "in_progress"
-    is_pending_start_filter = status == "pending_start"
     today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
 
     conditions = [Booking.user_id == str(user_id)]
-    if status is not None and not is_in_progress_filter and not is_pending_start_filter:
-        conditions.append(Booking.status == status)
-    elif is_in_progress_filter:
-        # in_progress: status=confirmed, payment_status=paid (所有已支付类型)
-        conditions.append(Booking.status == "confirmed")
-        conditions.append(Booking.payment_status == "paid")
-    elif is_pending_start_filter:
-        # pending_start: status in (pending, pending_confirm), payment_status=paid
-        conditions.append(Booking.status.in_(["pending", "pending_confirm"]))
-        conditions.append(Booking.payment_status == "paid")
+    conditions.extend(
+        build_status_filter_conditions(Booking.status, Booking.payment_status, status)
+    )
 
     where_clause = and_(*conditions)
 
@@ -641,7 +645,7 @@ async def cancel_booking(
         raise BookingAlreadyCancelledError("该预约已取消")
 
     # Pending (unpaid) bookings can be cancelled without refund logic
-    if booking.payment_status == "pending" and booking.status == "pending":
+    if is_unpaid_cancellable(status=booking.status, payment_status=booking.payment_status):
         now = booking_now(settings.BOOKING_TIMEZONE)
         booking.status = "cancelled"
         booking.cancelled_at = now
@@ -651,10 +655,10 @@ async def cancel_booking(
         room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
         return _build_booking_response(booking, seat, room)
 
-    if booking.status not in ("confirmed", "pending"):
-        raise BookingCancellationNotAllowedError("该预约不可取消")
-
-    if booking.payment_status != "paid":
+    if not is_cancellable(status=booking.status, payment_status=booking.payment_status):
+        # 保留两段式错误消息与判定顺序：状态非法优先于未支付（行为零变更）
+        if booking.status not in (BookingStatus.IN_PROGRESS, BookingStatus.PENDING_START):
+            raise BookingCancellationNotAllowedError("该预约不可取消")
         raise BookingCancellationNotAllowedError("未支付预约不可取消")
 
     policy = calculate_cancellation_policy(
@@ -741,12 +745,12 @@ async def pay_pending_booking(
     if booking is None or booking.user_id != str(user_id):
         raise BookingNotFoundError("预约不存在")
 
-    if booking.status != "pending" or booking.payment_status != "pending":
+    if not is_payable(status=booking.status, payment_status=booking.payment_status):
         raise BookingError("该预约不在待支付状态")
 
     total_price = Decimal(str(booking.total_price)).quantize(Decimal("0.01"))
 
-    if payment_method == PaymentMethodEnum.balance:
+    if payment_method == PaymentMethodEnum.BALANCE:
         user_result = await db.execute(
             select(User).where(User.id == user_id).with_for_update()
         )
@@ -758,10 +762,11 @@ async def pay_pending_booking(
 
         user.balance = Decimal(str(user.balance)) - total_price
         # 根据预约开始时间判断状态：当前时间 < date+start_time → pending（待开始），否则 → confirmed
-        now = datetime.now(ZoneInfo("Asia/Shanghai"))
-        booking_start = datetime.combine(booking.date, booking.start_time)
-        booking_start = booking_start.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
-        booking.status = "pending" if now < booking_start else "confirmed"
+        booking.status = resolve_seat_status(
+            now=booking_now(settings.BOOKING_TIMEZONE),
+            booking_date=booking.date,
+            start_time=booking.start_time,
+        ).value
         booking.payment_status = "paid"
         booking.payment_method = "balance"
         booking.payment_provider = None
@@ -1155,11 +1160,10 @@ async def admin_cancel_booking(db: AsyncSession, booking_id: int) -> BookingAdmi
         raise BookingAlreadyCancelledError("该预约已取消")
 
     # 待开始订单：管理员取消，已支付全额退款不扣手续费（不使用行锁，避免嵌套锁冲突）
-    is_course_pending_start = booking.booking_type == "course" and booking.status in (
-        "pending",
-        "pending_confirm",
+    is_course_pending_start = is_full_refund_cancellation(
+        booking_type=booking.booking_type, status=booking.status
     )
-    if booking.status == "pending_confirm" or is_course_pending_start:
+    if booking.status == BookingStatus.PENDING_CONFIRM.value or is_course_pending_start:
         schedule_id = getattr(booking, "schedule_id", None)
         now = booking_now(settings.BOOKING_TIMEZONE)
         booking.status = "cancelled"
@@ -1227,7 +1231,7 @@ async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdm
     if booking is None:
         raise BookingNotFoundError("预约不存在")
 
-    if booking.status != "pending_confirm":
+    if booking.status != BookingStatus.PENDING_CONFIRM.value:
         raise BookingError("该预约不是待确认状态")
 
     today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
@@ -1241,7 +1245,7 @@ async def admin_confirm_booking(db: AsyncSession, booking_id: int) -> BookingAdm
     #   当前日期 >= 开课日期 → “进行中”(confirmed)
     #   当前日期 < 开课日期  → “待开始”(pending)
     booking_date = booking.date or today
-    booking.status = "confirmed" if booking_date <= today else "pending"
+    booking.status = resolve_course_status(today=today, first_lesson_date=booking_date).value
 
     await db.flush()
 
@@ -1272,22 +1276,25 @@ async def _create_custom_schedule_on_confirm(db: AsyncSession, booking: Booking)
     from app.services.admin_course_service import AdminCourseService
 
     lesson_date = booking.date or today
-    time_slots_json = getattr(booking, "time_slots", None)
-    slots: list[dict] = []
-    if time_slots_json:
-        try:
-            parsed = json.loads(time_slots_json)
-            if isinstance(parsed, list):
-                for item in parsed:
-                    if isinstance(item, dict):
-                        slots.append(item)
-                    elif isinstance(item, str):
-                        slots.append({"weekday": lesson_date.isoweekday(), "time_slot": item})
-        except (json.JSONDecodeError, TypeError):
-            slots = []
-    if not slots and booking.start_time and booking.end_time:
-        time_slot = f"{booking.start_time.strftime('%H:%M')}-{booking.end_time.strftime('%H:%M')}"
-        slots = [{"weekday": lesson_date.isoweekday(), "time_slot": time_slot}]
+    # 解析/重建收敛至 app.utils.time_slots（§3.1）：parse_time_slots 容错解析 3 种历史格式，
+    # 无数据时 rebuild_from_time_range 从 start_time/end_time 重建单一时段；weekday 缺省（历史
+    # 纯字符串数组格式，§14）按第一课时日期回填 isoweekday，输出与旧逻辑逐字节一致。
+    parsed_slots = parse_time_slots(getattr(booking, "time_slots", None))
+    if not parsed_slots and booking.start_time and booking.end_time:
+        parsed_slots = parse_time_slots(
+            rebuild_from_time_range(
+                booking_date=lesson_date,
+                start_time=booking.start_time,
+                end_time=booking.end_time,
+            )
+        )
+    slots: list[dict] = [
+        {
+            "weekday": ts.weekday if ts.weekday is not None else lesson_date.isoweekday(),
+            "time_slot": f"{ts.start}-{ts.end}",
+        }
+        for ts in parsed_slots
+    ]
     time_slots_json = json.dumps(slots, ensure_ascii=False)
 
     # 定制每课时价格取自课程的固定班课排课（C 端下单时的计价来源：

@@ -38,8 +38,8 @@ export const ACTIVITY_STATUS_OPTIONS: BusinessOption[] = [
 export const BOOKING_STATUS_OPTIONS: BusinessOption[] = [
   { label: '全部', value: '' },
   { label: '待确认', value: 'pending_confirm' },
-  { label: '待开始', value: 'pending' },
-  { label: '进行中', value: 'confirmed' },
+  { label: '待开始', value: 'pending_start' },
+  { label: '进行中', value: 'in_progress' },
   { label: '已完成', value: 'completed' },
   { label: '已取消', value: 'cancelled' },
 ];
@@ -52,8 +52,8 @@ export const SEAT_ZONE_OPTIONS: BusinessOption[] = [
 
 export const BOOKING_STATUS_TAGS: Record<string, BusinessTagConfig> = {
   pending_confirm: { label: '待确认', type: 'warning' },
-  pending: { label: '待开始', type: 'default' },
-  confirmed: { label: '进行中', type: 'success' },
+  pending_start: { label: '待开始', type: 'default' },
+  in_progress: { label: '进行中', type: 'success' },
   completed: { label: '已完成', type: 'info' },
   cancelled: { label: '已取消', type: 'error' },
 };

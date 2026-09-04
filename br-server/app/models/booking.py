@@ -1,22 +1,11 @@
 from datetime import datetime
-from enum import Enum
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Text, Time, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-
-
-class PaymentMethod(str, Enum):
-    balance = "balance"
-    wechat = "wechat"
-
-
-class PaymentStatus(str, Enum):
-    pending = "pending"
-    paid = "paid"
-    failed = "failed"
+from app.domain.booking_status import BookingStatus, PaymentMethod, PaymentStatus  # noqa: F401
 
 
 class Booking(Base):
@@ -29,7 +18,7 @@ class Booking(Base):
     date: Mapped[datetime] = mapped_column(Date, nullable=False)
     start_time: Mapped[datetime] = mapped_column(Time, nullable=False)
     end_time: Mapped[datetime] = mapped_column(Time, nullable=False)
-    status: Mapped[str] = mapped_column(String(20), default="confirmed", nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default=BookingStatus.IN_PROGRESS.value, nullable=False)
     original_price: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     discount_amount: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     total_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)

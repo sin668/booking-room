@@ -35,7 +35,7 @@ from app.services.wechat_pay_client import WechatPayClient
 
 router = APIRouter(prefix="/api/v1/bookings", tags=["bookings"])
 
-_BOOKING_STATUS = Literal["confirmed", "cancelled", "completed", "in_progress", "pending_start", "pending_confirm"]
+_BOOKING_STATUS = Literal["cancelled", "completed", "in_progress", "pending_start", "pending_confirm"]
 
 
 def _build_wechat_client():
@@ -63,7 +63,7 @@ async def create_booking(
 ) -> CreateBookingResponse:
     try:
         response = await booking_service.create_booking(db, user_id, data)
-        if data.payment_method != PaymentMethodEnum.wechat:
+        if data.payment_method != PaymentMethodEnum.WECHAT:
             return CreateBookingResponse.model_validate(response.model_dump())
 
         user = await db.get(User, user_id)
@@ -175,7 +175,7 @@ async def pay_pending_booking_route(
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> CreateBookingResponse:
     try:
-        if data.payment_method == PaymentMethodEnum.wechat:
+        if data.payment_method == PaymentMethodEnum.WECHAT:
             booking = await db.get(Booking, booking_id)
             if booking is None:
                 raise booking_service.BookingNotFoundError("预约不存在")

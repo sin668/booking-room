@@ -7,7 +7,6 @@ import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, NamedTuple
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, cast, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -116,7 +115,7 @@ class VipUpgradeResult(NamedTuple):
     vip_coupon: UserCoupon | None
 
 
-CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")
+from app.utils.timezone import CHINA_TIMEZONE
 
 
 def _now_for_coupon_db() -> datetime:

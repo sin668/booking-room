@@ -1,6 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.booking_status import BookingStatus
 from app.models.booking import Booking
 from app.models.city import City
 from app.models.seat import Seat
@@ -201,7 +202,7 @@ async def delete_room(db: AsyncSession, room_id: int) -> None:
     active_count = (
         await db.execute(
             select(func.count()).where(
-                Booking.room_id == room_id, Booking.status == "confirmed"
+                Booking.room_id == room_id, Booking.status == BookingStatus.IN_PROGRESS.value
             )
         )
     ).scalar_one()

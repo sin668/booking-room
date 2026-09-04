@@ -6,6 +6,8 @@ import hmac
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+from app.domain.booking_status import BookingStatus, PaymentStatus
+
 
 TOKEN_TTL_SECONDS = 5 * 60
 COMPACT_TOKEN_VERSION = "v1"
@@ -95,3 +97,18 @@ def ensure_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value.astimezone(UTC)
+
+
+def is_verifiable(*, status, payment_status) -> bool:
+    """核销可核销复合判定（booking_verification_service.py:189-192 等 4 处）。
+
+    实测语义：IN_PROGRESS 恒可核销；PENDING_START 仅当已支付（F22）。
+    """
+    if status == BookingStatus.IN_PROGRESS:
+        return True
+    return status == BookingStatus.PENDING_START and payment_status == PaymentStatus.PAID
+
+
+def resolve_verification_status(*, now, end_at) -> BookingStatus:
+    """窗口内/外状态判定（booking_verification_service.py:264）。now <= end_at 含等号。"""
+    return BookingStatus.IN_PROGRESS if now <= end_at else BookingStatus.COMPLETED

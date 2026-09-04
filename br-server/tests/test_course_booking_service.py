@@ -363,7 +363,7 @@ class TestFixedBookingStartDateAndTimeSlots:
 
         booking = await self._create_fixed_booking(db_session)
 
-        assert booking.status == "pending"
+        assert booking.status == "pending_start"
         assert booking.date == first_date
         assert booking.time_slots == '[{"weekday": 5, "time_slot": "08:00-10:00"}]'
         assert booking.schedule_id == 1
@@ -381,6 +381,6 @@ class TestFixedBookingStartDateAndTimeSlots:
 
         booking = await self._create_fixed_booking(db_session)
 
-        assert booking.status == "confirmed"
+        assert booking.status == "in_progress"
         assert booking.date == today
         assert booking.time_slots == '[{"weekday": 5, "time_slot": "08:00-10:00"}]'

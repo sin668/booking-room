@@ -14,6 +14,8 @@ export interface AdminLoginParams {
 export interface AdminLoginResult {
   access_token: string;
   token_type?: string;
+  // 会话有效期（秒），后端 admin_auth 登录响应返回（§7.2）；前端据此存储令牌，不再硬编码第二份常量
+  expires_in?: number;
 }
 
 export interface AdminPermission {

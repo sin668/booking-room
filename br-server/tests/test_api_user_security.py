@@ -232,7 +232,7 @@ async def test_deactivate_account_blocks_risks(security_client, db_session):
             date=datetime.now().date(),
             start_time=datetime.now().time(),
             end_time=datetime.now().time(),
-            status="confirmed",
+            status="in_progress",
             payment_status="paid",
             total_price=10,
         )

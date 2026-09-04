@@ -1,13 +1,14 @@
 """课程预约服务层。"""
 
+import json
 import uuid
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.booking_status import BookingStatus, resolve_course_status
 from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
@@ -22,8 +23,9 @@ from app.schemas.course_booking import (
     CourseBookingResponse,
 )
 from app.services import coupon_service
-
-CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")
+from app.core.config import settings
+from app.utils.time_slots import build_time_slots_from_date
+from app.utils.timezone import CHINA_TIMEZONE, booking_now
 
 
 class CourseBookingError(ValueError):
@@ -44,11 +46,6 @@ class CouponUnavailableError(CourseBookingError):
 
 class WalletBalanceInsufficientError(CourseBookingError):
     pass
-
-
-def _now_naive() -> datetime:
-    """返回当前 Asia/Shanghai 时区的 naive datetime。"""
-    return datetime.now(CHINA_TIMEZONE).replace(tzinfo=None)
 
 
 class CourseBookingService:
@@ -121,7 +118,6 @@ class CourseBookingService:
 
         # 将老师的可排课时间段附加到 teacher 信息中
         if teacher and teacher.available_time_slots:
-            import json
             try:
                 course_dict["teacher"]["available_time_slots"] = json.loads(teacher.available_time_slots)
             except (json.JSONDecodeError, TypeError):
@@ -428,12 +424,11 @@ class CourseBookingService:
                     break
 
         if data.booking_type == "custom":
-            initial_status = "pending_confirm"
+            initial_status = BookingStatus.PENDING_CONFIRM.value
         else:
-            if first_lesson_date is not None and first_lesson_date > today:
-                initial_status = "pending"
-            else:
-                initial_status = "confirmed"
+            initial_status = resolve_course_status(
+                today=today, first_lesson_date=first_lesson_date
+            ).value
 
         # 7. 创建 Booking 记录
         #    1V1定制：将用户选择的日期和时间段存入 booking 记录，供管理员确认时使用
@@ -458,7 +453,6 @@ class CourseBookingService:
                 if isinstance(raw_time_slots, str):
                     booking_time_slots = raw_time_slots
                 else:
-                    import json
                     booking_time_slots = json.dumps(raw_time_slots, ensure_ascii=False)
         if data.booking_type == "custom":
             from datetime import time as time_type
@@ -477,12 +471,9 @@ class CourseBookingService:
                     pass
             if data.time_slot:
                 # 与课程排课 time_slots 格式一致：[{"weekday": N, "time_slot": "HH:MM-HH:MM"}]
-                # weekday 从用户选择的开课日期推算（isoweekday: 1=周一, 7=周日）
-                import json
-                weekday = booking_date.isoweekday()
-                booking_time_slots = json.dumps(
-                    [{"weekday": weekday, "time_slot": data.time_slot}],
-                    ensure_ascii=False,
+                # weekday 从开课日期推算（isoweekday），构造收敛至 build_time_slots_from_date（§3.1）
+                booking_time_slots = build_time_slots_from_date(
+                    booking_date=booking_date, time_slot=data.time_slot
                 )
 
         # 授课老师取自课程排课记录（course_schedules.teacher_id）
@@ -517,7 +508,7 @@ class CourseBookingService:
             payment_status="paid" if balance_payment else "pending",
             payment_provider=None if balance_payment else data.payment_method,
             payment_check_count=0,
-            next_payment_check_at=None if balance_payment else _now_naive() + timedelta(minutes=1),
+            next_payment_check_at=None if balance_payment else booking_now(settings.BOOKING_TIMEZONE) + timedelta(minutes=1),
             booking_type="course",
             course_id=course["id"],
             lesson_ids=data.lesson_ids,
@@ -629,8 +620,8 @@ class CourseBookingService:
             raise BookingAlreadyCancelledError("该预约已取消")
 
         # 待支付状态直接取消
-        if booking.payment_status == "pending" and booking.status == "pending":
-            now = _now_naive()
+        if booking.payment_status == "pending" and booking.status == BookingStatus.PENDING_START.value:
+            now = booking_now(settings.BOOKING_TIMEZONE)
             booking.status = "cancelled"
             booking.cancelled_at = now
             await coupon_service.restore_user_coupon_for_booking(db, booking)
@@ -642,9 +633,9 @@ class CourseBookingService:
             }
 
         # 已支付状态取消 - 需要退款
-        # 支持 confirmed（进行中）、pending + paid（待开始已支付）、pending_confirm + paid（待确认已支付）
-        if booking.status not in ("confirmed",) and not (
-            booking.status == "pending" and booking.payment_status == "paid"
+        # 支持 in_progress（进行中）、pending_start + paid（待开始已支付）、pending_confirm + paid（待确认已支付）
+        if booking.status not in (BookingStatus.IN_PROGRESS.value,) and not (
+            booking.status == BookingStatus.PENDING_START.value and booking.payment_status == "paid"
         ) and not (
             booking.status == "pending_confirm" and booking.payment_status == "paid"
         ):
@@ -667,7 +658,7 @@ class CourseBookingService:
             Decimal(str(user.balance)) + refund_amount
         ).quantize(Decimal("0.01"))
 
-        now = _now_naive()
+        now = booking_now(settings.BOOKING_TIMEZONE)
         booking.status = "cancelled"
         booking.cancelled_at = now
         booking.refund_amount = refund_amount
@@ -729,7 +720,6 @@ class CourseBookingService:
             
             if time_slot:
                 # 将时间段添加到 time_slots 中（JSON 数组）
-                import json
                 existing_slots = []
                 if schedule.time_slots:
                     try:

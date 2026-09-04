@@ -1,21 +1,12 @@
 from datetime import date, datetime, time
 from decimal import Decimal
-from enum import Enum
 from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-
-class PaymentMethodEnum(str, Enum):
-    balance = "balance"
-    wechat = "wechat"
-
-
-class PaymentStatusEnum(str, Enum):
-    pending = "pending"
-    paid = "paid"
-    failed = "failed"
+from app.domain.booking_status import PaymentMethod as PaymentMethodEnum  # noqa: F401
+from app.domain.booking_status import PaymentStatus as PaymentStatusEnum  # noqa: F401
 
 
 class SeatBrief(BaseModel):
@@ -56,7 +47,7 @@ class BookingCreate(BaseModel):
     start_time: time
     end_time: time
     coupon_id: int | None = None
-    payment_method: PaymentMethodEnum = PaymentMethodEnum.balance
+    payment_method: PaymentMethodEnum = PaymentMethodEnum.BALANCE
 
 
 class BookingResponse(BaseModel):
@@ -125,7 +116,7 @@ class PaymentStatusResponse(BaseModel):
 
 
 class PayPendingBooking(BaseModel):
-    payment_method: PaymentMethodEnum = PaymentMethodEnum.balance
+    payment_method: PaymentMethodEnum = PaymentMethodEnum.BALANCE
 
 
 class BookingListResponse(BaseModel):

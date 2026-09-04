@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime, time
 
+from app.domain.booking_status import BookingStatus
+
 
 @dataclass(frozen=True)
 class BookingCompletionInput:
@@ -37,7 +39,7 @@ def can_cancel_paid_booking(
     start_time: time,
     now: datetime,
 ) -> bool:
-    if status not in ("confirmed", "pending") or payment_status != "paid":
+    if status not in (BookingStatus.IN_PROGRESS, BookingStatus.PENDING_START) or payment_status != "paid":
         return False
     return not has_booking_started(
         booking_date=booking_date,
@@ -48,7 +50,7 @@ def can_cancel_paid_booking(
 
 def should_mark_booking_completed(value: BookingCompletionInput) -> bool:
     return (
-        value.status == "confirmed"
+        value.status == BookingStatus.IN_PROGRESS
         and value.payment_status == "paid"
         and datetime.combine(value.booking_date, value.end_time) <= value.now
     )

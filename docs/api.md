@@ -2712,7 +2712,7 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
   "date": "2026-05-01",
   "start_time": "09:00:00",
   "end_time": "12:00:00",
-  "status": "confirmed",
+  "status": "pending_start",
   "original_price": "18.00",
   "discount_amount": "3.00",
   "total_price": "15.00",
@@ -2754,7 +2754,7 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
   "date": "2026-05-01",
   "start_time": "09:00:00",
   "end_time": "12:00:00",
-  "status": "confirmed",
+  "status": "pending_start",
   "original_price": "18.00",
   "discount_amount": "3.00",
   "total_price": "15.00",
@@ -2823,7 +2823,9 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
 |------|------|--------|------|
 | page | integer | 1 | 页码（从 1 开始） |
 | page_size | integer | 10 | 每页数量（最大 50） |
-| status | string | - | 状态筛选：confirmed / cancelled / completed |
+| status | string | - | 状态筛选：pending_start / in_progress / cancelled / completed |
+
+> **状态词表（BREAKING，已翻转）**：DB `status` 真实值由旧 `pending`/`confirmed` 统一为 `pending_start`/`in_progress`（详见 `docs/booking-rules.md`）。C 端 `?status=` 查询契约**保持稳定**：`?status=pending_start` 为派生筛选（返回 `status IN ('pending_start','pending_confirm') AND payment_status='paid'`）；`?status=in_progress` 为派生筛选（返回 `status='in_progress' AND payment_status='paid'`，课程订单附加 `start_date <= today` 后置过滤，座位订单不做二次过滤）。响应体 `status` 字段返回 DB 真实值，前端不再做展示态派生。
 
 **响应 200：**
 ```json
@@ -2837,7 +2839,7 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
       "date": "2026-05-01",
       "start_time": "09:00:00",
       "end_time": "12:00:00",
-      "status": "confirmed",
+      "status": "pending_start",
       "original_price": "18.00",
       "discount_amount": "0.00",
       "total_price": "18.00",
@@ -3008,7 +3010,7 @@ CSV 列：交易时间、用户ID、用户昵称、手机号、交易类型、�
 
 ### POST /api/v1/bookings/{booking_id}/cancel/
 
-取消预约。仅当前用户自己的、`status="confirmed"`、`payment_status="paid"`、且尚未到预约开始时间的预约可取消。若该预约使用了卡券，取消成功后对应用户卡券恢复为 `available`，并清空 `used_booking_id` 和 `used_at`。余额支付和微信支付预约取消后均退回钱包，不做微信原路退款。
+取消预约。仅当前用户自己的、`status` 为 `pending_start`/`in_progress`、`payment_status="paid"`、且尚未到预约开始时间的预约可取消。若该预约使用了卡券，取消成功后对应用户卡券恢复为 `available`，并清空 `used_booking_id` 和 `used_at`。余额支付和微信支付预约取消后均退回钱包，不做微信原路退款。
 
 **认证：** Bearer Token
 
@@ -3190,7 +3192,7 @@ Response (201):
   "date": "2026-05-01",
   "start_time": "09:00",
   "end_time": "12:00",
-  "status": "confirmed",
+  "status": "pending_start",
   "total_price": "18.00",
   "created_at": "2026-05-01T09:00:00",
   "seat": { "id": 1, "seat_number": "A-01", "zone": "quiet", "position": "靠窗", "price_per_hour": "6.00" },
@@ -3211,7 +3213,7 @@ List current user's bookings. Requires authentication.
 Query Parameters:
 - `page` (int, default 1)
 - `page_size` (int, default 10, max 50)
-- `status` (optional, string): Filter by status — `confirmed`, `cancelled`, `completed`
+- `status` (optional, string): Filter by status — `pending_start`, `in_progress`, `cancelled`, `completed`
 
 Response (200):
 ```json
@@ -3769,7 +3771,7 @@ Get a single booking detail. Requires authentication. Only returns bookings belo
     "start_time": "09:00:00",
     "end_time": "12:00:00",
     "total_price": "45.00",
-    "status": "confirmed",
+    "status": "in_progress",
     "can_verify": true
   }
 }
@@ -3813,7 +3815,7 @@ Get a single booking detail. Requires authentication. Only returns bookings belo
     "start_time": "09:00:00",
     "end_time": "12:00:00",
     "total_price": "45.00",
-    "status": "confirmed",
+    "status": "in_progress",
     "can_verify": true
   }
 }
@@ -3829,11 +3831,11 @@ Get a single booking detail. Requires authentication. Only returns bookings belo
 
 ### POST /api/v1/booking-verifications/{token}/confirm
 
-管理员或工作人员确认到店核销。只有 `confirmed` 预约可更新为 `completed`。
+管理员或工作人员确认到店核销。可核销预约为 `status='in_progress'`，或 `status='pending_start'` 且 `payment_status='paid'`；核销成功后未过 `date + end_time` 置 `in_progress`，已过则置 `completed`。
 
 **认证：** X-Admin-Token
 
-**核销窗口：** 服务端会再次校验当天预约、开始前 30 分钟至 `end_time` 的时间窗口；确认核销使用条件更新，只有 `status=confirmed` 的预约能原子转换为 `completed`。
+**核销窗口：** 服务端会再次校验当天预约、开始前 30 分钟至 `end_time` 的时间窗口；确认核销使用条件更新（原子转换），仅命中上述可核销状态的预约，避免并发重复核销。
 
 **路径参数：**
 

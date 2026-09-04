@@ -38,7 +38,7 @@ class AdminAuthService:
             "sub": str(admin_id),
             "type": "admin_access",
             "scope": "admin",
-            "exp": now + timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES),
+            "exp": now + timedelta(days=config.ADMIN_ACCESS_TOKEN_EXPIRE_DAYS),
         }
         return jwt.encode(payload, config.JWT_SECRET_KEY, algorithm=config.JWT_ALGORITHM)
 

@@ -69,7 +69,7 @@
   function handleCancel(record: BookingItem) {
     const isCoursePendingStart =
       record.booking_type === 'course' &&
-      (record.status === 'pending' || record.status === 'pending_confirm');
+      (record.status === 'pending_start' || record.status === 'pending_confirm');
     const content = isCoursePendingStart
       ? '确定要取消该课程预约订单吗？取消后将全额退款，并删除对应的排课与课时记录。'
       : '确定要取消该订单吗？取消后将全额退款，不扣费。';
@@ -136,7 +136,7 @@
       // 仅课程预约的待开始订单展示取消按钮（自习室订单不提供取消操作）
       if (
         record.booking_type === 'course' &&
-        (record.status === 'pending' || record.status === 'pending_confirm')
+        (record.status === 'pending_start' || record.status === 'pending_confirm')
       ) {
         actions.push({
           label: '取消',

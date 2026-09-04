@@ -3,6 +3,7 @@ from datetime import date, time
 from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.booking_status import BookingStatus
 from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
@@ -259,7 +260,7 @@ async def delete_seat(db: AsyncSession, seat_id: int) -> None:
         raise ValueError(f"Seat {seat_id} not found")
 
     count_result = await db.execute(
-        select(func.count()).where(Booking.seat_id == seat_id, Booking.status == "confirmed")
+        select(func.count()).where(Booking.seat_id == seat_id, Booking.status == BookingStatus.IN_PROGRESS.value)
     )
     if count_result.scalar() > 0:
         raise ValueError("该座位存在活跃预约，无法删除")

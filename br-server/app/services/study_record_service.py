@@ -6,6 +6,7 @@ from decimal import Decimal
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.booking_status import BookingStatus
 from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
@@ -50,8 +51,8 @@ def _calculate_streak_days(studied_dates: list[date]) -> int:
 
 
 def _is_studied(status: str) -> bool:
-    """completed + confirmed(in_progress) both count as studied."""
-    return status in ("completed", "confirmed")
+    """completed + in_progress both count as studied."""
+    return status in (BookingStatus.COMPLETED.value, BookingStatus.IN_PROGRESS.value)
 
 
 def _is_lesson_completed(lesson_date: date) -> bool:
@@ -165,7 +166,7 @@ async def _collect_studied_items(
     # because course booking's Booking.date != lesson dates
     base_conditions = [
         Booking.user_id == str(user_id),
-        Booking.status.in_(["completed", "confirmed"]),
+        Booking.status.in_([BookingStatus.COMPLETED.value, BookingStatus.IN_PROGRESS.value]),
     ]
     base_where = and_(*base_conditions)
 

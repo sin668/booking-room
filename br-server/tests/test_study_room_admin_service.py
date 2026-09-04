@@ -177,7 +177,7 @@ async def test_delete_room_with_active_bookings(db_session, sample_room):
         date=date(2026, 5, 6),
         start_time=time(10, 0),
         end_time=time(12, 0),
-        status="confirmed",
+        status="in_progress",
         total_price=Decimal("20.00"),
     )
     db_session.add(booking)

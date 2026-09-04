@@ -162,7 +162,7 @@ class TestCreateBooking:
         assert data["date"] == "2026-05-01"
         assert data["start_time"] == "09:00:00"
         assert data["end_time"] == "12:00:00"
-        assert data["status"] == "confirmed"
+        assert data["status"] == "in_progress"
         assert data["original_price"] == "45.00"
         assert data["discount_amount"] == "0.00"
         assert data["total_price"] == "45.00"  # 3 hours * 15.00
@@ -390,7 +390,7 @@ class TestCreateBooking:
 
         assert resp.status_code == 201
         data = resp.json()
-        assert data["status"] == "pending"
+        assert data["status"] == "pending_start"
         assert data["payment_method"] == "wechat"
         assert data["payment_status"] == "pending"
         assert data["payment_params"]["package"] == "prepay_id=prepay-123"
@@ -442,9 +442,9 @@ class TestCreateBooking:
             )
 
         assert resp.status_code == 201
-        assert resp.json()["status"] == "pending"
+        assert resp.json()["status"] == "pending_start"
 
-        confirmed_resp = await auth_client.get("/api/v1/bookings", params={"status": "confirmed"})
+        confirmed_resp = await auth_client.get("/api/v1/bookings", params={"status": "in_progress"})
 
         assert confirmed_resp.status_code == 200
         confirmed_data = confirmed_resp.json()
@@ -456,7 +456,7 @@ class TestCreateBooking:
         assert all_resp.status_code == 200
         all_data = all_resp.json()
         assert all_data["total"] == 1
-        assert all_data["items"][0]["status"] == "pending"
+        assert all_data["items"][0]["status"] == "pending_start"
 
     @pytest.mark.asyncio
     async def test_pending_wechat_payment_locks_seat_until_cancelled(
@@ -484,7 +484,7 @@ class TestCreateBooking:
             date=date(2026, 5, 1),
             start_time=time(9, 0),
             end_time=time(12, 0),
-            status="pending",
+            status="pending_start",
             total_price=Decimal("45.00"),
             payment_method="wechat",
             payment_status="pending",
@@ -606,7 +606,7 @@ class TestCreateBooking:
                 date=date(2026, 5, 1),
                 start_time=time(8, 0),
                 end_time=time(10, 0),
-                status="confirmed",
+                status="in_progress",
                 total_price=30.00,
             )
         )
@@ -721,7 +721,7 @@ class TestListBookings:
                     date=date(2026, 5, 1 + i),
                     start_time=time(9, 0),
                     end_time=time(12, 0),
-                    status="confirmed",
+                    status="in_progress",
                     total_price=45.00,
                 )
             )
@@ -749,7 +749,7 @@ class TestListBookings:
                 date=confirmed_date,
                 start_time=time(9, 0),
                 end_time=time(12, 0),
-                status="confirmed",
+                status="in_progress",
                 total_price=45.00,
             )
         )
@@ -767,11 +767,11 @@ class TestListBookings:
         )
         await db_session.flush()
 
-        resp = await auth_client.get("/api/v1/bookings", params={"status": "confirmed"})
+        resp = await auth_client.get("/api/v1/bookings", params={"status": "in_progress"})
         assert resp.status_code == 200
         data = resp.json()
         assert data["total"] == 1
-        assert data["items"][0]["status"] == "confirmed"
+        assert data["items"][0]["status"] == "in_progress"
 
     @pytest.mark.asyncio
     async def test_list_bookings_no_auth(self, client: AsyncClient):
@@ -801,7 +801,7 @@ class TestGetBooking:
             date=date(2026, 5, 1),
             start_time=time(9, 0),
             end_time=time(12, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=45.00,
         )
         db_session.add(booking)
@@ -825,7 +825,7 @@ class TestGetBooking:
             date=date(2026, 5, 1),
             start_time=time(9, 0),
             end_time=time(12, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=45.00,
         )
         db_session.add(booking)
@@ -865,7 +865,7 @@ class TestBookingPaymentEndpoints:
             date=date(2026, 5, 1),
             start_time=time(9, 0),
             end_time=time(12, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("45.00"),
             payment_method="wechat",
             payment_status="paid",
@@ -901,7 +901,7 @@ class TestBookingPaymentEndpoints:
             date=date(2026, 5, 1),
             start_time=time(9, 0),
             end_time=time(12, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("45.00"),
             payment_method="wechat",
             payment_status="pending",
@@ -961,7 +961,7 @@ class TestCancelBooking:
             date=date.today() + timedelta(days=3),
             start_time=time(9, 0),
             end_time=time(12, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("45.00"),
             payment_method="balance",
             payment_status="paid",
@@ -1011,7 +1011,7 @@ class TestCancelBooking:
             date=date.today() + timedelta(days=3),
             start_time=time(9, 0),
             end_time=time(12, 0),
-            status="confirmed",
+            status="in_progress",
             original_price=Decimal("45.00"),
             discount_amount=Decimal("3.00"),
             total_price=Decimal("42.00"),
@@ -1071,7 +1071,7 @@ class TestCancelBooking:
             date=date.today() + timedelta(days=3),
             start_time=time(9, 0),
             end_time=time(12, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("45.00"),
             payment_method="balance",
             payment_status="paid",
@@ -1109,7 +1109,7 @@ class TestCancelBooking:
             date=start_at.date(),
             start_time=start_at.time().replace(microsecond=0),
             end_time=(start_at + timedelta(hours=2)).time().replace(microsecond=0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("45.00"),
             payment_method="wechat",
             payment_status="paid",
@@ -1155,7 +1155,7 @@ class TestCancelBooking:
             date=start_at.date(),
             start_time=start_at.time().replace(microsecond=0),
             end_time=(start_at + timedelta(hours=2)).time().replace(microsecond=0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("100.00"),
             payment_method="balance",
             payment_status="paid",
@@ -1188,7 +1188,7 @@ class TestCancelBooking:
             date=started_at.date(),
             start_time=started_at.time().replace(microsecond=0),
             end_time=(started_at + timedelta(hours=1)).time().replace(microsecond=0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("45.00"),
             payment_method="balance",
             payment_status="paid",
@@ -1228,7 +1228,7 @@ class TestCancelBooking:
             date=date.today() + timedelta(days=3),
             start_time=time(9, 0),
             end_time=time(12, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("45.00"),
             payment_method="wechat",
             payment_status="pending",
@@ -1257,7 +1257,7 @@ class TestCancelBooking:
             date=date.today() + timedelta(days=3),
             start_time=time(9, 0),
             end_time=time(12, 0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("45.00"),
             payment_method="balance",
             payment_status="paid",
@@ -1297,7 +1297,7 @@ class TestCancelBooking:
             date=started_at.date(),
             start_time=started_at.time().replace(microsecond=0),
             end_time=(started_at + timedelta(hours=1)).time().replace(microsecond=0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("45.00"),
             payment_method="balance",
             payment_status="paid",
@@ -1330,7 +1330,7 @@ class TestCancelBooking:
             date=start_at.date(),
             start_time=start_at.time().replace(microsecond=0),
             end_time=(start_at + timedelta(hours=2)).time().replace(microsecond=0),
-            status="confirmed",
+            status="in_progress",
             total_price=Decimal("100.00"),
             payment_method="balance",
             payment_status="paid",

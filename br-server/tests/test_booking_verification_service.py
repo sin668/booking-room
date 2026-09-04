@@ -73,7 +73,7 @@ async def verification_data(db_session: AsyncSession):
         date=today,
         start_time=time(0, 0),
         end_time=time(23, 59),
-        status="confirmed",
+        status="in_progress",
         total_price=45.00,
     )
     cancelled = Booking(
@@ -103,7 +103,7 @@ async def verification_data(db_session: AsyncSession):
         date=today,
         start_time=time(9, 0),
         end_time=time(11, 0),
-        status="pending",
+        status="pending_start",
         payment_status="paid",
         total_price=30.00,
     )
@@ -114,7 +114,7 @@ async def verification_data(db_session: AsyncSession):
         date=today,
         start_time=time(14, 0),
         end_time=time(16, 0),
-        status="pending",
+        status="pending_start",
         payment_status="pending",
         total_price=30.00,
     )
@@ -125,7 +125,7 @@ async def verification_data(db_session: AsyncSession):
         "user": user,
         "room": room,
         "seat": seat,
-        "confirmed": confirmed,
+        "in_progress": confirmed,
         "cancelled": cancelled,
         "completed": completed,
         "pending_paid": pending_paid,
@@ -151,13 +151,13 @@ async def test_issue_verification_token_returns_short_lived_token_and_summary(
     assert response.verify_url.startswith("https://example.com/app/#/pages/verify-booking/index?token=")
     assert "/pages/verify-booking/index?token=" in response.verify_url
     assert 295 <= (response.expires_at - datetime.now(UTC)).total_seconds() <= 300
-    assert response.booking.id == verification_data["confirmed"].id
+    assert response.booking.id == verification_data["in_progress"].id
     assert response.booking.user_id == str(USER_ID)
     assert response.booking.user_nickname == "Study User"
     assert response.booking.user_phone == "13800138000"
     assert response.booking.room_name == "Test Room"
     assert response.booking.seat_number == "A-01"
-    assert response.booking.status == "confirmed"
+    assert response.booking.status == "in_progress"
     assert response.booking.can_verify is True
 
 
@@ -187,7 +187,7 @@ async def test_issue_verification_token_allows_empty_jwt_secret_like_auth_servic
 
 
 def test_verification_window_uses_configured_business_timezone(verification_data):
-    booking = verification_data["confirmed"]
+    booking = verification_data["in_progress"]
     booking.date = date(2026, 5, 10)
     booking.start_time = time(9, 0)
     booking.end_time = time(12, 0)
@@ -206,7 +206,7 @@ async def test_issue_verification_token_without_verifiable_booking_raises(
     db_session: AsyncSession,
     verification_data,
 ):
-    verification_data["confirmed"].status = "cancelled"
+    verification_data["in_progress"].status = "cancelled"
     verification_data["pending_paid"].status = "cancelled"
     await db_session.flush()
 
@@ -218,21 +218,21 @@ async def test_issue_verification_token_for_future_booking_returns_token(
     db_session: AsyncSession,
     verification_data,
 ):
-    verification_data["confirmed"].date = datetime.now(UTC).date() + timedelta(days=1)
+    verification_data["in_progress"].date = datetime.now(UTC).date() + timedelta(days=1)
     await db_session.flush()
 
     response = await issue_verification_token(db_session, USER_ID)
 
     assert response.token
-    assert response.booking.id == verification_data["confirmed"].id
-    assert response.booking.status == "confirmed"
+    assert response.booking.id == verification_data["in_progress"].id
+    assert response.booking.status == "in_progress"
 
 
 async def test_issue_verification_token_selects_nearest_confirmed_booking(
     db_session: AsyncSession,
     verification_data,
 ):
-    expired = verification_data["confirmed"]
+    expired = verification_data["in_progress"]
     room = verification_data["room"]
     seat = verification_data["seat"]
     today = datetime.now(UTC).date()
@@ -245,7 +245,7 @@ async def test_issue_verification_token_selects_nearest_confirmed_booking(
         date=today,
         start_time=time(0, 0),
         end_time=time(23, 59),
-        status="confirmed",
+        status="in_progress",
         total_price=45.00,
     )
     db_session.add(eligible)
@@ -263,7 +263,7 @@ async def test_issue_verification_token_prefers_future_booking_over_stale_past(
 ):
     fixed_now = datetime(2026, 5, 12, 8, 40, tzinfo=_booking_timezone())
     monkeypatch.setattr(booking_verification_service, "_booking_now", lambda: fixed_now)
-    stale = verification_data["confirmed"]
+    stale = verification_data["in_progress"]
     room = verification_data["room"]
     seat = verification_data["seat"]
     stale.date = fixed_now.date()
@@ -276,7 +276,7 @@ async def test_issue_verification_token_prefers_future_booking_over_stale_past(
         date=fixed_now.date(),
         start_time=time(12, 0),
         end_time=time(13, 0),
-        status="confirmed",
+        status="in_progress",
         total_price=45.00,
     )
     db_session.add(future)
@@ -294,7 +294,7 @@ async def test_issue_verification_token_prioritizes_early_arrival_window(
 ):
     fixed_now = datetime(2026, 5, 12, 8, 40, tzinfo=_booking_timezone())
     monkeypatch.setattr(booking_verification_service, "_booking_now", lambda: fixed_now)
-    later = verification_data["confirmed"]
+    later = verification_data["in_progress"]
     room = verification_data["room"]
     seat = verification_data["seat"]
     later.date = fixed_now.date()
@@ -307,7 +307,7 @@ async def test_issue_verification_token_prioritizes_early_arrival_window(
         date=fixed_now.date(),
         start_time=time(9, 0),
         end_time=time(10, 0),
-        status="confirmed",
+        status="in_progress",
         total_price=45.00,
     )
     db_session.add(early_arrival)
@@ -332,7 +332,7 @@ async def test_legacy_jwt_verification_token_still_inspects(
     db_session: AsyncSession,
     verification_data,
 ):
-    booking = verification_data["confirmed"]
+    booking = verification_data["in_progress"]
     token, _ = booking_verification_service._create_legacy_jwt_verification_token(
         booking.id,
         str(USER_ID),
@@ -348,7 +348,7 @@ async def test_wrong_purpose_token_raises_invalid(
     db_session: AsyncSession,
     verification_data,
 ):
-    booking = verification_data["confirmed"]
+    booking = verification_data["in_progress"]
     payload = {
         "booking_id": booking.id,
         "user_id": str(USER_ID),
@@ -367,7 +367,7 @@ async def test_missing_audience_token_raises_invalid(
     db_session: AsyncSession,
     verification_data,
 ):
-    booking = verification_data["confirmed"]
+    booking = verification_data["in_progress"]
     payload = {
         "booking_id": booking.id,
         "user_id": str(USER_ID),
@@ -386,7 +386,7 @@ async def test_wrong_audience_token_raises_invalid(
     db_session: AsyncSession,
     verification_data,
 ):
-    booking = verification_data["confirmed"]
+    booking = verification_data["in_progress"]
     payload = {
         "booking_id": booking.id,
         "user_id": str(USER_ID),
@@ -406,7 +406,7 @@ async def test_expired_token_raises_for_inspect_and_confirm(
     db_session: AsyncSession,
     verification_data,
 ):
-    booking = verification_data["confirmed"]
+    booking = verification_data["in_progress"]
     token, _ = _create_verification_token(
         booking.id,
         str(USER_ID),
@@ -440,14 +440,14 @@ async def test_confirm_verification_for_future_booking_returns_confirmed(
 
     confirmed = await confirm_verification(db_session, token)
 
-    assert confirmed.booking.status == "confirmed"
+    assert confirmed.booking.status == "in_progress"
 
 
 async def test_confirm_verification_after_end_time_succeeds_with_valid_token(
     db_session: AsyncSession,
     verification_data,
 ):
-    booking = verification_data["confirmed"]
+    booking = verification_data["in_progress"]
     token, _ = _create_verification_token(booking.id, str(USER_ID), datetime.now(UTC))
     booking.start_time = time(0, 0)
     booking.end_time = time(0, 1)
@@ -464,7 +464,7 @@ async def test_confirm_verification_marks_booking_completed(
     monkeypatch,
 ):
     """Confirmed booking with end_time in the past should become completed."""
-    booking = verification_data["confirmed"]
+    booking = verification_data["in_progress"]
     booking.start_time = time(0, 0)
     booking.end_time = time(0, 1)
     # Move pending_paid out of the way
@@ -474,10 +474,10 @@ async def test_confirm_verification_marks_booking_completed(
 
     confirmed = await confirm_verification(db_session, response.token)
 
-    assert confirmed.booking.id == verification_data["confirmed"].id
+    assert confirmed.booking.id == verification_data["in_progress"].id
     assert confirmed.booking.status == "completed"
     assert confirmed.booking.can_verify is False
-    assert verification_data["confirmed"].status == "completed"
+    assert verification_data["in_progress"].status == "completed"
 
 
 async def test_completed_and_cancelled_bookings_cannot_be_confirmed(
@@ -512,7 +512,7 @@ async def test_confirm_verification_pending_paid_becomes_confirmed_when_before_e
 
     result = await confirm_verification(db_session, token)
 
-    assert result.booking.status == "confirmed"
+    assert result.booking.status == "in_progress"
     # confirmed status → can_verify is True by design
     assert result.booking.can_verify is True
 
@@ -542,7 +542,7 @@ async def test_confirm_verification_confirmed_becomes_completed_when_after_end_t
     monkeypatch,
 ):
     """confirmed booking with now > end_time should become completed."""
-    booking = verification_data["confirmed"]
+    booking = verification_data["in_progress"]
     today = datetime.now(UTC).date()
     booking.date = today
     booking.start_time = time(9, 0)
@@ -577,14 +577,14 @@ async def test_issue_verification_token_includes_pending_paid_booking(
 ):
     """pending+paid booking should be verifiable and can_verify should be True."""
     # Set confirmed booking to past so it's not selected; pending_paid is today
-    verification_data["confirmed"].date = date(2026, 1, 1)
-    verification_data["confirmed"].status = "completed"
+    verification_data["in_progress"].date = date(2026, 1, 1)
+    verification_data["in_progress"].status = "completed"
     await db_session.flush()
 
     response = await issue_verification_token(db_session, USER_ID)
 
     assert response.booking.id == verification_data["pending_paid"].id
-    assert response.booking.status == "pending"
+    assert response.booking.status == "pending_start"
     assert response.booking.can_verify is True
 
 
@@ -594,9 +594,9 @@ async def test_confirm_verification_already_confirmed_with_future_end_time_raise
     monkeypatch,
 ):
     """Idempotent protection: confirmed booking with now <= end_time must raise BookingAlreadyVerifiedError."""
-    booking = verification_data["confirmed"]
+    booking = verification_data["in_progress"]
     # Ensure booking is confirmed+paid with end_time in the future
-    booking.status = "confirmed"
+    booking.status = "in_progress"
     booking.payment_status = "paid"
     today = datetime.now(UTC).date()
     booking.date = today
@@ -621,7 +621,7 @@ async def test_load_verifiable_bookings_includes_pending_paid(
         db_session, USER_ID
     )
     booking_ids = {row[0].id for row in rows}
-    assert verification_data["confirmed"].id in booking_ids
+    assert verification_data["in_progress"].id in booking_ids
     assert verification_data["pending_paid"].id in booking_ids
     assert verification_data["pending_unpaid"].id not in booking_ids
     assert verification_data["cancelled"].id not in booking_ids

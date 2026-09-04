@@ -60,7 +60,7 @@ async def seed_verifiable_booking(db_session: AsyncSession):
         date=today,
         start_time=time(0, 0),
         end_time=time(23, 59),
-        status="confirmed",
+        status="in_progress",
         total_price=45.00,
     )
     db_session.add(booking)
@@ -120,7 +120,7 @@ async def test_user_can_list_verifiable_bookings(
         date=datetime.now(UTC).date(),
         start_time=time(0, 0),
         end_time=time(23, 59),
-        status="confirmed",
+        status="in_progress",
         total_price=45.00,
     )
     db_session.add(second_booking)
@@ -161,7 +161,7 @@ async def test_user_can_issue_verification_token_for_selected_booking(
         date=datetime.now(UTC).date(),
         start_time=time(0, 0),
         end_time=time(23, 59),
-        status="confirmed",
+        status="in_progress",
         total_price=90.00,
     )
     db_session.add(selected_booking)
@@ -200,7 +200,7 @@ async def test_admin_can_inspect_verification_token(
     assert response.status_code == 200
     data = response.json()
     assert data["booking"]["id"] == seed_verifiable_booking["booking"].id
-    assert data["booking"]["status"] == "confirmed"
+    assert data["booking"]["status"] == "in_progress"
     assert data["booking"]["can_verify"] is True
 
 
@@ -231,7 +231,7 @@ async def test_admin_can_confirm_future_booking_returns_confirmed(
 ):
     """Future pending+paid booking (now <= end_time) should become confirmed, not completed."""
     booking = seed_verifiable_booking["booking"]
-    booking.status = "pending"
+    booking.status = "pending_start"
     booking.payment_status = "paid"
     # end_time=23:59 ensures real now <= end_time so status stays confirmed
     booking.start_time = time(0, 0)
@@ -242,7 +242,7 @@ async def test_admin_can_confirm_future_booking_returns_confirmed(
     response = await auth_client.post(f"/api/v1/booking-verifications/{token}/confirm")
 
     assert response.status_code == 200
-    assert response.json()["booking"]["status"] == "confirmed"
+    assert response.json()["booking"]["status"] == "in_progress"
 
 
 async def test_real_admin_header_can_inspect_and_confirm(
@@ -342,7 +342,7 @@ async def test_admin_can_confirm_pending_paid_booking(
     from app.services import booking_verification_service
 
     booking = seed_verifiable_booking["booking"]
-    booking.status = "pending"
+    booking.status = "pending_start"
     booking.payment_status = "paid"
     booking.start_time = time(9, 0)
     booking.end_time = time(23, 59)  # end_time far in the future today
@@ -361,7 +361,7 @@ async def test_admin_can_confirm_pending_paid_booking(
     response = await auth_client.post(f"/api/v1/booking-verifications/{token}/confirm")
 
     assert response.status_code == 200
-    assert response.json()["booking"]["status"] == "confirmed"
+    assert response.json()["booking"]["status"] == "in_progress"
 
 
 async def test_confirm_already_confirmed_booking_returns_409(
@@ -372,7 +372,7 @@ async def test_confirm_already_confirmed_booking_returns_409(
     """Idempotent protection: confirming a confirmed booking with now <= end_time returns 409."""
     booking = seed_verifiable_booking["booking"]
     # confirmed+paid with end_time=23:59 ensures real now <= end_time
-    booking.status = "confirmed"
+    booking.status = "in_progress"
     booking.payment_status = "paid"
     booking.start_time = time(0, 0)
     booking.end_time = time(23, 59)
@@ -391,7 +391,7 @@ async def test_pending_unpaid_booking_cannot_be_verified(
 ):
     """pending (unpaid) booking should return 400 when trying to verify."""
     booking = seed_verifiable_booking["booking"]
-    booking.status = "pending"
+    booking.status = "pending_start"
     booking.payment_status = "pending"
     await db_session.flush()
 

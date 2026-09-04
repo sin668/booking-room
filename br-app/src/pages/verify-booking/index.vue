@@ -149,8 +149,8 @@ const priceText = computed(() => {
 })
 const statusText = computed(() => {
   const status = booking.value?.status
-  if (status === 'pending') return '待核销'
-  if (status === 'confirmed') {
+  if (status === 'pending_start') return '待核销'
+  if (status === 'in_progress') {
     // 核销后：根据时间判断进行中还是已核销
     if (booking.value?.date && booking.value?.end_time) {
       const now = new Date()
@@ -514,7 +514,7 @@ onLoad((options) => {
   background: $primary-light;
 }
 
-.status-pill.confirmed {
+.status-pill.in_progress {
   background: $primary-light;
 }
 

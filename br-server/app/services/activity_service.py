@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from html import escape
 from html.parser import HTMLParser
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +21,7 @@ from app.schemas.activity import (
 )
 
 
-CHINA_TIMEZONE = ZoneInfo("Asia/Shanghai")
+from app.utils.timezone import CHINA_TIMEZONE
 
 
 class ActivityCouponError(ValueError):

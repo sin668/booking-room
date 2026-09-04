@@ -151,3 +151,40 @@ async def test_course_custom_booking_start_date_follows_first_lesson_not_booking
     await _process_course_booking(db_session, booking, date(2026, 9, 5), _empty_stats())
     assert booking.status == "in_progress"
     assert booking.highlighted_lesson_id == 122
+
+
+@pytest.mark.asyncio
+async def test_course_highlight_next_lesson_when_today_between_lessons(db_session: AsyncSession):
+    """今天落在两节课之间时，高亮下一节即将上的课时（而非最近已上的课时）。
+
+    排课36课时：122→9/5、123→9/12。订单已 in_progress，today=9/8 落在两节课之间：
+    - 旧语义（最后一个 lesson_date <= today）会高亮 9/5 的 122（已上过的课）
+    - 新语义（第一个 lesson_date >= today）应高亮 9/12 的 123（下一节即将上的课）
+    复刻订单 74：今天 9/4 落在 9/2 与 9/8 之间，应高亮下一节 9/8。
+    """
+    _make_base_data(db_session)
+    booking = _make_custom_booking(db_session, schedule_id=36)
+    booking.status = "in_progress"
+    await db_session.flush()
+
+    stats = _empty_stats()
+    await _process_course_booking(db_session, booking, date(2026, 9, 8), stats)
+
+    assert booking.status == "in_progress"
+    assert booking.highlighted_lesson_id == 123
+    assert stats["course_highlight_updated"] == 1
+
+
+@pytest.mark.asyncio
+async def test_course_highlight_same_day_lesson_when_today_is_lesson_date(db_session: AsyncSession):
+    """今天正好是某课时日期时，高亮当天课时（第一个 lesson_date >= today，含当天）。"""
+    _make_base_data(db_session)
+    booking = _make_custom_booking(db_session, schedule_id=36)
+    booking.status = "in_progress"
+    await db_session.flush()
+
+    stats = _empty_stats()
+    await _process_course_booking(db_session, booking, date(2026, 9, 5), stats)
+
+    assert booking.status == "in_progress"
+    assert booking.highlighted_lesson_id == 122

@@ -181,29 +181,29 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
         elif settings.SCHEDULER_LOG_ENABLED:
             logger.info(f"Course booking {booking.id}: pending → confirmed, highlighting lesson")
     if transition.new_status == BookingStatus.IN_PROGRESS or transition.highlight_only:
-        # 高亮当前课时（最后一个 lesson_date <= today 的课时）
+        # 高亮下一节即将上的课时（第一个 lesson_date >= today 的课时）
         _update_highlight(booking, lessons, today, stats)
 
 
 def _update_highlight(booking: Booking, lessons, today: date, stats: dict):
     """更新课时高亮
 
-    找到当前应该高亮的课时：当前日期所在课时，
-    即最后一个 lesson_date <= today 的课时（当前日期落在该课时的时间范围内）。
-    若所有课时都未开始（理论上不会进入本函数），高亮第一课时。
+    高亮下一节即将上的课时：第一个 lesson_date >= today 的课时（含当天正在上的课）。
+    课程间隔期（今天不落在任何课时当天）展示下次上课时间，而非最近已上的课时。
+    若全部课时都已过（today > 最后一课时日期；进行中订单理论上不会发生，
+    因为此时会先转 completed），回退高亮最后一节课时。
 
     仅负责高亮推进与 course_highlight_updated 计数；course_started 计数已由
     _process_course_booking 在 PENDING_START → IN_PROGRESS 转移成功时显式自增（§5.2 Q6 修正）。
     """
     target_lesson = None
     for lesson in lessons:
-        if lesson.lesson_date <= today:
+        if lesson.lesson_date >= today:
             target_lesson = lesson
-        else:
             break
 
     if target_lesson is None:
-        target_lesson = lessons[0]
+        target_lesson = lessons[-1]
 
     if booking.highlighted_lesson_id != target_lesson.lesson_id:
         booking.highlighted_lesson_id = target_lesson.lesson_id

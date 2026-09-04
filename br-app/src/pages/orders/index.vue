@@ -344,19 +344,17 @@ export default {
     },
 
     getNearestLesson(order) {
-      // 回退高亮：当天所在课时，即最后一个 lesson_date <= today 的课时；无则为 null（不高亮）
+      // 回退高亮：下一节即将上的课时，即第一个 lesson_date >= today 的课时（含当天）；
+      // 若全部课时都已过则回退最后一节；无课时则 null（不高亮）
       const schedules = order?.lesson_schedules
       if (!schedules || !schedules.length) return null
       const todayStr = this.getTodayStr()
-      let target = null
       for (const s of schedules) {
-        if (s.lesson_date && s.lesson_date <= todayStr) {
-          target = s
-        } else {
-          break
+        if (s.lesson_date && s.lesson_date >= todayStr) {
+          return s
         }
       }
-      return target
+      return schedules[schedules.length - 1]
     },
 
     formatLessonStartTime(timeSlot) {

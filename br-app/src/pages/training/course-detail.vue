@@ -190,39 +190,34 @@
             <view class="section-bar" />
             <text class="section-title">学员评价</text>
           </view>
-          <view class="review-summary">
-            <text class="star-icon sm">★</text>
-            <text class="review-avg">{{ reviewAverageText }}</text>
-            <text class="review-count">({{ reviewSummary.count }}条)</text>
-            <text class="review-all" @tap="onViewAllReviews">查看全部 ›</text>
-          </view>
+          <text class="section-sub">{{ reviewSummary.count }}条</text>
         </view>
-        <view
-          v-for="(review, idx) in reviews"
-          :key="idx"
-          :class="['review-item', idx < reviews.length - 1 ? 'bordered' : '']"
-        >
-          <view class="review-top">
-            <image v-if="review.avatar" class="review-avatar-ph" :src="review.avatar" mode="aspectFill" />
-            <view v-else class="review-avatar-ph review-avatar-fallback">
+        <view v-for="(review, idx) in reviews" :key="idx" class="review-item">
+          <view v-if="idx > 0" class="review-divider" />
+          <view class="review-header">
+            <image v-if="review.avatar" class="review-avatar" :src="review.avatar" mode="aspectFill" />
+            <view v-else class="review-avatar review-avatar-empty">
               <text class="review-avatar-char">{{ review.initial }}</text>
             </view>
-            <view class="review-info">
+            <view class="review-meta">
               <text class="review-name">{{ review.name }}</text>
               <view class="review-stars">
                 <text
                   v-for="(starChar, starIdx) in review.stars"
                   :key="starIdx"
-                  class="star-icon xs"
-                  :class="{ 'star-icon-off': starChar === '☆' }"
+                  class="review-star"
+                  :class="{ 'review-star-off': starChar === '☆' }"
                 >{{ starChar }}</text>
               </view>
             </view>
-            <text class="review-date">{{ review.date }}</text>
+            <text class="review-time">{{ review.date }}</text>
           </view>
           <text class="review-content">{{ review.content }}</text>
         </view>
-        <view v-if="!reviewsLoading && !reviews.length" class="review-empty">
+        <view v-if="reviews.length" class="review-more-btn" @tap="onViewAllReviews">
+          <text class="review-more-text">查看全部评价</text>
+        </view>
+        <view v-else-if="!reviewsLoading" class="review-empty">
           <text class="review-empty-text">暂无评价</text>
         </view>
       </view>
@@ -640,10 +635,6 @@ export default {
   font-size: 22rpx;
 }
 
-.star-icon.xs {
-  font-size: 18rpx;
-}
-
 .stats-value {
   font-size: 28rpx;
   font-weight: 600;
@@ -1018,107 +1009,98 @@ export default {
   border: 1rpx solid $border-soft;
 }
 
-.review-summary {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-}
-
-.review-avg {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-.review-count {
-  font-size: 22rpx;
-  color: $text-muted;
-}
-
 .review-item {
-  padding: 20rpx 0;
+  padding-bottom: 20rpx;
 }
 
-.review-item.bordered {
-  border-bottom: 1rpx solid rgba(99, 110, 114, 0.06);
-  margin-bottom: 4rpx;
+.review-divider {
+  height: 2rpx;
+  background: rgba(0, 0, 0, 0.03);
+  margin-bottom: 20rpx;
 }
 
-.review-top {
+.review-header {
   display: flex;
   align-items: center;
-  gap: 14rpx;
-  margin-bottom: 12rpx;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
 }
 
-.review-avatar-ph {
-  width: 56rpx;
-  height: 56rpx;
+.review-avatar {
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 50%;
-  background: $surface-soft;
   flex-shrink: 0;
 }
 
-.review-avatar-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.review-avatar-char {
-  font-size: 24rpx;
-  color: $text-secondary;
-}
-
-.star-icon-off {
-  color: #dfe6e9;
-}
-
-.review-all {
-  margin-left: 12rpx;
-  font-size: 22rpx;
-  color: $primary;
-}
-
-.review-empty {
-  padding: 32rpx 0 12rpx;
-  text-align: center;
-}
-
-.review-empty-text {
-  font-size: 24rpx;
-  color: $text-muted;
-}
-
-.review-info {
+.review-meta {
   flex: 1;
-  min-width: 0;
 }
 
 .review-name {
   font-size: 26rpx;
   font-weight: 500;
   color: $text-primary;
-  display: block;
 }
 
 .review-stars {
   display: flex;
   gap: 2rpx;
-  margin-top: 4rpx;
 }
 
-.review-date {
-  font-size: 22rpx;
+.review-star {
+  font-size: 18rpx;
+  color: #FFD700;
+}
+
+.review-time {
+  font-size: 20rpx;
   color: $text-muted;
-  flex-shrink: 0;
 }
 
 .review-content {
-  font-size: 26rpx;
-  line-height: 1.6;
+  font-size: 24rpx;
   color: $text-secondary;
-  display: block;
+  line-height: 1.6;
+}
+
+.review-more-btn {
+  margin-top: 20rpx;
+  padding: 16rpx 0;
+  border: 2rpx solid $border-color;
+  border-radius: 20rpx;
+  text-align: center;
+}
+
+.review-more-text {
+  font-size: 26rpx;
+  color: $text-secondary;
+}
+
+.review-star-off {
+  color: #dfe6e9;
+}
+
+.review-avatar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $primary-soft;
+}
+
+.review-avatar-char {
+  font-size: 28rpx;
+  color: $primary;
+}
+
+.review-empty {
+  padding: 32rpx 0;
+  text-align: center;
+}
+
+.review-empty-text {
+  font-size: 24rpx;
+  color: $text-muted;
 }
 
 /* === 相关课程 === */

@@ -12,7 +12,7 @@ import uuid
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func, select
+from sqlalchemy import String, and_, cast, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -73,9 +73,12 @@ def _base_conditions(
     if band:
         conditions.append(Review.rating.in_(band))
     if has_images:
-        # create_review 把空图片列表写成 NULL，故 IS NOT NULL 即等价于"有图"，
-        # 无需依赖各方言的 JSON 数组长度函数
+        # images 是 JSON 列且 none_as_null=False：create_review 写 Python None 会被
+        # 序列化成 JSON 字面量 'null'（而非 SQL NULL），空列表则为 '[]'，两者都属
+        # “无图”。用文本比较一并排除，避免依赖各方言的 JSON 数组长度函数
+        # （PostgreSQL 对 json 'null' 求数组长度会直接报错），兼容 SQLite 与 PG。
         conditions.append(Review.images.is_not(None))
+        conditions.append(cast(Review.images, String).not_in(("null", "[]")))
     return conditions
 
 

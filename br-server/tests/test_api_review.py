@@ -449,6 +449,34 @@ async def test_has_images_filter(auth_client: AsyncClient, seed_many_reviews: di
 
 
 @pytest.mark.asyncio
+async def test_has_images_filter_excludes_json_null(
+    auth_client: AsyncClient, db_session: AsyncSession, seed: dict
+) -> None:
+    """回归：create_review 把空图片写成 JSON 字面量 null（非 SQL NULL）。
+
+    images 是 JSON 列且 none_as_null=False，显式传 images=None 会被序列化成
+    JSON 'null'，此时 `images IS NOT NULL` 为真，无图评价会漏进「仅看有图」。
+    过滤须同时排除 SQL NULL、JSON null 与空数组 []。
+    """
+    course_id = seed["course"].id
+    # 无图评价：显式 images=None → JSON 列序列化为字面量 null（复现线上数据）
+    await _add_review(db_session, seed, booking_id=seed["my_booking"].id, images=None)
+    # 有图评价
+    await _add_review(
+        db_session,
+        seed,
+        booking_id=seed["other_booking"].id,
+        user_id=OTHER_USER_ID,
+        images=["https://example.com/a.jpg"],
+    )
+
+    response = await auth_client.get(f"/api/v1/reviews?course_id={course_id}&has_images=true")
+
+    assert response.json()["total"] == 1
+    assert response.json()["items"][0]["images"] == ["https://example.com/a.jpg"]
+
+
+@pytest.mark.asyncio
 async def test_sort_by_score(auth_client: AsyncClient, seed_many_reviews: dict) -> None:
     course_id = seed_many_reviews["course"].id
 

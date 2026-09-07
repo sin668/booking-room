@@ -903,8 +903,8 @@ export default {
 }
 
 .review-avatar {
-  width: 56rpx;
-  height: 56rpx;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -965,7 +965,7 @@ export default {
 }
 
 .review-avatar-char {
-  font-size: 24rpx;
+  font-size: 28rpx;
   color: $primary;
 }
 

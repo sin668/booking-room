@@ -7,6 +7,7 @@ from app.models.booking import Booking
 from app.models.city import City
 from app.models.coupon import Coupon, UserCoupon
 from app.models.notification import Notification, NotificationPreference, NotificationType
+from app.models.review import Review
 from app.models.room_follow import RoomFollow
 from app.models.seat import Seat
 from app.models.course import Course
@@ -36,6 +37,7 @@ __all__ = [
     "Notification",
     "NotificationPreference",
     "NotificationType",
+    "Review",
     "RoomFollow",
     "Seat",
     "StudyRoom",

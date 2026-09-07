@@ -16,6 +16,9 @@ class Teacher(Base):
     rating: Mapped[float] = mapped_column(Numeric(3, 1), default=0.0, nullable=False)
     bio: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     student_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    review_count: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False, comment="已通过审核的评价数，与 student_count（学员数）语义不同"
+    )
     specialty: Mapped[str | None] = mapped_column(
         String(50), nullable=True, comment="专业方向，如考研政治"
     )

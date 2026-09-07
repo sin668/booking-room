@@ -15,6 +15,7 @@ class Course(Base):
     cover_image: Mapped[str | None] = mapped_column(String(512), nullable=True)
     category: Mapped[str] = mapped_column(String(30), nullable=False)
     rating: Mapped[float] = mapped_column(Numeric(3, 1), default=0.0, nullable=False)
+    review_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     enrollment_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     tags: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)

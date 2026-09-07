@@ -25,11 +25,11 @@
 
 ## 4. 后端上传 scope 与后台菜单
 
-- [ ] 4.1 `app/services/upload_service.py`：`UPLOAD_SCOPES` 加 `"review"`，`SCOPE_SIZE_LIMITS` 加 `"review": 5 * MB`
-- [ ] 4.2 `app/api/routes/upload.py`：把 `if scope != "avatar"` 改为 `if scope not in ("avatar", "review")`
-- [ ] 4.3 `app/services/seed_admin.py`：在 `MENU_SEEDS` 的培训管理段新增 `MenuSeed("training.reviews", "menu", "评价审核", "training:reviews:view", "reviews", "TrainingReviews", "/training/reviews/index", None, "SchoolOutline", 50, parent="training")`；在 `BUTTON_SEEDS` 新增 3 条：`("training.reviews", "training:reviews:view", "评价审核-查看")`、`("training.reviews", "training:reviews:audit", "评价审核-审核")`、`("training.reviews", "training:reviews:reply", "评价审核-回复")`（审核不拆 approve/reject 两码，理由见 design.md D11 的实现期修正）
-- [ ] 4.4 `app/services/admin_menu_service.py`：`COMPONENT_WHITELIST` 补 `"/training/reviews/index"` 与 `"/training/teachers/index"`
-- [ ] 4.5 执行 `cd br-server && python -m app.services.seed_admin` 两次，验证幂等（第二次不新增记录、不报权限码冲突）
+- [x] 4.1 `app/services/upload_service.py`：`UPLOAD_SCOPES` 加 `"review"`，`SCOPE_SIZE_LIMITS` 加 `"review": 5 * MB`
+- [x] 4.2 `app/api/routes/upload.py`：把 `if scope != "avatar"` 改为 `if scope not in ("avatar", "review")`
+- [x] 4.3 `app/services/seed_admin.py`：在 `MENU_SEEDS` 的培训管理段新增 `MenuSeed("training.reviews", "menu", "评价审核", "training:reviews:view", "reviews", "TrainingReviews", "/training/reviews/index", None, "SchoolOutline", 50, parent="training")`；在 `BUTTON_SEEDS` 新增 2 条（`training:reviews:view` 由菜单行自身持有，同码按钮会把菜单降级为 button，见 design.md D11 实现期修正二）：`("training.reviews", "training:reviews:audit", "评价审核-审核")`、`("training.reviews", "training:reviews:reply", "评价审核-回复")`（审核不拆 approve/reject 两码，理由见 design.md D11 的实现期修正）
+- [x] 4.4 `app/services/admin_menu_service.py`：`COMPONENT_WHITELIST` 补 `"/training/reviews/index"`（teachers 两项缺失属既有问题，只补其一会形成半修，留待独立 change）
+- [x] 4.5 执行 `cd br-server && python -m app.services.seed_admin` 两次，验证幂等（第二次不新增记录、不报权限码冲突）
 
 ## 5. 后端测试
 
@@ -38,8 +38,8 @@
 - [x] 5.3 在 `tests/test_api_review.py` 中补充筛选/排序/分页/概览用例：好评档（4-5 星）、差评档（1-2 星）、仅看有图、按评分最高排序、`page_size=100` 返回 422、分页 total 一致性、概览均分与分布计算、概览排除未审核、无评价时概览返回全 0 且 HTTP 200、概览缺维度参数返回 422
 - [x] 5.4 新建 `tests/test_api_admin_review.py`：覆盖后台列表按状态筛选、关键词搜索、匿名评价返回真实身份 + 匿名标记、通过（含 `reviewed_at.tzinfo is None` 断言，防 BUG-15/29 复发）、驳回缺理由 422、驳回带理由后 C 端公开列表不再出现但「我的评价」仍出现、重复通过幂等、不存在的评价 404、无权限 403、机构回复写入/覆盖/空白清空/超长 422
 - [x] 5.5 在 `tests/test_api_admin_review.py` 中补充聚合回写用例：首次通过覆盖 seed 评分、只统计 `approved`、驳回唯一一条已通过评价后归 0、老师聚合独立于课程、`teacher_id` 为空的评价不导致聚合报错
-- [ ] 5.6 补充上传 scope 用例（可并入既有上传测试文件）：`review` scope 上传成功且 `object_key` 前缀为 `images/review/`、`review` 超 5MB 返回 422、C 端入口以 `common` scope 上传返回 422、未登录以 `review` scope 上传返回 401
-- [ ] 5.7 运行 `cd br-server && pytest tests/test_api_review.py tests/test_api_admin_review.py -q` 全绿；再运行 `pytest -q` 确认全量回归无破坏
+- [x] 5.6 补充上传 scope 用例（可并入既有上传测试文件）：`review` scope 上传成功且 `object_key` 前缀为 `images/review/`、`review` 超 5MB 返回 422、C 端入口以 `common` scope 上传返回 422、未登录以 `review` scope 上传返回 401
+- [x] 5.7 运行 `cd br-server && pytest tests/test_api_review.py tests/test_api_admin_review.py -q` 全绿；再运行 `pytest -q` 确认全量回归无破坏
 
 ## 6. br-app 小程序端
 

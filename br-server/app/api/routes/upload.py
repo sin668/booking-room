@@ -40,6 +40,6 @@ async def upload_user_image(
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> UploadResponse:
     _ = user_id
-    if scope != "avatar":
+    if scope not in ("avatar", "review"):
         raise HTTPException(status_code=422, detail="上传场景不支持")
     return await _upload_image(file, scope)

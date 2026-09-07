@@ -112,11 +112,13 @@ class ReviewStatus(str, Enum):
 
 `router/icons.ts` 的 `constantRouterIcon` 是**字符串查表**，查不到返回 `null` → 图标空白（BUG-19 问题 1）。`StarOutlined` 在 `@vicons/antd` 存在但未注册。两个选择：注册新图标（改 2 处）或沿用已注册的 `SchoolOutline`。选后者——菜单挂在「培训管理」下，与父目录同图标视觉上合理，且零风险。
 
-菜单种子照抄 `MenuSeed("training.teachers", ...)` 那一行，`parent="training"`，`path="reviews"`（**相对路径**，父目录 `training` 存的是基路径 `/training`，生成器拼出 `/training/reviews`）。同时把 `/training/reviews/index` 加进 `admin_menu_service.py` 的 `COMPONENT_WHITELIST`（注意：`/training/teachers/index` 现在**不在**白名单里，因为 seed 直接写库绕过了校验；但白名单缺失会导致后续在菜单管理界面编辑该菜单时报 422，所以这次一并补上）。
+菜单种子照抄 `MenuSeed("training.teachers", ...)` 那一行，`parent="training"`，`path="reviews"`（**相对路径**，父目录 `training` 存的是基路径 `/training`，生成器拼出 `/training/reviews`）。同时把 `/training/reviews/index` 加进 `admin_menu_service.py` 的 `COMPONENT_WHITELIST`（注意：`/training/teachers/index` 与 `/training/teachers/edit/index` 现在都**不在**白名单里，因为 seed 直接写库绕过了校验；该缺失会导致后续在菜单管理界面编辑这两个菜单时报 422，但属既有问题，且只补其一会形成半修，故留待独立 change。本次只补 `/training/reviews/index`。）
 
-按钮权限 3 条：`training:reviews:view` / `:audit` / `:reply`。**不做 `:delete`**——驳回已能下架违规内容。
+按钮权限 2 条：`:audit` / `:reply`（`view` 由菜单行自身持有，见下方修正）。**不做 `:delete`**——驳回已能下架违规内容。
 
 > 实现期修正：原计划把审核拆成 `:approve` 与 `:reject` 两个权限码，但审核接口只有一个 `PATCH /{id}/status`（body 决定目标状态）。若该端点只校验 `:approve`，仅持有 `:reject` 的管理员将无法驳回，形成权限漏洞；若在端点内按 body 分流校验，则等于手写一套 `require_admin_permission`。通过/驳回本就是同一种「审核」能力，拆开属推测性粒度（YAGNI），故合并为单一 `:audit`，与 spec「MUST 由后端强制执行审核权限」的单数表述一致。将来确需区分时再拆码并分裂端点。
+
+> 实现期修正二：原计划再加一条 `training:reviews:view` 按钮权限，实测会造成真实缺陷。`_get_or_create_menu` 按 `permission_code` 查找已有行，而 `_seed_menus` 已先创建了持有同码的菜单行；随后 `_seed_buttons` 会把该行 `type` 改为 `button` 并清空 `path`/`name`/`component`/`icon`，且 `parent_id` 指向它自己——侧边栏「评价审核」菜单会直接消失。`permissions_for` 本来就收集**所有** type 的 `permission_code`，菜单行已足以授予 `view`，按钮属冗余。既有惯例也印证了这一点：`training.courses` 菜单持有 `training:courses:view`，其 BUTTON_SEEDS 只有 create/update/delete/status/schedule。故只加 `:audit` 与 `:reply` 两条。
 
 ### D12：上传 scope 的三处最小改动
 

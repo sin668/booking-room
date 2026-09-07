@@ -191,3 +191,72 @@ class TestUploadAPI:
 
         assert resp.status_code == 422
         assert resp.json()["detail"] == "上传场景不支持"
+
+    @pytest.mark.asyncio
+    async def test_app_upload_review_scope(
+        self,
+        client: AsyncClient,
+        tmp_path,
+        monkeypatch,
+    ):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(settings, "UPLOAD_STORAGE_DRIVER", "local")
+        app.dependency_overrides[get_current_user_id] = lambda: uuid.UUID(int=2)
+
+        resp = await client.post(
+            "/api/v1/upload/image",
+            files={"file": ("review.png", io.BytesIO(PNG_BYTES), "image/png")},
+            data={"scope": "review"},
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["object_key"].startswith("images/review/")
+        assert data["url"].startswith("/uploads/images/review/")
+
+    @pytest.mark.asyncio
+    async def test_app_upload_oversized_review_returns_422(
+        self,
+        client: AsyncClient,
+        monkeypatch,
+    ):
+        monkeypatch.setattr(settings, "UPLOAD_STORAGE_DRIVER", "local")
+        app.dependency_overrides[get_current_user_id] = lambda: uuid.UUID(int=2)
+        large_content = b"\x89PNG\r\n\x1a\n" + (b"x" * (5 * 1024 * 1024))
+
+        resp = await client.post(
+            "/api/v1/upload/image",
+            files={"file": ("big.png", io.BytesIO(large_content), "image/png")},
+            data={"scope": "review"},
+        )
+
+        assert resp.status_code == 422
+        assert "文件大小不能超过5MB" in resp.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_app_upload_rejects_common_scope(
+        self,
+        client: AsyncClient,
+        monkeypatch,
+    ):
+        monkeypatch.setattr(settings, "UPLOAD_STORAGE_DRIVER", "local")
+        app.dependency_overrides[get_current_user_id] = lambda: uuid.UUID(int=2)
+
+        resp = await client.post(
+            "/api/v1/upload/image",
+            files={"file": ("any.png", io.BytesIO(PNG_BYTES), "image/png")},
+            data={"scope": "common"},
+        )
+
+        assert resp.status_code == 422
+        assert resp.json()["detail"] == "上传场景不支持"
+
+    @pytest.mark.asyncio
+    async def test_app_upload_review_scope_without_login_returns_401(self, client: AsyncClient):
+        # 鉴权依赖先于 scope 白名单执行：未登录时即便 scope 合法也必须是 401 而非 422
+        resp = await client.post(
+            "/api/v1/upload/image",
+            files={"file": ("review.png", io.BytesIO(PNG_BYTES), "image/png")},
+            data={"scope": "review"},
+        )
+        assert resp.status_code == 401

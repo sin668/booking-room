@@ -43,6 +43,7 @@ class ReviewItem(BaseModel):
 
     id: int
     booking_id: int
+    booking_type: str | None = None
     user_nickname: str | None = None
     user_avatar: str | None = None
     rating: int
@@ -50,6 +51,8 @@ class ReviewItem(BaseModel):
     images: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     is_anonymous: bool
+    room_name: str | None = None
+    seat_number: str | None = None
     course_id: int | None = None
     course_name: str | None = None
     teacher_id: int | None = None

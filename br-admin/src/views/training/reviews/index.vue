@@ -10,7 +10,7 @@
         :request="loadDataTable"
         :row-key="(row: AdminReviewItem) => row.id"
         :actionColumn="actionColumn"
-        :scroll-x="1600"
+        :scroll-x="1900"
         :striped="true"
       />
     </n-card>
@@ -24,7 +24,7 @@
 
 <script lang="ts" setup>
   import { h, ref } from 'vue';
-  import { NAvatar, NRate, NTag } from 'naive-ui';
+  import { NAvatar, NImage, NImageGroup, NRate, NTag } from 'naive-ui';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, useForm } from '@/components/Form/index';
   import { getAdminReviewList, type AdminReviewItem } from '@/api/review';
@@ -77,15 +77,60 @@
         return h(NRate, { value: record.rating, readonly: true, size: 'small' });
       },
     },
-    createTextColumn<AdminReviewItem>('评价内容', 'content', 260),
+    {
+      title: '评价内容',
+      key: 'content',
+      width: 260,
+      render(record: AdminReviewItem) {
+        return h(
+          'div',
+          {
+            title: record.content,
+            style: {
+              display: '-webkit-box',
+              '-webkit-line-clamp': '2',
+              '-webkit-box-orient': 'vertical',
+              overflow: 'hidden',
+              'text-overflow': 'ellipsis',
+              'word-break': 'break-all',
+              'line-height': '1.4',
+              'max-height': '2.8em',
+            },
+          },
+          record.content || '-'
+        );
+      },
+    },
     {
       title: '图片',
       key: 'images',
-      width: 70,
+      width: 160,
       render(record: AdminReviewItem) {
-        return record.images?.length ? `${record.images.length}张` : '-';
+        if (!record.images?.length) return '-';
+        return h(
+          NImageGroup,
+          {},
+          {
+            default: () =>
+              h(
+                'div',
+                { class: 'flex flex-wrap gap-1' },
+                record.images.map((url) =>
+                  h(NImage, {
+                    src: url,
+                    width: 36,
+                    height: 36,
+                    objectFit: 'cover',
+                    style: 'border-radius: 4px; cursor: pointer',
+                  })
+                )
+              ),
+          }
+        );
       },
     },
+    createTextColumn<AdminReviewItem>('所属学习室', 'room_name', 140),
+    createTextColumn<AdminReviewItem>('座位编号', 'seat_number', 100),
     createTextColumn<AdminReviewItem>('所属课程', 'course_name', 150),
     createTextColumn<AdminReviewItem>('所属老师', 'teacher_name', 110),
     { title: '订单号', key: 'booking_id', width: 90 },

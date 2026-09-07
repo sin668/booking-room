@@ -11,6 +11,7 @@ import {
 export interface AdminReviewItem {
   id: number;
   booking_id: number;
+  booking_type: string | null;
   user_nickname: string | null;
   user_avatar: string | null;
   rating: number;
@@ -18,6 +19,8 @@ export interface AdminReviewItem {
   images: string[];
   tags: string[];
   is_anonymous: boolean;
+  room_name: string | null;
+  seat_number: string | null;
   course_id: number | null;
   course_name: string | null;
   teacher_id: number | null;

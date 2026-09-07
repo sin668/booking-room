@@ -85,7 +85,6 @@
             </view>
             <view class="rating-desc">
               <text class="rating-text" :style="{ color: ratingColor }">{{ ratingText }}</text>
-              <text class="rating-hint">{{ ratingHint }}</text>
             </view>
             <view class="rating-score">
               <text class="score-num">{{ scoreText }}</text>
@@ -242,13 +241,13 @@ const MAX_TAGS = 5
 // 与后端 min_length=1 保持一致：10 字仅作为前端鼓励阈值，不阻断提交
 const CONTENT_SUGGEST_LENGTH = 10
 const RATING_META = [
-  { text: '很失望', hint: '与预期差距较大', color: '#E4574C' },
-  { text: '不太满意', hint: '还有较多可以改进的地方', color: '#F39C12' },
-  { text: '一般般', hint: '基本符合预期，中规中矩', color: '#F39C12' },
-  { text: '比较满意', hint: '整体不错，值得推荐', color: '#FFB400' },
-  { text: '超出预期', hint: '老师讲解、课程安排都很棒', color: '#FFB400' },
+  { text: '很失望', color: '#E4574C' },
+  { text: '不太满意', color: '#F39C12' },
+  { text: '一般般', color: '#F39C12' },
+  { text: '比较满意', color: '#FFB400' },
+  { text: '超出预期', color: '#FFB400' },
 ]
-const RATING_IDLE = { text: '点击星星打分', hint: '你的评分会帮助更多同学做决定', color: '#B2BEC3' }
+const RATING_IDLE = { text: '点击星星打分', color: '#B2BEC3' }
 const TAGS_POS = ['讲解清晰', '重点突出', '答疑及时', '资料齐全', '节奏适中', '互动性强', '案例生动', '环境安静', '座位舒适', '性价比高', '收获很大', '会再报名']
 const TAGS_NEG = ['进度太快', '内容偏浅', '答疑不及时', '资料缺失', '设备问题', '隔音较差', '座位拥挤', '性价比一般', '与描述不符']
 // 快捷填入：与原型 review-submit.html 的三条常用句式一致
@@ -278,7 +277,7 @@ export default {
       maxTags: MAX_TAGS,
       loading: true,
       alreadyReviewed: false,
-      rating: 0,
+      rating: 5,
       popStar: 0,
       tags: [],
       content: '',
@@ -365,8 +364,6 @@ export default {
       if (this.isCourse) {
         return [
           { icon: 'icon-user', text: this.teacherText },
-          { icon: 'icon-book', text: this.lessonText },
-          { icon: 'icon-clock', text: this.scheduleText },
           { icon: 'icon-location', text: room?.name || '' },
         ].filter((line) => line.text)
       }
@@ -402,9 +399,6 @@ export default {
     },
     ratingText() {
       return this.ratingMeta.text
-    },
-    ratingHint() {
-      return this.ratingMeta.hint
     },
     ratingColor() {
       return this.ratingMeta.color
@@ -950,13 +944,6 @@ export default {
   display: block;
   font-size: 26rpx;
   font-weight: bold;
-}
-
-.rating-hint {
-  display: block;
-  margin-top: 6rpx;
-  font-size: 20rpx;
-  color: $text-muted;
 }
 
 .rating-score {

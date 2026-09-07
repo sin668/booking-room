@@ -49,6 +49,8 @@
       </div>
 
       <n-descriptions :column="2" label-placement="left" size="small" bordered>
+        <n-descriptions-item label="所属学习室">{{ review.room_name || '-' }}</n-descriptions-item>
+        <n-descriptions-item label="座位编号">{{ review.seat_number || '-' }}</n-descriptions-item>
         <n-descriptions-item label="所属课程">{{ review.course_name || '-' }}</n-descriptions-item>
         <n-descriptions-item label="所属老师">{{ review.teacher_name || '-' }}</n-descriptions-item>
         <n-descriptions-item label="订单标识">{{ review.booking_id }}</n-descriptions-item>

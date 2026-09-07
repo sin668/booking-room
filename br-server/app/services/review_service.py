@@ -21,6 +21,8 @@ from app.domain.review_status import ReviewStatus
 from app.models.booking import Booking
 from app.models.course import Course
 from app.models.review import Review
+from app.models.seat import Seat
+from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.models.user import User
 from app.schemas.review import (
@@ -89,13 +91,14 @@ async def assemble_items(
     *,
     mask_anonymous: bool,
 ) -> list[ReviewItem]:
-    """批量补齐昵称/头像/课程名/老师名并组装条目。"""
+    """批量补齐昵称/头像/课程名/老师名/学习室/座位并组装条目。"""
     if not reviews:
         return []
 
     user_ids = {r.user_id for r in reviews}
     course_ids = {r.course_id for r in reviews if r.course_id is not None}
     teacher_ids = {r.teacher_id for r in reviews if r.teacher_id is not None}
+    booking_ids = {r.booking_id for r in reviews}
 
     users = (await db.execute(select(User).where(User.id.in_(user_ids)))).scalars().all()
     user_map: dict[uuid.UUID, User] = {u.id: u for u in users}
@@ -108,14 +111,32 @@ async def assemble_items(
         teachers = (await db.execute(select(Teacher).where(Teacher.id.in_(teacher_ids)))).scalars().all()
         teacher_map = {t.id: t.name for t in teachers}
 
+    # 查询关联订单以获取 booking_type / room_id / seat_id
+    bookings = (await db.execute(select(Booking).where(Booking.id.in_(booking_ids)))).scalars().all()
+    booking_map: dict[int, Booking] = {b.id: b for b in bookings}
+
+    # 批量查询学习室和座位
+    room_ids = {b.room_id for b in bookings if b.room_id is not None}
+    seat_ids = {b.seat_id for b in bookings if b.seat_id is not None}
+    room_map: dict[int, str] = {}
+    if room_ids:
+        rooms = (await db.execute(select(StudyRoom).where(StudyRoom.id.in_(room_ids)))).scalars().all()
+        room_map = {r.id: r.name for r in rooms}
+    seat_map: dict[int, str] = {}
+    if seat_ids:
+        seats = (await db.execute(select(Seat).where(Seat.id.in_(seat_ids)))).scalars().all()
+        seat_map = {s.id: s.seat_number for s in seats}
+
     items: list[ReviewItem] = []
     for review in reviews:
         user = user_map.get(review.user_id)
         anonymous = mask_anonymous and review.is_anonymous
+        booking = booking_map.get(review.booking_id)
         items.append(
             ReviewItem(
                 id=review.id,
                 booking_id=review.booking_id,
+                booking_type=booking.booking_type if booking else None,
                 user_nickname=ANONYMOUS_NICKNAME if anonymous else (user.nickname if user else None),
                 user_avatar=None if anonymous else (user.avatar if user else None),
                 rating=review.rating,
@@ -123,6 +144,8 @@ async def assemble_items(
                 images=review.images,
                 tags=review.tags,
                 is_anonymous=review.is_anonymous,
+                room_name=room_map.get(booking.room_id) if booking and booking.room_id else None,
+                seat_number=seat_map.get(booking.seat_id) if booking and booking.seat_id else None,
                 course_id=review.course_id,
                 course_name=course_map.get(review.course_id) if review.course_id else None,
                 teacher_id=review.teacher_id,

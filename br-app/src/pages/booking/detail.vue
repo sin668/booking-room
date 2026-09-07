@@ -104,7 +104,10 @@
 
       <view class="section animate-in" style="animation-delay: 0.1s;">
         <view class="section-header">
-          <text class="section-title">环境照片</text>
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">环境照片</text>
+          </view>
           <view class="section-more" @tap="onViewAllPhotos">
             <text class="section-sub">共{{ roomPhotos.length }}张</text>
             <view class="icon icon-arrow-right section-more-icon" />
@@ -128,7 +131,10 @@
       <!-- 座位概况（仅 study/comprehensive） -->
       <view v-if="isStudyRoom || isComprehensiveRoom" class="section seat-section animate-in" style="animation-delay: 0.2s;">
         <view class="section-header">
-          <text class="section-title">座位概况</text>
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">座位概况</text>
+          </view>
           <text class="availability-copy">{{ availabilityLabel }}</text>
         </view>
         <view class="stats-grid">
@@ -171,8 +177,8 @@
         </view>
       </view>
 
-      <!-- 学员评价（仅 study/comprehensive，数据来自 /api/v1/reviews?room_id=） -->
-      <view v-if="isStudyRoom || isComprehensiveRoom" class="section review-section animate-in" style="animation-delay: 0.25s;">
+      <!-- 学员评价（仅 study 自习室，数据来自 /api/v1/reviews?room_id=） -->
+      <view v-if="isStudyRoom" class="section review-section animate-in" style="animation-delay: 0.25s;">
         <view class="section-header">
           <view class="section-title-group">
             <view class="section-bar" />
@@ -1136,6 +1142,11 @@ export default {
 
 .section {
   margin: 32rpx 28rpx 0;
+  background: $surface;
+  border-radius: 32rpx;
+  padding: 28rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 
 .section-header {
@@ -1216,14 +1227,6 @@ export default {
   font-size: 36rpx;
   font-weight: 600;
   color: $white;
-}
-
-.seat-section {
-  background: $surface;
-  border-radius: 32rpx;
-  padding: 28rpx;
-  box-shadow: $shadow-card;
-  border: 1rpx solid $border-soft;
 }
 
 .stats-grid {
@@ -1367,14 +1370,6 @@ export default {
 }
 
 /* === 学员评价 === */
-.review-section {
-  background: $surface;
-  border-radius: 32rpx;
-  padding: 28rpx;
-  box-shadow: $shadow-card;
-  border: 1rpx solid $border-soft;
-}
-
 .review-item {
   padding-bottom: 20rpx;
 }
@@ -1625,14 +1620,6 @@ export default {
 }
 
 /* === 培训室简介 === */
-.intro-section {
-  background: $surface;
-  border-radius: 32rpx;
-  padding: 28rpx;
-  box-shadow: $shadow-card;
-  border: 1rpx solid $border-soft;
-}
-
 .intro-text {
   font-size: 26rpx;
   line-height: 1.6;
@@ -1640,14 +1627,6 @@ export default {
 }
 
 /* === 教室概况 === */
-.classroom-section {
-  background: $surface;
-  border-radius: 32rpx;
-  padding: 28rpx;
-  box-shadow: $shadow-card;
-  border: 1rpx solid $border-soft;
-}
-
 .section-bar {
   width: 6rpx;
   height: 28rpx;

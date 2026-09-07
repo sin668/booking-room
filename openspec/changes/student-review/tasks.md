@@ -17,17 +17,17 @@
 
 ## 3. 后端审核 API 与评分聚合
 
-- [ ] 3.1 新建 `app/schemas/admin_review.py`：`AdminReviewItem`（含真实昵称头像 + 匿名标记 + 订单标识 + 审核状态 + 驳回理由 + 回复 + 审核人/审核时间）、`AdminReviewPage`、`ReviewStatusUpdate`（`status` 限定 approved/rejected、`reject_reason`）、`ReviewReplyUpdate`（`reply_content` max_length=500）
-- [ ] 3.2 在 `app/services/review_service.py` 中新增 `refresh_rating_aggregates(db, *, course_id=None, teacher_id=None)`：全量重算 `approved` 评价的 `AVG(rating)`（`round(..., 1)`）与 `COUNT(*)`，无评价时写 0；分别 `UPDATE courses` / `UPDATE teachers`；`course_id` 或 `teacher_id` 为 `None` 时跳过对应目标但不中断另一个
-- [ ] 3.3 新建 `app/services/admin_review_service.py`：`list_reviews`（按状态/评分档位/关键词模糊搜索内容或昵称 + 分页，永不脱敏）、`update_status`（驳回时强制要求非空理由、通过时清空理由、写入 `reviewed_by`/`reviewed_at`（用 `booking_now()`）、幂等、成功后调 `refresh_rating_aggregates`）、`update_reply`（空白内容视为清空回复并同步清空 `reply_at`，写入时间用 `booking_now()`）
-- [ ] 3.4 新建 `app/api/routes/admin_review.py`：`GET /api/v1/admin/reviews`（`require_admin_permission("training:reviews:view")`）、`PATCH /api/v1/admin/reviews/{review_id}/status`（`training:reviews:approve`）、`PATCH /api/v1/admin/reviews/{review_id}/reply`（`training:reviews:reply`）；路径不带尾斜杠；`response_model` 全部为纯 Pydantic
-- [ ] 3.5 在 `app/main.py` import 并 `include_router(admin_review_router)`
+- [x] 3.1 新建 `app/schemas/admin_review.py`：`AdminReviewItem`（含真实昵称头像 + 匿名标记 + 订单标识 + 审核状态 + 驳回理由 + 回复 + 审核人/审核时间）、`AdminReviewPage`、`ReviewStatusUpdate`（`status` 限定 approved/rejected、`reject_reason`）、`ReviewReplyUpdate`（`reply_content` max_length=500）
+- [x] 3.2 在 `app/services/review_service.py` 中新增 `refresh_rating_aggregates(db, *, course_id=None, teacher_id=None)`：全量重算 `approved` 评价的 `AVG(rating)`（`round(..., 1)`）与 `COUNT(*)`，无评价时写 0；分别 `UPDATE courses` / `UPDATE teachers`；`course_id` 或 `teacher_id` 为 `None` 时跳过对应目标但不中断另一个
+- [x] 3.3 新建 `app/services/admin_review_service.py`：`list_reviews`（按状态/评分档位/关键词模糊搜索内容或昵称 + 分页，永不脱敏）、`update_status`（驳回时强制要求非空理由、通过时清空理由、写入 `reviewed_by`/`reviewed_at`（用 `booking_now()`）、幂等、成功后调 `refresh_rating_aggregates`）、`update_reply`（空白内容视为清空回复并同步清空 `reply_at`，写入时间用 `booking_now()`）
+- [x] 3.4 新建 `app/api/routes/admin_review.py`：`GET /api/v1/admin/reviews`（`require_admin_permission("training:reviews:view")`）、`PATCH /api/v1/admin/reviews/{review_id}/status`（`training:reviews:audit`）、`PATCH /api/v1/admin/reviews/{review_id}/reply`（`training:reviews:reply`）；路径不带尾斜杠；`response_model` 全部为纯 Pydantic；审核与回复端点把 `require_admin_permission(...)` 作为**参数**依赖以取得 `AdminContext`，从而写入 `reviewed_by`
+- [x] 3.5 在 `app/main.py` import 并 `include_router(admin_review_router)`
 
 ## 4. 后端上传 scope 与后台菜单
 
 - [ ] 4.1 `app/services/upload_service.py`：`UPLOAD_SCOPES` 加 `"review"`，`SCOPE_SIZE_LIMITS` 加 `"review": 5 * MB`
 - [ ] 4.2 `app/api/routes/upload.py`：把 `if scope != "avatar"` 改为 `if scope not in ("avatar", "review")`
-- [ ] 4.3 `app/services/seed_admin.py`：在 `MENU_SEEDS` 的培训管理段新增 `MenuSeed("training.reviews", "menu", "评价审核", "training:reviews:view", "reviews", "TrainingReviews", "/training/reviews/index", None, "SchoolOutline", 50, parent="training")`；在 `BUTTON_SEEDS` 新增 4 条：`("training.reviews", "training:reviews:view", "评价审核-查看")`、`("training.reviews", "training:reviews:approve", "评价审核-通过")`、`("training.reviews", "training:reviews:reject", "评价审核-驳回")`、`("training.reviews", "training:reviews:reply", "评价审核-回复")`
+- [ ] 4.3 `app/services/seed_admin.py`：在 `MENU_SEEDS` 的培训管理段新增 `MenuSeed("training.reviews", "menu", "评价审核", "training:reviews:view", "reviews", "TrainingReviews", "/training/reviews/index", None, "SchoolOutline", 50, parent="training")`；在 `BUTTON_SEEDS` 新增 3 条：`("training.reviews", "training:reviews:view", "评价审核-查看")`、`("training.reviews", "training:reviews:audit", "评价审核-审核")`、`("training.reviews", "training:reviews:reply", "评价审核-回复")`（审核不拆 approve/reject 两码，理由见 design.md D11 的实现期修正）
 - [ ] 4.4 `app/services/admin_menu_service.py`：`COMPONENT_WHITELIST` 补 `"/training/reviews/index"` 与 `"/training/teachers/index"`
 - [ ] 4.5 执行 `cd br-server && python -m app.services.seed_admin` 两次，验证幂等（第二次不新增记录、不报权限码冲突）
 
@@ -36,8 +36,8 @@
 - [x] 5.1 新建 `tests/test_api_review.py`：自定义 `auth_client` fixture（覆盖 `get_current_user_id` 返回固定 UUID，照抄 `tests/test_api_coupon.py:18-27`）；覆盖发表成功、订单未完成被拒、评价他人订单被拒、重复评价被拒（400）、rating 越界 422、content 过长/为空 422、图片超 9 张 422、未登录 401
 - [x] 5.2 在 `tests/test_api_review.py` 中补充查询与可见性用例：按课程过滤、按老师过滤、按 `booking_id` 查询本人评价、公开列表只返回 `approved`、`mine=true` 返回本人全部状态且携带驳回理由、`mine=true` 不泄露他人评价、匿名脱敏（公开列表脱敏 / 本人查询不脱敏）、未登录可读公开列表、未登录查 `mine` 返回 401
 - [x] 5.3 在 `tests/test_api_review.py` 中补充筛选/排序/分页/概览用例：好评档（4-5 星）、差评档（1-2 星）、仅看有图、按评分最高排序、`page_size=100` 返回 422、分页 total 一致性、概览均分与分布计算、概览排除未审核、无评价时概览返回全 0 且 HTTP 200、概览缺维度参数返回 422
-- [ ] 5.4 新建 `tests/test_api_admin_review.py`：覆盖后台列表按状态筛选、关键词搜索、匿名评价返回真实身份 + 匿名标记、通过（含 `reviewed_at.tzinfo is None` 断言，防 BUG-15/29 复发）、驳回缺理由 422、驳回带理由后 C 端公开列表不再出现但「我的评价」仍出现、重复通过幂等、不存在的评价 404、无权限 403、机构回复写入/覆盖/空白清空/超长 422
-- [ ] 5.5 在 `tests/test_api_admin_review.py` 中补充聚合回写用例：首次通过覆盖 seed 评分、只统计 `approved`、驳回唯一一条已通过评价后归 0、老师聚合独立于课程、`teacher_id` 为空的评价不导致聚合报错
+- [x] 5.4 新建 `tests/test_api_admin_review.py`：覆盖后台列表按状态筛选、关键词搜索、匿名评价返回真实身份 + 匿名标记、通过（含 `reviewed_at.tzinfo is None` 断言，防 BUG-15/29 复发）、驳回缺理由 422、驳回带理由后 C 端公开列表不再出现但「我的评价」仍出现、重复通过幂等、不存在的评价 404、无权限 403、机构回复写入/覆盖/空白清空/超长 422
+- [x] 5.5 在 `tests/test_api_admin_review.py` 中补充聚合回写用例：首次通过覆盖 seed 评分、只统计 `approved`、驳回唯一一条已通过评价后归 0、老师聚合独立于课程、`teacher_id` 为空的评价不导致聚合报错
 - [ ] 5.6 补充上传 scope 用例（可并入既有上传测试文件）：`review` scope 上传成功且 `object_key` 前缀为 `images/review/`、`review` 超 5MB 返回 422、C 端入口以 `common` scope 上传返回 422、未登录以 `review` scope 上传返回 401
 - [ ] 5.7 运行 `cd br-server && pytest tests/test_api_review.py tests/test_api_admin_review.py -q` 全绿；再运行 `pytest -q` 确认全量回归无破坏
 

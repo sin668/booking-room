@@ -22,6 +22,7 @@ from app.api.routes.admin_user import router as admin_user_router
 from app.api.routes.admin_wallet import router as admin_wallet_router
 from app.api.routes.admin_menu import router as admin_menu_router
 from app.api.routes.admin_role import router as admin_role_router
+from app.api.routes.admin_review import router as admin_review_router
 from app.api.routes.admin_seat import flat_seats_router as admin_flat_seats_router
 from app.api.routes.admin_seat import room_seats_router as admin_room_seats_router
 from app.api.routes.admin_setting import router as admin_setting_router
@@ -370,6 +371,7 @@ app.include_router(admin_user_router)
 app.include_router(admin_wallet_router)
 app.include_router(admin_menu_router)
 app.include_router(admin_role_router)
+app.include_router(admin_review_router)
 app.include_router(admin_setting_router)
 app.include_router(admin_activity_router)
 app.include_router(admin_booking_router)

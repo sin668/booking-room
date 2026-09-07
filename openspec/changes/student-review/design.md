@@ -114,7 +114,9 @@ class ReviewStatus(str, Enum):
 
 菜单种子照抄 `MenuSeed("training.teachers", ...)` 那一行，`parent="training"`，`path="reviews"`（**相对路径**，父目录 `training` 存的是基路径 `/training`，生成器拼出 `/training/reviews`）。同时把 `/training/reviews/index` 加进 `admin_menu_service.py` 的 `COMPONENT_WHITELIST`（注意：`/training/teachers/index` 现在**不在**白名单里，因为 seed 直接写库绕过了校验；但白名单缺失会导致后续在菜单管理界面编辑该菜单时报 422，所以这次一并补上）。
 
-按钮权限 4 条：`training:reviews:view` / `:approve` / `:reject` / `:reply`。**不做 `:delete`**——驳回已能下架违规内容。
+按钮权限 3 条：`training:reviews:view` / `:audit` / `:reply`。**不做 `:delete`**——驳回已能下架违规内容。
+
+> 实现期修正：原计划把审核拆成 `:approve` 与 `:reject` 两个权限码，但审核接口只有一个 `PATCH /{id}/status`（body 决定目标状态）。若该端点只校验 `:approve`，仅持有 `:reject` 的管理员将无法驳回，形成权限漏洞；若在端点内按 body 分流校验，则等于手写一套 `require_admin_permission`。通过/驳回本就是同一种「审核」能力，拆开属推测性粒度（YAGNI），故合并为单一 `:audit`，与 spec「MUST 由后端强制执行审核权限」的单数表述一致。将来确需区分时再拆码并分裂端点。
 
 ### D12：上传 scope 的三处最小改动
 

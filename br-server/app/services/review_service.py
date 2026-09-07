@@ -77,13 +77,13 @@ def _base_conditions(
     return conditions
 
 
-def _order_by(sort: str):
+def order_by_clauses(sort: str):
     if sort == "score":
         return (Review.rating.desc(), Review.created_at.desc(), Review.id.desc())
     return (Review.created_at.desc(), Review.id.desc())
 
 
-async def _assemble_items(
+async def assemble_items(
     db: AsyncSession,
     reviews: list[Review],
     *,
@@ -176,11 +176,11 @@ async def list_reviews(
     result = await db.execute(
         select(Review)
         .where(where)
-        .order_by(*_order_by(sort))
+        .order_by(*order_by_clauses(sort))
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
-    items = await _assemble_items(db, list(result.scalars().all()), mask_anonymous=not mine)
+    items = await assemble_items(db, list(result.scalars().all()), mask_anonymous=not mine)
     return ReviewListResponse(items=items, total=total, page=page, page_size=page_size)
 
 
@@ -266,5 +266,45 @@ async def create_review(
         ) from exc
     await db.refresh(review)
 
-    items = await _assemble_items(db, [review], mask_anonymous=False)
+    items = await assemble_items(db, [review], mask_anonymous=False)
     return items[0]
+
+
+async def _approved_rating_stats(db: AsyncSession, condition) -> tuple[float, int]:
+    """统计某维度下已通过评价的均分（保留一位小数）与条数。"""
+    rating_sum, count = (
+        await db.execute(
+            select(func.sum(Review.rating), func.count())
+            .where(Review.status == ReviewStatus.APPROVED.value, condition)
+        )
+    ).one()
+    if not count:
+        return 0.0, 0
+    # 用 SUM/COUNT 而非 AVG：整数求和在两种方言下都是精确值，不引入浮点误差
+    return round_half_up(Decimal(rating_sum) / Decimal(count)), count
+
+
+async def refresh_rating_aggregates(
+    db: AsyncSession,
+    *,
+    course_id: int | None = None,
+    teacher_id: int | None = None,
+) -> None:
+    """全量重算并回写课程/老师的评分与评价数。
+
+    全量重算而非增量加减：幂等、并发安全、无需行锁。
+    某个维度为 None 时只跳过该维度，不中断另一个。
+    """
+    if course_id is not None:
+        course = await db.get(Course, course_id)
+        if course is not None:
+            course.rating, course.review_count = await _approved_rating_stats(
+                db, Review.course_id == course_id
+            )
+    if teacher_id is not None:
+        teacher = await db.get(Teacher, teacher_id)
+        if teacher is not None:
+            teacher.rating, teacher.review_count = await _approved_rating_stats(
+                db, Review.teacher_id == teacher_id
+            )
+    await db.flush()

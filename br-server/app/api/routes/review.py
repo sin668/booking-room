@@ -22,6 +22,7 @@ async def list_reviews(
     course_id: int | None = Query(None, description="按课程过滤"),
     teacher_id: int | None = Query(None, description="按老师过滤"),
     booking_id: int | None = Query(None, description="按订单过滤"),
+    room_id: int | None = Query(None, description="按学习室过滤（仅自习座位订单）"),
     mine: bool = Query(False, description="只看本人发表的评价（含待审核/已驳回）"),
     rating_band: str = Query("all", pattern="^(all|good|mid|bad)$"),
     has_images: bool = Query(False, description="仅看有图"),
@@ -40,6 +41,7 @@ async def list_reviews(
         course_id=course_id,
         teacher_id=teacher_id,
         booking_id=booking_id,
+        room_id=room_id,
         mine=mine,
         rating_band=rating_band,
         has_images=has_images,
@@ -53,15 +55,16 @@ async def list_reviews(
 async def get_review_summary(
     course_id: int | None = Query(None),
     teacher_id: int | None = Query(None),
+    room_id: int | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ) -> ReviewSummary:
-    if course_id is None and teacher_id is None:
+    if course_id is None and teacher_id is None and room_id is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="course_id 与 teacher_id 至少传一个",
+            detail="course_id、teacher_id 与 room_id 至少传一个",
         )
     return await review_service.get_summary(
-        db, course_id=course_id, teacher_id=teacher_id
+        db, course_id=course_id, teacher_id=teacher_id, room_id=room_id
     )
 
 

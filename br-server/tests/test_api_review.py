@@ -605,3 +605,73 @@ async def test_summary_requires_a_dimension(auth_client: AsyncClient) -> None:
     response = await auth_client.get("/api/v1/reviews/summary")
 
     assert response.status_code == 422
+
+
+# ── room_id 维度（自习室评价）──────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_list_filters_by_room_id(
+    auth_client: AsyncClient, seed_many_reviews: dict
+) -> None:
+    """自习室维度：seed 订单均为该室的 seat 订单，5 条评价全部命中。"""
+    room_id = seed_many_reviews["room"].id
+
+    response = await auth_client.get(f"/api/v1/reviews?room_id={room_id}")
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 5
+
+
+@pytest.mark.asyncio
+async def test_room_id_filter_excludes_course_bookings(
+    auth_client: AsyncClient, db_session: AsyncSession, seed: dict
+) -> None:
+    """综合室既出租座位又上课：课程订单（booking_type='course'）也带 room_id，
+    但其评价属课程/老师维度，不应混进自习室评价区。"""
+    room_id = seed["room"].id
+    # 自习座位订单评价（应命中）
+    await _add_review(
+        db_session, seed, booking_id=seed["my_booking"].id, content="自习室很安静"
+    )
+    # 同室课程订单评价（应排除）
+    course_booking = Booking(
+        user_id=str(OTHER_USER_ID),
+        room_id=room_id,
+        date=date(2026, 9, 1),
+        start_time=time(9, 0),
+        end_time=time(11, 0),
+        total_price=100,
+        status=BookingStatus.COMPLETED.value,
+        booking_type="course",
+        course_id=seed["course"].id,
+        teacher_id=seed["teacher"].id,
+    )
+    db_session.add(course_booking)
+    await db_session.flush()
+    await _add_review(
+        db_session, seed, booking_id=course_booking.id, user_id=OTHER_USER_ID,
+        content="老师讲得很好",
+    )
+
+    response = await auth_client.get(f"/api/v1/reviews?room_id={room_id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["content"] == "自习室很安静"
+
+
+@pytest.mark.asyncio
+async def test_summary_by_room_id(
+    auth_client: AsyncClient, seed_many_reviews: dict
+) -> None:
+    """自习室概览：与课程维度同口径（seed 订单同属该室），均分 3.6、5 条。"""
+    room_id = seed_many_reviews["room"].id
+
+    response = await auth_client.get(f"/api/v1/reviews/summary?room_id={room_id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["average"] == 3.6
+    assert data["count"] == 5

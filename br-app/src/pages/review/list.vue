@@ -217,6 +217,7 @@ export default {
       SORTS,
       courseId: null,
       teacherId: null,
+      roomId: null,
       mine: false,
       reviews: [],
       total: 0,
@@ -276,6 +277,7 @@ export default {
     const query = options || {}
     this.courseId = query.course_id ? Number(query.course_id) : null
     this.teacherId = query.teacher_id ? Number(query.teacher_id) : null
+    this.roomId = query.room_id ? Number(query.room_id) : null
     this.mine = query.mine === '1' || query.mine === 'true'
 
     const title = query.title
@@ -342,15 +344,17 @@ export default {
       if (this.mine) params.mine = true
       if (this.courseId) params.course_id = this.courseId
       if (this.teacherId) params.teacher_id = this.teacherId
+      if (this.roomId) params.room_id = this.roomId
       return params
     },
 
     async loadSummary() {
-      // 概览接口只支持课程/老师维度，「我的评价」不展示概览
-      if (!this.courseId && !this.teacherId) return
+      // 概览接口支持课程/老师/学习室维度，「我的评价」不展示概览
+      if (!this.courseId && !this.teacherId && !this.roomId) return
       const params = {}
       if (this.courseId) params.course_id = this.courseId
       if (this.teacherId) params.teacher_id = this.teacherId
+      if (this.roomId) params.room_id = this.roomId
       try {
         this.summary = await getReviewSummary(params)
       } catch (error) {

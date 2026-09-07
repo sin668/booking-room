@@ -59,6 +59,7 @@ def _base_conditions(
     course_id: int | None = None,
     teacher_id: int | None = None,
     booking_id: int | None = None,
+    room_id: int | None = None,
     rating_band: str = "all",
     has_images: bool = False,
 ) -> list:
@@ -69,6 +70,18 @@ def _base_conditions(
         conditions.append(Review.teacher_id == teacher_id)
     if booking_id is not None:
         conditions.append(Review.booking_id == booking_id)
+    if room_id is not None:
+        # 自习室评价：评价挂靠订单，订单再归属学习室。综合室既出租座位又上课，
+        # 课程订单也带 room_id，故只取该室的自习座位订单（booking_type='seat'），
+        # 排除在此上课的课程订单评价，避免把「老师讲解」类评价混进自习室评价区。
+        conditions.append(
+            Review.booking_id.in_(
+                select(Booking.id).where(
+                    Booking.room_id == room_id,
+                    Booking.booking_type == "seat",
+                )
+            )
+        )
     band = RATING_BANDS.get(rating_band)
     if band:
         conditions.append(Review.rating.in_(band))
@@ -170,6 +183,7 @@ async def list_reviews(
     course_id: int | None = None,
     teacher_id: int | None = None,
     booking_id: int | None = None,
+    room_id: int | None = None,
     mine: bool = False,
     rating_band: str = "all",
     has_images: bool = False,
@@ -186,6 +200,7 @@ async def list_reviews(
         course_id=course_id,
         teacher_id=teacher_id,
         booking_id=booking_id,
+        room_id=room_id,
         rating_band=rating_band,
         has_images=has_images,
     )
@@ -215,11 +230,12 @@ async def get_summary(
     *,
     course_id: int | None = None,
     teacher_id: int | None = None,
+    room_id: int | None = None,
 ) -> ReviewSummary:
     """评价概览。只统计 approved；无数据时返回全 0，不抛 404。"""
     conditions = [Review.status == ReviewStatus.APPROVED.value]
     conditions.extend(
-        _base_conditions(course_id=course_id, teacher_id=teacher_id)
+        _base_conditions(course_id=course_id, teacher_id=teacher_id, room_id=room_id)
     )
 
     rows = (

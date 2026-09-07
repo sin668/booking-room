@@ -171,6 +171,45 @@
         </view>
       </view>
 
+      <!-- 学员评价（仅 study/comprehensive，数据来自 /api/v1/reviews?room_id=） -->
+      <view v-if="isStudyRoom || isComprehensiveRoom" class="section review-section animate-in" style="animation-delay: 0.25s;">
+        <view class="section-header">
+          <view class="section-title-group">
+            <view class="section-bar" />
+            <text class="section-title">学员评价</text>
+          </view>
+          <text class="section-sub">{{ reviewCount }}条</text>
+        </view>
+        <view v-for="(review, idx) in reviews" :key="idx" class="review-item">
+          <view v-if="idx > 0" class="review-divider" />
+          <view class="review-header">
+            <image v-if="review.avatar" class="review-avatar" :src="review.avatar" mode="aspectFill" />
+            <view v-else class="review-avatar review-avatar-empty">
+              <text class="review-avatar-char">{{ review.initial }}</text>
+            </view>
+            <view class="review-meta">
+              <text class="review-name">{{ review.name }}</text>
+              <view class="review-stars">
+                <text
+                  v-for="(starChar, starIdx) in review.stars"
+                  :key="starIdx"
+                  class="review-star"
+                  :class="{ 'review-star-off': starChar === '☆' }"
+                >{{ starChar }}</text>
+              </view>
+            </view>
+            <text class="review-time">{{ review.time }}</text>
+          </view>
+          <text class="review-content">{{ review.content }}</text>
+        </view>
+        <view v-if="reviews.length" class="review-more-btn" @tap="onViewAllReviews">
+          <text class="review-more-text">查看全部评价</text>
+        </view>
+        <view v-else-if="!reviewsLoading" class="review-empty">
+          <text class="review-empty-text">暂无评价</text>
+        </view>
+      </view>
+
       <!-- 教室概况（仅 training/comprehensive） -->
       <view v-if="isTrainingRoom || isComprehensiveRoom" class="section classroom-section animate-in" style="animation-delay: 0.2s;">
         <view class="section-header">
@@ -342,13 +381,14 @@
 <script>
 import { getSeatStats } from '@/api/seats'
 import { getTrainingRoomDetail } from '@/api/training'
+import { getReviewList, getReviewSummary } from '@/api/review'
 import {
   followRoom as apiFollowRoom,
   unfollowRoom as apiUnfollowRoom,
   getFollowedRooms as apiGetFollowedRooms,
 } from '@/api/roomFollows'
 import { fetchBookingRoom } from '@/services/bookingPageService'
-import { formatCourseSchedule, formatCourseStartDate } from '@/utils/formatters'
+import { buildStarChars, formatCourseSchedule, formatCourseStartDate, formatRelativeDay } from '@/utils/formatters'
 
 const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
@@ -372,6 +412,9 @@ export default {
       expandedScheduleIds: {},
       isFav: false,
       reviewCount: 0,
+      reviews: [],
+      reviewsLoading: true,
+      reviewSummary: null,
     }
   },
 
@@ -407,11 +450,15 @@ export default {
     },
 
     ratingText() {
-      return this.room.rating || '4.8'
+      // 评分来自后端评价概览（自习室维度），无评价时为 0.0
+      const avg = this.reviewSummary?.average
+      return Number(avg || 0).toFixed(1)
     },
 
     minPrice() {
-      return this.room.min_price || '8'
+      // 起步价来自后端学习室详情，去掉硬编码兜底
+      const price = this.room.min_price
+      return price === undefined || price === null || price === '' ? '-' : price
     },
 
     availabilityPercent() {
@@ -497,6 +544,7 @@ export default {
         const tasks = []
         if (this.roomType === 'study' || this.roomType === 'comprehensive') {
           tasks.push(this.loadSeatStats())
+          tasks.push(this.loadReviews())
         }
         if (this.roomType === 'training' || this.roomType === 'comprehensive') {
           tasks.push(this.loadTrainingDetail())
@@ -551,6 +599,41 @@ export default {
       } catch {
         this.seatStatsData = null
       }
+    },
+
+    // 学员评价：区块只取前 3 条；评分概览用于顶部「评分」统计（自习室维度）
+    async loadReviews() {
+      try {
+        const [list, summary] = await Promise.all([
+          getReviewList({ room_id: this.roomId, page: 1, page_size: 3 }),
+          getReviewSummary({ room_id: this.roomId }),
+        ])
+        this.reviewCount = list.total || 0
+        this.reviewSummary = summary || null
+        this.reviews = (list.items || []).map((item) => {
+          const name = item.user_nickname || '匿名用户'
+          return {
+            avatar: item.user_avatar || '',
+            name,
+            initial: name.slice(0, 1),
+            content: item.content,
+            time: formatRelativeDay(item.created_at),
+            stars: buildStarChars(item.rating),
+          }
+        })
+      } catch {
+        // 降级为空状态，不阻塞自习室详情主体渲染
+        this.reviews = []
+        this.reviewCount = 0
+        this.reviewSummary = null
+      } finally {
+        this.reviewsLoading = false
+      }
+    },
+
+    onViewAllReviews() {
+      const title = encodeURIComponent(this.room.name || '学员评价')
+      uni.navigateTo({ url: `/pages/review/list?room_id=${this.roomId}&title=${title}` })
     },
 
     onBack() {
@@ -1280,6 +1363,109 @@ export default {
   display: block;
   margin-top: 4rpx;
   font-size: 23rpx;
+  color: $text-muted;
+}
+
+/* === 学员评价 === */
+.review-section {
+  background: $surface;
+  border-radius: 32rpx;
+  padding: 28rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+}
+
+.review-item {
+  padding-bottom: 20rpx;
+}
+
+.review-divider {
+  height: 2rpx;
+  background: rgba(0, 0, 0, 0.03);
+  margin-bottom: 20rpx;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
+}
+
+.review-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.review-avatar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $primary-soft;
+}
+
+.review-avatar-char {
+  font-size: 28rpx;
+  color: $primary;
+}
+
+.review-meta {
+  flex: 1;
+}
+
+.review-name {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: $text-primary;
+}
+
+.review-stars {
+  display: flex;
+  gap: 2rpx;
+}
+
+.review-star {
+  font-size: 18rpx;
+  color: #FFD700;
+}
+
+.review-star-off {
+  color: #dfe6e9;
+}
+
+.review-time {
+  font-size: 20rpx;
+  color: $text-muted;
+}
+
+.review-content {
+  font-size: 24rpx;
+  color: $text-secondary;
+  line-height: 1.6;
+}
+
+.review-more-btn {
+  margin-top: 20rpx;
+  padding: 16rpx 0;
+  border: 2rpx solid $border-color;
+  border-radius: 20rpx;
+  text-align: center;
+}
+
+.review-more-text {
+  font-size: 26rpx;
+  color: $text-secondary;
+}
+
+.review-empty {
+  padding: 32rpx 0;
+  text-align: center;
+}
+
+.review-empty-text {
+  font-size: 24rpx;
   color: $text-muted;
 }
 

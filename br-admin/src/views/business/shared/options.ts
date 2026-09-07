@@ -88,3 +88,24 @@ export const WALLET_STATUS_TAGS: Record<string, BusinessTagConfig> = {
   failed: { label: '失败', type: 'error' },
   cancelled: { label: '已取消', type: 'default' },
 };
+
+export const REVIEW_STATUS_OPTIONS: BusinessOption[] = [
+  { label: '全部', value: '' },
+  { label: '待审核', value: 'pending' },
+  { label: '已通过', value: 'approved' },
+  { label: '已驳回', value: 'rejected' },
+];
+
+export const REVIEW_STATUS_TAGS: Record<string, BusinessTagConfig> = {
+  pending: { label: '待审核', type: 'warning' },
+  approved: { label: '已通过', type: 'success' },
+  rejected: { label: '已驳回', type: 'error' },
+};
+
+// 与后端 rating_band 参数的取值一一对应（all 不传，用空串走 compactQuery 剔除）
+export const REVIEW_RATING_BAND_OPTIONS: BusinessOption[] = [
+  { label: '全部评分', value: '' },
+  { label: '好评（4-5星）', value: 'good' },
+  { label: '中评（3星）', value: 'mid' },
+  { label: '差评（1-2星）', value: 'bad' },
+];

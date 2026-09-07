@@ -619,7 +619,8 @@ async def get_booking(
     if _sync_booking_completion(booking):
         await db.flush()
 
-    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
+    # 课程预约订单 seat_id 为 NULL（不占座），用 scalar_one_or_none 避免 NoResultFound
+    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
 
     return _build_booking_response(booking, seat, room)
@@ -651,7 +652,8 @@ async def cancel_booking(
         booking.cancelled_at = now
         await coupon_service.restore_user_coupon_for_booking(db, booking)
         await db.flush()
-        seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
+        # 课程预约订单 seat_id 为 NULL（不占座），用 scalar_one_or_none 避免 NoResultFound
+        seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
         room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
         return _build_booking_response(booking, seat, room)
 
@@ -714,7 +716,8 @@ async def cancel_booking(
     db.add(wallet_transaction)
     await db.flush()
 
-    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
+    # 课程预约订单 seat_id 为 NULL（不占座），用 scalar_one_or_none 避免 NoResultFound
+    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
 
     return _build_booking_response(

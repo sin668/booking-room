@@ -846,6 +846,33 @@ class TestGetBooking:
         resp = await client.get("/api/v1/bookings/1")
         assert resp.status_code == 401
 
+    @pytest.mark.asyncio
+    async def test_get_course_booking_with_null_seat(
+        self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
+    ):
+        """课程预约 seat_id 为 None，C 端详情接口不应报 500。"""
+        room = seed_room_seat["room"]
+        booking = Booking(
+            seat_id=None,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=date(2026, 5, 1),
+            start_time=time(9, 0),
+            end_time=time(12, 0),
+            status="in_progress",
+            total_price=Decimal("100.00"),
+            booking_type="course",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        resp = await auth_client.get(f"/api/v1/bookings/{booking.id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["id"] == booking.id
+        assert data["seat"] is None
+        assert data["room"]["name"] == "Test Room"
+
 
 class TestBookingPaymentEndpoints:
     @pytest.mark.asyncio

@@ -58,6 +58,14 @@
           <text class="menu-item-meta">{{ followSummary }}</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
+        <!-- 整块菜单已在 v-if="userStore.isLoggedIn" 内，无需重复登录判定 -->
+        <view class="menu-item" @tap="navigateTo('/pages/review/list?mine=1')">
+          <view class="menu-icon orange">
+            <text class="review-star-icon">★</text>
+          </view>
+          <text class="menu-item-text">我的评价</text>
+          <view class="icon icon-arrow-right menu-arrow" />
+        </view>
 
         <view class="menu-divider" />
         <view class="menu-section-label">
@@ -570,6 +578,13 @@ export default {
   height: 16rpx;
   border-radius: 4rpx 4rpx 0 0;
   background: #00a884;
+}
+
+/* 评价图标直接用 ★ 字形：仓内无 clip-path 先例，而 ★ 已是全站统一的星级表现 */
+.review-star-icon {
+  font-size: 34rpx;
+  line-height: 1;
+  color: #ff9500;
 }
 
 .history-icon {

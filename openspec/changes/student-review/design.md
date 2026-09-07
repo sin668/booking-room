@@ -96,6 +96,7 @@ class ReviewStatus(str, Enum):
 ### D9：br-app 不引库，星级用文本字符，预览用原生 API
 
 - 星级：`★`(U+2605) 实心 + `☆`(U+2606) 空心，`v-for` 按 `rating` 渲染。既有 `course-detail.vue` L209-213 已经是这个套路，只是没画空心星。不为此引入 uview / uni-ui。
+- 星级渲染收敛为公用函数 `buildStarChars(rating)`（`src/utils/formatters.js`），返回长度 5 的字符数组。`list.vue` / `submit.vue` / `teacher/profile.vue` / `course-detail.vue` 四处共用，不在各页各写一套 clamp + 填充（数组形式便于逐颗上色，纯文本需求 `.join('')` 即可）。
 - 图片预览：`uni.previewImage({ urls, current })`，替代原型的自写 lightbox（原型里那个 `<img src="">` 空 src 缺陷一并消失）。
 - 选图：`uni.chooseImage({ count: 9 - 已选数, sizeType: ['compressed'] })`，照抄 `settings/index.vue` 的头像上传（含取消判定 `isChooseImageCancel`）。
 - 分页：照抄 `orders/index.vue` 的 `<scroll-view refresher-enabled @scrolltolower>` 范式（Options API），`PAGE_SIZE = 20`。

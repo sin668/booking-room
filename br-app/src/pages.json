@@ -147,6 +147,18 @@
       }
     },
     {
+      "path": "pages/review/list",
+      "style": {
+        "navigationBarTitleText": "学员评价"
+      }
+    },
+    {
+      "path": "pages/review/submit",
+      "style": {
+        "navigationBarTitleText": "发表评价"
+      }
+    },
+    {
       "path": "pages/login/login",
       "style": {
         "navigationBarTitleText": "登录",

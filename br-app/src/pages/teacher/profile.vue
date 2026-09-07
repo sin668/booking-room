@@ -151,29 +151,40 @@
         </view>
       </view>
 
-      <!-- 学员评价（静态占位数据） -->
+      <!-- 学员评价（数据来自 /api/v1/reviews?teacher_id=） -->
       <view class="section animate-in delay-4">
         <view class="section-header">
           <view class="section-bar" />
           <text class="section-title">学员评价</text>
-          <text class="section-sub">{{ reviews.length }}条</text>
+          <text class="section-sub">{{ reviewCount }}条</text>
         </view>
         <view v-for="(review, idx) in reviews" :key="idx" class="review-item">
           <view v-if="idx > 0" class="review-divider" />
           <view class="review-header">
-            <image class="review-avatar" :src="review.avatar" mode="aspectFill" />
+            <image v-if="review.avatar" class="review-avatar" :src="review.avatar" mode="aspectFill" />
+            <view v-else class="review-avatar review-avatar-empty">
+              <text class="review-avatar-char">{{ review.initial }}</text>
+            </view>
             <view class="review-meta">
               <text class="review-name">{{ review.name }}</text>
               <view class="review-stars">
-                <text v-for="s in 5" :key="s" class="review-star">★</text>
+                <text
+                  v-for="(starChar, starIdx) in review.stars"
+                  :key="starIdx"
+                  class="review-star"
+                  :class="{ 'review-star-off': starChar === '☆' }"
+                >{{ starChar }}</text>
               </view>
             </view>
             <text class="review-time">{{ review.time }}</text>
           </view>
           <text class="review-content">{{ review.content }}</text>
         </view>
-        <view class="review-more-btn">
+        <view v-if="reviews.length" class="review-more-btn" @tap="onViewAllReviews">
           <text class="review-more-text">查看全部评价</text>
+        </view>
+        <view v-else-if="!reviewsLoading" class="review-empty">
+          <text class="review-empty-text">暂无评价</text>
         </view>
       </view>
 
@@ -196,6 +207,8 @@
 <script>
 import { onLoad } from '@dcloudio/uni-app'
 import { getTeacherDetail } from '@/api/teacher'
+import { getReviewList } from '@/api/review'
+import { buildStarChars, formatRelativeDay } from '@/utils/formatters'
 import { followTeacher, unfollowTeacher, isTeacherFollowed } from '@/services/followedTeachers'
 
 export default {
@@ -207,26 +220,9 @@ export default {
       courses: [],
       isFav: false,
       loading: true,
-      reviews: [
-        {
-          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&h=60&fit=crop&crop=face',
-          name: '学习达人',
-          content: '老师讲课非常有感染力，把枯燥的理论知识讲得生动有趣。答题方法真的很实用，强烈推荐！',
-          time: '3天前',
-        },
-        {
-          avatar: 'https://images.unsplash.com/photo-1599566159882-aa1b6c5f0c3a?w=60&h=60&fit=crop&crop=face',
-          name: '考研上岸君',
-          content: '跟着老师学了一个月，成绩提升明显！押题命中率真的很高，强烈推荐！',
-          time: '1周前',
-        },
-        {
-          avatar: 'https://images.unsplash.com/photo-1607746755531-e42f2c35a319?w=60&h=60&fit=crop&crop=face',
-          name: '勤奋小张',
-          content: '老师耐心负责，每次课后都会答疑，知识点梳理得很清晰，配套资料也很全面。',
-          time: '2周前',
-        },
-      ],
+      reviewCount: 0,
+      reviews: [],
+      reviewsLoading: true,
       qualifications: [],
       teachingTags: [],
     }
@@ -260,6 +256,7 @@ export default {
       this.teacherId = Number(options.teacher_id)
       this.isFav = isTeacherFollowed(this.teacherId)
       this.loadData()
+      this.loadReviews()
     }
   },
 
@@ -278,6 +275,36 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    // 学员评价：区块只取前 3 条，头部条数用列表返回的 total（与概览接口同口径，省一次请求）
+    async loadReviews() {
+      try {
+        const data = await getReviewList({ teacher_id: this.teacherId, page: 1, page_size: 3 })
+        this.reviewCount = data.total || 0
+        this.reviews = (data.items || []).map((item) => {
+          const name = item.user_nickname || '匿名用户'
+          return {
+            avatar: item.user_avatar || '',
+            name,
+            initial: name.slice(0, 1),
+            content: item.content,
+            time: formatRelativeDay(item.created_at),
+            stars: buildStarChars(item.rating),
+          }
+        })
+      } catch {
+        // 降级为空状态，不阻塞老师详情主体渲染
+        this.reviews = []
+        this.reviewCount = 0
+      } finally {
+        this.reviewsLoading = false
+      }
+    },
+
+    onViewAllReviews() {
+      const title = encodeURIComponent(this.teacher.name || '学员评价')
+      uni.navigateTo({ url: `/pages/review/list?teacher_id=${this.teacherId}&title=${title}` })
     },
 
     // 资质认证：接口返回 [{name, sub}]，循环分配图标与配色保持原型风格
@@ -924,6 +951,32 @@ export default {
 .review-more-text {
   font-size: 26rpx;
   color: $text-secondary;
+}
+
+.review-star-off {
+  color: #dfe6e9;
+}
+
+.review-avatar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $primary-soft;
+}
+
+.review-avatar-char {
+  font-size: 24rpx;
+  color: $primary;
+}
+
+.review-empty {
+  padding: 32rpx 0;
+  text-align: center;
+}
+
+.review-empty-text {
+  font-size: 24rpx;
+  color: $text-muted;
 }
 
 /* === 底部操作栏 === */

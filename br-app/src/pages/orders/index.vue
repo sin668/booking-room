@@ -228,6 +228,14 @@
                 {{ cancellingOrderId === order.id ? '取消中' : '取消' }}
               </text>
             </view>
+            <!-- 已评价的订单仍展示入口，由发表页的进入预判与后端 400 兜底，避免列表页逐单查评价 -->
+            <view
+              v-if="order.status === 'completed'"
+              class="action-btn"
+              @tap="goReview(order)"
+            >
+              <text class="action-btn-text">去评价</text>
+            </view>
             <view
               v-if="order.status === 'completed'"
               class="action-btn"
@@ -531,6 +539,10 @@ export default {
         return
       }
       uni.switchTab({ url: '/pages/booking/index' })
+    },
+
+    goReview(order) {
+      uni.navigateTo({ url: `/pages/review/submit?booking_id=${order.id}` })
     },
 
     goBooking() {

@@ -53,8 +53,8 @@
         <view class="stats-row">
           <view class="stats-item">
             <text class="star-icon">★</text>
-            <text class="stats-value">{{ course.rating || '0' }}</text>
-            <text class="stats-sub">({{ course.review_count || 0 }})</text>
+            <text class="stats-value">{{ reviewAverageText }}</text>
+            <text class="stats-sub">({{ reviewSummary.count }})</text>
           </view>
           <view class="stats-item">
             <text class="stats-text">{{ course.enrollment_count || 0 }}人已学</text>
@@ -192,8 +192,9 @@
           </view>
           <view class="review-summary">
             <text class="star-icon sm">★</text>
-            <text class="review-avg">{{ course.rating || '0' }}</text>
-            <text class="review-count">({{ course.review_count || 0 }}条)</text>
+            <text class="review-avg">{{ reviewAverageText }}</text>
+            <text class="review-count">({{ reviewSummary.count }}条)</text>
+            <text class="review-all" @tap="onViewAllReviews">查看全部 ›</text>
           </view>
         </view>
         <view
@@ -202,20 +203,27 @@
           :class="['review-item', idx < reviews.length - 1 ? 'bordered' : '']"
         >
           <view class="review-top">
-            <view class="review-avatar-ph" />
+            <image v-if="review.avatar" class="review-avatar-ph" :src="review.avatar" mode="aspectFill" />
+            <view v-else class="review-avatar-ph review-avatar-fallback">
+              <text class="review-avatar-char">{{ review.initial }}</text>
+            </view>
             <view class="review-info">
               <text class="review-name">{{ review.name }}</text>
               <view class="review-stars">
                 <text
-                  v-for="s in review.rating"
-                  :key="s"
+                  v-for="(starChar, starIdx) in review.stars"
+                  :key="starIdx"
                   class="star-icon xs"
-                >★</text>
+                  :class="{ 'star-icon-off': starChar === '☆' }"
+                >{{ starChar }}</text>
               </view>
             </view>
             <text class="review-date">{{ review.date }}</text>
           </view>
           <text class="review-content">{{ review.content }}</text>
+        </view>
+        <view v-if="!reviewsLoading && !reviews.length" class="review-empty">
+          <text class="review-empty-text">暂无评价</text>
         </view>
       </view>
 
@@ -279,6 +287,8 @@
 
 <script>
 import { getCourseDetail } from '@/api/training'
+import { getReviewList, getReviewSummary } from '@/api/review'
+import { buildStarChars, formatRelativeDay } from '@/utils/formatters'
 import { followCourse, isCourseFollowed, unfollowCourse } from '@/services/followedCourses'
 
 export default {
@@ -294,14 +304,19 @@ export default {
       loading: true,
       isFav: false,
       lessonsExpanded: false,
-      reviews: [
-        { name: '张同学', rating: 5, content: '课程内容很充实，老师讲解很到位。', date: '2025-12-01' },
-        { name: '李同学', rating: 4, content: '整体不错，希望能增加更多实操环节。', date: '2025-11-20' },
-      ],
+      reviews: [],
+      reviewsLoading: true,
+      reviewSummary: { average: 0, count: 0 },
     }
   },
 
   computed: {
+    // 均分与条数取自概览接口：course schema 不返回 review_count，
+    // 且只应统计已通过审核的评价，course.rating 的口径与之不一致
+    reviewAverageText() {
+      return Number(this.reviewSummary.average || 0).toFixed(1)
+    },
+
     displayLessons() {
       if (this.lessonsExpanded || this.lessons.length <= 4) return this.lessons
       return this.lessons.slice(0, 4)
@@ -327,6 +342,7 @@ export default {
       this.courseId = Number(options.course_id)
       this.isFav = isCourseFollowed(this.courseId)
       this.loadCourseDetail()
+      this.loadReviews()
     }
   },
 
@@ -347,6 +363,39 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    // 学员评价：区块只取前 3 条，均分与条数走概览接口
+    async loadReviews() {
+      try {
+        const [list, summary] = await Promise.all([
+          getReviewList({ course_id: this.courseId, page: 1, page_size: 3 }),
+          getReviewSummary({ course_id: this.courseId }),
+        ])
+        this.reviewSummary = summary || { average: 0, count: 0 }
+        this.reviews = (list?.items || []).map((item) => {
+          const name = item.user_nickname || '匿名用户'
+          return {
+            avatar: item.user_avatar || '',
+            name,
+            initial: name.slice(0, 1),
+            content: item.content,
+            date: formatRelativeDay(item.created_at),
+            stars: buildStarChars(item.rating),
+          }
+        })
+      } catch {
+        // 降级为空状态，不阻塞课程详情主体渲染
+        this.reviews = []
+        this.reviewSummary = { average: 0, count: 0 }
+      } finally {
+        this.reviewsLoading = false
+      }
+    },
+
+    onViewAllReviews() {
+      const title = encodeURIComponent(this.course.name || '学员评价')
+      uni.navigateTo({ url: `/pages/review/list?course_id=${this.courseId}&title=${title}` })
     },
 
     onBack() {
@@ -1008,6 +1057,37 @@ export default {
   border-radius: 50%;
   background: $surface-soft;
   flex-shrink: 0;
+}
+
+.review-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.review-avatar-char {
+  font-size: 24rpx;
+  color: $text-secondary;
+}
+
+.star-icon-off {
+  color: #dfe6e9;
+}
+
+.review-all {
+  margin-left: 12rpx;
+  font-size: 22rpx;
+  color: $primary;
+}
+
+.review-empty {
+  padding: 32rpx 0 12rpx;
+  text-align: center;
+}
+
+.review-empty-text {
+  font-size: 24rpx;
+  color: $text-muted;
 }
 
 .review-info {

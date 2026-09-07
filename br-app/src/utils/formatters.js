@@ -160,3 +160,54 @@ export function formatCourseEndDate(endDate) {
   if (!datePart) return ''
   return `于 ${datePart} 结课`
 }
+
+/**
+ * 把评分渲染为 5 个星级字符（★ 实心 / ☆ 空心），入参越界与非数字均被钳制
+ *
+ * 返回数组而非字符串，便于逐颗上色（如空心星置灰）；只需纯文本时 `.join('')` 即可。
+ * 在 JS 侧算好比较结果，避免小程序模板出现 `<` `>` 字符（BUG-20）。
+ * @param {number|string|null|undefined} rating - 评分，支持小数（四舍五入到整星）
+ * @returns {string[]} 长度为 5 的星级字符数组
+ */
+export function buildStarChars(rating) {
+  const filled = Math.min(5, Math.max(0, Math.round(Number(rating) || 0)))
+  return [1, 2, 3, 4, 5].map((star) => (star <= filled ? '★' : '☆'))
+}
+
+/**
+ * 把时间格式化为相对日期文案，如 "今天" / "昨天" / "3天前"，超过 30 天回落到日期
+ * @param {string|null|undefined} value - ISO 时间字符串
+ * @returns {string} 相对日期文案
+ */
+export function formatRelativeDay(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+
+  const days = Math.floor((Date.now() - date.getTime()) / 86400000)
+  if (days <= 0) return '今天'
+  if (days === 1) return '昨天'
+  if (days < 30) return `${days}天前`
+  return formatDateSlash(value)
+}
+
+/**
+ * 把后端错误响应归一为可直接 toast 的中文文案
+ * 兼容 FastAPI 的 `{ detail: "..." }`、422 校验错误数组与普通 Error 对象
+ * @param {*} error - request 失败时 reject 的响应体或 Error
+ * @param {string} fallback - 无法解析时的兜底文案
+ * @returns {string} 错误文案
+ */
+export function formatErrorDetail(error, fallback = '操作失败') {
+  const detail = error?.detail
+  if (typeof detail === 'string' && detail.trim()) return detail
+  if (Array.isArray(detail)) {
+    const message = detail
+      .map((item) => item?.msg || item?.message || '')
+      .filter(Boolean)
+      .join('；')
+    if (message) return message
+  }
+  const message = error?.message || error?.msg
+  return typeof message === 'string' && message.trim() ? message : fallback
+}

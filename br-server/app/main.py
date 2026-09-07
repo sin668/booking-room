@@ -34,6 +34,7 @@ from app.api.routes.coupon import router as coupon_router
 from app.api.routes.booking_verification import router as booking_verification_router
 from app.api.routes.cities import router as cities_router
 from app.api.routes.notification import router as notification_router
+from app.api.routes.review import router as review_router
 from app.api.routes.room_follow import router as room_follow_router
 from app.api.routes.teacher import router as teacher_router
 from app.api.routes.seat import router as seat_router
@@ -393,6 +394,7 @@ app.include_router(course_booking_router)
 app.include_router(booking_verification_router)
 app.include_router(wallet_router)
 app.include_router(notification_router)
+app.include_router(review_router)
 app.include_router(room_follow_router)
 app.include_router(teacher_router)
 

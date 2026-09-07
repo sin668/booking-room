@@ -8,12 +8,12 @@
 
 ## 2. 后端 C 端 schema 与 service
 
-- [ ] 2.1 新建 `app/schemas/review.py`：`ReviewCreate`（`booking_id`、`rating` ge=1 le=5、`content` min_length=1 max_length=500、`images` 最多 9 项、`tags` 最多 5 项、`is_anonymous`）、`ReviewItem`（含昵称/头像/星级/内容/图片/标签/发表时间/课程名/老师名/机构回复；`images` 与 `tags` 用 `field_validator(mode="before")` 把 `None` 归一为 `[]`）、`ReviewPage`（`items`/`total`/`page`/`page_size`）、`ReviewSummary`（`average`/`count`/`positive_rate`/`distribution`）；全部 `model_config = ConfigDict(from_attributes=True)`
-- [ ] 2.2 新建 `app/services/review_service.py`，实现 `list_reviews`（按 `course_id`/`teacher_id`/`mine`/`booking_id`/评分档位/仅看有图/排序 过滤 + 分页；`mine=False` 时只取 `approved`）、`get_summary`（只统计 `approved`，`AVG`+`COUNT`+`GROUP BY rating`，无数据时返回全 0 而非 404）、`create_review`（校验订单存在/归属/`status == BookingStatus.COMPLETED.value`/未评价，从 `Booking` 抄 `course_id` 与 `teacher_id`，捕获 `IntegrityError` 转 400「该订单已评价」）
-- [ ] 2.3 在 `review_service` 中实现批量关联查询：用 `select(...).where(id.in_(ids))` 一次性取回课程名、老师名、用户昵称与头像，组装 dict map 后填充 `ReviewItem`（规避 BUG-16/26 的 `MissingGreenlet`）
-- [ ] 2.4 在 `review_service` 中实现匿名脱敏：非 `mine` 的公开查询把 `is_anonymous=True` 的记录昵称替换为「匿名用户」、头像置空
-- [ ] 2.5 新建 `app/api/routes/review.py`：`GET /api/v1/reviews`（`get_optional_current_user_id`；`page_size` 用 `Query(20, ge=1, le=50)`；`mine=true` 时无登录凭证返回 401）、`GET /api/v1/reviews/summary`（`course_id` 与 `teacher_id` 至少传一个，否则 422）、`POST /api/v1/reviews`（`get_current_user_id`）；路由路径**不带尾部斜杠**（BUG-22）
-- [ ] 2.6 在 `app/main.py` 按既有风格 import 并 `include_router(review_router)`（不传参，prefix 写在 router 上）
+- [x] 2.1 新建 `app/schemas/review.py`：`ReviewCreate`（`booking_id`、`rating` ge=1 le=5、`content` min_length=1 max_length=500、`images` 最多 9 项、`tags` 最多 5 项、`is_anonymous`）、`ReviewItem`（含昵称/头像/星级/内容/图片/标签/发表时间/课程名/老师名/机构回复；`images` 与 `tags` 用 `field_validator(mode="before")` 把 `None` 归一为 `[]`）、`ReviewPage`（`items`/`total`/`page`/`page_size`）、`ReviewSummary`（`average`/`count`/`positive_rate`/`distribution`）；全部 `model_config = ConfigDict(from_attributes=True)`
+- [x] 2.2 新建 `app/services/review_service.py`，实现 `list_reviews`（按 `course_id`/`teacher_id`/`mine`/`booking_id`/评分档位/仅看有图/排序 过滤 + 分页；`mine=False` 时只取 `approved`）、`get_summary`（只统计 `approved`，`AVG`+`COUNT`+`GROUP BY rating`，无数据时返回全 0 而非 404）、`create_review`（校验订单存在/归属/`status == BookingStatus.COMPLETED.value`/未评价，从 `Booking` 抄 `course_id` 与 `teacher_id`，捕获 `IntegrityError` 转 400「该订单已评价」）
+- [x] 2.3 在 `review_service` 中实现批量关联查询：用 `select(...).where(id.in_(ids))` 一次性取回课程名、老师名、用户昵称与头像，组装 dict map 后填充 `ReviewItem`（规避 BUG-16/26 的 `MissingGreenlet`）
+- [x] 2.4 在 `review_service` 中实现匿名脱敏：非 `mine` 的公开查询把 `is_anonymous=True` 的记录昵称替换为「匿名用户」、头像置空
+- [x] 2.5 新建 `app/api/routes/review.py`：`GET /api/v1/reviews`（`get_optional_current_user_id`；`page_size` 用 `Query(20, ge=1, le=50)`；`mine=true` 时无登录凭证返回 401）、`GET /api/v1/reviews/summary`（`course_id` 与 `teacher_id` 至少传一个，否则 422）、`POST /api/v1/reviews`（`get_current_user_id`）；路由路径**不带尾部斜杠**（BUG-22）
+- [x] 2.6 在 `app/main.py` 按既有风格 import 并 `include_router(review_router)`（不传参，prefix 写在 router 上）
 
 ## 3. 后端审核 API 与评分聚合
 
@@ -33,9 +33,9 @@
 
 ## 5. 后端测试
 
-- [ ] 5.1 新建 `tests/test_api_review.py`：自定义 `auth_client` fixture（覆盖 `get_current_user_id` 返回固定 UUID，照抄 `tests/test_api_coupon.py:18-27`）；覆盖发表成功、订单未完成被拒、评价他人订单被拒、重复评价被拒（400）、rating 越界 422、content 过长/为空 422、图片超 9 张 422、未登录 401
-- [ ] 5.2 在 `tests/test_api_review.py` 中补充查询与可见性用例：按课程过滤、按老师过滤、按 `booking_id` 查询本人评价、公开列表只返回 `approved`、`mine=true` 返回本人全部状态且携带驳回理由、`mine=true` 不泄露他人评价、匿名脱敏（公开列表脱敏 / 本人查询不脱敏）、未登录可读公开列表、未登录查 `mine` 返回 401
-- [ ] 5.3 在 `tests/test_api_review.py` 中补充筛选/排序/分页/概览用例：好评档（4-5 星）、差评档（1-2 星）、仅看有图、按评分最高排序、`page_size=100` 返回 422、分页 total 一致性、概览均分与分布计算、概览排除未审核、无评价时概览返回全 0 且 HTTP 200、概览缺维度参数返回 422
+- [x] 5.1 新建 `tests/test_api_review.py`：自定义 `auth_client` fixture（覆盖 `get_current_user_id` 返回固定 UUID，照抄 `tests/test_api_coupon.py:18-27`）；覆盖发表成功、订单未完成被拒、评价他人订单被拒、重复评价被拒（400）、rating 越界 422、content 过长/为空 422、图片超 9 张 422、未登录 401
+- [x] 5.2 在 `tests/test_api_review.py` 中补充查询与可见性用例：按课程过滤、按老师过滤、按 `booking_id` 查询本人评价、公开列表只返回 `approved`、`mine=true` 返回本人全部状态且携带驳回理由、`mine=true` 不泄露他人评价、匿名脱敏（公开列表脱敏 / 本人查询不脱敏）、未登录可读公开列表、未登录查 `mine` 返回 401
+- [x] 5.3 在 `tests/test_api_review.py` 中补充筛选/排序/分页/概览用例：好评档（4-5 星）、差评档（1-2 星）、仅看有图、按评分最高排序、`page_size=100` 返回 422、分页 total 一致性、概览均分与分布计算、概览排除未审核、无评价时概览返回全 0 且 HTTP 200、概览缺维度参数返回 422
 - [ ] 5.4 新建 `tests/test_api_admin_review.py`：覆盖后台列表按状态筛选、关键词搜索、匿名评价返回真实身份 + 匿名标记、通过（含 `reviewed_at.tzinfo is None` 断言，防 BUG-15/29 复发）、驳回缺理由 422、驳回带理由后 C 端公开列表不再出现但「我的评价」仍出现、重复通过幂等、不存在的评价 404、无权限 403、机构回复写入/覆盖/空白清空/超长 422
 - [ ] 5.5 在 `tests/test_api_admin_review.py` 中补充聚合回写用例：首次通过覆盖 seed 评分、只统计 `approved`、驳回唯一一条已通过评价后归 0、老师聚合独立于课程、`teacher_id` 为空的评价不导致聚合报错
 - [ ] 5.6 补充上传 scope 用例（可并入既有上传测试文件）：`review` scope 上传成功且 `object_key` 前缀为 `images/review/`、`review` 超 5MB 返回 422、C 端入口以 `common` scope 上传返回 422、未登录以 `review` scope 上传返回 401

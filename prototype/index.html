@@ -192,7 +192,7 @@
                 <span class="text-white/90 ml-2">自习室预约</span>
             </h1>
             <p class="text-white/50 text-lg mb-8 max-w-xl mx-auto">
-                共享自习室预约+培训课程微信小程序 · 高保真原型设计 · 24个核心界面
+                共享自习室预约+培训课程微信小程序 · 高保真原型设计 · 27个核心界面
             </p>
 
             <!-- Stats -->
@@ -206,7 +206,11 @@
                     <div class="text-xs text-white/40 mt-1">培训模块</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-2xl font-bold text-[#00B894]">4</div>
+                    <div class="text-2xl font-bold text-[#FFB400]">2</div>
+                    <div class="text-xs text-white/40 mt-1">评价模块</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-2xl font-bold text-[#00B894]">5</div>
                     <div class="text-xs text-white/40 mt-1">管理后台</div>
                 </div>
                 <div class="stat-card">
@@ -214,7 +218,7 @@
                     <div class="text-xs text-white/40 mt-1">iPhone 17 Pro</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-2xl font-bold text-[#E17055]">24</div>
+                    <div class="text-2xl font-bold text-[#E17055]">27</div>
                     <div class="text-xs text-white/40 mt-1">总页面数</div>
                 </div>
             </div>
@@ -592,6 +596,64 @@
     <!-- Divider -->
     <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
 
+    <!-- Section: Review Module -->
+    <section class="px-6 py-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-[#FFB400]/20 flex items-center justify-center">
+                    <i class="fas fa-star-half-stroke text-[#FFB400] text-sm"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-white/90">学员评价模块</h2>
+                <span class="badge bg-[#FFB400]/20 text-[#FFB400]">Review</span>
+            </div>
+            <p class="text-white/30 text-sm mb-8 ml-11">课程结束后的星级打分与图文评价，以及聚合展示的课程评价列表（含评分分布、标签筛选、机构回复与追评）</p>
+
+            <!-- Flow arrows -->
+            <div class="flex items-center justify-center gap-2 mb-8 text-white/20 text-xs flex-wrap">
+                <span class="bg-white/5 px-3 py-1 rounded-full">订单完成</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">发表评价</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">后台审核</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">评价列表展示</span>
+            </div>
+
+            <div class="grid-container">
+                <!-- Review Submit -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="review-submit.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">发表评价</div>
+                        <div class="text-white/30 text-xs mt-1">review-submit.html</div>
+                    </div>
+                </div>
+
+                <!-- Review List -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="review-list.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">课程评价列表</div>
+                        <div class="text-white/30 text-xs mt-1">review-list.html</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
+
     <!-- Section: Other Pages -->
     <section class="px-6 py-12">
         <div class="max-w-6xl mx-auto">
@@ -649,7 +711,7 @@
                 <h2 class="text-xl font-semibold text-white/90">管理后台</h2>
                 <span class="badge bg-[#00B894]/20 text-[#00B894]">Admin</span>
             </div>
-            <p class="text-white/30 text-sm mb-8 ml-11">培训模块管理后台界面，包含课程管理、课程编辑、老师管理与培训订单管理</p>
+            <p class="text-white/30 text-sm mb-8 ml-11">培训模块管理后台界面，包含课程管理、课程编辑、老师管理、培训订单管理与学员评价审核</p>
 
             <div class="space-y-12">
                 <!-- Admin Courses -->
@@ -721,6 +783,24 @@
                     <div class="page-label">
                         <div class="text-white/80 text-sm font-medium">培训订单管理</div>
                         <div class="text-white/30 text-xs mt-1">admin-training-orders.html</div>
+                    </div>
+                </div>
+
+                <!-- Admin Reviews -->
+                <div>
+                    <div class="desktop-frame mx-auto">
+                        <div class="desktop-titlebar">
+                            <div class="desktop-dot bg-red-400"></div>
+                            <div class="desktop-dot bg-yellow-400"></div>
+                            <div class="desktop-dot bg-green-400"></div>
+                        </div>
+                        <div class="desktop-screen">
+                            <iframe src="admin-reviews.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">学员评价审核</div>
+                        <div class="text-white/30 text-xs mt-1">admin-reviews.html</div>
                     </div>
                 </div>
             </div>

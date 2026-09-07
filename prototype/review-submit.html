@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>发表评价 - 去K书</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F6EF7',
+                        'primary-light': '#E8EDFF',
+                        'primary-dark': '#3A56D4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #F5F6FA;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* ===== iPhone 17 Pro device shell (393 x 852) ===== */
+        .device { width: 100%; max-width: 393px; height: 100vh; position: relative; flex-shrink: 0; }
+        .screen {
+            display: flex; flex-direction: column; height: 100%;
+            background: #F5F6FA; overflow: hidden; position: relative;
+        }
+        @media (min-width: 520px) {
+            body { background: #0f0f1a; align-items: center; padding: 28px 0; min-height: 100vh; overflow-y: auto; }
+            .device {
+                width: 393px; height: 852px; padding: 10px; border-radius: 54px;
+                background: linear-gradient(160deg, #34344a 0%, #14141f 100%);
+                box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 30px 80px rgba(0,0,0,.65), 0 0 60px rgba(79,110,247,.18);
+            }
+            .screen { height: 100%; border-radius: 44px; }
+        }
+
+        .scroll-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .press-effect:active { transform: scale(0.96); transition: transform 0.1s; }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { opacity: 0; animation: fadeInUp 0.45s ease forwards; }
+        .delay-1 { animation-delay: 0.05s; } .delay-2 { animation-delay: 0.12s; }
+        .delay-3 { animation-delay: 0.19s; } .delay-4 { animation-delay: 0.26s; }
+        .delay-5 { animation-delay: 0.33s; }
+
+        /* ===== Star rating ===== */
+        .star-btn {
+            background: none; border: none; cursor: pointer; padding: 2px;
+            color: #E1E5EF; font-size: 30px; line-height: 1;
+            transition: color 0.2s ease, transform 0.2s cubic-bezier(.34,1.56,.64,1);
+        }
+        .star-btn.on { color: #FFB400; }
+        .star-btn:hover { transform: scale(1.12); }
+        .star-btn:focus-visible { outline: 2px solid #4F6EF7; outline-offset: 3px; border-radius: 6px; }
+        @keyframes starPop { 0% { transform: scale(1); } 45% { transform: scale(1.32); } 100% { transform: scale(1); } }
+        .star-btn.pop { animation: starPop 0.32s ease; }
+
+        .star-sm { background: none; border: none; cursor: pointer; padding: 0; color: #E1E5EF; font-size: 15px; line-height: 1; transition: color .18s ease, transform .18s ease; }
+        .star-sm.on { color: #FFB400; }
+        .star-sm:hover { transform: scale(1.18); }
+        .star-sm:focus-visible { outline: 2px solid #4F6EF7; outline-offset: 2px; border-radius: 4px; }
+
+        /* ===== Tag chips ===== */
+        .chip {
+            padding: 6px 13px; border-radius: 999px; font-size: 12px; cursor: pointer;
+            background: #F5F6FA; color: #636E72; border: 1px solid transparent;
+            transition: all 0.18s ease; user-select: none; white-space: nowrap;
+        }
+        .chip:hover { background: #EEF1FA; }
+        .chip.on { background: #E8EDFF; color: #4F6EF7; border-color: rgba(79,110,247,.35); font-weight: 500; }
+        .chip.on-neg { background: #FFF1F0; color: #E4574C; border-color: rgba(228,87,76,.3); font-weight: 500; }
+        .chip:focus-visible { outline: 2px solid #4F6EF7; outline-offset: 2px; }
+
+        /* ===== iOS switch ===== */
+        .ios-switch { width: 46px; height: 28px; border-radius: 999px; background: #E1E5EF; position: relative; cursor: pointer; transition: background .25s ease; border: none; flex-shrink: 0; }
+        .ios-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .25s cubic-bezier(.4,0,.2,1); }
+        .ios-switch.on { background: #34C759; }
+        .ios-switch.on::after { transform: translateX(18px); }
+        .ios-switch:focus-visible { outline: 2px solid #4F6EF7; outline-offset: 2px; }
+
+        textarea, input { font-family: inherit; }
+        textarea:focus, input:focus { outline: none; }
+        textarea::placeholder, input::placeholder { color: #B2BEC3; }
+
+        /* ===== Upload tile ===== */
+        .up-thumb { width: 76px; height: 76px; border-radius: 14px; overflow: hidden; position: relative; flex-shrink: 0; }
+        .up-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .up-del { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; transition: background .18s ease; }
+        .up-del:hover { background: rgba(0,0,0,.75); }
+
+        /* ===== Success overlay ===== */
+        .overlay { position: absolute; inset: 0; background: rgba(15,15,26,.55); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 80; opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+        .overlay.show { opacity: 1; pointer-events: auto; }
+        @keyframes checkIn { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+        .overlay.show .dialog { animation: checkIn .4s cubic-bezier(.34,1.56,.64,1) forwards; }
+        .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="device">
+    <div class="screen">
+
+        <!-- ==================== iOS STATUS BAR ==================== -->
+        <div class="flex-shrink-0 bg-white h-11 flex items-center justify-between px-6 relative z-50">
+            <span class="font-semibold text-sm text-[#2D3436]">9:41</span>
+            <div class="w-[120px] h-[34px] bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-1"></div>
+            <div class="flex items-center gap-1.5 text-sm text-[#2D3436]">
+                <i class="fa-solid fa-signal text-xs"></i>
+                <i class="fa-solid fa-wifi text-xs"></i>
+                <i class="fa-solid fa-battery-full text-xs"></i>
+            </div>
+        </div>
+
+        <!-- ==================== NAV BAR ==================== -->
+        <div class="flex-shrink-0 bg-white h-12 flex items-center px-4 border-b border-gray-50 relative z-40">
+            <a href="orders.html" aria-label="返回" class="w-9 h-9 -ml-2 flex items-center justify-center rounded-full cursor-pointer active:bg-gray-50 transition">
+                <i class="fas fa-chevron-left text-[#2D3436] text-base"></i>
+            </a>
+            <span class="absolute left-1/2 -translate-x-1/2 font-semibold text-base text-[#2D3436]">发表评价</span>
+            <button class="ml-auto text-xs text-[#B2BEC3] cursor-pointer hover:text-primary transition px-1" aria-label="评价规则说明">
+                <i class="far fa-circle-question mr-1"></i>规则
+            </button>
+        </div>
+
+        <!-- ==================== SCROLL CONTENT ==================== -->
+        <main class="scroll-area">
+
+            <!-- 订单/课程信息 -->
+            <section class="mx-4 mt-3 bg-white rounded-2xl p-3.5 shadow-sm animate-in delay-1">
+                <div class="flex items-center gap-3">
+                    <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+                        <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b5cb9?w=200&h=200&fit=crop" alt="考研政治冲刺班课程封面">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <h1 class="text-sm font-semibold text-[#2D3436] truncate">考研政治冲刺班</h1>
+                            <span class="bg-green-50 text-green-600 text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0">已完成</span>
+                        </div>
+                        <p class="text-[11px] text-[#636E72] mt-1 flex items-center gap-1.5">
+                            <img src="https://images.unsplash.com/photo-1568602471122-3b6f0c1c3f9a?w=60&h=60&fit=crop&crop=face" alt="李明华老师" class="w-4 h-4 rounded-full object-cover">
+                            李明华 老师 · 第 12 讲
+                        </p>
+                        <p class="text-[10px] text-[#B2BEC3] mt-1 flex items-center gap-1">
+                            <i class="far fa-clock text-[9px]"></i>2026-08-14 14:00-16:00 · 光谷培训室
+                        </p>
+                    </div>
+                </div>
+                <div class="border-t border-gray-50 mt-3 pt-2.5 flex items-center justify-between">
+                    <span class="text-[10px] text-[#B2BEC3] font-mono">订单号 TC202608140001</span>
+                    <span class="text-xs font-semibold text-primary">¥75.00</span>
+                </div>
+            </section>
+
+            <!-- 学习成果 -->
+            <section class="mx-4 mt-3 rounded-2xl p-4 shadow-sm bg-gradient-to-br from-[#4F6EF7] to-[#6C5CE7] text-white animate-in delay-1">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs font-medium text-white/85 flex items-center gap-1.5">
+                        <i class="fas fa-chart-line text-[11px]"></i>本次学习成果
+                    </p>
+                    <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">出勤率 100%</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+                    <div>
+                        <p class="text-lg font-bold">12<span class="text-[10px] font-normal text-white/70">/12</span></p>
+                        <p class="text-[10px] text-white/70 mt-0.5">完成课时</p>
+                    </div>
+                    <div class="border-x border-white/20">
+                        <p class="text-lg font-bold">26.5<span class="text-[10px] font-normal text-white/70">h</span></p>
+                        <p class="text-[10px] text-white/70 mt-0.5">累计时长</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold">+18%</p>
+                        <p class="text-[10px] text-white/70 mt-0.5">模考提升</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 综合评分 -->
+            <section class="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm animate-in delay-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-1 h-4 bg-primary rounded-full"></div>
+                    <h2 class="text-sm font-bold text-[#2D3436]">综合评分</h2>
+                    <span class="text-[10px] text-red-400 ml-0.5">*</span>
+                </div>
+                <div class="flex items-center gap-3 mt-3">
+                    <div id="mainStars" class="flex items-center gap-1.5" role="radiogroup" aria-label="综合评分，1 到 5 星"></div>
+                    <div class="flex-1">
+                        <p id="ratingText" class="text-sm font-semibold text-[#FFB400]">超出预期</p>
+                        <p id="ratingHint" class="text-[10px] text-[#B2BEC3] mt-0.5">老师讲解、课程安排都很棒</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-2xl font-bold text-[#2D3436] leading-none"><span id="ratingNum">5.0</span></p>
+                        <p class="text-[10px] text-[#B2BEC3] mt-1">分</p>
+                    </div>
+                </div>
+
+                <!-- 多维度评分 -->
+                <div class="border-t border-gray-50 mt-4 pt-3 space-y-2.5" id="dimGroup"></div>
+            </section>
+
+            <!-- 评价标签 -->
+            <section class="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm animate-in delay-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-1 h-4 bg-primary rounded-full"></div>
+                        <h2 class="text-sm font-bold text-[#2D3436]">选个标签</h2>
+                    </div>
+                    <span class="text-[10px] text-[#B2BEC3]">已选 <span id="tagCount" class="text-primary font-semibold">0</span>/5</span>
+                </div>
+                <div id="tagBox" class="flex flex-wrap gap-2 mt-3"></div>
+            </section>
+
+            <!-- 文字评价 -->
+            <section class="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm animate-in delay-3">
+                <div class="flex items-center justify-between mb-2">
+                    <label for="reviewText" class="flex items-center gap-2">
+                        <span class="w-1 h-4 bg-primary rounded-full"></span>
+                        <span class="text-sm font-bold text-[#2D3436]">写下你的评价</span>
+                    </label>
+                    <span id="charCount" class="text-[10px] text-[#B2BEC3]">0/500</span>
+                </div>
+                <textarea id="reviewText" rows="4" maxlength="500"
+                          placeholder="聊聊课程节奏、老师讲解、资料质量、上课环境…真实的评价能帮助更多同学（不少于 10 个字）"
+                          class="w-full bg-[#F8F9FC] rounded-xl p-3 text-sm text-[#2D3436] leading-relaxed resize-none border border-transparent focus:border-primary/40 transition"></textarea>
+                <!-- 快捷短语 -->
+                <div class="flex items-center gap-2 mt-2.5">
+                    <span class="text-[10px] text-[#B2BEC3] flex-shrink-0"><i class="fas fa-wand-magic-sparkles mr-1"></i>快捷填入</span>
+                    <div class="flex gap-1.5 overflow-x-auto hide-scrollbar">
+                        <button class="chip quick flex-shrink-0" data-text="老师讲解清晰，重点突出，课后答疑也很及时，收获很大！">讲解清晰</button>
+                        <button class="chip quick flex-shrink-0" data-text="配套资料很全，真题解析详细，跟着节奏复习效率提升明显。">资料齐全</button>
+                        <button class="chip quick flex-shrink-0" data-text="培训室安静舒适，座位宽敞，学习氛围很好，会再来。">环境不错</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 图片上传 -->
+            <section class="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm animate-in delay-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-1 h-4 bg-primary rounded-full"></div>
+                        <h2 class="text-sm font-bold text-[#2D3436]">添加图片</h2>
+                        <span class="text-[10px] text-[#B2BEC3]">最多 9 张</span>
+                    </div>
+                    <span class="text-[10px] text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full"><i class="fas fa-gift mr-1"></i>晒图 +10 积分</span>
+                </div>
+                <div id="upBox" class="flex flex-wrap gap-2.5"></div>
+            </section>
+
+            <!-- 隐私与开关 -->
+            <section class="mx-4 mt-3 bg-white rounded-2xl shadow-sm overflow-hidden animate-in delay-4">
+                <div class="flex items-center justify-between px-4 py-3.5">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <i class="fas fa-user-secret text-primary text-xs"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-[#2D3436]">匿名评价</p>
+                            <p class="text-[10px] text-[#B2BEC3] mt-0.5">昵称将显示为「匿名学员」，头像隐藏</p>
+                        </div>
+                    </div>
+                    <button id="anonSwitch" class="ios-switch" role="switch" aria-checked="false" aria-label="匿名评价"></button>
+                </div>
+                <div class="border-t border-gray-50 flex items-center justify-between px-4 py-3.5">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center">
+                            <i class="fas fa-reply text-green-500 text-xs"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-[#2D3436]">允许机构回复</p>
+                            <p class="text-[10px] text-[#B2BEC3] mt-0.5">开启后可收到老师的官方回复与感谢</p>
+                        </div>
+                    </div>
+                    <button id="replySwitch" class="ios-switch on" role="switch" aria-checked="true" aria-label="允许机构回复"></button>
+                </div>
+                <div class="border-t border-gray-50 px-4 py-3 bg-[#FAFBFE]">
+                    <p class="text-[10px] text-[#B2BEC3] leading-relaxed">
+                        <i class="fas fa-shield-halved text-primary mr-1"></i>
+                        评价将经过审核后展示，请勿包含广告、联系方式或不实内容。发布即代表同意
+                        <a href="#" class="text-primary">《用户评价规范》</a>
+                    </p>
+                </div>
+            </section>
+
+            <div class="h-5"></div>
+        </main>
+
+        <!-- ==================== BOTTOM ACTION BAR ==================== -->
+        <div class="flex-shrink-0 bg-white border-t border-gray-100 px-4 pt-3 z-40">
+            <div class="flex items-center gap-3">
+                <div class="flex-shrink-0">
+                    <p class="text-[10px] text-[#B2BEC3]">预计可得</p>
+                    <p class="text-sm font-bold text-orange-500 flex items-center gap-1">
+                        <i class="fas fa-coins text-xs"></i><span id="pointTotal">30</span> 积分
+                    </p>
+                </div>
+                <button id="submitBtn"
+                        class="flex-1 bg-primary text-white rounded-full py-3 text-sm font-semibold shadow-lg shadow-primary/25 active:bg-primary-dark transition flex items-center justify-center gap-2 cursor-pointer disabled:bg-[#C7D0F5] disabled:shadow-none disabled:cursor-not-allowed">
+                    <span id="submitText">提交评价</span>
+                </button>
+            </div>
+            <div class="h-[26px] flex items-end justify-center pb-2">
+                <div class="w-[134px] h-[5px] bg-black/20 rounded-full"></div>
+            </div>
+        </div>
+
+        <!-- ==================== SUCCESS OVERLAY ==================== -->
+        <div id="overlay" class="overlay">
+            <div class="dialog bg-white rounded-3xl px-7 py-8 w-[280px] text-center shadow-2xl">
+                <div class="w-16 h-16 mx-auto rounded-full bg-green-50 flex items-center justify-center">
+                    <i class="fas fa-check text-green-500 text-2xl"></i>
+                </div>
+                <h3 class="text-base font-bold text-[#2D3436] mt-4">评价提交成功</h3>
+                <p class="text-xs text-[#636E72] mt-2 leading-relaxed">
+                    我们将在 <span class="text-primary font-medium">2 小时内</span> 完成审核，<br>审核通过后会展示在课程详情页
+                </p>
+                <div class="bg-orange-50 rounded-xl px-3 py-2.5 mt-4 flex items-center justify-center gap-1.5">
+                    <i class="fas fa-coins text-orange-500 text-xs"></i>
+                    <span class="text-xs text-orange-600 font-medium">已获得 30 积分奖励</span>
+                </div>
+                <a href="review-list.html" class="block w-full bg-primary text-white rounded-full py-2.5 text-sm font-semibold mt-4 cursor-pointer active:bg-primary-dark transition">查看课程评价</a>
+                <a href="orders.html" class="block w-full text-[#636E72] text-xs mt-3 py-1 cursor-pointer hover:text-primary transition">返回订单列表</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* ==================== 综合评分 ==================== */
+    const RATING_META = [
+        { text: '很失望',   hint: '课程与预期差距较大', color: '#E4574C' },
+        { text: '不太满意', hint: '还有较多可以改进的地方', color: '#F39C12' },
+        { text: '一般般',   hint: '基本符合预期，中规中矩', color: '#F39C12' },
+        { text: '比较满意', hint: '整体不错，值得推荐', color: '#FFB400' },
+        { text: '超出预期', hint: '老师讲解、课程安排都很棒', color: '#FFB400' }
+    ];
+    let mainScore = 5;
+    const mainStars = document.getElementById('mainStars');
+    const ratingText = document.getElementById('ratingText');
+    const ratingHint = document.getElementById('ratingHint');
+    const ratingNum = document.getElementById('ratingNum');
+
+    function renderMainStars() {
+        mainStars.innerHTML = '';
+        for (let i = 1; i <= 5; i++) {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'star-btn' + (i <= mainScore ? ' on' : '');
+            b.setAttribute('role', 'radio');
+            b.setAttribute('aria-checked', i === mainScore ? 'true' : 'false');
+            b.setAttribute('aria-label', i + ' 星');
+            b.innerHTML = '<i class="fas fa-star"></i>';
+            b.onclick = () => { setMainScore(i, b); };
+            mainStars.appendChild(b);
+        }
+    }
+    function setMainScore(score, btnEl) {
+        mainScore = score;
+        renderMainStars();
+        const meta = RATING_META[score - 1];
+        ratingText.textContent = meta.text;
+        ratingText.style.color = meta.color;
+        ratingHint.textContent = meta.hint;
+        ratingNum.textContent = score.toFixed(1);
+        const nodes = mainStars.querySelectorAll('.star-btn');
+        if (btnEl) {
+            const idx = score - 1;
+            nodes[idx].classList.add('pop');
+            setTimeout(() => nodes[idx].classList.remove('pop'), 340);
+        }
+        renderTags();
+        validate();
+    }
+
+    /* ==================== 多维度评分 ==================== */
+    const DIMS = [
+        { key: 'teach',  label: '教学质量', icon: 'fa-chalkboard-user', color: 'text-primary',   score: 5 },
+        { key: 'content',label: '课程内容', icon: 'fa-book-open',       color: 'text-[#6C5CE7]', score: 5 },
+        { key: 'service',label: '老师态度', icon: 'fa-face-smile',      color: 'text-orange-500',score: 4 },
+        { key: 'room',   label: '上课环境', icon: 'fa-couch',           color: 'text-green-500', score: 5 },
+        { key: 'value',  label: '性价比',   icon: 'fa-tags',            color: 'text-red-400',   score: 4 }
+    ];
+    const dimGroup = document.getElementById('dimGroup');
+
+    function renderDims() {
+        dimGroup.innerHTML = '';
+        DIMS.forEach((dim, di) => {
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-2.5';
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += '<button type="button" class="star-sm' + (i <= dim.score ? ' on' : '') +
+                    '" data-dim="' + di + '" data-val="' + i + '" aria-label="' + dim.label + ' ' + i + ' 星"><i class="fas fa-star"></i></button>';
+            }
+            row.innerHTML =
+                '<i class="fas ' + dim.icon + ' ' + dim.color + ' text-xs w-4 text-center"></i>' +
+                '<span class="text-xs text-[#636E72] w-16">' + dim.label + '</span>' +
+                '<div class="flex items-center gap-1 flex-1">' + stars + '</div>' +
+                '<span class="text-xs font-semibold text-[#2D3436] w-7 text-right" id="dimVal-' + di + '">' + dim.score.toFixed(1) + '</span>';
+            dimGroup.appendChild(row);
+        });
+        dimGroup.querySelectorAll('.star-sm').forEach(btn => {
+            btn.onclick = () => {
+                const di = +btn.dataset.dim, val = +btn.dataset.val;
+                DIMS[di].score = val;
+                dimGroup.querySelectorAll('.star-sm[data-dim="' + di + '"]').forEach(b => {
+                    b.classList.toggle('on', +b.dataset.val <= val);
+                });
+                document.getElementById('dimVal-' + di).textContent = val.toFixed(1);
+            };
+        });
+    }
+
+    /* ==================== 评价标签（随评分变化） ==================== */
+    const TAGS_POS = ['讲解清晰', '重点突出', '答疑及时', '资料齐全', '节奏适中', '互动性强', '案例生动', '环境安静', '座位舒适', '性价比高', '收获很大', '会再报名'];
+    const TAGS_NEG = ['进度太快', '内容偏浅', '答疑不及时', '资料缺失', '设备问题', '隔音较差', '座位拥挤', '性价比一般', '与描述不符'];
+    const selected = new Set();
+    const tagBox = document.getElementById('tagBox');
+    const tagCount = document.getElementById('tagCount');
+
+    function renderTags() {
+        const neg = mainScore <= 2;
+        const pool = neg ? TAGS_NEG : TAGS_POS;
+        tagBox.innerHTML = '';
+        pool.forEach(t => {
+            const el = document.createElement('button');
+            el.type = 'button';
+            el.className = 'chip' + (selected.has(t) ? (neg ? ' on-neg' : ' on') : '');
+            el.textContent = t;
+            el.setAttribute('aria-pressed', selected.has(t) ? 'true' : 'false');
+            el.onclick = () => {
+                if (selected.has(t)) { selected.delete(t); }
+                else if (selected.size >= 5) {
+                    el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-3px)' }, { transform: 'translateX(3px)' }, { transform: 'translateX(0)' }], { duration: 220 });
+                    return;
+                } else { selected.add(t); }
+                renderTags();
+            };
+            tagBox.appendChild(el);
+        });
+        tagCount.textContent = selected.size;
+    }
+
+    /* ==================== 图片上传 ==================== */
+    const IMGS = [
+        'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1517842645767-c639042777db?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=200&h=200&fit=crop'
+    ];
+    const CANDIDATES = [
+        'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1454165184704-b8c9c3c2c94a?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=200&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=200&h=200&fit=crop'
+    ];
+    let photos = IMGS.slice();
+    const upBox = document.getElementById('upBox');
+
+    function renderUploads() {
+        upBox.innerHTML = '';
+        photos.forEach((src, i) => {
+            const d = document.createElement('div');
+            d.className = 'up-thumb';
+            d.innerHTML = '<img src="' + src + '" alt="评价图片 ' + (i + 1) + '">' +
+                '<button type="button" class="up-del" aria-label="删除图片 ' + (i + 1) + '"><i class="fas fa-xmark"></i></button>';
+            d.querySelector('.up-del').onclick = () => { photos.splice(i, 1); renderUploads(); updatePoints(); };
+            upBox.appendChild(d);
+        });
+        if (photos.length < 9) {
+            const add = document.createElement('button');
+            add.type = 'button';
+            add.className = 'w-[76px] h-[76px] rounded-[14px] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary-light/40 transition';
+            add.setAttribute('aria-label', '添加图片');
+            add.innerHTML = '<i class="fas fa-camera text-gray-300 text-base"></i><span class="text-[10px] text-[#B2BEC3] mt-1">' + photos.length + '/9</span>';
+            add.onclick = () => {
+                const next = CANDIDATES.find(c => !photos.includes(c));
+                if (next) { photos.push(next); renderUploads(); updatePoints(); }
+            };
+            upBox.appendChild(add);
+        }
+    }
+
+    /* ==================== 文本框计数 & 快捷短语 ==================== */
+    const ta = document.getElementById('reviewText');
+    const charCount = document.getElementById('charCount');
+    ta.addEventListener('input', () => {
+        const len = ta.value.length;
+        charCount.textContent = len + '/500';
+        charCount.style.color = len >= 10 ? '#00B894' : '#B2BEC3';
+        validate();
+    });
+    document.querySelectorAll('.quick').forEach(btn => {
+        btn.onclick = () => {
+            const text = btn.dataset.text;
+            ta.value = ta.value.includes(text) ? ta.value : (ta.value ? ta.value.replace(/\s*$/, ' ') + text : text);
+            ta.dispatchEvent(new Event('input'));
+            ta.focus();
+        };
+    });
+
+    /* ==================== 开关 ==================== */
+    document.querySelectorAll('.ios-switch').forEach(sw => {
+        sw.onclick = () => {
+            sw.classList.toggle('on');
+            sw.setAttribute('aria-checked', sw.classList.contains('on') ? 'true' : 'false');
+        };
+    });
+
+    /* ==================== 积分 & 提交校验 ==================== */
+    function updatePoints() {
+        let p = 20;
+        if (photos.length > 0) p += 10;
+        if (ta.value.length >= 50) p += 10;
+        document.getElementById('pointTotal').textContent = p;
+    }
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    function validate() {
+        const ok = mainScore > 0 && ta.value.trim().length >= 10;
+        submitBtn.disabled = !ok;
+        submitText.textContent = ok ? '提交评价' : (mainScore > 0 ? '评价至少 10 个字' : '请先打分');
+        updatePoints();
+    }
+
+    submitBtn.onclick = () => {
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
+        submitText.innerHTML = '<span class="spinner inline-block align-[-2px]"></span> 提交中';
+        setTimeout(() => {
+            submitText.textContent = '提交评价';
+            document.getElementById('overlay').classList.add('show');
+        }, 1100);
+    };
+    document.getElementById('overlay').onclick = (e) => {
+        if (e.target.id === 'overlay') e.currentTarget.classList.remove('show');
+    };
+
+    /* ==================== init ==================== */
+    renderMainStars();
+    renderDims();
+    renderTags();
+    renderUploads();
+    setMainScore(5, null);
+    validate();
+</script>
+</body>
+</html>

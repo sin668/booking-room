@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>学员评价 - 考研政治冲刺班</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F6EF7',
+                        'primary-light': '#E8EDFF',
+                        'primary-dark': '#3A56D4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #F5F6FA;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex; justify-content: center; overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* ===== iPhone 17 Pro device shell (393 x 852) ===== */
+        .device { width: 100%; max-width: 393px; height: 100vh; position: relative; flex-shrink: 0; }
+        .screen { display: flex; flex-direction: column; height: 100%; background: #F5F6FA; overflow: hidden; position: relative; }
+        @media (min-width: 520px) {
+            body { background: #0f0f1a; align-items: center; padding: 28px 0; min-height: 100vh; overflow-y: auto; }
+            .device {
+                width: 393px; height: 852px; padding: 10px; border-radius: 54px;
+                background: linear-gradient(160deg, #34344a 0%, #14141f 100%);
+                box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 30px 80px rgba(0,0,0,.65), 0 0 60px rgba(79,110,247,.18);
+            }
+            .screen { height: 100%; border-radius: 44px; }
+        }
+
+        .scroll-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .press-effect:active { transform: scale(0.97); transition: transform 0.1s; }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { opacity: 0; animation: fadeInUp 0.45s ease forwards; }
+        .delay-1 { animation-delay: 0.05s; } .delay-2 { animation-delay: 0.12s; }
+        .delay-3 { animation-delay: 0.19s; } .delay-4 { animation-delay: 0.26s; }
+
+        /* ===== filter chips ===== */
+        .fchip {
+            padding: 6px 13px; border-radius: 999px; font-size: 12px; cursor: pointer; white-space: nowrap;
+            background: #F2F3F8; color: #636E72; border: 1px solid transparent; transition: all .18s ease; flex-shrink: 0;
+        }
+        .fchip:hover { background: #E9ECF6; }
+        .fchip.on { background: #4F6EF7; color: #fff; font-weight: 500; box-shadow: 0 4px 12px rgba(79,110,247,.28); }
+        .fchip:focus-visible { outline: 2px solid #4F6EF7; outline-offset: 2px; }
+
+        /* ===== segmented sort ===== */
+        .seg { display: flex; background: #F2F3F8; border-radius: 999px; padding: 3px; }
+        .seg button {
+            flex: 1; font-size: 11px; padding: 5px 0; border-radius: 999px; cursor: pointer; border: none;
+            background: transparent; color: #8A94A6; transition: all .2s ease;
+        }
+        .seg button.on { background: #fff; color: #4F6EF7; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .seg button:focus-visible { outline: 2px solid #4F6EF7; outline-offset: 1px; }
+
+        /* ===== rating bar ===== */
+        .bar-track { height: 5px; border-radius: 999px; background: #EEF0F6; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #FFC93C, #FFB400); transition: width .6s ease; }
+
+        .like-btn { cursor: pointer; transition: color .18s ease; }
+        .like-btn.on { color: #4F6EF7; }
+        .like-btn.on i::before { content: "\f004"; font-weight: 900; }
+
+        .rev-img { cursor: pointer; transition: transform .2s ease, opacity .2s ease; }
+        .rev-img:hover { opacity: .88; }
+        .rev-img:active { transform: scale(.96); }
+
+        /* ===== lightbox ===== */
+        .lightbox { position: absolute; inset: 0; background: rgba(10,10,18,.92); z-index: 90; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
+        .lightbox.show { display: flex; }
+        .lightbox img { max-width: 88%; max-height: 62%; border-radius: 16px; object-fit: cover; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="device">
+    <div class="screen">
+
+        <!-- ==================== iOS STATUS BAR ==================== -->
+        <div class="flex-shrink-0 bg-white h-11 flex items-center justify-between px-6 relative z-50">
+            <span class="font-semibold text-sm text-[#2D3436]">9:41</span>
+            <div class="w-[120px] h-[34px] bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-1"></div>
+            <div class="flex items-center gap-1.5 text-sm text-[#2D3436]">
+                <i class="fa-solid fa-signal text-xs"></i>
+                <i class="fa-solid fa-wifi text-xs"></i>
+                <i class="fa-solid fa-battery-full text-xs"></i>
+            </div>
+        </div>
+
+        <!-- ==================== NAV BAR ==================== -->
+        <div class="flex-shrink-0 bg-white h-12 flex items-center px-4 relative z-40">
+            <a href="course-detail.html" aria-label="返回课程详情" class="w-9 h-9 -ml-2 flex items-center justify-center rounded-full cursor-pointer active:bg-gray-50 transition">
+                <i class="fas fa-chevron-left text-[#2D3436] text-base"></i>
+            </a>
+            <div class="absolute left-1/2 -translate-x-1/2 text-center">
+                <span class="font-semibold text-base text-[#2D3436] block leading-tight">学员评价</span>
+                <span class="text-[10px] text-[#B2BEC3]">考研政治冲刺班</span>
+            </div>
+            <button class="ml-auto w-9 h-9 flex items-center justify-center rounded-full cursor-pointer active:bg-gray-50 transition" aria-label="更多操作">
+                <i class="fas fa-ellipsis text-[#636E72] text-base"></i>
+            </button>
+        </div>
+
+        <!-- ==================== SCROLL CONTENT ==================== -->
+        <main class="scroll-area pb-28">
+
+            <!-- ===== 评分概览 ===== -->
+            <section class="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm animate-in delay-1">
+                <div class="flex items-center gap-4">
+                    <div class="text-center flex-shrink-0">
+                        <p class="text-[40px] font-bold text-[#2D3436] leading-none">4.9</p>
+                        <div class="flex items-center gap-0.5 justify-center mt-1.5" aria-label="平均 4.9 星">
+                            <i class="fas fa-star text-[#FFB400] text-[11px]"></i>
+                            <i class="fas fa-star text-[#FFB400] text-[11px]"></i>
+                            <i class="fas fa-star text-[#FFB400] text-[11px]"></i>
+                            <i class="fas fa-star text-[#FFB400] text-[11px]"></i>
+                            <i class="fas fa-star text-[#FFB400] text-[11px]"></i>
+                        </div>
+                        <p class="text-[10px] text-[#B2BEC3] mt-1">86 条评价</p>
+                    </div>
+
+                    <div class="flex-1 space-y-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-[#8A94A6] w-5 text-right">5星</span>
+                            <div class="bar-track flex-1"><div class="bar-fill" style="width: 88%"></div></div>
+                            <span class="text-[10px] text-[#B2BEC3] w-7">88%</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-[#8A94A6] w-5 text-right">4星</span>
+                            <div class="bar-track flex-1"><div class="bar-fill" style="width: 9%"></div></div>
+                            <span class="text-[10px] text-[#B2BEC3] w-7">9%</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-[#8A94A6] w-5 text-right">3星</span>
+                            <div class="bar-track flex-1"><div class="bar-fill" style="width: 2%"></div></div>
+                            <span class="text-[10px] text-[#B2BEC3] w-7">2%</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-[#8A94A6] w-5 text-right">2星</span>
+                            <div class="bar-track flex-1"><div class="bar-fill" style="width: 1%; background:#F39C12"></div></div>
+                            <span class="text-[10px] text-[#B2BEC3] w-7">1%</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-[#8A94A6] w-5 text-right">1星</span>
+                            <div class="bar-track flex-1"><div class="bar-fill" style="width: 0%"></div></div>
+                            <span class="text-[10px] text-[#B2BEC3] w-7">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 维度均分 -->
+                <div class="border-t border-gray-50 mt-3.5 pt-3 grid grid-cols-4 gap-1 text-center">
+                    <div>
+                        <p class="text-sm font-bold text-primary">4.9</p>
+                        <p class="text-[10px] text-[#B2BEC3] mt-0.5">教学质量</p>
+                    </div>
+                    <div class="border-l border-gray-50">
+                        <p class="text-sm font-bold text-[#6C5CE7]">4.8</p>
+                        <p class="text-[10px] text-[#B2BEC3] mt-0.5">课程内容</p>
+                    </div>
+                    <div class="border-l border-gray-50">
+                        <p class="text-sm font-bold text-green-500">5.0</p>
+                        <p class="text-[10px] text-[#B2BEC3] mt-0.5">老师态度</p>
+                    </div>
+                    <div class="border-l border-gray-50">
+                        <p class="text-sm font-bold text-orange-500">4.7</p>
+                        <p class="text-[10px] text-[#B2BEC3] mt-0.5">上课环境</p>
+                    </div>
+                </div>
+
+                <!-- 好评率 + 推荐 -->
+                <div class="flex items-center gap-2 mt-3">
+                    <span class="bg-green-50 text-green-600 text-[10px] px-2.5 py-1 rounded-full font-medium">
+                        <i class="fas fa-thumbs-up mr-1"></i>好评率 98%
+                    </span>
+                    <span class="bg-orange-50 text-orange-500 text-[10px] px-2.5 py-1 rounded-full font-medium">
+                        <i class="fas fa-fire mr-1"></i>96% 学员愿意推荐
+                    </span>
+                </div>
+            </section>
+
+            <!-- ===== 高频标签 ===== -->
+            <section class="mx-4 mt-3 bg-white rounded-2xl p-3.5 shadow-sm animate-in delay-2">
+                <p class="text-[11px] text-[#8A94A6] mb-2 flex items-center gap-1.5">
+                    <i class="fas fa-tags text-primary text-[10px]"></i>大家常提到
+                </p>
+                <div class="flex flex-wrap gap-1.5">
+                    <span class="text-[11px] bg-primary-light text-primary px-2.5 py-1 rounded-full">讲解清晰 <b class="ml-0.5">62</b></span>
+                    <span class="text-[11px] bg-primary-light text-primary px-2.5 py-1 rounded-full">重点突出 <b class="ml-0.5">48</b></span>
+                    <span class="text-[11px] bg-[#F3F0FF] text-[#6C5CE7] px-2.5 py-1 rounded-full">答疑及时 <b class="ml-0.5">35</b></span>
+                    <span class="text-[11px] bg-[#F3F0FF] text-[#6C5CE7] px-2.5 py-1 rounded-full">资料齐全 <b class="ml-0.5">29</b></span>
+                    <span class="text-[11px] bg-green-50 text-green-600 px-2.5 py-1 rounded-full">环境安静 <b class="ml-0.5">21</b></span>
+                    <span class="text-[11px] bg-orange-50 text-orange-500 px-2.5 py-1 rounded-full">性价比高 <b class="ml-0.5">18</b></span>
+                </div>
+            </section>
+
+            <!-- ===== 筛选 + 排序（吸顶） ===== -->
+            <div class="sticky top-0 z-30 bg-[#F5F6FA]/95 backdrop-blur-sm px-4 pt-3 pb-2.5">
+                <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar" id="filterBox">
+                    <button class="fchip on" data-filter="all">全部 86</button>
+                    <button class="fchip" data-filter="good">好评 82</button>
+                    <button class="fchip" data-filter="mid">中评 3</button>
+                    <button class="fchip" data-filter="bad">差评 1</button>
+                    <button class="fchip" data-filter="photo">有图 24</button>
+                    <button class="fchip" data-filter="five">五星 76</button>
+                    <button class="fchip" data-filter="reply">有回复 12</button>
+                </div>
+                <div class="flex items-center justify-between mt-2.5">
+                    <div class="seg w-[200px]" id="sortBox">
+                        <button class="on" data-sort="new">最新发布</button>
+                        <button data-sort="hot">最有用</button>
+                        <button data-sort="score">评分最高</button>
+                    </div>
+                    <span id="resultCount" class="text-[10px] text-[#B2BEC3]">共 86 条</span>
+                </div>
+            </div>
+
+            <!-- ===== 评价列表 ===== -->
+            <div id="reviewList" class="space-y-3 px-4">
+
+                <!-- Review 1 -->
+                <article class="review-card bg-white rounded-2xl p-4 shadow-sm animate-in delay-2"
+                         data-type="good" data-photo="1" data-score="5" data-hot="128" data-time="5">
+                    <div class="flex items-start gap-2.5">
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=face" alt="学员 学习达人 头像" class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-sm font-medium text-[#2D3436]">学习达人</span>
+                                <span class="bg-gradient-to-r from-[#FDCB6E] to-[#E17055] text-white text-[9px] px-1.5 py-px rounded-full font-medium">VIP</span>
+                                <span class="text-[9px] text-green-600 bg-green-50 px-1.5 py-px rounded-full"><i class="fas fa-circle-check mr-0.5"></i>已验证</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <div class="flex items-center gap-px" aria-label="5 星评价">
+                                    <i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i>
+                                </div>
+                                <span class="text-[10px] text-[#B2BEC3]">3天前</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-[13px] text-[#2D3436] leading-relaxed mt-2.5">
+                        李老师讲课非常有感染力，把枯燥的政治理论讲得生动有趣。<b class="text-primary font-medium">三步答题法</b>真的很实用，主观题再也不是弱项了！跟着节奏复习两个月，模考从 52 分提到了 74 分。
+                    </p>
+
+                    <div class="grid grid-cols-3 gap-1.5 mt-2.5">
+                        <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=240&h=240&fit=crop" alt="课堂笔记照片" class="rev-img w-full aspect-square rounded-xl object-cover">
+                        <img src="https://images.unsplash.com/photo-1517842645767-c639042777db?w=240&h=240&fit=crop" alt="课程资料照片" class="rev-img w-full aspect-square rounded-xl object-cover">
+                        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=240&h=240&fit=crop" alt="自习讨论照片" class="rev-img w-full aspect-square rounded-xl object-cover">
+                    </div>
+
+                    <div class="flex flex-wrap gap-1.5 mt-2.5">
+                        <span class="text-[10px] bg-[#F5F6FA] text-[#8A94A6] px-2 py-0.5 rounded-full">讲解清晰</span>
+                        <span class="text-[10px] bg-[#F5F6FA] text-[#8A94A6] px-2 py-0.5 rounded-full">重点突出</span>
+                        <span class="text-[10px] bg-[#F5F6FA] text-[#8A94A6] px-2 py-0.5 rounded-full">收获很大</span>
+                    </div>
+
+                    <div class="flex items-center gap-3 mt-2 text-[10px] text-[#B2BEC3]">
+                        <span class="flex items-center gap-1"><i class="fas fa-graduation-cap text-[9px]"></i>第 12 讲 · 全套班</span>
+                        <span class="flex items-center gap-1"><i class="far fa-clock text-[9px]"></i>学习 26.5 小时</span>
+                    </div>
+
+                    <!-- 商家回复 -->
+                    <div class="bg-[#F8F9FC] rounded-xl p-3 mt-3 relative">
+                        <span class="absolute -top-1.5 left-4 bg-primary text-white text-[9px] px-2 py-0.5 rounded-full">机构回复</span>
+                        <p class="text-[11px] text-[#636E72] leading-relaxed mt-1">
+                            感谢同学的认可！冲刺阶段记得配合《高频考点手册》一起使用，考前两周我们会在群里安排答疑专场，祝顺利上岸～
+                        </p>
+                        <p class="text-[10px] text-[#B2BEC3] mt-1.5">去K书教研团队 · 2天前</p>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-gray-50">
+                        <button class="like-btn text-[11px] text-[#8A94A6] flex items-center gap-1.5 px-2 py-1 rounded-full hover:bg-[#F5F6FA] transition" aria-label="点赞该评价">
+                            <i class="far fa-thumbs-up"></i>有用 <span class="like-num font-medium">128</span>
+                        </button>
+                        <div class="flex items-center gap-3 text-[11px] text-[#8A94A6]">
+                            <button class="flex items-center gap-1.5 px-2 py-1 rounded-full hover:bg-[#F5F6FA] transition cursor-pointer" aria-label="回复该评价">
+                                <i class="far fa-comment-dots"></i>回复
+                            </button>
+                            <button class="flex items-center gap-1.5 px-2 py-1 rounded-full hover:bg-[#F5F6FA] transition cursor-pointer" aria-label="分享该评价">
+                                <i class="far fa-share-from-square"></i>分享
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Review 2（含追评） -->
+                <article class="review-card bg-white rounded-2xl p-4 shadow-sm animate-in delay-3"
+                         data-type="good" data-photo="1" data-score="5" data-hot="96" data-time="4">
+                    <div class="flex items-start gap-2.5">
+                        <img src="https://images.unsplash.com/photo-1599566159882-aa1b6c5f0c3a?w=80&h=80&fit=crop&crop=face" alt="学员 考研上岸君 头像" class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-sm font-medium text-[#2D3436]">考研上岸君</span>
+                                <span class="text-[9px] text-green-600 bg-green-50 px-1.5 py-px rounded-full"><i class="fas fa-circle-check mr-0.5"></i>已验证</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <div class="flex items-center gap-px" aria-label="5 星评价">
+                                    <i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i>
+                                </div>
+                                <span class="text-[10px] text-[#B2BEC3]">1周前</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                            <span class="text-[10px] text-[#B2BEC3]">教学 5.0</span>
+                            <span class="text-[10px] text-[#B2BEC3]">内容 4.8</span>
+                        </div>
+                    </div>
+
+                    <p class="text-[13px] text-[#2D3436] leading-relaxed mt-2.5">
+                        跟着李老师学了一个月，政治从 50 分提升到了 78 分！押题命中率真的很高，配套资料也很全，强烈推荐！
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-1.5 mt-2.5 max-w-[240px]">
+                        <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=240&h=240&fit=crop" alt="学习笔记照片" class="rev-img w-full aspect-square rounded-xl object-cover">
+                        <img src="https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=240&h=240&fit=crop" alt="上课桌面照片" class="rev-img w-full aspect-square rounded-xl object-cover">
+                    </div>
+
+                    <!-- 追加评价 -->
+                    <div class="border border-dashed border-primary/30 bg-primary-light/30 rounded-xl p-3 mt-3">
+                        <p class="text-[10px] text-primary font-semibold flex items-center gap-1">
+                            <i class="fas fa-rotate"></i>15 天后追评
+                        </p>
+                        <p class="text-[11px] text-[#636E72] leading-relaxed mt-1">
+                            出分了！政治 78 分，选择题只错了两个，谢谢老师最后阶段的押题卷，真的救命。
+                        </p>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-gray-50">
+                        <button class="like-btn text-[11px] text-[#8A94A6] flex items-center gap-1.5 px-2 py-1 rounded-full hover:bg-[#F5F6FA] transition" aria-label="点赞该评价">
+                            <i class="far fa-thumbs-up"></i>有用 <span class="like-num font-medium">96</span>
+                        </button>
+                        <span class="text-[10px] text-[#B2BEC3] flex items-center gap-1">
+                            <i class="fas fa-graduation-cap text-[9px]"></i>第 8 讲
+                        </span>
+                    </div>
+                </article>
+
+                <!-- Review 3（匿名，无图） -->
+                <article class="review-card bg-white rounded-2xl p-4 shadow-sm animate-in delay-3"
+                         data-type="good" data-photo="0" data-score="4" data-hot="41" data-time="3">
+                    <div class="flex items-start gap-2.5">
+                        <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-user-secret text-[#B2BEC3] text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-sm font-medium text-[#2D3436]">匿名学员</span>
+                                <span class="text-[9px] text-[#8A94A6] bg-[#F2F3F8] px-1.5 py-px rounded-full">匿名</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <div class="flex items-center gap-px" aria-label="4 星评价">
+                                    <i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#E1E5EF] text-[10px]"></i>
+                                </div>
+                                <span class="text-[10px] text-[#B2BEC3]">2周前</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-[13px] text-[#2D3436] leading-relaxed mt-2.5">
+                        老师耐心负责，每次课后都会答疑，知识点梳理得很清晰。唯一的小建议是希望能多提供几套模拟题，冲刺阶段刷题量还是不太够。
+                    </p>
+                    <div class="flex flex-wrap gap-1.5 mt-2.5">
+                        <span class="text-[10px] bg-[#F5F6FA] text-[#8A94A6] px-2 py-0.5 rounded-full">答疑及时</span>
+                        <span class="text-[10px] bg-[#F5F6FA] text-[#8A94A6] px-2 py-0.5 rounded-full">节奏适中</span>
+                    </div>
+                    <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-gray-50">
+                        <button class="like-btn text-[11px] text-[#8A94A6] flex items-center gap-1.5 px-2 py-1 rounded-full hover:bg-[#F5F6FA] transition" aria-label="点赞该评价">
+                            <i class="far fa-thumbs-up"></i>有用 <span class="like-num font-medium">41</span>
+                        </button>
+                        <span class="text-[10px] text-[#B2BEC3]">环境 4.5 · 性价比 4.0</span>
+                    </div>
+                </article>
+
+                <!-- Review 4（中评，有商家回复） -->
+                <article class="review-card bg-white rounded-2xl p-4 shadow-sm animate-in delay-4"
+                         data-type="mid" data-photo="0" data-score="3" data-hot="18" data-time="2" data-reply="1">
+                    <div class="flex items-start gap-2.5">
+                        <img src="https://images.unsplash.com/photo-1607746755531-e42f2c35a319?w=80&h=80&fit=crop&crop=face" alt="学员 勤奋小张 头像" class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-medium text-[#2D3436]">勤奋小张</span>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <div class="flex items-center gap-px" aria-label="3 星评价">
+                                    <i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#E1E5EF] text-[10px]"></i><i class="fas fa-star text-[#E1E5EF] text-[10px]"></i>
+                                </div>
+                                <span class="text-[10px] text-[#B2BEC3]">3周前</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-[13px] text-[#2D3436] leading-relaxed mt-2.5">
+                        内容本身不错，但那节课培训室空调有点冷，投影也调了十几分钟才开始，前面耽误了一些时间。
+                    </p>
+                    <div class="bg-[#F8F9FC] rounded-xl p-3 mt-3 relative">
+                        <span class="absolute -top-1.5 left-4 bg-primary text-white text-[9px] px-2 py-0.5 rounded-full">机构回复</span>
+                        <p class="text-[11px] text-[#636E72] leading-relaxed mt-1">
+                            非常抱歉影响了上课体验！我们已更换光谷培训室 2 号教室的投影设备，并调整了空调温度标准（24-26℃），欢迎同学下次课前反馈，我们会提前调试好。
+                        </p>
+                        <p class="text-[10px] text-[#B2BEC3] mt-1.5">去K书运营团队 · 3周前</p>
+                    </div>
+                    <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-gray-50">
+                        <button class="like-btn text-[11px] text-[#8A94A6] flex items-center gap-1.5 px-2 py-1 rounded-full hover:bg-[#F5F6FA] transition" aria-label="点赞该评价">
+                            <i class="far fa-thumbs-up"></i>有用 <span class="like-num font-medium">18</span>
+                        </button>
+                        <span class="text-[10px] text-[#B2BEC3]">环境 2.5 · 教学 4.0</span>
+                    </div>
+                </article>
+
+                <!-- Review 5（差评，已处理） -->
+                <article class="review-card bg-white rounded-2xl p-4 shadow-sm animate-in delay-4"
+                         data-type="bad" data-photo="0" data-score="2" data-hot="7" data-time="1" data-reply="1">
+                    <div class="flex items-start gap-2.5">
+                        <img src="https://images.unsplash.com/photo-1564564321837-a57b7070251d?w=80&h=80&fit=crop&crop=face" alt="学员 王同学 头像" class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-medium text-[#2D3436]">王同学</span>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <div class="flex items-center gap-px" aria-label="2 星评价">
+                                    <i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#FFB400] text-[10px]"></i><i class="fas fa-star text-[#E1E5EF] text-[10px]"></i><i class="fas fa-star text-[#E1E5EF] text-[10px]"></i><i class="fas fa-star text-[#E1E5EF] text-[10px]"></i>
+                                </div>
+                                <span class="text-[10px] text-[#B2BEC3]">1个月前</span>
+                            </div>
+                        </div>
+                        <span class="text-[9px] text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full flex-shrink-0">已受理</span>
+                    </div>
+                    <p class="text-[13px] text-[#2D3436] leading-relaxed mt-2.5">
+                        进度比我预期的快，第 5 讲之后的内容有点跟不上，课后想约一对一答疑但排期比较满，等了三天才约上。
+                    </p>
+                    <div class="flex flex-wrap gap-1.5 mt-2.5">
+                        <span class="text-[10px] bg-[#FFF1F0] text-[#E4574C] px-2 py-0.5 rounded-full">进度太快</span>
+                        <span class="text-[10px] bg-[#FFF1F0] text-[#E4574C] px-2 py-0.5 rounded-full">答疑不及时</span>
+                    </div>
+                    <div class="bg-[#F8F9FC] rounded-xl p-3 mt-3 relative">
+                        <span class="absolute -top-1.5 left-4 bg-primary text-white text-[9px] px-2 py-0.5 rounded-full">机构回复</span>
+                        <p class="text-[11px] text-[#636E72] leading-relaxed mt-1">
+                            同学抱歉！已为你开通答疑优先通道，并赠送 2 课时的一对一补差辅导，稍后客服会与你联系安排时间。
+                        </p>
+                        <p class="text-[10px] text-[#B2BEC3] mt-1.5">去K书教研团队 · 1个月前</p>
+                    </div>
+                    <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-gray-50">
+                        <button class="like-btn text-[11px] text-[#8A94A6] flex items-center gap-1.5 px-2 py-1 rounded-full hover:bg-[#F5F6FA] transition" aria-label="点赞该评价">
+                            <i class="far fa-thumbs-up"></i>有用 <span class="like-num font-medium">7</span>
+                        </button>
+                        <button class="text-[10px] text-[#B2BEC3] flex items-center gap-1 cursor-pointer hover:text-red-400 transition" aria-label="举报该评价">
+                            <i class="far fa-flag"></i>举报
+                        </button>
+                    </div>
+                </article>
+
+                <!-- 空状态 -->
+                <div id="emptyState" class="hidden py-16 flex-col items-center justify-center text-center">
+                    <i class="fa-regular fa-comments text-gray-200 text-5xl"></i>
+                    <p class="text-gray-400 text-sm mt-4">该分类下暂无评价</p>
+                    <p class="text-gray-300 text-xs mt-1">换个筛选条件看看吧</p>
+                </div>
+
+                <!-- 加载更多 -->
+                <button id="loadMore" class="w-full py-3 text-xs text-[#8A94A6] bg-white rounded-2xl shadow-sm cursor-pointer hover:text-primary transition flex items-center justify-center gap-1.5">
+                    <i class="fas fa-angles-down text-[10px]"></i>加载更多评价（剩余 81 条）
+                </button>
+            </div>
+        </main>
+
+        <!-- ==================== BOTTOM ACTION BAR ==================== -->
+        <div class="absolute bottom-0 left-0 right-0 z-40">
+            <div class="bg-gradient-to-t from-[#F5F6FA] via-[#F5F6FA]/95 to-transparent px-4 pt-6 pb-3">
+                <a href="review-submit.html"
+                   class="block w-full bg-primary text-white rounded-full py-3.5 text-center text-sm font-semibold shadow-lg shadow-primary/30 cursor-pointer active:bg-primary-dark transition">
+                    <i class="fas fa-pen-to-square mr-1.5"></i>写评价 · 赚 30 积分
+                </a>
+            </div>
+            <div class="h-[22px] bg-[#F5F6FA] flex items-start justify-center pt-1">
+                <div class="w-[134px] h-[5px] bg-black/20 rounded-full"></div>
+            </div>
+        </div>
+
+        <!-- ==================== LIGHTBOX ==================== -->
+        <div id="lightbox" class="lightbox" role="dialog" aria-label="图片预览">
+            <img id="lightboxImg" src="" alt="评价图片预览">
+            <button id="lightboxClose" class="text-white/70 text-xs cursor-pointer hover:text-white transition px-4 py-2">
+                <i class="fas fa-xmark mr-1"></i>点击任意处关闭
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* ==================== 筛选 ==================== */
+    const cards = Array.from(document.querySelectorAll('.review-card'));
+    const emptyState = document.getElementById('emptyState');
+    const resultCount = document.getElementById('resultCount');
+    const TOTAL = { all: 86, good: 82, mid: 3, bad: 1, photo: 24, five: 76, reply: 12 };
+    let currentFilter = 'all';
+    let currentSort = 'new';
+
+    function match(card, filter) {
+        if (filter === 'all') return true;
+        if (filter === 'photo') return card.dataset.photo === '1';
+        if (filter === 'five') return card.dataset.score === '5';
+        if (filter === 'reply') return card.dataset.reply === '1';
+        return card.dataset.type === filter;
+    }
+
+    function applyView() {
+        let visible = cards.filter(c => match(c, currentFilter));
+        if (currentSort === 'hot') visible.sort((a, b) => +b.dataset.hot - +a.dataset.hot);
+        else if (currentSort === 'score') visible.sort((a, b) => +b.dataset.score - +a.dataset.score || +b.dataset.hot - +a.dataset.hot);
+        else visible.sort((a, b) => +b.dataset.time - +a.dataset.time);
+
+        cards.forEach(c => { c.style.display = 'none'; });
+        visible.forEach((c, i) => {
+            c.style.display = '';
+            c.style.order = i;
+        });
+        const list = document.getElementById('reviewList');
+        const loadMore = document.getElementById('loadMore');
+        list.style.display = 'flex';
+        list.style.flexDirection = 'column';
+        emptyState.style.order = 999;
+        loadMore.style.order = 999;
+        emptyState.style.display = visible.length ? 'none' : 'flex';
+        loadMore.style.display = visible.length ? '' : 'none';
+        resultCount.textContent = '共 ' + (TOTAL[currentFilter] ?? visible.length) + ' 条';
+    }
+
+    document.querySelectorAll('#filterBox .fchip').forEach(chip => {
+        chip.onclick = () => {
+            document.querySelectorAll('#filterBox .fchip').forEach(c => c.classList.remove('on'));
+            chip.classList.add('on');
+            currentFilter = chip.dataset.filter;
+            applyView();
+        };
+    });
+
+    document.querySelectorAll('#sortBox button').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('#sortBox button').forEach(b => b.classList.remove('on'));
+            btn.classList.add('on');
+            currentSort = btn.dataset.sort;
+            applyView();
+        };
+    });
+
+    /* ==================== 点赞 ==================== */
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.onclick = () => {
+            const num = btn.querySelector('.like-num');
+            const on = btn.classList.toggle('on');
+            num.textContent = +num.textContent + (on ? 1 : -1);
+            const icon = btn.querySelector('i');
+            icon.className = on ? 'fas fa-thumbs-up' : 'far fa-thumbs-up';
+        };
+    });
+
+    /* ==================== 图片预览 ==================== */
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    document.querySelectorAll('.rev-img').forEach(img => {
+        img.onclick = () => {
+            lightboxImg.src = img.src.replace('w=240&h=240', 'w=800&h=800');
+            lightboxImg.alt = img.alt;
+            lightbox.classList.add('show');
+        };
+    });
+    const closeLightbox = () => lightbox.classList.remove('show');
+    lightbox.onclick = closeLightbox;
+    document.getElementById('lightboxClose').onclick = closeLightbox;
+
+    /* ==================== 加载更多 ==================== */
+    document.getElementById('loadMore').onclick = function () {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin text-[10px]"></i>加载中...';
+        setTimeout(() => {
+            this.innerHTML = '<span class="text-[#B2BEC3]">已经到底啦 · 共 86 条评价</span>';
+            this.classList.remove('hover:text-primary');
+            this.disabled = true;
+        }, 900);
+    };
+
+    applyView();
+</script>
+</body>
+</html>

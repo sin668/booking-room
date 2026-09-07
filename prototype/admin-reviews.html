@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>评价审核 - 去K书管理后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#4F6EF7', 'primary-light': '#E8EDFF', 'primary-dark': '#3A56D4' } } } }</script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #F5F6FA; -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+        .nav-item { transition: all 0.2s; }
+        .nav-item:hover { background: rgba(79, 110, 247, 0.08); }
+        .nav-item.active { background: rgba(79, 110, 247, 0.12); color: #4F6EF7; border-right: 3px solid #4F6EF7; }
+        .status-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .tab-item { position: relative; transition: color 0.2s ease; cursor: pointer; }
+        .tab-item.active { color: #4F6EF7; font-weight: 600; border-bottom: 2px solid #4F6EF7; }
+
+        .rev-card { transition: box-shadow .2s ease, background .2s ease, opacity .25s ease; }
+        .rev-card:hover { box-shadow: 0 6px 20px rgba(45,52,54,.07); }
+        .rev-card.selected { background: #FCFDFF; }
+        .rev-card.processed { opacity: .62; }
+        .rev-card.processed:hover { opacity: .9; }
+
+        .cbox { width: 16px; height: 16px; border: 1.5px solid #D5DAE5; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s ease; background: #fff; flex-shrink: 0; }
+        .cbox:hover { border-color: #4F6EF7; }
+        .cbox.on { background: #4F6EF7; border-color: #4F6EF7; }
+        .cbox.on::after { content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900; color: #fff; font-size: 9px; }
+        .cbox:focus-visible { outline: 2px solid #4F6EF7; outline-offset: 2px; }
+
+        .act { padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all .18s ease; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 5px; }
+        .act-pass { background: #ECFDF5; color: #059669; border-color: #A7F3D0; }
+        .act-pass:hover { background: #059669; color: #fff; }
+        .act-reject { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+        .act-reject:hover { background: #DC2626; color: #fff; }
+        .act-ghost { background: #fff; color: #636E72; border-color: #E5E7EB; }
+        .act-ghost:hover { background: #F5F6FA; color: #2D3436; }
+        .act:focus-visible { outline: 2px solid #4F6EF7; outline-offset: 2px; }
+
+        .rchip { padding: 6px 14px; border-radius: 999px; font-size: 12px; cursor: pointer; background: #F5F6FA; color: #636E72; border: 1px solid transparent; transition: all .18s ease; }
+        .rchip:hover { background: #EEF1FA; }
+        .rchip.on { background: #FEF2F2; color: #DC2626; border-color: #FECACA; font-weight: 500; }
+        .rchip:focus-visible { outline: 2px solid #4F6EF7; outline-offset: 2px; }
+
+        .sw { width: 38px; height: 22px; border-radius: 999px; background: #E1E5EF; position: relative; cursor: pointer; transition: background .22s ease; border: none; flex-shrink: 0; }
+        .sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .22s ease; }
+        .sw.on { background: #34C759; }
+        .sw.on::after { transform: translateX(16px); }
+        .sw:focus-visible { outline: 2px solid #4F6EF7; outline-offset: 2px; }
+
+        .mask { position: fixed; inset: 0; background: rgba(15,15,26,.45); backdrop-filter: blur(3px); z-index: 90; display: none; align-items: center; justify-content: center; }
+        .mask.show { display: flex; }
+        .modal { background: #fff; border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,.25); animation: modalIn .25s ease forwards; }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+
+        .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-20px); z-index: 120; background: #2D3436; color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.25); opacity: 0; pointer-events: none; transition: all .28s ease; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        mark { background: #FEF2F2; color: #DC2626; padding: 0 3px; border-radius: 3px; border-bottom: 1px dashed #FCA5A5; }
+        .thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; cursor: pointer; transition: transform .18s ease; }
+        .thumb:hover { transform: scale(1.06); }
+        .timeline-dot { width: 8px; height: 8px; border-radius: 50%; background: #4F6EF7; flex-shrink: 0; margin-top: 5px; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside class="w-60 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+        <div class="h-16 flex items-center gap-2.5 px-5 border-b border-gray-100">
+            <div class="w-8 h-8 bg-gradient-to-br from-primary to-[#6C5CE7] rounded-lg flex items-center justify-center"><i class="fas fa-book-open text-white text-sm"></i></div>
+            <div><p class="text-sm font-bold text-[#2D3436]">去K书</p><p class="text-[10px] text-gray-400">管理后台</p></div>
+        </div>
+        <nav class="flex-1 py-3 overflow-y-auto">
+            <div class="px-5 mb-1"><p class="text-[10px] font-medium text-gray-400 uppercase tracking-wider">主功能</p></div>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-gauge-high w-4 text-center"></i><span>仪表盘</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-building w-4 text-center"></i><span>门店管理</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-couch w-4 text-center"></i><span>座位管理</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-receipt w-4 text-center"></i><span>自习室订单</span></a>
+            <div class="px-5 mt-4 mb-1"><p class="text-[10px] font-medium text-gray-400 uppercase tracking-wider">培训模块</p></div>
+            <a href="admin-courses.html" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-graduation-cap w-4 text-center"></i><span>培训课程</span></a>
+            <a href="admin-teachers.html" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-chalkboard-user w-4 text-center"></i><span>老师管理</span></a>
+            <a href="admin-training-orders.html" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-clipboard-list w-4 text-center"></i><span>培训订单</span></a>
+            <a href="admin-reviews.html" class="nav-item active flex items-center gap-3 px-5 py-2.5 text-sm">
+                <i class="fas fa-star-half-stroke w-4 text-center"></i><span class="font-medium">评价审核</span>
+                <span class="ml-auto bg-red-500 text-white text-[10px] px-1.5 rounded-full leading-[16px]">8</span>
+            </a>
+            <div class="px-5 mt-4 mb-1"><p class="text-[10px] font-medium text-gray-400 uppercase tracking-wider">运营</p></div>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-ticket w-4 text-center"></i><span>卡券管理</span></a>
+            <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 text-sm text-gray-600"><i class="fas fa-users w-4 text-center"></i><span>用户管理</span></a>
+        </nav>
+        <div class="border-t border-gray-100 p-4 flex items-center gap-2.5">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&h=60&fit=crop&crop=face" alt="管理员头像" class="w-8 h-8 rounded-full object-cover">
+            <div class="flex-1 min-w-0"><p class="text-sm font-medium text-[#2D3436] truncate">管理员</p><p class="text-[10px] text-gray-400">admin@qukshu.com</p></div>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN ==================== -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-lg font-semibold text-[#2D3436]">评价审核</h1>
+                <span class="text-xs text-gray-400">共 1,284 条评价 · 8 条待审核</span>
+                <span class="status-badge bg-orange-50 text-orange-500"><i class="fas fa-bolt mr-1"></i>AI 预审已开启</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1.5">
+                    <i class="fas fa-magnifying-glass text-gray-400 text-xs"></i>
+                    <label for="searchInput" class="sr-only">搜索评价</label>
+                    <input id="searchInput" type="text" placeholder="搜索昵称 / 评价内容 / 订单号" class="bg-transparent text-sm text-gray-700 placeholder-gray-300 outline-none w-52">
+                </div>
+                <button class="act act-ghost" onclick="toast('审核规则配置（原型示意）', 'sliders')"><i class="fas fa-sliders"></i>审核规则</button>
+                <button class="act act-ghost" onclick="toast('已导出当前筛选结果', 'download')"><i class="fas fa-download"></i>导出</button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6">
+
+            <!-- ===== Stats ===== -->
+            <div class="grid grid-cols-5 gap-4 mb-5">
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center"><i class="fas fa-hourglass-half text-orange-500"></i></div>
+                        <span class="text-[10px] text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">需处理</span>
+                    </div>
+                    <p class="text-2xl font-bold text-[#2D3436]">8</p><p class="text-xs text-gray-400 mt-1">待审核</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center"><i class="fas fa-circle-check text-green-500"></i></div>
+                        <span class="text-xs text-green-500 font-medium">+18%</span>
+                    </div>
+                    <p class="text-2xl font-bold text-[#2D3436]">24</p><p class="text-xs text-gray-400 mt-1">今日已通过</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center"><i class="fas fa-ban text-red-500"></i></div>
+                        <span class="text-xs text-gray-400">本月</span>
+                    </div>
+                    <p class="text-2xl font-bold text-[#2D3436]">7</p><p class="text-xs text-gray-400 mt-1">已驳回</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><i class="fas fa-star text-primary"></i></div>
+                        <span class="text-xs text-green-500 font-medium">+0.1</span>
+                    </div>
+                    <p class="text-2xl font-bold text-[#2D3436]">4.8</p><p class="text-xs text-gray-400 mt-1">全站平均评分</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center"><i class="fas fa-flag text-purple-500"></i></div>
+                        <span class="text-[10px] text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full">2 条超时</span>
+                    </div>
+                    <p class="text-2xl font-bold text-[#2D3436]">3</p><p class="text-xs text-gray-400 mt-1">举报待处理</p>
+                </div>
+            </div>
+
+            <!-- ===== Tabs + Filters ===== -->
+            <div class="bg-white rounded-t-xl border border-gray-50 border-b-0">
+                <div class="flex items-center justify-between px-4 border-b border-gray-100">
+                    <div class="flex items-center gap-6">
+                        <div class="tab-item active py-3 text-sm" data-status="all" onclick="switchTab(this)">全部</div>
+                        <div class="tab-item py-3 text-sm text-gray-500" data-status="pending" onclick="switchTab(this)">待审核 <span class="ml-1 bg-orange-500 text-white text-[10px] px-1.5 rounded-full">8</span></div>
+                        <div class="tab-item py-3 text-sm text-gray-500" data-status="approved" onclick="switchTab(this)">已通过</div>
+                        <div class="tab-item py-3 text-sm text-gray-500" data-status="rejected" onclick="switchTab(this)">已驳回</div>
+                        <div class="tab-item py-3 text-sm text-gray-500" data-status="reported" onclick="switchTab(this)">被举报</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="fCourse" class="sr-only">按课程筛选</label>
+                        <select id="fCourse" class="text-xs text-gray-600 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white outline-none cursor-pointer hover:border-primary/40 transition">
+                            <option>全部课程</option><option>考研政治冲刺班</option><option>雅思口语1v1</option><option>英语四级冲刺</option><option>公务员行测精讲</option>
+                        </select>
+                        <label for="fTeacher" class="sr-only">按老师筛选</label>
+                        <select id="fTeacher" class="text-xs text-gray-600 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white outline-none cursor-pointer hover:border-primary/40 transition">
+                            <option>全部老师</option><option>李明华</option><option>陈雅琪</option><option>张伟强</option><option>王晓雯</option>
+                        </select>
+                        <label for="fScore" class="sr-only">按评分筛选</label>
+                        <select id="fScore" class="text-xs text-gray-600 border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white outline-none cursor-pointer hover:border-primary/40 transition">
+                            <option>全部评分</option><option>5 星</option><option>4 星</option><option>3 星及以下</option>
+                        </select>
+                        <button class="act act-ghost" onclick="toast('时间筛选（原型示意）', 'calendar')"><i class="far fa-calendar"></i>近 7 天</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Bulk bar ===== -->
+            <div class="bg-white border-x border-gray-50 px-4 py-2.5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <div id="checkAll" class="cbox" role="checkbox" aria-checked="false" tabindex="0" aria-label="全选当前列表"></div>
+                        <span class="text-xs text-gray-500">全选</span>
+                    </div>
+                    <span class="text-xs text-gray-400">已选择 <b id="selCount" class="text-primary">0</b> 条</span>
+                </div>
+                <div id="bulkActions" class="flex items-center gap-2 opacity-40 pointer-events-none transition-opacity">
+                    <button class="act act-pass" onclick="bulkAction()"><i class="fas fa-check"></i>批量通过</button>
+                    <button class="act act-reject" onclick="openReject(null, true)"><i class="fas fa-xmark"></i>批量驳回</button>
+                    <button class="act act-ghost" onclick="clearSel()">取消选择</button>
+                </div>
+            </div>
+
+            <!-- ===== Review cards ===== -->
+            <div id="reviewList" class="bg-white rounded-b-xl shadow-sm border border-gray-50 border-t-0 overflow-hidden divide-y divide-gray-50">
+
+                <!-- Card 1: 待审核 · AI 建议通过 -->
+                <article class="rev-card p-4 border-l-4 border-l-orange-400" data-status="pending" data-id="RV202608140086">
+                    <div class="flex items-start gap-3">
+                        <div class="cbox mt-1" role="checkbox" aria-checked="false" tabindex="0" aria-label="选择该评价"></div>
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=face" alt="学员 学习达人 头像" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm font-semibold text-[#2D3436]">学习达人</span>
+                                <span class="text-[10px] text-gray-400 font-mono">UID 100286</span>
+                                <span class="status-badge bg-amber-50 text-amber-600 text-[10px]">VIP 会员</span>
+                                <span class="status-badge bg-green-50 text-green-600 text-[10px]">实名认证</span>
+                                <span class="status-badge bg-orange-50 text-orange-500 status-tag">待审核</span>
+                            </div>
+                            <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                                <span class="flex items-center gap-1"><i class="fas fa-graduation-cap text-gray-300"></i>考研政治冲刺班 · 第 12 讲</span>
+                                <span class="flex items-center gap-1"><i class="fas fa-chalkboard-user text-gray-300"></i>李明华</span>
+                                <span class="flex items-center gap-1 font-mono text-gray-400">TC202608140001</span>
+                                <span class="flex items-center gap-1 text-gray-400"><i class="far fa-clock"></i>2026-08-14 21:36</span>
+                            </div>
+                            <div class="flex items-center gap-3 mt-2.5">
+                                <div class="flex items-center gap-1" aria-label="综合评分 5 星">
+                                    <i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i>
+                                    <span class="text-sm font-bold text-[#2D3436] ml-1">5.0</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 text-[10px]">
+                                    <span class="bg-gray-50 text-gray-500 px-2 py-0.5 rounded">教学 5.0</span>
+                                    <span class="bg-gray-50 text-gray-500 px-2 py-0.5 rounded">内容 5.0</span>
+                                    <span class="bg-gray-50 text-gray-500 px-2 py-0.5 rounded">态度 4.0</span>
+                                    <span class="bg-gray-50 text-gray-500 px-2 py-0.5 rounded">环境 5.0</span>
+                                    <span class="bg-gray-50 text-gray-500 px-2 py-0.5 rounded">性价比 4.0</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-[#2D3436] leading-relaxed mt-2.5">
+                                李老师讲课非常有感染力，把枯燥的政治理论讲得生动有趣。三步答题法真的很实用，主观题再也不是弱项了！跟着节奏复习两个月，模考从 52 分提到了 74 分，配套资料也很全。
+                            </p>
+                            <div class="flex items-center gap-2 mt-2.5">
+                                <span class="text-[10px] bg-primary-light text-primary px-2 py-0.5 rounded-full">讲解清晰</span>
+                                <span class="text-[10px] bg-primary-light text-primary px-2 py-0.5 rounded-full">重点突出</span>
+                                <span class="text-[10px] bg-primary-light text-primary px-2 py-0.5 rounded-full">收获很大</span>
+                                <span class="text-[10px] text-gray-400 ml-1"><i class="far fa-image mr-1"></i>3 张图片</span>
+                                <span class="text-[10px] text-gray-400"><i class="far fa-eye-slash mr-1"></i>非匿名</span>
+                            </div>
+                            <div class="flex items-center gap-2 mt-2">
+                                <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=120&h=120&fit=crop" alt="评价图片 1" class="thumb">
+                                <img src="https://images.unsplash.com/photo-1517842645767-c639042777db?w=120&h=120&fit=crop" alt="评价图片 2" class="thumb">
+                                <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=120&h=120&fit=crop" alt="评价图片 3" class="thumb">
+                            </div>
+                        </div>
+                        <div class="w-52 flex-shrink-0 bg-[#F8FBF9] border border-green-100 rounded-xl p-3">
+                            <p class="text-[11px] font-semibold text-green-700 flex items-center gap-1.5"><i class="fas fa-robot"></i>AI 审核建议：通过</p>
+                            <div class="mt-2 space-y-1 text-[10px] text-gray-500">
+                                <p class="flex items-center justify-between"><span>敏感内容</span><span class="text-green-600 font-medium">未检出</span></p>
+                                <p class="flex items-center justify-between"><span>广告 / 联系方式</span><span class="text-green-600 font-medium">未检出</span></p>
+                                <p class="flex items-center justify-between"><span>情感倾向</span><span class="text-green-600 font-medium">正向 96%</span></p>
+                                <p class="flex items-center justify-between"><span>订单核验</span><span class="text-green-600 font-medium">已完成课程</span></p>
+                                <p class="flex items-center justify-between"><span>字数 / 图片</span><span>89 字 · 3 图</span></p>
+                            </div>
+                            <div class="border-t border-green-100 mt-2 pt-2 text-[10px] text-gray-400">该用户历史评价 12 条，0 次违规</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-3 pl-[26px]">
+                        <div class="flex items-center gap-3 text-[11px] text-gray-400">
+                            <span><i class="far fa-thumbs-up mr-1"></i>0 有用</span>
+                            <span><i class="far fa-comment-dots mr-1"></i>0 回复</span>
+                            <span><i class="far fa-flag mr-1"></i>0 举报</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="act act-ghost" onclick="openDetail()"><i class="far fa-file-lines"></i>详情</button>
+                            <button class="act act-ghost" onclick="toast('机构回复编辑框（原型示意）', 'comment-dots')"><i class="far fa-comment-dots"></i>回复</button>
+                            <button class="act act-reject" onclick="openReject(this)"><i class="fas fa-xmark"></i>驳回</button>
+                            <button class="act act-pass" onclick="approve(this)"><i class="fas fa-check"></i>通过并展示</button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Card 2: 待审核 · AI 建议驳回（含联系方式） -->
+                <article class="rev-card p-4 border-l-4 border-l-red-400" data-status="pending" data-id="RV202608140085">
+                    <div class="flex items-start gap-3">
+                        <div class="cbox mt-1" role="checkbox" aria-checked="false" tabindex="0" aria-label="选择该评价"></div>
+                        <img src="https://images.unsplash.com/photo-1580489944761-4d81d45578ea?w=80&h=80&fit=crop&crop=face" alt="学员 努力的小李 头像" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm font-semibold text-[#2D3436]">努力的小李</span>
+                                <span class="text-[10px] text-gray-400 font-mono">UID 100742</span>
+                                <span class="status-badge bg-orange-50 text-orange-500 status-tag">待审核</span>
+                                <span class="status-badge bg-red-50 text-red-500 text-[10px]"><i class="fas fa-triangle-exclamation mr-1"></i>命中敏感规则</span>
+                            </div>
+                            <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                                <span class="flex items-center gap-1"><i class="fas fa-graduation-cap text-gray-300"></i>公务员行测精讲 · 第 5 讲</span>
+                                <span class="flex items-center gap-1"><i class="fas fa-chalkboard-user text-gray-300"></i>王晓雯</span>
+                                <span class="flex items-center gap-1 font-mono text-gray-400">TC202608130022</span>
+                                <span class="flex items-center gap-1 text-gray-400"><i class="far fa-clock"></i>2026-08-14 20:12</span>
+                            </div>
+                            <div class="flex items-center gap-3 mt-2.5">
+                                <div class="flex items-center gap-1" aria-label="综合评分 4 星">
+                                    <i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#E1E5EF] text-xs"></i>
+                                    <span class="text-sm font-bold text-[#2D3436] ml-1">4.0</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 text-[10px]">
+                                    <span class="bg-gray-50 text-gray-500 px-2 py-0.5 rounded">教学 4.0</span>
+                                    <span class="bg-gray-50 text-gray-500 px-2 py-0.5 rounded">内容 4.0</span>
+                                    <span class="bg-gray-50 text-gray-500 px-2 py-0.5 rounded">性价比 5.0</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-[#2D3436] leading-relaxed mt-2.5">
+                                课程讲得挺细的，行测数量关系部分收获很大。想一起组团刷题的同学可以加我<mark>微信号 xiaoli_2026</mark>，我们建了个学习群，群里也会分享一些<mark>免费资料链接</mark>。
+                            </p>
+                            <div class="flex items-center gap-2 mt-2.5">
+                                <span class="text-[10px] bg-primary-light text-primary px-2 py-0.5 rounded-full">讲解清晰</span>
+                                <span class="text-[10px] text-gray-400 ml-1"><i class="far fa-eye-slash mr-1"></i>非匿名</span>
+                                <span class="text-[10px] text-red-400"><i class="fas fa-link mr-1"></i>外链风险 1 处</span>
+                            </div>
+                        </div>
+                        <div class="w-52 flex-shrink-0 bg-[#FFFBFB] border border-red-100 rounded-xl p-3">
+                            <p class="text-[11px] font-semibold text-red-600 flex items-center gap-1.5"><i class="fas fa-robot"></i>AI 审核建议：驳回</p>
+                            <div class="mt-2 space-y-1 text-[10px] text-gray-500">
+                                <p class="flex items-center justify-between"><span>广告 / 联系方式</span><span class="text-red-500 font-medium">检出 2 处</span></p>
+                                <p class="flex items-center justify-between"><span>敏感内容</span><span class="text-green-600 font-medium">未检出</span></p>
+                                <p class="flex items-center justify-between"><span>情感倾向</span><span class="text-gray-500">正向 71%</span></p>
+                                <p class="flex items-center justify-between"><span>命中规则</span><span class="text-red-500 font-medium">R-03 引流</span></p>
+                            </div>
+                            <div class="border-t border-red-100 mt-2 pt-2 text-[10px] text-gray-400">建议驳回并提示用户删除联系方式</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-3 pl-[26px]">
+                        <div class="flex items-center gap-2 text-[11px] text-gray-400">
+                            <span><i class="fas fa-shield-halved mr-1"></i>命中规则 R-03「禁止导流」</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="act act-ghost" onclick="openDetail()"><i class="far fa-file-lines"></i>详情</button>
+                            <button class="act act-ghost" onclick="toast('进入编辑模式（原型示意）', 'pen')"><i class="fas fa-pen"></i>编辑后通过</button>
+                            <button class="act act-pass" onclick="approve(this)"><i class="fas fa-check"></i>仍要通过</button>
+                            <button class="act act-reject" onclick="openReject(this)"><i class="fas fa-xmark"></i>驳回</button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Card 3: 被举报 -->
+                <article class="rev-card p-4 border-l-4 border-l-purple-400" data-status="reported" data-id="RV202608130071">
+                    <div class="flex items-start gap-3">
+                        <div class="cbox mt-1" role="checkbox" aria-checked="false" tabindex="0" aria-label="选择该评价"></div>
+                        <img src="https://images.unsplash.com/photo-1564564321837-a57b7070251d?w=80&h=80&fit=crop&crop=face" alt="学员 王同学 头像" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm font-semibold text-[#2D3436]">王同学</span>
+                                <span class="text-[10px] text-gray-400 font-mono">UID 100518</span>
+                                <span class="status-badge bg-green-50 text-green-600 status-tag">已通过</span>
+                                <span class="status-badge bg-purple-50 text-purple-600"><i class="fas fa-flag mr-1"></i>被举报 2 次</span>
+                            </div>
+                            <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                                <span class="flex items-center gap-1"><i class="fas fa-graduation-cap text-gray-300"></i>教师资格证面试 · 第 2 讲</span>
+                                <span class="flex items-center gap-1"><i class="fas fa-chalkboard-user text-gray-300"></i>刘芳芳</span>
+                                <span class="flex items-center gap-1 text-gray-400"><i class="far fa-clock"></i>2026-08-13 10:05 · 已展示 1 天</span>
+                            </div>
+                            <div class="flex items-center gap-1 mt-2.5" aria-label="综合评分 2 星">
+                                <i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#E1E5EF] text-xs"></i><i class="fas fa-star text-[#E1E5EF] text-xs"></i><i class="fas fa-star text-[#E1E5EF] text-xs"></i>
+                                <span class="text-sm font-bold text-[#2D3436] ml-1">2.0</span>
+                                <span class="text-[10px] text-gray-400 ml-2">差评 · 差评率预警</span>
+                            </div>
+                            <p class="text-sm text-[#2D3436] leading-relaxed mt-2">
+                                进度比我预期的快，第 5 讲之后有点跟不上，课后想约一对一答疑排期比较满，等了三天才约上，体验一般。
+                            </p>
+                            <div class="bg-purple-50/60 border border-purple-100 rounded-lg px-3 py-2 mt-2.5 text-[11px] text-purple-700">
+                                <p class="font-medium flex items-center gap-1.5"><i class="fas fa-flag"></i>举报原因（2）</p>
+                                <p class="text-gray-500 mt-1">① 内容与事实不符（UID 100620）&nbsp;&nbsp;② 疑似恶意差评（UID 100933）</p>
+                            </div>
+                        </div>
+                        <div class="w-52 flex-shrink-0 bg-gray-50 border border-gray-100 rounded-xl p-3">
+                            <p class="text-[11px] font-semibold text-gray-600 flex items-center gap-1.5"><i class="fas fa-robot"></i>AI 复核</p>
+                            <div class="mt-2 space-y-1 text-[10px] text-gray-500">
+                                <p class="flex items-center justify-between"><span>辱骂 / 不实信息</span><span class="text-green-600 font-medium">未检出</span></p>
+                                <p class="flex items-center justify-between"><span>订单真实性</span><span class="text-green-600 font-medium">已核验</span></p>
+                                <p class="flex items-center justify-between"><span>举报可信度</span><span class="text-gray-500">低 22%</span></p>
+                            </div>
+                            <div class="border-t border-gray-200 mt-2 pt-2 text-[10px] text-gray-400">建议：保留评价，驳回举报</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-3 pl-[26px]">
+                        <div class="flex items-center gap-3 text-[11px] text-gray-400">
+                            <span><i class="far fa-thumbs-up mr-1"></i>7 有用</span>
+                            <span><i class="far fa-comment-dots mr-1"></i>1 机构回复</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="act act-ghost" onclick="openDetail()"><i class="far fa-file-lines"></i>详情</button>
+                            <button class="act act-ghost" onclick="toast('举报已驳回，评价保持展示', 'shield-halved')"><i class="fas fa-shield-halved"></i>驳回举报</button>
+                            <button class="act act-reject" onclick="openReject(this)"><i class="fas fa-eye-slash"></i>下架评价</button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Card 4: 已通过 -->
+                <article class="rev-card processed p-4 border-l-4 border-l-green-400" data-status="approved" data-id="RV202608130064">
+                    <div class="flex items-start gap-3">
+                        <div class="cbox mt-1" role="checkbox" aria-checked="false" tabindex="0" aria-label="选择该评价"></div>
+                        <img src="https://images.unsplash.com/photo-1599566159882-aa1b6c5f0c3a?w=80&h=80&fit=crop&crop=face" alt="学员 考研上岸君 头像" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm font-semibold text-[#2D3436]">考研上岸君</span>
+                                <span class="text-[10px] text-gray-400 font-mono">UID 100311</span>
+                                <span class="status-badge bg-green-50 text-green-600 status-tag">已通过</span>
+                                <span class="status-badge bg-primary-light text-primary text-[10px]"><i class="fas fa-thumbtack mr-1"></i>已置顶</span>
+                            </div>
+                            <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                                <span class="flex items-center gap-1"><i class="fas fa-graduation-cap text-gray-300"></i>考研政治冲刺班 · 第 8 讲</span>
+                                <span class="flex items-center gap-1"><i class="fas fa-chalkboard-user text-gray-300"></i>李明华</span>
+                                <span class="flex items-center gap-1 text-gray-400"><i class="far fa-clock"></i>2026-08-13 19:22 · 审核人 张运营</span>
+                            </div>
+                            <div class="flex items-center gap-1 mt-2.5" aria-label="综合评分 5 星">
+                                <i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#FFB400] text-xs"></i>
+                                <span class="text-sm font-bold text-[#2D3436] ml-1">5.0</span>
+                                <span class="text-[10px] text-gray-400 ml-2">好评 · 含 2 图 · 含追评</span>
+                            </div>
+                            <p class="text-sm text-[#2D3436] leading-relaxed mt-2">
+                                跟着李老师学了一个月，政治从 50 分提升到了 78 分！押题命中率真的很高，配套资料也很全，强烈推荐！
+                            </p>
+                            <div class="flex items-center gap-2 mt-2">
+                                <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=120&h=120&fit=crop" alt="评价图片 1" class="thumb">
+                                <img src="https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=120&h=120&fit=crop" alt="评价图片 2" class="thumb">
+                            </div>
+                        </div>
+                        <div class="w-52 flex-shrink-0 bg-gray-50 border border-gray-100 rounded-xl p-3">
+                            <p class="text-[11px] font-semibold text-gray-600 flex items-center gap-1.5"><i class="fas fa-chart-simple"></i>展示效果</p>
+                            <div class="mt-2 space-y-1 text-[10px] text-gray-500">
+                                <p class="flex items-center justify-between"><span>浏览量</span><span class="text-gray-700 font-medium">1,286</span></p>
+                                <p class="flex items-center justify-between"><span>有用数</span><span class="text-gray-700 font-medium">96</span></p>
+                                <p class="flex items-center justify-between"><span>带动预约</span><span class="text-green-600 font-medium">+14 单</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-3 pl-[26px]">
+                        <div class="flex items-center gap-2 text-[11px] text-gray-400"><span><i class="far fa-comment-dots mr-1"></i>机构已回复</span></div>
+                        <div class="flex items-center gap-2">
+                            <button class="act act-ghost" onclick="openDetail()"><i class="far fa-file-lines"></i>详情</button>
+                            <button class="act act-ghost" onclick="toast('已取消置顶', 'thumbtack')"><i class="fas fa-thumbtack"></i>取消置顶</button>
+                            <button class="act act-reject" onclick="openReject(this)"><i class="fas fa-eye-slash"></i>下架</button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Card 5: 已驳回 -->
+                <article class="rev-card processed p-4 border-l-4 border-l-gray-300" data-status="rejected" data-id="RV202608120052">
+                    <div class="flex items-start gap-3">
+                        <div class="cbox mt-1" role="checkbox" aria-checked="false" tabindex="0" aria-label="选择该评价"></div>
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-user-secret text-gray-400"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm font-semibold text-[#2D3436]">匿名学员</span>
+                                <span class="text-[10px] text-gray-400 font-mono">UID 100977</span>
+                                <span class="status-badge bg-red-50 text-red-500 status-tag">已驳回</span>
+                                <span class="text-[10px] text-gray-400">驳回原因：违法违规的广告内容</span>
+                            </div>
+                            <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                                <span class="flex items-center gap-1"><i class="fas fa-graduation-cap text-gray-300"></i>英语四级冲刺 · 第 3 讲</span>
+                                <span class="flex items-center gap-1"><i class="fas fa-chalkboard-user text-gray-300"></i>张伟强</span>
+                                <span class="flex items-center gap-1 text-gray-400"><i class="far fa-clock"></i>2026-08-12 09:41 · 审核人 系统</span>
+                            </div>
+                            <div class="flex items-center gap-1 mt-2.5" aria-label="综合评分 1 星">
+                                <i class="fas fa-star text-[#FFB400] text-xs"></i><i class="fas fa-star text-[#E1E5EF] text-xs"></i><i class="fas fa-star text-[#E1E5EF] text-xs"></i><i class="fas fa-star text-[#E1E5EF] text-xs"></i><i class="fas fa-star text-[#E1E5EF] text-xs"></i>
+                                <span class="text-sm font-bold text-[#2D3436] ml-1">1.0</span>
+                            </div>
+                            <p class="text-sm text-gray-400 leading-relaxed mt-2 line-through decoration-red-300">
+                                代写论文、四六级答案加微信 xxx，价格优惠，包过……
+                            </p>
+                            <div class="bg-red-50/60 border border-red-100 rounded-lg px-3 py-2 mt-2.5 text-[11px] text-red-600 flex items-center gap-2">
+                                <i class="fas fa-triangle-exclamation"></i>命中规则 R-01「违法违规内容」· 已同步风控，用户禁言 7 天
+                            </div>
+                        </div>
+                        <div class="w-52 flex-shrink-0 bg-gray-50 border border-gray-100 rounded-xl p-3">
+                            <p class="text-[11px] font-semibold text-gray-600 flex items-center gap-1.5"><i class="fas fa-clock-rotate-left"></i>处理记录</p>
+                            <div class="mt-2 space-y-1.5 text-[10px] text-gray-500">
+                                <p>08-12 09:41 用户提交</p>
+                                <p>08-12 09:41 AI 自动驳回</p>
+                                <p>08-12 10:02 用户申诉（已驳回）</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-3 pl-[26px]">
+                        <div class="flex items-center gap-2 text-[11px] text-gray-400"><span><i class="fas fa-user-slash mr-1"></i>用户已禁言</span></div>
+                        <div class="flex items-center gap-2">
+                            <button class="act act-ghost" onclick="openDetail()"><i class="far fa-file-lines"></i>详情</button>
+                            <button class="act act-ghost" onclick="toast('已恢复为待审核状态', 'rotate-left')"><i class="fas fa-rotate-left"></i>恢复</button>
+                            <button class="act act-pass" onclick="approve(this)"><i class="fas fa-check"></i>改为通过</button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- 空状态 -->
+                <div id="adminEmpty" class="hidden py-16 flex-col items-center justify-center text-center">
+                    <i class="fa-regular fa-star text-gray-200 text-5xl"></i>
+                    <p class="text-gray-400 text-sm mt-4">当前分类下没有评价</p>
+                </div>
+            </div>
+
+            <!-- ===== Pagination ===== -->
+            <div class="flex items-center justify-between px-1 py-4">
+                <span class="text-xs text-gray-400">共 1,284 条记录，第 1 页 / 共 214 页</span>
+                <div class="flex items-center gap-1">
+                    <button class="px-3 py-1 text-xs text-gray-400 border border-gray-200 rounded bg-white disabled:opacity-50" disabled>上一页</button>
+                    <button class="px-3 py-1 text-xs text-white bg-primary border border-primary rounded cursor-pointer">1</button>
+                    <button class="px-3 py-1 text-xs text-gray-400 border border-gray-200 rounded bg-white hover:text-primary transition cursor-pointer">2</button>
+                    <button class="px-3 py-1 text-xs text-gray-400 border border-gray-200 rounded bg-white hover:text-primary transition cursor-pointer">3</button>
+                    <button class="px-3 py-1 text-xs text-gray-400 border border-gray-200 rounded bg-white hover:text-primary transition cursor-pointer">下一页</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ==================== 驳回弹窗 ==================== -->
+    <div id="rejectMask" class="mask" role="dialog" aria-modal="true" aria-labelledby="rejectTitle">
+        <div class="modal w-[520px] p-6">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h3 id="rejectTitle" class="text-base font-semibold text-[#2D3436]">驳回评价</h3>
+                    <p id="rejectSub" class="text-xs text-gray-400 mt-1">驳回后评价不会展示，用户可在「我的评价」中查看原因并修改后重新提交</p>
+                </div>
+                <button onclick="closeReject()" class="w-8 h-8 rounded-lg hover:bg-gray-50 text-gray-400 cursor-pointer transition" aria-label="关闭弹窗"><i class="fas fa-xmark"></i></button>
+            </div>
+
+            <p class="text-xs font-medium text-[#2D3436] mt-5 mb-2">驳回原因 <span class="text-red-400">*</span></p>
+            <div class="flex flex-wrap gap-2" id="reasonBox">
+                <button class="rchip">含广告 / 联系方式</button>
+                <button class="rchip">辱骂或人身攻击</button>
+                <button class="rchip">与课程服务无关</button>
+                <button class="rchip">虚假 / 不实描述</button>
+                <button class="rchip">图片违规</button>
+                <button class="rchip">重复灌水</button>
+                <button class="rchip">其他</button>
+            </div>
+
+            <label for="rejectNote" class="text-xs font-medium text-[#2D3436] mt-5 mb-2 block">补充说明（将展示给用户）</label>
+            <textarea id="rejectNote" rows="3" maxlength="200" placeholder="请友好地说明具体问题，例如：评价中包含微信号，请删除后重新提交～"
+                      class="w-full bg-gray-50 rounded-xl p-3 text-sm text-[#2D3436] resize-none border border-gray-100 focus:border-primary/50 outline-none transition"></textarea>
+
+            <div class="flex items-center justify-between mt-4 bg-gray-50 rounded-xl px-4 py-3">
+                <div>
+                    <p class="text-sm text-[#2D3436]">通知用户</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">通过小程序订阅消息推送审核结果</p>
+                </div>
+                <button id="notifySw" class="sw on" role="switch" aria-checked="true" aria-label="通知用户"></button>
+            </div>
+            <div class="flex items-center justify-between mt-2 bg-gray-50 rounded-xl px-4 py-3">
+                <div>
+                    <p class="text-sm text-[#2D3436]">标记为恶意评价</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">计入用户信用记录，连续 3 次将限制评价权限</p>
+                </div>
+                <button id="maliceSw" class="sw" role="switch" aria-checked="false" aria-label="标记为恶意评价"></button>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 mt-6">
+                <button onclick="closeReject()" class="act act-ghost px-5 py-2">取消</button>
+                <button onclick="confirmReject()" class="px-5 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition cursor-pointer">确认驳回</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 详情弹窗 ==================== -->
+    <div id="detailMask" class="mask" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <div class="modal w-[700px] max-h-[86vh] overflow-y-auto p-6">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=face" alt="学员头像" class="w-11 h-11 rounded-full object-cover">
+                    <div>
+                        <h3 id="detailTitle" class="text-base font-semibold text-[#2D3436]">学习达人 <span class="text-[10px] text-gray-400 font-mono ml-1">UID 100286</span></h3>
+                        <p class="text-xs text-gray-400 mt-0.5">评价编号 RV202608140086 · 提交于 2026-08-14 21:36 · iPhone 小程序</p>
+                    </div>
+                </div>
+                <button onclick="closeDetail()" class="w-8 h-8 rounded-lg hover:bg-gray-50 text-gray-400 cursor-pointer transition" aria-label="关闭弹窗"><i class="fas fa-xmark"></i></button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mt-5">
+                <div class="bg-gray-50 rounded-xl p-3">
+                    <p class="text-[10px] text-gray-400">关联订单</p>
+                    <p class="text-sm font-medium text-[#2D3436] mt-1 font-mono">TC202608140001</p>
+                    <p class="text-[10px] text-gray-400 mt-1">¥75.00 · 已完成</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-3">
+                    <p class="text-[10px] text-gray-400">课程 / 老师</p>
+                    <p class="text-sm font-medium text-[#2D3436] mt-1">考研政治冲刺班</p>
+                    <p class="text-[10px] text-gray-400 mt-1">李明华 · 第 12 讲</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-3">
+                    <p class="text-[10px] text-gray-400">用户评价信用</p>
+                    <p class="text-sm font-medium text-green-600 mt-1">良好（98 分）</p>
+                    <p class="text-[10px] text-gray-400 mt-1">历史 12 条 · 违规 0 次</p>
+                </div>
+            </div>
+
+            <div class="mt-5 border border-gray-100 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1" aria-label="综合评分 5 星">
+                        <i class="fas fa-star text-[#FFB400] text-sm"></i><i class="fas fa-star text-[#FFB400] text-sm"></i><i class="fas fa-star text-[#FFB400] text-sm"></i><i class="fas fa-star text-[#FFB400] text-sm"></i><i class="fas fa-star text-[#FFB400] text-sm"></i>
+                        <span class="text-base font-bold text-[#2D3436] ml-1.5">5.0</span>
+                    </div>
+                    <span class="status-badge bg-orange-50 text-orange-500">待审核</span>
+                </div>
+                <div class="grid grid-cols-5 gap-2 mt-3 text-center">
+                    <div class="bg-gray-50 rounded-lg py-2"><p class="text-sm font-semibold text-primary">5.0</p><p class="text-[10px] text-gray-400 mt-0.5">教学质量</p></div>
+                    <div class="bg-gray-50 rounded-lg py-2"><p class="text-sm font-semibold text-[#6C5CE7]">5.0</p><p class="text-[10px] text-gray-400 mt-0.5">课程内容</p></div>
+                    <div class="bg-gray-50 rounded-lg py-2"><p class="text-sm font-semibold text-orange-500">4.0</p><p class="text-[10px] text-gray-400 mt-0.5">老师态度</p></div>
+                    <div class="bg-gray-50 rounded-lg py-2"><p class="text-sm font-semibold text-green-500">5.0</p><p class="text-[10px] text-gray-400 mt-0.5">上课环境</p></div>
+                    <div class="bg-gray-50 rounded-lg py-2"><p class="text-sm font-semibold text-red-400">4.0</p><p class="text-[10px] text-gray-400 mt-0.5">性价比</p></div>
+                </div>
+                <p class="text-sm text-[#2D3436] leading-relaxed mt-4">
+                    李老师讲课非常有感染力，把枯燥的政治理论讲得生动有趣。三步答题法真的很实用，主观题再也不是弱项了！跟着节奏复习两个月，模考从 52 分提到了 74 分，配套资料也很全。
+                </p>
+                <div class="flex items-center gap-2 mt-3">
+                    <span class="text-[10px] bg-primary-light text-primary px-2 py-0.5 rounded-full">讲解清晰</span>
+                    <span class="text-[10px] bg-primary-light text-primary px-2 py-0.5 rounded-full">重点突出</span>
+                    <span class="text-[10px] bg-primary-light text-primary px-2 py-0.5 rounded-full">收获很大</span>
+                </div>
+                <div class="flex items-center gap-2 mt-3">
+                    <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=160&h=160&fit=crop" alt="评价图片 1" class="thumb">
+                    <img src="https://images.unsplash.com/photo-1517842645767-c639042777db?w=160&h=160&fit=crop" alt="评价图片 2" class="thumb">
+                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=160&h=160&fit=crop" alt="评价图片 3" class="thumb">
+                </div>
+            </div>
+
+            <p class="text-xs font-semibold text-[#2D3436] mt-5 mb-3">审核记录</p>
+            <div class="pl-1">
+                <div class="flex gap-3">
+                    <div class="timeline-dot"></div>
+                    <div class="flex-1 border-b border-gray-50 pb-3">
+                        <p class="text-xs text-[#2D3436]">用户提交评价</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">2026-08-14 21:36 · iPhone 小程序</p>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-3">
+                    <div class="timeline-dot" style="background:#00B894"></div>
+                    <div class="flex-1 border-b border-gray-50 pb-3">
+                        <p class="text-xs text-[#2D3436]">AI 预审通过（置信度 96%）</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">2026-08-14 21:36 · 未命中敏感规则，转人工复核</p>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-3">
+                    <div class="timeline-dot" style="background:#FDCB6E"></div>
+                    <div class="flex-1">
+                        <p class="text-xs text-[#2D3436]">等待人工审核</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">已超过 2 小时 · SLA 要求 24 小时内处理</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 mt-6">
+                <button onclick="closeDetail()" class="act act-ghost px-5 py-2">关闭</button>
+                <button onclick="closeDetail(); toast('评价已驳回', 'ban')" class="px-5 py-2 rounded-lg text-sm font-medium border border-red-200 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition cursor-pointer">驳回</button>
+                <button onclick="closeDetail(); toast('评价已通过并展示', 'check')" class="px-5 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary-dark transition cursor-pointer">通过并展示</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TOAST ==================== -->
+    <div id="toast" class="toast"><i id="toastIcon" class="fas fa-check text-green-400"></i><span id="toastText"></span></div>
+
+    <script>
+        /* ==================== Tab 筛选 ==================== */
+        const cards = Array.from(document.querySelectorAll('.rev-card'));
+        const adminEmpty = document.getElementById('adminEmpty');
+
+        function switchTab(el) {
+            document.querySelectorAll('.tab-item').forEach(t => { t.classList.remove('active'); t.classList.add('text-gray-500'); });
+            el.classList.add('active');
+            el.classList.remove('text-gray-500');
+            const status = el.dataset.status;
+            let visible = 0;
+            cards.forEach(c => {
+                const show = status === 'all' || c.dataset.status === status;
+                c.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            adminEmpty.style.display = visible ? 'none' : 'flex';
+            clearSel();
+        }
+
+        /* ==================== 多选 ==================== */
+        const checkAll = document.getElementById('checkAll');
+        const bulkActions = document.getElementById('bulkActions');
+        const selCount = document.getElementById('selCount');
+
+        function visibleCards() { return cards.filter(c => c.style.display !== 'none'); }
+        function selectedCards() { return visibleCards().filter(c => c.querySelector('.cbox').classList.contains('on')); }
+
+        function syncSel() {
+            const sel = selectedCards(), vis = visibleCards();
+            selCount.textContent = sel.length;
+            bulkActions.classList.toggle('opacity-40', sel.length === 0);
+            bulkActions.classList.toggle('pointer-events-none', sel.length === 0);
+            checkAll.classList.toggle('on', vis.length > 0 && sel.length === vis.length);
+            checkAll.setAttribute('aria-checked', vis.length > 0 && sel.length === vis.length ? 'true' : 'false');
+        }
+        function clearSel() {
+            cards.forEach(c => { c.querySelector('.cbox').classList.remove('on'); c.classList.remove('selected'); });
+            syncSel();
+        }
+        cards.forEach(card => {
+            const box = card.querySelector('.cbox');
+            const toggle = () => { box.classList.toggle('on'); card.classList.toggle('selected', box.classList.contains('on')); syncSel(); };
+            box.onclick = toggle;
+            box.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } };
+        });
+        checkAll.onclick = () => {
+            const vis = visibleCards();
+            const target = selectedCards().length !== vis.length;
+            vis.forEach(c => { c.querySelector('.cbox').classList.toggle('on', target); c.classList.toggle('selected', target); });
+            syncSel();
+        };
+
+        /* ==================== 审核动作 ==================== */
+        function setStatus(card, status, label) {
+            card.dataset.status = status;
+            const tag = card.querySelector('.status-tag');
+            if (tag) {
+                tag.textContent = label;
+                tag.className = 'status-badge status-tag ' + (status === 'approved' ? 'bg-green-50 text-green-600'
+                    : status === 'rejected' ? 'bg-red-50 text-red-500' : 'bg-orange-50 text-orange-500');
+            }
+            card.classList.remove('border-l-orange-400', 'border-l-green-400', 'border-l-red-400', 'border-l-gray-300', 'border-l-purple-400');
+            card.classList.add(status === 'approved' ? 'border-l-green-400' : status === 'rejected' ? 'border-l-gray-300' : 'border-l-orange-400');
+            card.classList.toggle('processed', status !== 'pending');
+        }
+
+        function approve(btn) {
+            const card = btn.closest('.rev-card');
+            setStatus(card, 'approved', '已通过');
+            card.querySelector('.cbox').classList.remove('on');
+            card.classList.remove('selected');
+            syncSel();
+            toast('评价已通过，将在小程序端展示', 'check');
+        }
+
+        function bulkAction() {
+            const sel = selectedCards();
+            if (!sel.length) return;
+            sel.forEach(c => {
+                setStatus(c, 'approved', '已通过');
+                c.querySelector('.cbox').classList.remove('on');
+                c.classList.remove('selected');
+            });
+            syncSel();
+            toast('已批量通过 ' + sel.length + ' 条评价', 'check');
+        }
+
+        /* ==================== 驳回弹窗 ==================== */
+        const rejectMask = document.getElementById('rejectMask');
+        const rejectSub = document.getElementById('rejectSub');
+        let rejectTarget = null, rejectIsBulk = false;
+
+        function openReject(btn, isBulk) {
+            rejectIsBulk = !!isBulk;
+            rejectTarget = btn ? btn.closest('.rev-card') : null;
+            rejectSub.textContent = rejectIsBulk
+                ? '将驳回已选中的 ' + selectedCards().length + ' 条评价，驳回后不会展示'
+                : '驳回后评价不会展示，用户可在「我的评价」中查看原因并修改后重新提交';
+            rejectMask.classList.add('show');
+        }
+        function closeReject() { rejectMask.classList.remove('show'); }
+        function confirmReject() {
+            const reason = document.querySelector('#reasonBox .rchip.on');
+            if (!reason) { toast('请先选择驳回原因', 'triangle-exclamation'); return; }
+            const targets = rejectIsBulk ? selectedCards() : (rejectTarget ? [rejectTarget] : []);
+            targets.forEach(c => {
+                setStatus(c, 'rejected', '已驳回');
+                c.querySelector('.cbox').classList.remove('on');
+                c.classList.remove('selected');
+            });
+            syncSel();
+            closeReject();
+            toast('已驳回 ' + targets.length + ' 条评价' + (document.getElementById('notifySw').classList.contains('on') ? '，已通知用户' : ''), 'ban');
+            document.querySelectorAll('#reasonBox .rchip').forEach(c => c.classList.remove('on'));
+            document.getElementById('rejectNote').value = '';
+        }
+        document.querySelectorAll('#reasonBox .rchip').forEach(chip => {
+            chip.onclick = () => {
+                document.querySelectorAll('#reasonBox .rchip').forEach(c => c.classList.remove('on'));
+                chip.classList.add('on');
+            };
+        });
+
+        /* ==================== 详情弹窗 ==================== */
+        const detailMask = document.getElementById('detailMask');
+        function openDetail() { detailMask.classList.add('show'); }
+        function closeDetail() { detailMask.classList.remove('show'); }
+
+        /* ==================== 开关 / Toast / 遮罩关闭 ==================== */
+        document.querySelectorAll('.sw').forEach(sw => {
+            sw.onclick = () => { sw.classList.toggle('on'); sw.setAttribute('aria-checked', sw.classList.contains('on') ? 'true' : 'false'); };
+        });
+
+        let toastTimer = null;
+        function toast(text, icon) {
+            const el = document.getElementById('toast');
+            document.getElementById('toastText').textContent = text;
+            document.getElementById('toastIcon').className = 'fas fa-' + (icon || 'check') + ' text-green-400';
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+        }
+
+        [rejectMask, detailMask].forEach(mask => {
+            mask.onclick = e => { if (e.target === mask) mask.classList.remove('show'); };
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { rejectMask.classList.remove('show'); detailMask.classList.remove('show'); }
+        });
+
+        syncSel();
+    </script>
+</body>
+</html>

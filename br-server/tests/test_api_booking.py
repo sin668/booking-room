@@ -13,8 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import get_current_user_id
 from app.models.booking import Booking
 from app.models.coupon import Coupon, UserCoupon
+from app.models.course import Course
+from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
+from app.models.teacher import Teacher
 from app.models.user import User
 from app.models.wallet import WalletTransaction
 from app.services.booking_payment_service import PaymentProviderUnavailableError
@@ -872,6 +876,93 @@ class TestGetBooking:
         assert data["id"] == booking.id
         assert data["seat"] is None
         assert data["room"]["name"] == "Test Room"
+
+    @pytest.mark.asyncio
+    async def test_get_course_booking_detail_enriches_course_fields(
+        self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
+    ):
+        """课程预约详情应返回课程名/课时标题/老师/上课时间，供评价页第一屏展示。"""
+        room = seed_room_seat["room"]
+        teacher = Teacher(name="李明华")
+        db_session.add(teacher)
+        await db_session.flush()
+
+        course = Course(room_id=room.id, name="考研政治冲刺班", category="exam")
+        db_session.add(course)
+        await db_session.flush()
+
+        schedule = CourseSchedule(
+            course_id=course.id,
+            teacher_id=teacher.id,
+            start_date=date(2026, 8, 14),
+            end_date=date(2026, 9, 14),
+            time_slots='[{"weekday":3,"start":"14:00","end":"16:00"}]',
+            price=Decimal("75.00"),
+        )
+        db_session.add(schedule)
+        lesson_a = CourseLesson(course_id=course.id, title="第 12 讲", sort_order=1)
+        lesson_b = CourseLesson(course_id=course.id, title="第 13 讲", sort_order=2)
+        db_session.add_all([lesson_a, lesson_b])
+        await db_session.flush()
+
+        booking = Booking(
+            seat_id=None,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=date(2026, 8, 14),
+            start_time=time(14, 0),
+            end_time=time(16, 0),
+            status="completed",
+            total_price=Decimal("75.00"),
+            booking_type="course",
+            course_id=course.id,
+            # 逆序写入，验证返回按 lesson_ids 原序而非查询顺序
+            lesson_ids=[lesson_b.id, lesson_a.id],
+            schedule_id=schedule.id,
+            schedule_type="fixed",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        resp = await auth_client.get(f"/api/v1/bookings/{booking.id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["booking_type"] == "course"
+        assert data["course_name"] == "考研政治冲刺班"
+        assert data["lesson_titles"] == ["第 13 讲", "第 12 讲"]
+        assert data["teacher_name"] == "李明华"
+        assert data["start_date"] == "2026-08-14"
+        assert data["end_date"] == "2026-09-14"
+        assert data["schedule_type"] == "fixed"
+        assert data["total_price"] == "75.00"
+
+    @pytest.mark.asyncio
+    async def test_get_seat_booking_detail_keeps_seat_type(
+        self, auth_client: AsyncClient, db_session: AsyncSession, seed_room_seat
+    ):
+        """自习室预约详情仍返回 seat 类型与座位信息，不受课程富化影响。"""
+        room = seed_room_seat["room"]
+        seat = seed_room_seat["seat_a"]
+        booking = Booking(
+            seat_id=seat.id,
+            user_id=str(USER_ID),
+            room_id=room.id,
+            date=date(2026, 5, 1),
+            start_time=time(9, 0),
+            end_time=time(12, 0),
+            status="in_progress",
+            total_price=Decimal("30.00"),
+        )
+        db_session.add(booking)
+        await db_session.flush()
+
+        resp = await auth_client.get(f"/api/v1/bookings/{booking.id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["booking_type"] == "seat"
+        assert data["seat"]["seat_number"] == seat.seat_number
+        assert data["course_name"] is None
+        assert data["lesson_titles"] is None
 
 
 class TestBookingPaymentEndpoints:

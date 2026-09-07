@@ -606,6 +606,69 @@ async def list_bookings(
     )
 
 
+async def _attach_course_booking_detail(
+    db: AsyncSession, booking: Booking, resp: BookingResponse
+) -> None:
+    """为课程预约订单详情补充课程/课时/老师信息。
+
+    口径与 list_bookings 的课程富化保持一致（排课优先取订单绑定的 schedule_id，
+    无绑定时回退该课程最早创建的排课；1V1 定制订单开课日期取下单选择的日期）。
+    """
+    resp.booking_type = "course"
+    resp.course_id = booking.course_id
+    resp.schedule_type = getattr(booking, "schedule_type", None)
+    resp.highlighted_lesson_id = getattr(booking, "highlighted_lesson_id", None)
+
+    if booking.course_id:
+        resp.course_name = (
+            await db.execute(select(Course.name).where(Course.id == booking.course_id))
+        ).scalar_one_or_none()
+
+    schedule = None
+    if getattr(booking, "schedule_id", None):
+        schedule = (
+            await db.execute(
+                select(CourseSchedule).where(CourseSchedule.id == booking.schedule_id)
+            )
+        ).scalar_one_or_none()
+    if schedule is None and booking.course_id:
+        schedule = (
+            await db.execute(
+                select(CourseSchedule)
+                .where(CourseSchedule.course_id == booking.course_id)
+                .order_by(CourseSchedule.created_at)
+            )
+        ).scalars().first()
+
+    if schedule is not None:
+        resp.schedule = schedule.time_slots
+        start_d = schedule.start_date
+        if resp.schedule_type == "custom" and getattr(booking, "date", None):
+            start_d = booking.date
+        resp.start_date = start_d.isoformat() if start_d else None
+        resp.end_date = schedule.end_date.isoformat() if schedule.end_date else None
+        if schedule.teacher_id:
+            teacher = (
+                await db.execute(select(Teacher).where(Teacher.id == schedule.teacher_id))
+            ).scalar_one_or_none()
+            if teacher is not None:
+                resp.teacher_name = teacher.name
+                resp.teacher_avatar = teacher.avatar
+
+    lesson_ids = list(booking.lesson_ids or [])
+    if lesson_ids:
+        rows = (
+            await db.execute(
+                select(CourseLesson.id, CourseLesson.title).where(
+                    CourseLesson.id.in_(lesson_ids)
+                )
+            )
+        ).all()
+        title_map = {row[0]: row[1] for row in rows}
+        # 按 booking.lesson_ids 原序输出，in_ 查询不保证顺序
+        resp.lesson_titles = [title_map[lid] for lid in lesson_ids if lid in title_map]
+
+
 async def get_booking(
     db: AsyncSession, booking_id: int, user_id: uuid.UUID
 ) -> BookingResponse:
@@ -623,7 +686,10 @@ async def get_booking(
     seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
 
-    return _build_booking_response(booking, seat, room)
+    resp = _build_booking_response(booking, seat, room)
+    if getattr(booking, "booking_type", None) == "course":
+        await _attach_course_booking_detail(db, booking, resp)
+    return resp
 
 
 async def cancel_booking(

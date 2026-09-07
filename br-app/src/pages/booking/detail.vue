@@ -1142,9 +1142,16 @@ export default {
 
 .section {
   margin: 32rpx 28rpx 0;
+  padding: 28rpx;
+}
+
+/* 简介/座位概况/学员评价/教室概况保留白色卡片；环境照片/名师团队/本培训室课程为无卡片区块 */
+.intro-section,
+.seat-section,
+.review-section,
+.classroom-section {
   background: $surface;
   border-radius: 32rpx;
-  padding: 28rpx;
   box-shadow: $shadow-card;
   border: 1rpx solid $border-soft;
 }

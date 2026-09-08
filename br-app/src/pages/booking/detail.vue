@@ -893,7 +893,8 @@ export default {
   position: absolute;
   left: 28rpx;
   right: 140rpx;
-  bottom: 34rpx;
+  /* 与老师页 hero-info 同样上移 40rpx，避免被下方 info-card（margin-top:-42rpx）遮挡 */
+  bottom: 74rpx;
   display: flex;
   flex-direction: column;
   gap: 8rpx;
@@ -915,7 +916,8 @@ export default {
 .hero-counter {
   position: absolute;
   right: 28rpx;
-  bottom: 36rpx;
+  /* 与 hero-title 同步上移 40rpx，保持两者基线对齐 */
+  bottom: 76rpx;
   display: flex;
   align-items: center;
   gap: 8rpx;

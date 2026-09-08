@@ -864,7 +864,8 @@ async def pay_pending_booking(
             booking.next_payment_check_at = datetime.now() + timedelta(minutes=1)
         await db.flush()
 
-    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one()
+    # 课程预约订单 seat_id 为 NULL（不占座），用 scalar_one_or_none 避免 NoResultFound
+    seat = (await db.execute(select(Seat).where(Seat.id == booking.seat_id))).scalar_one_or_none()
     room = (await db.execute(select(StudyRoom).where(StudyRoom.id == booking.room_id))).scalar_one()
 
     response = _build_booking_response(booking, seat, room)

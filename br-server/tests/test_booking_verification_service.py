@@ -219,6 +219,9 @@ async def test_issue_verification_token_for_future_booking_returns_token(
     verification_data,
 ):
     verification_data["in_progress"].date = datetime.now(UTC).date() + timedelta(days=1)
+    # 把 pending_paid 移出今天的核销窗口，避免测试运行时刻落在其 09:00-11:00
+    # 窗口内时被优先选中，使断言依赖运行时刻（flaky）
+    verification_data["pending_paid"].date = datetime.now(UTC).date() - timedelta(days=1)
     await db_session.flush()
 
     response = await issue_verification_token(db_session, USER_ID)

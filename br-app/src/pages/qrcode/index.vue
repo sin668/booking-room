@@ -236,7 +236,8 @@ async function loadToken(bookingId = selectedBookingId.value) {
     await loadBookings()
     const targetBookingId = bookingId || selectedBookingId.value
     selectedBookingId.value = targetBookingId
-    const data = await issueVerificationToken(targetBookingId ? { booking_id: targetBookingId } : undefined)
+    // 无指定预约时发空对象而非 undefined，避免 uni 运行时把 undefined 序列化成非法 JSON body 导致 422
+    const data = await issueVerificationToken(targetBookingId ? { booking_id: targetBookingId } : {})
     const verifyUrl = toAbsoluteVerifyUrl(data.verify_url)
     if (!isScannableVerifyUrl(verifyUrl)) {
       throw new Error('核销链接不是可被微信打开的公网地址，请配置 FRONTEND_BASE_URL 或 VITE_FRONTEND_BASE_URL')

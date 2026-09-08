@@ -1,6 +1,7 @@
+import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id, require_admin_permission
@@ -8,7 +9,6 @@ from app.core.database import get_db
 from app.schemas.booking_verification import (
     BookingVerificationConfirmResponse,
     BookingVerificationDetailResponse,
-    BookingVerificationTokenRequest,
     BookingVerificationTokenResponse,
     VerifiableBookingListResponse,
 )
@@ -19,15 +19,29 @@ router = APIRouter(prefix="/api/v1/booking-verifications", tags=["booking-verifi
 
 @router.post("/token", response_model=BookingVerificationTokenResponse)
 async def issue_verification_token(
-    body: BookingVerificationTokenRequest | None = None,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> BookingVerificationTokenResponse:
+    # 兼容旧版客户端：body 可能缺失或非法 JSON（如字符串 "undefined"），
+    # 一律降级为“未指定 booking_id”（自选最近可核销预约），不再 422
+    booking_id: int | None = None
+    raw = await request.body()
+    if raw:
+        try:
+            payload = json.loads(raw)
+        except ValueError:
+            payload = None
+        if isinstance(payload, dict) and payload.get("booking_id") is not None:
+            try:
+                booking_id = int(payload["booking_id"])
+            except (TypeError, ValueError):
+                booking_id = None
     try:
         return await booking_verification_service.issue_verification_token(
             db,
             user_id,
-            booking_id=body.booking_id if body else None,
+            booking_id=booking_id,
         )
     except booking_verification_service.NoVerifiableBookingError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="暂无可核销预约")

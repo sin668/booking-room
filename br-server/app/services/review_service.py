@@ -60,6 +60,7 @@ def _base_conditions(
     teacher_id: int | None = None,
     booking_id: int | None = None,
     room_id: int | None = None,
+    room_booking_type: str = "seat",
     rating_band: str = "all",
     has_images: bool = False,
 ) -> list:
@@ -71,17 +72,16 @@ def _base_conditions(
     if booking_id is not None:
         conditions.append(Review.booking_id == booking_id)
     if room_id is not None:
-        # 自习室评价：评价挂靠订单，订单再归属学习室。综合室既出租座位又上课，
-        # 课程订单也带 room_id，故只取该室的自习座位订单（booking_type='seat'），
-        # 排除在此上课的课程订单评价，避免把「老师讲解」类评价混进自习室评价区。
-        conditions.append(
-            Review.booking_id.in_(
-                select(Booking.id).where(
-                    Booking.room_id == room_id,
-                    Booking.booking_type == "seat",
-                )
-            )
-        )
+        # 学习室评价：评价挂靠订单，订单再归属学习室。room_booking_type 决定统计口径：
+        #   "seat"   → 仅自习座位订单评价（自习室，排除在此上课的课程评价）
+        #   "course" → 仅课程订单评价（培训室的老师/课程评价）
+        #   "all"    → 两者合并（综合室：既出租座位又上课）
+        booking_query = select(Booking.id).where(Booking.room_id == room_id)
+        if room_booking_type == "seat":
+            booking_query = booking_query.where(Booking.booking_type == "seat")
+        elif room_booking_type == "course":
+            booking_query = booking_query.where(Booking.booking_type == "course")
+        conditions.append(Review.booking_id.in_(booking_query))
     band = RATING_BANDS.get(rating_band)
     if band:
         conditions.append(Review.rating.in_(band))
@@ -233,9 +233,25 @@ async def get_summary(
     room_id: int | None = None,
 ) -> ReviewSummary:
     """评价概览。只统计 approved；无数据时返回全 0，不抛 404。"""
+    # room_id 维度按房型决定评分口径：
+    #   自习室 → 自习座位评价；培训室 → 课程/老师评价；综合室 → 两者合并
+    room_booking_type = "seat"
+    if room_id is not None:
+        room_type = (
+            await db.execute(select(StudyRoom.room_type).where(StudyRoom.id == room_id))
+        ).scalar_one_or_none()
+        if room_type == "training":
+            room_booking_type = "course"
+        elif room_type == "comprehensive":
+            room_booking_type = "all"
     conditions = [Review.status == ReviewStatus.APPROVED.value]
     conditions.extend(
-        _base_conditions(course_id=course_id, teacher_id=teacher_id, room_id=room_id)
+        _base_conditions(
+            course_id=course_id,
+            teacher_id=teacher_id,
+            room_id=room_id,
+            room_booking_type=room_booking_type,
+        )
     )
 
     rows = (

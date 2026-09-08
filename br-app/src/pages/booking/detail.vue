@@ -456,9 +456,11 @@ export default {
     },
 
     ratingText() {
-      // 评分来自后端评价概览（自习室维度），无评价时为 0.0
-      const avg = this.reviewSummary?.average
-      return Number(avg || 0).toFixed(1)
+      // 评分来自后端评价概览，后端按房型统计口径
+      // （自习室=自习评价、培训室=课程/老师评价、综合室=两者合并）；无评价时默认 5.0
+      const summary = this.reviewSummary
+      if (!summary || !summary.count) return '5.0'
+      return Number(summary.average || 0).toFixed(1)
     },
 
     minPrice() {
@@ -468,8 +470,10 @@ export default {
     },
 
     availabilityPercent() {
-      if (!this.seatStats.total) return 0
-      return Math.round((this.seatStats.available / this.seatStats.total) * 100)
+      // 空座率 = 可用座位 / 总座位；无座位数据（如培训室）时默认 100%
+      const { total, available } = this.seatStats
+      if (!total) return 100
+      return Math.round((available / total) * 100)
     },
 
     availabilityLabel() {
@@ -548,9 +552,14 @@ export default {
         if (!this.room || !this.room.id) return
         this.roomType = this.room.room_type || 'study'
         const tasks = []
+        // 评分概览：所有房型都需要（后端按房型决定统计口径）
+        tasks.push(this.loadReviewSummary())
         if (this.roomType === 'study' || this.roomType === 'comprehensive') {
           tasks.push(this.loadSeatStats())
-          tasks.push(this.loadReviews())
+        }
+        // 学员评价区块仅自习室展示
+        if (this.roomType === 'study') {
+          tasks.push(this.loadReviewList())
         }
         if (this.roomType === 'training' || this.roomType === 'comprehensive') {
           tasks.push(this.loadTrainingDetail())
@@ -607,15 +616,21 @@ export default {
       }
     },
 
-    // 学员评价：区块只取前 3 条；评分概览用于顶部「评分」统计（自习室维度）
-    async loadReviews() {
+    // 评分概览：顶部「评分」统计，后端按房型决定口径（自习/课程/合并）
+    async loadReviewSummary() {
       try {
-        const [list, summary] = await Promise.all([
-          getReviewList({ room_id: this.roomId, page: 1, page_size: 3 }),
-          getReviewSummary({ room_id: this.roomId }),
-        ])
-        this.reviewCount = list.total || 0
+        const summary = await getReviewSummary({ room_id: this.roomId })
         this.reviewSummary = summary || null
+      } catch {
+        this.reviewSummary = null
+      }
+    },
+
+    // 学员评价区块：仅自习室展示，取前 3 条
+    async loadReviewList() {
+      try {
+        const list = await getReviewList({ room_id: this.roomId, page: 1, page_size: 3 })
+        this.reviewCount = list.total || 0
         this.reviews = (list.items || []).map((item) => {
           const name = item.user_nickname || '匿名用户'
           return {
@@ -628,10 +643,9 @@ export default {
           }
         })
       } catch {
-        // 降级为空状态，不阻塞自习室详情主体渲染
+        // 降级为空状态，不阻塞详情主体渲染
         this.reviews = []
         this.reviewCount = 0
-        this.reviewSummary = null
       } finally {
         this.reviewsLoading = false
       }

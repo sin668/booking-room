@@ -299,12 +299,17 @@ class TestListStudyRoomsRoomTypeFilter:
     async def test_no_room_type_returns_all_open(
         self, db_session: AsyncSession, seed_training_data
     ):
-        """不传 room_type 时返回所有 open 状态的房间。"""
+        """不传 room_type 时自习列表默认返回自习室与综合室（排除纯培训室）。"""
         from app.services.study_room_service import list_study_rooms
 
         result = await list_study_rooms(db_session)
-        # 4 个 open 状态的房间（排除已关闭的）
-        assert result.total == 4
+        # open 的 study(普通自习室) + comprehensive(综合学习中心) = 2；
+        # 纯培训室只在培训页展示，不进自习列表
+        assert result.total == 2
+        names = {item.name for item in result.items}
+        assert "普通自习室" in names
+        assert "综合学习中心" in names
+        assert "培训中心A" not in names
 
 
 # ---------------------------------------------------------------------------

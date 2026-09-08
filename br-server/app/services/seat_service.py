@@ -1,6 +1,6 @@
 from datetime import date, time
 
-from sqlalchemy import and_, case, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.booking_status import BookingStatus
@@ -80,22 +80,33 @@ async def get_seat_stats(
     with_availability = target_date is not None and start_time is not None and end_time is not None
 
     if not with_availability:
-        result = await db.execute(
-            select(
-                func.count(Seat.id),
-                func.sum(case((Seat.status == "available", 1), else_=0)),
-                func.sum(case((Seat.status == "maintenance", 1), else_=0)),
-            ).where(Seat.room_id == room_id)
-        )
-        total, available, maintenance = result.one()
-        total = total or 0
-        available = available or 0
-        maintenance = maintenance or 0
+        # 无时段查询（学习室详情页座位概况）：座位占用以「活跃订单」为准。
+        # 待开始/进行中的自习座位订单占用座位（已占+1、可用-1），
+        # 已完成/已取消释放座位；静态 Seat.status 仅用于识别维护中座位。
+        seats = (await db.execute(select(Seat).where(Seat.room_id == room_id))).scalars().all()
+        total = len(seats)
+        maintenance_ids = {s.id for s in seats if s.status == "maintenance"}
+        maintenance = len(maintenance_ids)
+        active_seat_ids = (
+            await db.execute(
+                select(Booking.seat_id).where(
+                    Booking.room_id == room_id,
+                    Booking.booking_type == "seat",
+                    Booking.seat_id.is_not(None),
+                    Booking.status.in_(
+                        [BookingStatus.PENDING_START.value, BookingStatus.IN_PROGRESS.value]
+                    ),
+                )
+            )
+        ).scalars().all()
+        # 同一座位多个活跃订单只算占用一次；维护中座位不计入可用/已占
+        occupied = len({sid for sid in active_seat_ids if sid not in maintenance_ids})
+        available = max(0, total - maintenance - occupied)
         return SeatStatsResponse(
             total=total,
             available=available,
+            occupied=occupied,
             maintenance=maintenance,
-            occupied=max(0, total - available - maintenance),
         )
 
     result = await db.execute(select(Seat).where(Seat.room_id == room_id))

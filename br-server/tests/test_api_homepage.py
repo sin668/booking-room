@@ -20,9 +20,10 @@ class TestStudyRoomAPI:
         assert data["items"][0]["name"] == "Study Room"
 
     async def test_room_type_in_response(self, client: AsyncClient, db_session: AsyncSession):
-        db_session.add(StudyRoom(name="Test Room", address="Addr", status="open", min_price=10.00, room_type="training"))
+        # 自习列表（无显式 room_type）默认返回自习室与综合室，响应携 room_type 字段
+        db_session.add(StudyRoom(name="Test Room", address="Addr", status="open", min_price=10.00, room_type="comprehensive"))
         await db_session.flush()
 
         resp = await client.get("/api/v1/rooms")
         assert resp.status_code == 200
-        assert resp.json()["items"][0]["room_type"] == "training"
+        assert resp.json()["items"][0]["room_type"] == "comprehensive"

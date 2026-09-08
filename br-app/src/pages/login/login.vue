@@ -8,7 +8,7 @@
       <!-- Logo & 品牌 -->
       <view class="brand">
         <view class="logo">
-          <image class="logo-img" src="/static/logo.png" mode="aspectFit" />
+          <image class="logo-img" src="https://img.yichengpai.cn/images/logo/logo.png" mode="aspectFit" />
         </view>
         <text class="brand-title">去静界</text>
         <text class="brand-desc">觅知几，好好学习，遇见更好的自己~</text>

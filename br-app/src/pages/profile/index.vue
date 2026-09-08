@@ -131,7 +131,7 @@
       <button class="logout-btn" @tap="handleLogout">退出登录</button>
     </view>
     <view v-else class="not-logged-in">
-      <image class="logo" src="/static/logo.png" mode="aspectFit" />
+      <image class="logo" src="https://img.yichengpai.cn/images/logo/logo.png" mode="aspectFit" />
       <text class="title">去静界</text>
       <text class="desc">觅知几，好好学习，遇见更好的自己~</text>
       <button class="login-btn" @tap="goLogin">去登录</button>

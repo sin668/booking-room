@@ -128,16 +128,21 @@
     },
     price_per_hour: {
       required: true,
+      // n-input-number 的值为 number，须显式声明类型，
+      // 否则 async-validator 默认按 string 校验导致有值也报“请输入”
+      type: 'number',
       trigger: ['blur', 'change'],
       message: '请输入每小时价格',
     },
     row: {
       required: true,
+      type: 'number',
       trigger: ['blur', 'change'],
       message: '请输入行号',
     },
     col: {
       required: true,
+      type: 'number',
       trigger: ['blur', 'change'],
       message: '请输入列号',
     },
@@ -152,7 +157,8 @@
         formValues.zone = props.editData.zone;
         formValues.position = props.editData.position;
         formValues.floor = props.editData.floor;
-        formValues.price_per_hour = props.editData.price_per_hour;
+        // 后端 Decimal 序列化为字符串（如 "12.00"），需转 number 供 n-input-number 与校验使用
+        formValues.price_per_hour = Number(props.editData.price_per_hour);
         formValues.row = props.editData.row;
         formValues.col = props.editData.col;
       } else {

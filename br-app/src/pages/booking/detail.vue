@@ -92,7 +92,7 @@
       </view>
 
       <!-- 培训室简介（仅 training/comprehensive） -->
-      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section intro-section animate-in" style="animation-delay: 0.05s;">
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section content-section animate-in" style="animation-delay: 0.05s;">
         <view class="section-header">
           <view class="section-title-group">
             <view class="section-bar" />
@@ -102,7 +102,7 @@
         <text class="intro-text">{{ room.description || '暂无简介' }}</text>
       </view>
 
-      <view class="section animate-in" style="animation-delay: 0.1s;">
+      <view class="section frame-section animate-in" style="animation-delay: 0.1s;">
         <view class="section-header">
           <view class="section-title-group">
             <view class="section-bar" />
@@ -129,7 +129,7 @@
       </view>
 
       <!-- 座位概况（仅 study/comprehensive） -->
-      <view v-if="isStudyRoom || isComprehensiveRoom" class="section seat-section animate-in" style="animation-delay: 0.2s;">
+      <view v-if="isStudyRoom || isComprehensiveRoom" class="section frame-section animate-in" style="animation-delay: 0.2s;">
         <view class="section-header">
           <view class="section-title-group">
             <view class="section-bar" />
@@ -178,7 +178,7 @@
       </view>
 
       <!-- 学员评价（仅 study 自习室，数据来自 /api/v1/reviews?room_id=） -->
-      <view v-if="isStudyRoom" class="section review-section animate-in" style="animation-delay: 0.25s;">
+      <view v-if="isStudyRoom" class="section content-section animate-in" style="animation-delay: 0.25s;">
         <view class="section-header">
           <view class="section-title-group">
             <view class="section-bar" />
@@ -217,7 +217,7 @@
       </view>
 
       <!-- 教室概况（仅 training/comprehensive） -->
-      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section classroom-section animate-in" style="animation-delay: 0.2s;">
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section frame-section animate-in" style="animation-delay: 0.2s;">
         <view class="section-header">
           <view class="section-title-group">
             <view class="section-bar" />
@@ -265,7 +265,7 @@
       </view>
 
       <!-- 名师团队（仅 training/comprehensive） -->
-      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section animate-in" style="animation-delay: 0.3s;">
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section frame-section animate-in" style="animation-delay: 0.3s;">
         <view class="section-header">
           <view class="section-title-group">
             <view class="section-bar" />
@@ -291,7 +291,7 @@
       </view>
 
       <!-- 本培训室课程（仅 training/comprehensive） -->
-      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section animate-in" style="animation-delay: 0.4s;">
+      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section frame-section animate-in" style="animation-delay: 0.4s;">
         <view class="section-header">
           <view class="section-title-group">
             <view class="section-bar" />
@@ -1162,10 +1162,13 @@ export default {
 }
 
 /* 简介/座位概况/学员评价/教室概况保留白色卡片；环境照片/名师团队/本培训室课程为无卡片区块 */
-.intro-section,
-.seat-section,
-.review-section,
-.classroom-section {
+.frame-section {
+  border-radius: 32rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
+}
+
+.content-section {
   background: $surface;
   border-radius: 32rpx;
   box-shadow: $shadow-card;

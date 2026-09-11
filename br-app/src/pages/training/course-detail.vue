@@ -1105,7 +1105,10 @@ export default {
 
 /* === 相关课程 === */
 .related-section {
-  margin-top: 32rpx;
+  border-radius: 32rpx;
+  padding: 28rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 
 .related-scroll {

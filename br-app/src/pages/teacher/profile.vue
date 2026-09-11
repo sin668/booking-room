@@ -116,41 +116,6 @@
         </view>
       </view>
 
-      <!-- 主讲课程列表 -->
-      <view class="courses-section animate-in delay-3">
-        <view class="courses-header">
-          <text class="courses-title">主讲课程</text>
-          <text class="courses-count">共{{ courses.length }}门</text>
-        </view>
-        <view v-if="courses.length === 0" class="empty-state">
-          <text class="empty-text">暂无课程</text>
-        </view>
-        <view v-else class="course-list">
-          <view v-for="course in courses" :key="course.id" class="course-card" @tap="onCourseDetail(course)">
-            <image class="course-cover" :src="course.cover_image || ''" mode="aspectFill" />
-            <view class="course-body">
-              <view class="course-top">
-                <text class="course-name">{{ course.name }}</text>
-              </view>
-              <text class="course-lesson-info">共{{ course.lesson_count || 0 }}课时 · 含资料</text>
-              <view class="course-rating-row">
-                <view class="rating-stars">
-                  <text class="star-icon">★</text>
-                  <text class="rating-value">{{ course.rating }}</text>
-                </view>
-                <text class="rating-count">{{ course.enrollment_count }}人</text>
-              </view>
-              <view class="course-bottom">
-                <view class="course-price-wrap">
-                  <text class="course-price">¥{{ course.price }}</text>
-                  <text class="price-unit">/课时</text>
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-
       <!-- 学员评价（数据来自 /api/v1/reviews?teacher_id=） -->
       <view class="section animate-in delay-4">
         <view class="section-header">
@@ -185,6 +150,42 @@
         </view>
         <view v-else-if="!reviewsLoading" class="review-empty">
           <text class="review-empty-text">暂无评价</text>
+        </view>
+      </view>
+
+      <!-- 主讲课程列表 -->
+      <view class="courses-section animate-in delay-3">
+        <view class="courses-header">
+          <view class="section-bar" />
+          <text class="section-title">主讲课程</text>
+          <text class="section-sub">共{{ courses.length }}门</text>
+        </view>
+        <view v-if="courses.length === 0" class="empty-state">
+          <text class="empty-text">暂无课程</text>
+        </view>
+        <view v-else class="course-list">
+          <view v-for="course in courses" :key="course.id" class="course-card" @tap="onCourseDetail(course)">
+            <image class="course-cover" :src="course.cover_image || ''" mode="aspectFill" />
+            <view class="course-body">
+              <view class="course-top">
+                <text class="course-name">{{ course.name }}</text>
+              </view>
+              <text class="course-lesson-info">共{{ course.lesson_count || 0 }}课时 · 含资料</text>
+              <view class="course-rating-row">
+                <view class="rating-stars">
+                  <text class="star-icon">★</text>
+                  <text class="rating-value">{{ course.rating }}</text>
+                </view>
+                <text class="rating-count">{{ course.enrollment_count }}人</text>
+              </view>
+              <view class="course-bottom">
+                <view class="course-price-wrap">
+                  <text class="course-price">¥{{ course.price }}</text>
+                  <text class="price-unit">/课时</text>
+                </view>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
 
@@ -743,26 +744,19 @@ export default {
 
 /* === 主讲课程 === */
 .courses-section {
-  margin-top: 28rpx;
+  margin: 28rpx 28rpx 0;
+  padding: 28rpx 0;
+  border-radius: 28rpx;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $border-soft;
 }
 
 .courses-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12rpx;
   padding: 0 28rpx;
-  margin-bottom: 14rpx;
-}
-
-.courses-title {
-  font-size: 30rpx;
-  font-weight: bold;
-  color: $text-primary;
-}
-
-.courses-count {
-  font-size: 22rpx;
-  color: $text-muted;
+  margin-bottom: 20rpx;
 }
 
 .empty-state {

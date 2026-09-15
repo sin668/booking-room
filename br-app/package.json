@@ -12,7 +12,8 @@
     "test:refactor": "node scripts/test-refactored-page-logic.js",
     "test:activity-coupon": "node scripts/verify-activity-coupon-campaign.js",
     "test:course-schedule": "node scripts/verify-course-schedule-format.js",
-    "test:scripts": "npm run test:profile-links && npm run test:wechat-appid && npm run test:refactor && npm run test:activity-coupon && npm run test:course-schedule"
+    "test:profile-menu": "node scripts/verify-profile-menu-summary.js",
+    "test:scripts": "npm run test:profile-links && npm run test:wechat-appid && npm run test:refactor && npm run test:activity-coupon && npm run test:course-schedule && npm run test:profile-menu"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4060620250520001",

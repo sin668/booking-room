@@ -64,6 +64,15 @@
             <text class="review-star-icon">★</text>
           </view>
           <text class="menu-item-text">我的评价</text>
+          <text class="menu-item-meta">{{ reviewSummary }}</text>
+          <view class="icon icon-arrow-right menu-arrow" />
+        </view>
+        <view class="menu-item" @tap="navigateTo('/pages/notifications/index')">
+          <view class="menu-icon blue">
+            <view class="icon icon-bell message-icon" />
+          </view>
+          <text class="menu-item-text">我的消息</text>
+          <text class="menu-item-meta">{{ unreadMessageSummary }}</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
 
@@ -84,6 +93,7 @@
             <view class="wallet-icon" />
           </view>
           <text class="menu-item-text">钱包充值</text>
+          <text class="menu-item-meta">充值钱包</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
         <view class="menu-item" @tap="navigateTo('/pages/wallet/transactions')">
@@ -144,6 +154,8 @@ import { useUserStore } from '@/store/modules/user'
 import { getCoupons } from '@/api/coupons'
 import { getMonthlySummary } from '@/api/studyRecords'
 import { getBalance } from '@/api/wallet'
+import { getReviewList } from '@/api/review'
+import { getNotificationUnreadSummary } from '@/api/notifications'
 import { getAllFollowedCategories } from '@/services/followedRooms'
 import { formatAmount, formatMoney } from '@/utils/formatters'
 
@@ -157,6 +169,8 @@ export default {
       profileRequestId: 0,
       followedRooms: [],
       followTotalCount: 0,
+      reviewCount: 0,
+      unreadMessageCount: 0,
     }
   },
   computed: {
@@ -174,6 +188,12 @@ export default {
     },
     followSummary() {
       return this.followTotalCount > 0 ? `${this.followTotalCount}项关注` : ''
+    },
+    reviewSummary() {
+      return this.reviewCount > 0 ? `${this.reviewCount}条评论` : ''
+    },
+    unreadMessageSummary() {
+      return this.unreadMessageCount > 0 ? `${this.unreadMessageCount}条未读` : ''
     },
   },
   onShow() {
@@ -213,11 +233,13 @@ export default {
     async loadProfileStats() {
       const requestId = ++this.profileRequestId
       const month = this.currentMonthString()
-      const [balanceResult, couponResult, studyResult] = await Promise.allSettled([
+      const [balanceResult, couponResult, studyResult, , reviewResult, unreadResult] = await Promise.allSettled([
         getBalance(),
         getCoupons('available'),
         getMonthlySummary({ month }),
         this.userStore.fetchUserInfo(),
+        getReviewList({ mine: true, page_size: 1 }),
+        getNotificationUnreadSummary(),
       ])
 
       if (requestId !== this.profileRequestId) return
@@ -237,6 +259,14 @@ export default {
 
       this.totalStudyHours = studyResult.status === 'fulfilled'
         ? (studyResult.value?.total_hours || 0)
+        : 0
+
+      this.reviewCount = reviewResult.status === 'fulfilled'
+        ? (reviewResult.value?.total || 0)
+        : 0
+
+      this.unreadMessageCount = unreadResult.status === 'fulfilled'
+        ? (unreadResult.value?.total_unread || 0)
         : 0
     },
     currentMonthString() {
@@ -585,6 +615,11 @@ export default {
   font-size: 34rpx;
   line-height: 1;
   color: #ff9500;
+}
+
+.message-icon {
+  font-size: 34rpx;
+  color: $primary;
 }
 
 .history-icon {

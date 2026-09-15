@@ -1,6 +1,8 @@
 ## Purpose
 Define app user authentication behavior, token issuance, and current-user identity fields.
+
 ## Requirements
+
 ### Requirement: JWT token issuance
 系统 SHALL 在用户注册或登录成功后签发 JWT Access Token（15 分钟有效期）和 Refresh Token（7 天有效期）。用户数据从统一的 `users` 表中查询，不再按 `user_type` 过滤。注册成功后自动分配 `app_register_user` 默认角色，并保证用户具有全局唯一 username。
 
@@ -132,7 +134,7 @@ Define app user authentication behavior, token issuance, and current-user identi
 - **AND** 系统 SHALL NOT 修改 password_hash
 
 ### Requirement: Deleted account authentication guard
-系统 SHALL 阻止 `status='deleted'` 的账号继续登录或刷新会话。
+系统 SHALL 阻止 `status='deleted'` 的账号继续登录或刷新会话。小程序端在刷新会话失败（含 401 且刷新失败）时 SHALL 仅清理本地登录态并将错误上抛给调用方，SHALL NOT 由请求层直接强制跳转登录页；登录门槛由页面与操作层决定。
 
 #### Scenario: Reject login for deleted account
 - **GIVEN** 用户账号状态为 `deleted`
@@ -145,3 +147,10 @@ Define app user authentication behavior, token issuance, and current-user identi
 - **WHEN** 用户使用 refresh token 请求刷新会话
 - **THEN** 系统 SHALL 返回 HTTP 401 或 HTTP 403
 - **AND** 系统 SHALL NOT 签发新的 token
+
+#### Scenario: Token refresh failure does not force global redirect
+- **GIVEN** 小程序端任意请求返回 401 且 refresh token 刷新失败
+- **WHEN** 请求层处理该失败
+- **THEN** 小程序 SHALL 清理本地 token 并抛出「登录已过期」错误
+- **AND** 小程序 SHALL NOT 在请求层强制 reLaunch 到登录页
+- **AND** 后续导航行为 SHALL 由调用方页面自行决定

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>认证管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #F5F6FA;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
+    .press-effect:active { transform: scale(0.96); transition: transform 0.1s; }
+  </style>
+</head>
+<body class="bg-[#F5F6FA] pb-24 max-w-md mx-auto relative">
+
+  <!-- iOS Status Bar -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-white h-11 flex items-center justify-between px-6 max-w-md mx-auto">
+    <span class="font-semibold text-sm text-[#2D3436]">9:41</span>
+    <div class="w-[120px] h-[34px] bg-black rounded-full mt-1"></div>
+    <div class="flex items-center gap-1.5 text-sm text-[#2D3436]">
+      <i class="fa-solid fa-signal text-xs"></i>
+      <i class="fa-solid fa-wifi text-xs"></i>
+      <i class="fa-solid fa-battery-full text-xs"></i>
+    </div>
+  </div>
+
+  <!-- Nav Bar -->
+  <div class="fixed top-11 left-0 right-0 z-40 bg-white h-12 flex items-center justify-center shadow-sm max-w-md mx-auto">
+    <span class="font-semibold text-base text-[#2D3436]">认证管理</span>
+  </div>
+
+  <!-- Main Content -->
+  <main class="pt-[92px] pb-24 px-4">
+
+    <!-- Certification Status Header -->
+    <div class="bg-gradient-to-r from-primary to-[#6C5CE7] rounded-2xl p-4 mt-4 text-white animate-in" style="animation: fadeInUp 0.45s ease forwards;">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+          <i class="fa-solid fa-shield-check text-xl"></i>
+        </div>
+        <div>
+          <p class="font-bold text-base">已认证 2 项</p>
+          <p class="text-white/70 text-xs mt-0.5">完成更多认证，解锁更多发布权限</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Certification Cards -->
+    <div class="mt-5 space-y-3">
+
+      <!-- 实名认证 (已认证) -->
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+              <i class="fa-solid fa-id-card text-green-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-[#2D3436]">实名认证</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">所有用户必须完成</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 bg-green-50 text-green-600 text-xs px-2.5 py-1 rounded-full">
+            <i class="fa-solid fa-check-circle text-[10px]"></i>
+            <span>已认证</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 学历认证 (已认证) -->
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
+              <i class="fa-solid fa-graduation-cap text-orange-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-[#2D3436]">学历认证</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">认证后可发布家教信息（教人）</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 bg-green-50 text-green-600 text-xs px-2.5 py-1 rounded-full">
+            <i class="fa-solid fa-check-circle text-[10px]"></i>
+            <span>已认证</span>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-gray-50">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-gray-500">学校</span>
+            <span class="text-[#2D3436]">华南师范大学</span>
+          </div>
+          <div class="flex items-center justify-between text-xs mt-1.5">
+            <span class="text-gray-500">学历</span>
+            <span class="text-[#2D3436]">硕士研究生</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 教师资格认证 (未认证) -->
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <i class="fa-solid fa-chalkboard-user text-primary"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-[#2D3436]">教师资格认证</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">认证后可发布培训班和家教信息</p>
+            </div>
+          </div>
+          <div class="press-effect cursor-pointer bg-primary text-white text-xs px-3 py-1.5 rounded-full">
+            去认证
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Permission Matrix -->
+    <div class="mt-6">
+      <p class="text-sm font-medium text-[#2D3436] mb-3">发布权限说明</p>
+      <div class="bg-white rounded-xl overflow-hidden shadow-sm">
+        <div class="px-4 py-3 border-b border-gray-50">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-primary text-xs"></i>
+            <span class="text-xs text-gray-500">完成对应认证即可解锁发布权限</span>
+          </div>
+        </div>
+        <!-- Row 1 -->
+        <div class="px-4 py-3 flex items-center justify-between border-b border-gray-50">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded bg-green-500/10 flex items-center justify-center">
+              <i class="fa-solid fa-check text-green-500 text-[10px]"></i>
+            </div>
+            <span class="text-xs text-[#2D3436]">实名认证</span>
+          </div>
+          <div class="flex gap-4 text-[10px] text-gray-500">
+            <span>发布需求</span>
+          </div>
+        </div>
+        <!-- Row 2 -->
+        <div class="px-4 py-3 flex items-center justify-between border-b border-gray-50">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded bg-orange-500/10 flex items-center justify-center">
+              <i class="fa-solid fa-graduation-cap text-orange-500 text-[10px]"></i>
+            </div>
+            <span class="text-xs text-[#2D3436]">+ 学历认证</span>
+          </div>
+          <div class="flex gap-4 text-[10px] text-gray-500">
+            <span class="text-primary font-medium">发布家教(教)</span>
+          </div>
+        </div>
+        <!-- Row 3 -->
+        <div class="px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
+              <i class="fa-solid fa-chalkboard-user text-primary text-[10px]"></i>
+            </div>
+            <span class="text-xs text-[#2D3436]">+ 教师资格</span>
+          </div>
+          <div class="flex gap-4 text-[10px] text-gray-500">
+            <span class="text-primary font-medium">发布培训班+家教</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <style>
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+
+</body>
+</html>

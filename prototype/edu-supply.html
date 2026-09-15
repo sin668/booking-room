@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>教培供需 - 教广场</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #F5F6FA;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .press-effect:active { transform: scale(0.96); transition: transform 0.1s; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in { opacity: 0; animation: fadeInUp 0.45s ease forwards; }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.12s; }
+    .delay-3 { animation-delay: 0.19s; }
+    .delay-4 { animation-delay: 0.26s; }
+
+    .category-tab {
+      position: relative;
+      transition: color 0.2s ease;
+    }
+    .category-tab.active {
+      color: #4F6EF7;
+      font-weight: 600;
+    }
+    .category-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 2px;
+      background: #4F6EF7;
+      border-radius: 1px;
+    }
+
+    /* Waterfall layout */
+    .waterfall {
+      column-count: 2;
+      column-gap: 12px;
+    }
+    .waterfall-item {
+      break-inside: avoid;
+      margin-bottom: 12px;
+    }
+
+    .listing-card {
+      transition: transform 0.2s ease;
+    }
+    .listing-card:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body class="bg-[#F5F6FA] pb-24 max-w-md mx-auto relative">
+
+  <!-- ==================== iOS STATUS BAR ==================== -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-white h-11 flex items-center justify-between px-6 max-w-md mx-auto">
+    <span class="font-semibold text-sm text-[#2D3436]">9:41</span>
+    <div class="w-[120px] h-[34px] bg-black rounded-full mt-1"></div>
+    <div class="flex items-center gap-1.5 text-sm text-[#2D3436]">
+      <i class="fa-solid fa-signal text-xs"></i>
+      <i class="fa-solid fa-wifi text-xs"></i>
+      <i class="fa-solid fa-battery-full text-xs"></i>
+    </div>
+  </div>
+
+  <!-- ==================== NAV BAR ==================== -->
+  <div class="fixed top-11 left-0 right-0 z-40 bg-white h-12 flex items-center justify-between px-4 shadow-sm max-w-md mx-auto">
+    <span class="font-semibold text-base text-[#2D3436]">教培供需</span>
+    <div class="press-effect cursor-pointer p-1">
+      <i class="fa-solid fa-plus-circle text-primary text-xl"></i>
+    </div>
+  </div>
+
+  <!-- ==================== TAB SWITCHER ==================== -->
+  <div class="fixed top-[92px] left-0 right-0 z-30 bg-white px-4 py-3 border-b border-gray-50 max-w-md mx-auto">
+    <div class="flex items-center justify-center gap-8">
+      <div class="category-tab active press-effect cursor-pointer">
+        <span class="text-sm">教广场</span>
+      </div>
+      <div class="category-tab press-effect cursor-pointer">
+        <span class="text-sm text-gray-500">学广场</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="pt-[148px] pb-24 px-4">
+
+    <!-- Filter Bar -->
+    <div class="flex items-center gap-2 mb-4 animate-in">
+      <div class="flex-1 bg-white rounded-lg px-3 py-2 flex items-center gap-2 press-effect cursor-pointer">
+        <i class="fa-solid fa-location-dot text-primary text-xs"></i>
+        <span class="text-xs text-gray-600">茂名市</span>
+        <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 ml-auto"></i>
+      </div>
+      <div class="bg-white rounded-lg px-3 py-2 flex items-center gap-2 press-effect cursor-pointer">
+        <span class="text-xs text-gray-600">分类</span>
+        <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+      </div>
+      <div class="bg-white rounded-lg px-3 py-2 flex items-center gap-2 press-effect cursor-pointer">
+        <span class="text-xs text-gray-600">排序</span>
+        <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+      </div>
+    </div>
+
+    <!-- Waterfall Listings -->
+    <div class="waterfall">
+
+      <!-- Card 1 - 家教信息 -->
+      <div class="waterfall-item animate-in delay-1">
+        <div class="listing-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+          <div class="h-32 overflow-hidden relative">
+            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop"
+                 alt="英语家教" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 bg-primary/90 text-white text-[10px] px-2 py-0.5 rounded-full">
+              <i class="fa-solid fa-graduation-cap mr-1"></i>家教
+            </div>
+          </div>
+          <div class="p-3">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight line-clamp-2">英语专业八级 | 一对一口语辅导</p>
+            <div class="flex items-center gap-1 mt-2">
+              <i class="fa-solid fa-certificate text-orange-500 text-[10px]"></i>
+              <span class="text-[10px] text-gray-500">学历认证</span>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-1.5">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face"
+                     alt="Avatar" class="w-5 h-5 rounded-full object-cover">
+                <span class="text-[10px] text-gray-500">林老师</span>
+              </div>
+              <span class="text-primary font-bold text-sm">¥80<span class="text-[10px] font-normal text-gray-400">/小时</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 - 培训课程 -->
+      <div class="waterfall-item animate-in delay-2">
+        <div class="listing-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+          <div class="h-40 overflow-hidden relative">
+            <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=400&fit=crop"
+                 alt="数学培训班" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 bg-purple-500/90 text-white text-[10px] px-2 py-0.5 rounded-full">
+              <i class="fa-solid fa-book-open mr-1"></i>培训班
+            </div>
+          </div>
+          <div class="p-3">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight line-clamp-2">高中数学提分班 | 小班授课6人满班</p>
+            <div class="flex items-center gap-1 mt-2">
+              <i class="fa-solid fa-certificate text-orange-500 text-[10px]"></i>
+              <span class="text-[10px] text-gray-500">学历认证</span>
+              <i class="fa-solid fa-check-circle text-green-500 text-[10px] ml-1"></i>
+              <span class="text-[10px] text-gray-500">教师资格</span>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-1.5">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+                     alt="Avatar" class="w-5 h-5 rounded-full object-cover">
+                <span class="text-[10px] text-gray-500">张老师</span>
+              </div>
+              <span class="text-primary font-bold text-sm">¥150<span class="text-[10px] font-normal text-gray-400">/人/节</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 - 家教信息 -->
+      <div class="waterfall-item animate-in delay-3">
+        <div class="listing-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+          <div class="h-28 overflow-hidden relative">
+            <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=280&fit=crop"
+                 alt="物理家教" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 bg-primary/90 text-white text-[10px] px-2 py-0.5 rounded-full">
+              <i class="fa-solid fa-graduation-cap mr-1"></i>家教
+            </div>
+          </div>
+          <div class="p-3">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight line-clamp-2">985硕士 | 初中物理家教</p>
+            <div class="flex items-center gap-1 mt-2">
+              <i class="fa-solid fa-certificate text-orange-500 text-[10px]"></i>
+              <span class="text-[10px] text-gray-500">学历认证</span>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-1.5">
+                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face"
+                     alt="Avatar" class="w-5 h-5 rounded-full object-cover">
+                <span class="text-[10px] text-gray-500">王老师</span>
+              </div>
+              <span class="text-primary font-bold text-sm">¥100<span class="text-[10px] font-normal text-gray-400">/小时</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 - 培训课程 -->
+      <div class="waterfall-item animate-in delay-4">
+        <div class="listing-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+          <div class="h-36 overflow-hidden relative">
+            <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&h=360&fit=crop"
+                 alt="钢琴培训" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 bg-purple-500/90 text-white text-[10px] px-2 py-0.5 rounded-full">
+              <i class="fa-solid fa-book-open mr-1"></i>培训班
+            </div>
+          </div>
+          <div class="p-3">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight line-clamp-2">钢琴入门课程 | 一对一教学</p>
+            <div class="flex items-center gap-1 mt-2">
+              <i class="fa-solid fa-certificate text-orange-500 text-[10px]"></i>
+              <span class="text-[10px] text-gray-500">学历认证</span>
+              <i class="fa-solid fa-check-circle text-green-500 text-[10px] ml-1"></i>
+              <span class="text-[10px] text-gray-500">教师资格</span>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-1.5">
+                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face"
+                     alt="Avatar" class="w-5 h-5 rounded-full object-cover">
+                <span class="text-[10px] text-gray-500">李老师</span>
+              </div>
+              <span class="text-primary font-bold text-sm">¥200<span class="text-[10px] font-normal text-gray-400">/节</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 - 家教信息 -->
+      <div class="waterfall-item animate-in delay-1">
+        <div class="listing-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+          <div class="h-32 overflow-hidden relative">
+            <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=320&fit=crop"
+                 alt="化学家教" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 bg-primary/90 text-white text-[10px] px-2 py-0.5 rounded-full">
+              <i class="fa-solid fa-graduation-cap mr-1"></i>家教
+            </div>
+          </div>
+          <div class="p-3">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight line-clamp-2">化学竞赛辅导 | 省重点中学在职</p>
+            <div class="flex items-center gap-1 mt-2">
+              <i class="fa-solid fa-certificate text-orange-500 text-[10px]"></i>
+              <span class="text-[10px] text-gray-500">学历认证</span>
+              <i class="fa-solid fa-check-circle text-green-500 text-[10px] ml-1"></i>
+              <span class="text-[10px] text-gray-500">教师资格</span>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-1.5">
+                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
+                     alt="Avatar" class="w-5 h-5 rounded-full object-cover">
+                <span class="text-[10px] text-gray-500">陈老师</span>
+              </div>
+              <span class="text-primary font-bold text-sm">¥120<span class="text-[10px] font-normal text-gray-400">/小时</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 - 培训课程 -->
+      <div class="waterfall-item animate-in delay-2">
+        <div class="listing-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+          <div class="h-28 overflow-hidden relative">
+            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=280&fit=crop"
+                 alt="编程培训" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 bg-purple-500/90 text-white text-[10px] px-2 py-0.5 rounded-full">
+              <i class="fa-solid fa-book-open mr-1"></i>培训班
+            </div>
+          </div>
+          <div class="p-3">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight line-clamp-2">Python编程入门 | 青少年编程班</p>
+            <div class="flex items-center gap-1 mt-2">
+              <i class="fa-solid fa-certificate text-orange-500 text-[10px]"></i>
+              <span class="text-[10px] text-gray-500">学历认证</span>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-1.5">
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face"
+                     alt="Avatar" class="w-5 h-5 rounded-full object-cover">
+                <span class="text-[10px] text-gray-500">赵老师</span>
+              </div>
+              <span class="text-primary font-bold text-sm">¥180<span class="text-[10px] font-normal text-gray-400">/人/节</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 7 - 家教信息 -->
+      <div class="waterfall-item animate-in delay-3">
+        <div class="listing-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+          <div class="h-36 overflow-hidden relative">
+            <img src="https://images.unsplash.com/photo-1588072432836-e10032774350?w=400&h=360&fit=crop"
+                 alt="语文家教" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 bg-primary/90 text-white text-[10px] px-2 py-0.5 rounded-full">
+              <i class="fa-solid fa-graduation-cap mr-1"></i>家教
+            </div>
+          </div>
+          <div class="p-3">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight line-clamp-2">小学语文作文辅导 | 写作技巧提升</p>
+            <div class="flex items-center gap-1 mt-2">
+              <i class="fa-solid fa-certificate text-orange-500 text-[10px]"></i>
+              <span class="text-[10px] text-gray-500">学历认证</span>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-1.5">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face"
+                     alt="Avatar" class="w-5 h-5 rounded-full object-cover">
+                <span class="text-[10px] text-gray-500">刘老师</span>
+              </div>
+              <span class="text-primary font-bold text-sm">¥90<span class="text-[10px] font-normal text-gray-400">/小时</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 8 - 培训课程 -->
+      <div class="waterfall-item animate-in delay-4">
+        <div class="listing-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+          <div class="h-32 overflow-hidden relative">
+            <img src="https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400&h=320&fit=crop"
+                 alt="美术培训" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 bg-purple-500/90 text-white text-[10px] px-2 py-0.5 rounded-full">
+              <i class="fa-solid fa-book-open mr-1"></i>培训班
+            </div>
+          </div>
+          <div class="p-3">
+            <p class="text-sm font-medium text-[#2D3436] leading-tight line-clamp-2">少儿美术创意班 | 4-8岁儿童</p>
+            <div class="flex items-center gap-1 mt-2">
+              <i class="fa-solid fa-certificate text-orange-500 text-[10px]"></i>
+              <span class="text-[10px] text-gray-500">学历认证</span>
+              <i class="fa-solid fa-check-circle text-green-500 text-[10px] ml-1"></i>
+              <span class="text-[10px] text-gray-500">教师资格</span>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-1.5">
+                <img src="https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=100&h=100&fit=crop&crop=face"
+                     alt="Avatar" class="w-5 h-5 rounded-full object-cover">
+                <span class="text-[10px] text-gray-500">周老师</span>
+              </div>
+              <span class="text-primary font-bold text-sm">¥160<span class="text-[10px] font-normal text-gray-400">/人/节</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Loading indicator -->
+    <div class="flex items-center justify-center py-6">
+      <div class="flex items-center gap-2 text-gray-400">
+        <i class="fa-solid fa-spinner fa-spin text-sm"></i>
+        <span class="text-xs">加载中...</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== BOTTOM TAB BAR ==================== -->
+  <div class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 max-w-md mx-auto">
+    <div class="flex items-stretch justify-around pt-2">
+      <!-- Tab 1: 首页 -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-solid fa-house text-gray-400 text-lg"></i>
+        <span class="text-gray-400 text-[10px] mt-1">首页</span>
+      </div>
+      <!-- Tab 2: 自习 -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-regular fa-calendar-check text-gray-400 text-lg"></i>
+        <span class="text-gray-400 text-[10px] mt-1">自习</span>
+      </div>
+      <!-- Tab 3: 教培供需 (active) -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-solid fa-graduation-cap text-primary text-lg"></i>
+        <span class="text-primary text-[10px] mt-1 font-medium">教培供需</span>
+      </div>
+      <!-- Tab 4: 订单 -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-regular fa-receipt text-gray-400 text-lg"></i>
+        <span class="text-gray-400 text-[10px] mt-1">订单</span>
+      </div>
+      <!-- Tab 5: 我的 -->
+      <div class="flex flex-col items-center cursor-pointer flex-1 press-effect">
+        <i class="fa-regular fa-user text-gray-400 text-lg"></i>
+        <span class="text-gray-400 text-[10px] mt-1">我的</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

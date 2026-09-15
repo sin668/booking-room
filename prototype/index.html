@@ -192,7 +192,7 @@
                 <span class="text-white/90 ml-2">自习室预约</span>
             </h1>
             <p class="text-white/50 text-lg mb-8 max-w-xl mx-auto">
-                共享自习室预约+培训课程微信小程序 · 高保真原型设计 · 27个核心界面
+                共享自习室预约+培训课程+教培供需微信小程序 · 高保真原型设计 · 34个核心界面
             </p>
 
             <!-- Stats -->
@@ -210,6 +210,10 @@
                     <div class="text-xs text-white/40 mt-1">评价模块</div>
                 </div>
                 <div class="stat-card">
+                    <div class="text-2xl font-bold text-[#E87BA5]">7</div>
+                    <div class="text-xs text-white/40 mt-1">教培供需</div>
+                </div>
+                <div class="stat-card">
                     <div class="text-2xl font-bold text-[#00B894]">5</div>
                     <div class="text-xs text-white/40 mt-1">管理后台</div>
                 </div>
@@ -218,7 +222,7 @@
                     <div class="text-xs text-white/40 mt-1">iPhone 17 Pro</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-2xl font-bold text-[#E17055]">27</div>
+                    <div class="text-2xl font-bold text-[#E17055]">34</div>
                     <div class="text-xs text-white/40 mt-1">总页面数</div>
                 </div>
             </div>
@@ -596,6 +600,152 @@
     <!-- Divider -->
     <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
 
+    <!-- Section: Edu Market (教培供需) -->
+    <section class="px-6 py-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-[#E87BA5]/20 flex items-center justify-center">
+                    <i class="fas fa-chalkboard-user text-[#E87BA5] text-sm"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-white/90">教培供需模块</h2>
+                <span class="badge bg-[#E87BA5]/20 text-[#E87BA5]">Edu Market</span>
+            </div>
+            <p class="text-white/30 text-sm mb-8 ml-11">独立的教培供需广场：学历认证/教师资格认证体系 + 教广场（供给）与学广场（需求）瀑布流 + 发布与详情</p>
+
+            <!-- Flow arrows -->
+            <div class="flex items-center justify-center gap-2 mb-8 text-white/20 text-xs flex-wrap">
+                <span class="bg-white/5 px-3 py-1 rounded-full">认证管理</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">发布信息</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">教/学广场</span>
+                <i class="fas fa-arrow-right"></i>
+                <span class="bg-white/5 px-3 py-1 rounded-full">供需详情</span>
+            </div>
+
+            <!-- APP Pages -->
+            <div class="grid-container">
+                <!-- Edu Supply (教广场) -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="edu-supply.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">教广场（供给）</div>
+                        <div class="text-white/30 text-xs mt-1">edu-supply.html</div>
+                    </div>
+                </div>
+
+                <!-- Edu Demand (学广场) -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="edu-demand.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">学广场（需求）</div>
+                        <div class="text-white/30 text-xs mt-1">edu-demand.html</div>
+                    </div>
+                </div>
+
+                <!-- Certification -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="edu-certification.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">认证管理</div>
+                        <div class="text-white/30 text-xs mt-1">edu-certification.html</div>
+                    </div>
+                </div>
+
+                <!-- Publish -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="edu-publish.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">发布教培信息</div>
+                        <div class="text-white/30 text-xs mt-1">edu-publish.html</div>
+                    </div>
+                </div>
+
+                <!-- Detail -->
+                <div>
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <iframe src="edu-detail.html" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="page-label">
+                        <div class="text-white/80 text-sm font-medium">教培详情</div>
+                        <div class="text-white/30 text-xs mt-1">edu-detail.html</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Pages -->
+            <div class="mt-12">
+                <div class="flex items-center gap-2 mb-6 ml-4">
+                    <i class="fas fa-desktop text-[#E87BA5]/60 text-sm"></i>
+                    <span class="text-white/50 text-sm">管理后台</span>
+                </div>
+                <div class="space-y-12">
+                    <!-- Admin Edu Market -->
+                    <div>
+                        <div class="desktop-frame mx-auto">
+                            <div class="desktop-titlebar">
+                                <div class="desktop-dot bg-red-400"></div>
+                                <div class="desktop-dot bg-yellow-400"></div>
+                                <div class="desktop-dot bg-green-400"></div>
+                            </div>
+                            <div class="desktop-screen">
+                                <iframe src="admin-edu-market.html" loading="lazy"></iframe>
+                            </div>
+                        </div>
+                        <div class="page-label">
+                            <div class="text-white/80 text-sm font-medium">供需信息管理</div>
+                            <div class="text-white/30 text-xs mt-1">admin-edu-market.html</div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Edu Certification -->
+                    <div>
+                        <div class="desktop-frame mx-auto">
+                            <div class="desktop-titlebar">
+                                <div class="desktop-dot bg-red-400"></div>
+                                <div class="desktop-dot bg-yellow-400"></div>
+                                <div class="desktop-dot bg-green-400"></div>
+                            </div>
+                            <div class="desktop-screen">
+                                <iframe src="admin-edu-certification.html" loading="lazy"></iframe>
+                            </div>
+                        </div>
+                        <div class="page-label">
+                            <div class="text-white/80 text-sm font-medium">认证审核管理</div>
+                            <div class="text-white/30 text-xs mt-1">admin-edu-certification.html</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="max-w-6xl mx-auto px-6"><div class="border-t border-white/5"></div></div>
+
     <!-- Section: Review Module -->
     <section class="px-6 py-12">
         <div class="max-w-6xl mx-auto">
@@ -809,7 +959,7 @@
 
     <!-- Footer -->
     <footer class="border-t border-white/5 py-8 text-center">
-        <p class="text-white/20 text-xs">去K书 · 自习室预约+培训课程小程序 · High-Fidelity Prototype · Built with Tailwind CSS + FontAwesome</p>
+        <p class="text-white/20 text-xs">去K书 · 自习室预约+培训课程+教培供需小程序 · High-Fidelity Prototype · Built with Tailwind CSS + FontAwesome</p>
         <p class="text-white/10 text-xs mt-2">iPhone 17 Pro · 393×852 · iOS Design Guidelines · Desktop Admin Dashboard</p>
     </footer>
 

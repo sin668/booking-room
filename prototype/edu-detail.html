@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>教培详情</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #F5F6FA;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
+    .press-effect:active { transform: scale(0.96); transition: transform 0.1s; }
+  </style>
+</head>
+<body class="bg-[#F5F6FA] pb-24 max-w-md mx-auto relative">
+
+  <!-- iOS Status Bar -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-white/90 h-11 flex items-center justify-between px-6 max-w-md mx-auto backdrop-blur-md">
+    <span class="font-semibold text-sm text-[#2D3436]">9:41</span>
+    <div class="w-[120px] h-[34px] bg-black rounded-full mt-1"></div>
+    <div class="flex items-center gap-1.5 text-sm text-[#2D3436]">
+      <i class="fa-solid fa-signal text-xs"></i>
+      <i class="fa-solid fa-wifi text-xs"></i>
+      <i class="fa-solid fa-battery-full text-xs"></i>
+    </div>
+  </div>
+
+  <!-- Nav Bar -->
+  <div class="fixed top-11 left-0 right-0 z-40 bg-white/90 backdrop-blur-md h-12 flex items-center justify-between px-4 shadow-sm max-w-md mx-auto">
+    <i class="fa-solid fa-chevron-left text-[#2D3436] press-effect cursor-pointer"></i>
+    <span class="font-semibold text-base text-[#2D3436]">详情</span>
+    <div class="flex items-center gap-3">
+      <i class="fa-regular fa-heart text-[#2D3436] press-effect cursor-pointer"></i>
+      <i class="fa-solid fa-share-nodes text-[#2D3436] press-effect cursor-pointer"></i>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="pt-[92px] pb-32">
+
+    <!-- Hero Image -->
+    <div class="h-56 overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=500&fit=crop"
+           alt="英语家教" class="w-full h-full object-cover">
+    </div>
+
+    <!-- Info Section -->
+    <div class="bg-white rounded-t-2xl -mt-4 relative z-10 px-4 pt-5 pb-4">
+
+      <!-- Tags -->
+      <div class="flex items-center gap-2 mb-2">
+        <div class="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full">
+          <i class="fa-solid fa-graduation-cap mr-1"></i>家教
+        </div>
+        <div class="flex items-center gap-1">
+          <i class="fa-solid fa-certificate text-orange-500 text-[10px]"></i>
+          <span class="text-[10px] text-gray-500">学历认证</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <i class="fa-solid fa-check-circle text-green-500 text-[10px]"></i>
+          <span class="text-[10px] text-gray-500">教师资格</span>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <h1 class="text-lg font-bold text-[#2D3436] leading-tight">英语专业八级 | 一对一口语辅导</h1>
+
+      <!-- Price -->
+      <div class="flex items-baseline gap-1 mt-2">
+        <span class="text-primary font-bold text-2xl">¥80</span>
+        <span class="text-gray-400 text-xs">/小时</span>
+      </div>
+
+      <!-- Meta Info -->
+      <div class="flex items-center gap-4 mt-3 text-xs text-gray-500">
+        <span><i class="fa-solid fa-location-dot text-primary mr-1"></i>茂南区</span>
+        <span><i class="fa-solid fa-user text-primary mr-1"></i>一对一</span>
+        <span><i class="fa-regular fa-eye text-primary mr-1"></i>328次浏览</span>
+      </div>
+
+    </div>
+
+    <!-- Teacher Profile -->
+    <div class="bg-white rounded-xl mx-4 mt-3 p-4 shadow-sm">
+      <div class="flex items-center gap-3">
+        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face"
+             alt="Avatar" class="w-12 h-12 rounded-full object-cover border-2 border-primary/20">
+        <div class="flex-1">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium text-[#2D3436]">林老师</span>
+            <span class="bg-orange-50 text-orange-600 text-[10px] px-1.5 py-0.5 rounded">学历认证</span>
+          </div>
+          <p class="text-xs text-gray-500 mt-0.5">华南师范大学 · 英语专业硕士</p>
+          <p class="text-xs text-gray-400 mt-0.5">3年教学经验 · 好评率 98%</p>
+        </div>
+        <div class="press-effect cursor-pointer border border-primary text-primary text-xs px-3 py-1.5 rounded-full">
+          关注
+        </div>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="bg-white rounded-xl mx-4 mt-3 p-4 shadow-sm">
+      <p class="text-sm font-medium text-[#2D3436] mb-2">详细介绍</p>
+      <p class="text-xs text-gray-600 leading-relaxed">
+        本人英语专业八级，拥有3年一对一家教经验。擅长口语教学，帮助学生纠正发音、提升口语表达能力。教学风格耐心细致，根据学生水平定制教学方案。
+      </p>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-1 rounded">口语教学</span>
+        <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-1 rounded">发音纠正</span>
+        <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-1 rounded">定制方案</span>
+        <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-1 rounded">耐心细致</span>
+      </div>
+    </div>
+
+    <!-- Available Times -->
+    <div class="bg-white rounded-xl mx-4 mt-3 p-4 shadow-sm">
+      <p class="text-sm font-medium text-[#2D3436] mb-2">可授课时间</p>
+      <div class="flex flex-wrap gap-2">
+        <span class="bg-primary/5 text-primary text-[10px] px-2 py-1 rounded">周一至周五 晚上</span>
+        <span class="bg-primary/5 text-primary text-[10px] px-2 py-1 rounded">周六 全天</span>
+        <span class="bg-primary/5 text-primary text-[10px] px-2 py-1 rounded">周日 下午</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Action Bar -->
+  <div class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+    <div class="flex items-center gap-4">
+      <div class="flex flex-col items-center press-effect cursor-pointer">
+        <i class="fa-regular fa-comment-dots text-gray-400 text-lg"></i>
+        <span class="text-[10px] text-gray-400 mt-0.5">咨询</span>
+      </div>
+      <div class="flex flex-col items-center press-effect cursor-pointer">
+        <i class="fa-regular fa-heart text-gray-400 text-lg"></i>
+        <span class="text-[10px] text-gray-400 mt-0.5">收藏</span>
+      </div>
+    </div>
+    <div class="flex-1 bg-gradient-to-r from-primary to-[#6C5CE7] text-white text-sm font-medium py-2.5 rounded-full text-center press-effect cursor-pointer">
+      立即联系
+    </div>
+  </div>
+
+</body>
+</html>

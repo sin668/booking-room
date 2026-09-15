@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>发布教培信息</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F6EF7',
+            'primary-light': '#E8EDFF',
+            'primary-dark': '#3A56D4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #F5F6FA;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
+    .press-effect:active { transform: scale(0.96); transition: transform 0.1s; }
+  </style>
+</head>
+<body class="bg-[#F5F6FA] pb-24 max-w-md mx-auto relative">
+
+  <!-- iOS Status Bar -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-white h-11 flex items-center justify-between px-6 max-w-md mx-auto">
+    <span class="font-semibold text-sm text-[#2D3436]">9:41</span>
+    <div class="w-[120px] h-[34px] bg-black rounded-full mt-1"></div>
+    <div class="flex items-center gap-1.5 text-sm text-[#2D3436]">
+      <i class="fa-solid fa-signal text-xs"></i>
+      <i class="fa-solid fa-wifi text-xs"></i>
+      <i class="fa-solid fa-battery-full text-xs"></i>
+    </div>
+  </div>
+
+  <!-- Nav Bar -->
+  <div class="fixed top-11 left-0 right-0 z-40 bg-white h-12 flex items-center justify-between px-4 shadow-sm max-w-md mx-auto">
+    <i class="fa-solid fa-chevron-left text-[#2D3436] press-effect cursor-pointer"></i>
+    <span class="font-semibold text-base text-[#2D3436]">发布教培信息</span>
+    <span class="text-primary text-sm press-effect cursor-pointer font-medium">发布</span>
+  </div>
+
+  <!-- Main Content -->
+  <main class="pt-[92px] pb-24 px-4">
+
+    <!-- Type Selector -->
+    <div class="mt-4">
+      <p class="text-xs text-gray-400 mb-2 font-medium">选择发布类型</p>
+      <div class="flex gap-3">
+        <div class="flex-1 bg-primary/5 border-2 border-primary rounded-xl p-3 text-center press-effect cursor-pointer">
+          <i class="fa-solid fa-graduation-cap text-primary text-lg"></i>
+          <p class="text-xs font-medium text-primary mt-1">家教(教人)</p>
+        </div>
+        <div class="flex-1 bg-white border border-gray-200 rounded-xl p-3 text-center press-effect cursor-pointer opacity-50">
+          <i class="fa-solid fa-book-open text-gray-400 text-lg"></i>
+          <p class="text-xs font-medium text-gray-400 mt-1">培训班</p>
+          <p class="text-[9px] text-gray-400 mt-0.5">需教师资格</p>
+        </div>
+        <div class="flex-1 bg-white border border-gray-200 rounded-xl p-3 text-center press-effect cursor-pointer">
+          <i class="fa-solid fa-user-graduate text-green-500 text-lg"></i>
+          <p class="text-xs font-medium text-[#2D3436] mt-1">求教(被教)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="mt-5 bg-white rounded-xl p-4 shadow-sm">
+
+      <!-- Title -->
+      <div class="mb-4">
+        <label class="text-xs text-gray-400 mb-1.5 block">标题</label>
+        <input type="text" placeholder="例如：英语专业八级 | 一对一口语辅导"
+               class="w-full bg-gray-50 rounded-lg px-3 py-2.5 text-sm text-[#2D3436] placeholder-gray-300 border border-gray-100 focus:border-primary focus:outline-none">
+      </div>
+
+      <!-- Subject -->
+      <div class="mb-4">
+        <label class="text-xs text-gray-400 mb-1.5 block">科目分类</label>
+        <div class="flex flex-wrap gap-2">
+          <span class="bg-primary/10 text-primary text-xs px-3 py-1.5 rounded-full cursor-pointer press-effect">英语</span>
+          <span class="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full cursor-pointer press-effect">数学</span>
+          <span class="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full cursor-pointer press-effect">物理</span>
+          <span class="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full cursor-pointer press-effect">化学</span>
+          <span class="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full cursor-pointer press-effect">语文</span>
+          <span class="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full cursor-pointer press-effect">编程</span>
+          <span class="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full cursor-pointer press-effect">钢琴</span>
+          <span class="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full cursor-pointer press-effect">美术</span>
+        </div>
+      </div>
+
+      <!-- Teaching Mode -->
+      <div class="mb-4">
+        <label class="text-xs text-gray-400 mb-1.5 block">授课方式</label>
+        <div class="flex gap-3">
+          <div class="flex-1 bg-primary/5 border border-primary rounded-lg py-2 text-center text-xs text-primary cursor-pointer press-effect">一对一</div>
+          <div class="flex-1 bg-gray-50 border border-gray-200 rounded-lg py-2 text-center text-xs text-gray-500 cursor-pointer press-effect">小班</div>
+          <div class="flex-1 bg-gray-50 border border-gray-200 rounded-lg py-2 text-center text-xs text-gray-500 cursor-pointer press-effect">线上</div>
+        </div>
+      </div>
+
+      <!-- Price -->
+      <div class="mb-4">
+        <label class="text-xs text-gray-400 mb-1.5 block">价格</label>
+        <div class="flex items-center gap-2">
+          <input type="number" placeholder="请输入价格"
+                 class="flex-1 bg-gray-50 rounded-lg px-3 py-2.5 text-sm text-[#2D3436] placeholder-gray-300 border border-gray-100 focus:border-primary focus:outline-none">
+          <span class="text-xs text-gray-400">元/小时</span>
+        </div>
+      </div>
+
+      <!-- Area -->
+      <div class="mb-4">
+        <label class="text-xs text-gray-400 mb-1.5 block">服务区域</label>
+        <div class="bg-gray-50 rounded-lg px-3 py-2.5 flex items-center justify-between border border-gray-100 cursor-pointer press-effect">
+          <span class="text-sm text-[#2D3436]">茂名市 - 茂南区</span>
+          <i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-4">
+        <label class="text-xs text-gray-400 mb-1.5 block">详细描述</label>
+        <textarea placeholder="介绍您的教学经验、教学特色、可授课时间等..."
+                  class="w-full bg-gray-50 rounded-lg px-3 py-2.5 text-sm text-[#2D3436] placeholder-gray-300 border border-gray-100 focus:border-primary focus:outline-none h-24 resize-none"></textarea>
+      </div>
+
+      <!-- Images -->
+      <div class="mb-4">
+        <label class="text-xs text-gray-400 mb-1.5 block">相关图片（最多3张）</label>
+        <div class="flex gap-2">
+          <div class="w-20 h-20 bg-gray-50 rounded-lg border border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer press-effect">
+            <i class="fa-solid fa-plus text-gray-400 text-sm"></i>
+            <span class="text-[10px] text-gray-400 mt-1">添加</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Certification Reminder -->
+    <div class="mt-4 bg-orange-50 rounded-xl p-3 flex items-start gap-2">
+      <i class="fa-solid fa-circle-info text-orange-500 text-sm mt-0.5"></i>
+      <div>
+        <p class="text-xs text-orange-700 font-medium">认证提醒</p>
+        <p class="text-[10px] text-orange-600 mt-0.5">发布家教信息需完成学历认证。<a href="#" class="text-primary font-medium">去认证 &gt;</a></p>
+      </div>
+    </div>
+
+  </main>
+
+</body>
+</html>

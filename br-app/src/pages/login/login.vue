@@ -7,7 +7,10 @@
     <view class="content">
       <!-- 返回首页 -->
       <view class="back-home" @tap="goHome">
-        <view class="icon icon-arrow-left" style="font-size: 22rpx;" />
+        <view class="home-icon">
+          <view class="home-roof"></view>
+          <view class="home-body"></view>
+        </view>
         <text class="back-home-text">返回首页</text>
       </view>
 
@@ -675,6 +678,42 @@ function openAgreement(type) {
 .back-home-text {
   font-size: 26rpx;
   color: $text-secondary;
+}
+
+// 首页图标
+.home-icon {
+  position: relative;
+  width: 28rpx;
+  height: 28rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.home-roof {
+  width: 0;
+  height: 0;
+  border-left: 14rpx solid transparent;
+  border-right: 14rpx solid transparent;
+  border-bottom: 12rpx solid $primary;
+  margin-bottom: -2rpx;
+}
+.home-body {
+  width: 20rpx;
+  height: 14rpx;
+  background: $primary;
+  border-radius: 0 0 3rpx 3rpx;
+  position: relative;
+}
+.home-body::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6rpx;
+  height: 8rpx;
+  background: $white;
+  border-radius: 2rpx 2rpx 0 0;
 }
 
 // 品牌

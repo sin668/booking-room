@@ -1,6 +1,6 @@
 """培训室与课程查询服务。"""
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Exists
 
@@ -93,7 +93,7 @@ async def list_training_rooms(
         StudyRoom.room_type.in_(["training", "comprehensive"]),
     ]
     if city_id is not None:
-        filters.append(StudyRoom.city_id == city_id)
+        filters.append(or_(StudyRoom.city_id == city_id, StudyRoom.city_id.is_(None)))
 
     # Step1: 统计总数 + 分页查询培训室
     count_result = await db.execute(

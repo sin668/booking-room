@@ -5,13 +5,21 @@
       <text class="nav-title">培训课程</text>
     </view>
 
-    <!-- 搜索栏 -->
-    <navigator url="/pages/search/index" class="search-bar">
-      <view class="search-input-wrap">
-        <view class="icon icon-search search-icon" />
-        <text class="search-placeholder-text">搜索课程、老师</text>
+    <!-- 搜索栏 + 城市选择 -->
+    <view class="search-bar">
+      <view class="search-bar-inner">
+        <view class="city-pill" @tap="onTapCity">
+          <view class="icon icon-location city-pill-icon" />
+          <text class="city-pill-text">{{ currentCityName }}</text>
+          <view class="icon icon-arrow-down city-pill-arrow" />
+        </view>
+        <view class="search-divider" />
+        <navigator url="/pages/search/index" class="search-input-wrap">
+          <view class="icon icon-search search-icon" />
+          <text class="search-placeholder-text">搜索课程、老师</text>
+        </navigator>
       </view>
-    </navigator>
+    </view>
 
     <!-- 分类 TAB -->
     <view class="tab-bar">
@@ -278,11 +286,12 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { onMounted } from 'vue'
-import { onReachBottom } from '@dcloudio/uni-app'
+import { onReachBottom, onShow } from '@dcloudio/uni-app'
 import { getTrainingRooms, getTrainingCourses } from '@/api/training'
 import { formatCourseSchedule, formatCourseStartDate } from '@/utils/formatters'
+import { useCityStore } from '@/store/modules/city'
 
 const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
@@ -334,6 +343,15 @@ const roomPage = ref(1)
 const roomTotal = ref(0)
 const coursePage = ref(1)
 const courseTotal = ref(0)
+
+const cityStore = useCityStore()
+const currentCityName = computed(() => cityStore.currentCityName)
+const currentCityId = computed(() => cityStore.currentCity?.id)
+let lastCityId = null
+
+function onTapCity() {
+  uni.navigateTo({ url: '/pages/city-select/index' })
+}
 
 const tabs = [
   { key: 'all', label: '培训室' },
@@ -444,10 +462,14 @@ async function fetchTrainingRooms(reset = false) {
   }
   loading.value = true
   try {
-    const data = await getTrainingRooms({
+    const params = {
       page: roomPage.value,
       page_size: 10,
-    })
+    }
+    if (currentCityId.value) {
+      params.city_id = currentCityId.value
+    }
+    const data = await getTrainingRooms(params)
     trainingRooms.value = reset ? data.items : trainingRooms.value.concat(data.items)
     roomTotal.value = data.total || 0
     if (!reset) roomPage.value++
@@ -489,8 +511,17 @@ watch(activeTab, (newTab) => {
   }
 })
 
-onMounted(() => {
+onMounted(async () => {
+  await cityStore.initCity()
+  lastCityId = currentCityId.value
   fetchTrainingRooms(true)
+})
+
+onShow(() => {
+  if (currentCityId.value !== lastCityId) {
+    lastCityId = currentCityId.value
+    fetchTrainingRooms(true)
+  }
 })
 
 onReachBottom(() => {
@@ -548,7 +579,53 @@ onReachBottom(() => {
   border-bottom: 1rpx solid $border-soft;
 }
 
+.search-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.city-pill {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 16rpx;
+  background: $primary-soft;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}
+
+.city-pill-icon {
+  font-size: 24rpx;
+  color: $primary;
+}
+
+.city-pill-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: $primary;
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.city-pill-arrow {
+  font-size: 18rpx;
+  color: $primary;
+  opacity: 0.7;
+}
+
+.search-divider {
+  width: 1rpx;
+  height: 32rpx;
+  background: $border-soft;
+  flex-shrink: 0;
+}
+
 .search-input-wrap {
+  flex: 1;
+  min-width: 0;
   background: $surface-soft;
   border-radius: 999rpx;
   padding: 14rpx 24rpx;

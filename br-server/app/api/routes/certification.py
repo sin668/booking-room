@@ -9,10 +9,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.dependencies import get_current_user_id
 from app.core.database import get_db
 from app.models.user_identity_verification import UserIdentityVerification
-from app.services.auth import get_current_user
-from app.models.user import User
 
 router = APIRouter(prefix="/user-identity-verifications", tags=["certification"])
 
@@ -66,12 +65,12 @@ class CertificationResponse(BaseModel):
 
 @router.get("", response_model=List[CertificationResponse])
 async def get_user_certifications(
-    current_user: User = Depends(get_current_user),
+    user_id: uuid.UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """获取当前用户的所有认证记录"""
     stmt = select(UserIdentityVerification).where(
-        UserIdentityVerification.user_id == current_user.id
+        UserIdentityVerification.user_id == user_id
     ).order_by(UserIdentityVerification.created_at.desc())
     
     result = await db.execute(stmt)
@@ -83,7 +82,7 @@ async def get_user_certifications(
 @router.post("/real-name", response_model=CertificationResponse, status_code=status.HTTP_201_CREATED)
 async def submit_real_name_certification(
     data: RealNameCertificationRequest,
-    current_user: User = Depends(get_current_user),
+    user_id: uuid.UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """提交实名认证"""
@@ -91,7 +90,7 @@ async def submit_real_name_certification(
     
     # 检查是否已有实名认证
     stmt = select(UserIdentityVerification).where(
-        UserIdentityVerification.user_id == current_user.id,
+        UserIdentityVerification.user_id == user_id,
         UserIdentityVerification.verification_type == "real_name"
     )
     result = await db.execute(stmt)
@@ -119,7 +118,7 @@ async def submit_real_name_certification(
     else:
         # 创建新记录
         certification = UserIdentityVerification(
-            user_id=current_user.id,
+            user_id=user_id,
             verification_type="real_name",
             real_name=data.real_name,
             id_card_hash=id_card_hash,
@@ -137,13 +136,13 @@ async def submit_real_name_certification(
 @router.post("/education", response_model=CertificationResponse, status_code=status.HTTP_201_CREATED)
 async def submit_education_certification(
     data: EducationCertificationRequest,
-    current_user: User = Depends(get_current_user),
+    user_id: uuid.UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """提交学历认证"""
     # 检查是否已完成实名认证
     stmt = select(UserIdentityVerification).where(
-        UserIdentityVerification.user_id == current_user.id,
+        UserIdentityVerification.user_id == user_id,
         UserIdentityVerification.verification_type == "real_name",
         UserIdentityVerification.status == "approved"
     )
@@ -158,7 +157,7 @@ async def submit_education_certification(
     
     # 检查是否已有学历认证
     stmt = select(UserIdentityVerification).where(
-        UserIdentityVerification.user_id == current_user.id,
+        UserIdentityVerification.user_id == user_id,
         UserIdentityVerification.verification_type == "education"
     )
     result = await db.execute(stmt)
@@ -184,7 +183,7 @@ async def submit_education_certification(
     else:
         # 创建新记录
         certification = UserIdentityVerification(
-            user_id=current_user.id,
+            user_id=user_id,
             verification_type="education",
             school=data.school,
             education_level=data.education_level,
@@ -204,13 +203,13 @@ async def submit_education_certification(
 @router.post("/teacher", response_model=CertificationResponse, status_code=status.HTTP_201_CREATED)
 async def submit_teacher_certification(
     data: TeacherCertificationRequest,
-    current_user: User = Depends(get_current_user),
+    user_id: uuid.UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """提交教师资格认证"""
     # 检查是否已完成实名认证
     stmt = select(UserIdentityVerification).where(
-        UserIdentityVerification.user_id == current_user.id,
+        UserIdentityVerification.user_id == user_id,
         UserIdentityVerification.verification_type == "real_name",
         UserIdentityVerification.status == "approved"
     )
@@ -225,7 +224,7 @@ async def submit_teacher_certification(
     
     # 检查是否已完成学历认证（如果未完成，同时提交学历和教师认证）
     stmt = select(UserIdentityVerification).where(
-        UserIdentityVerification.user_id == current_user.id,
+        UserIdentityVerification.user_id == user_id,
         UserIdentityVerification.verification_type == "education",
         UserIdentityVerification.status == "approved"
     )
@@ -241,7 +240,7 @@ async def submit_teacher_certification(
     
     # 检查是否已有教师资格认证
     stmt = select(UserIdentityVerification).where(
-        UserIdentityVerification.user_id == current_user.id,
+        UserIdentityVerification.user_id == user_id,
         UserIdentityVerification.verification_type == "teacher"
     )
     result = await db.execute(stmt)
@@ -265,7 +264,7 @@ async def submit_teacher_certification(
     else:
         # 创建新记录
         certification = UserIdentityVerification(
-            user_id=current_user.id,
+            user_id=user_id,
             verification_type="teacher",
             teacher_certificate_number=data.teacher_certificate_number,
             teaching_subject=data.teaching_subject,

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "argv": ["npm", "run", "build:mp-weixin"],
+  "cwd": "br-app",
+  "files": [
+    "br-app/src",
+    "br-app/scripts",
+    "br-app/package.json",
+    "br-app/package-lock.json",
+    "br-app/vite.config.js",
+    "br-app/index.html"
+  ],
+  "env": ["PATH", "NODE_ENV", "NODE_OPTIONS"]
+}

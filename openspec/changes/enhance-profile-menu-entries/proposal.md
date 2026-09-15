@@ -21,11 +21,13 @@
 
 ## Impact
 
-- 影响模块：仅 `br-app`（uni-app 小程序前端），单文件 `br-app/src/pages/profile/index.vue`。
+- 影响模块：仅 `br-app`（uni-app 小程序前端）。
+- 实现文件：`br-app/src/pages/profile/index.vue`；另新增只读校验脚本 `br-app/scripts/verify-profile-menu-summary.js` 并在 `br-app/package.json` 注册 `test:profile-menu` 且并入 `test:scripts`。
 - 数据来源：`br-app/src/api/review.js`（已有 `getReviewList`）、`br-app/src/api/notifications.js`（已有 `getNotificationUnreadSummary`）。
 - `br-server`、`br-admin`、数据库与 alembic 迁移：无改动。
-- 新增请求：每次进入「我的」页 `onShow` 多两个只读 GET，与既有 `Promise.allSettled` 并发发起，互不阻塞。
+- 新增请求：每次进入「我的」页 `onShow` 多两个 GET，与既有 `Promise.allSettled` 并发发起，互不阻塞。其中评价列表为只读；`/notifications/unread-summary` 在用户首次访问时会 get-or-create 一行 `notification_preferences`（`notification_service.py:108`），因此不是纯只读接口——但首页通知铃铛本就调用同一接口，本次改动不引入新的写路径。
+- 仓库配置：新增 `.comet/check-policy.json`，用于把构建校验的输入范围声明到 `br-app`。缺失时 `comet check run` 会扫描到 `.qoder/skills/` 下已被 git 跟踪的符号链接并拒绝记录构建证据。
 
 ## Rollback
 
-改动集中在一个页面的模板/computed/取数方法，回滚方式为 `git revert` 本次 tweak 提交；无迁移、无接口签名变更、无数据写入，回滚后无需任何清理动作。
+改动集中在一个页面的模板/computed/取数方法，外加一个只读校验脚本与 `.comet/check-policy.json`；回滚方式为 `git revert` 本次 tweak 提交。无迁移、无接口签名变更、无业务数据写入，回滚后无需任何清理动作。

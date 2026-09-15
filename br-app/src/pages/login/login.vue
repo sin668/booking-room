@@ -5,6 +5,12 @@
     <view class="deco deco-2"></view>
 
     <view class="content">
+      <!-- 返回首页 -->
+      <view class="back-home" @tap="goHome">
+        <view class="icon icon-arrow-left" style="font-size: 22rpx;" />
+        <text class="back-home-text">返回首页</text>
+      </view>
+
       <!-- Logo & 品牌 -->
       <view class="brand">
         <view class="logo">
@@ -604,6 +610,11 @@ function onSocialLogin(platform) {
   showToast('暂未开放，敬请期待')
 }
 
+// ===== 返回首页 =====
+function goHome() {
+  uni.switchTab({ url: '/pages/index/index' })
+}
+
 // ===== 用户协议 =====
 function openAgreement(type) {
   // TODO: 跳转协议页面
@@ -646,6 +657,24 @@ function openAgreement(type) {
   z-index: 1;
   padding: 0 48rpx;
   padding-top: 140rpx;
+}
+
+// 返回首页
+.back-home {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-bottom: 24rpx;
+  padding: 12rpx 0;
+  color: $text-secondary;
+  transition: opacity 0.2s;
+}
+.back-home:active {
+  opacity: 0.6;
+}
+.back-home-text {
+  font-size: 26rpx;
+  color: $text-secondary;
 }
 
 // 品牌

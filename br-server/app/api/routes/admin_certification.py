@@ -9,10 +9,10 @@ from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.dependencies import AdminContext, get_current_admin
 from app.core.database import get_db
 from app.models.user_identity_verification import UserIdentityVerification
 from app.models.user import User
-from app.services.auth import require_admin
 
 router = APIRouter(prefix="/admin/certifications", tags=["admin-certification"])
 
@@ -55,7 +55,7 @@ async def list_certifications(
     type_filter: Optional[str] = Query(None, description="类型过滤：real_name/education/teacher"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    current_user: User = Depends(require_admin),
+    context: AdminContext = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """获取认证列表（管理员）"""
@@ -133,7 +133,7 @@ class ApproveCertificationRequest(BaseModel):
 async def review_certification(
     cert_id: uuid.UUID,
     data: ApproveCertificationRequest,
-    current_user: User = Depends(require_admin),
+    context: AdminContext = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """审核认证（通过或拒绝）"""
@@ -168,7 +168,7 @@ async def review_certification(
         certification.rejection_reason = data.rejection_reason
     
     certification.reviewed_at = datetime.utcnow()
-    certification.reviewer_id = current_user.id
+    certification.reviewer_id = context.admin_id
     
     await db.commit()
     await db.refresh(certification)

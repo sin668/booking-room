@@ -12,9 +12,20 @@
         </view>
       </view>
 
-      <view class="search-bar" @tap="onTapSearch">
+      <view class="search-bar">
         <view class="icon icon-search search-icon" />
-        <text class="search-placeholder">搜索自习室、商圈或地址</text>
+        <input
+          class="search-input"
+          v-model="searchKeyword"
+          placeholder="搜索自习室、商圈或地址"
+          placeholder-class="search-placeholder"
+          confirm-type="search"
+          @input="onSearchInput"
+          @confirm="onSearchInput"
+        />
+        <view v-if="searchKeyword" class="search-clear" @tap="clearSearch">
+          <text class="clear-text">×</text>
+        </view>
       </view>
 
       <scroll-view class="filter-scroll" scroll-x :show-scrollbar="false">
@@ -166,6 +177,8 @@ export default {
       lastCityId: null,
       selectedFilter: FILTERS[0].value,
       filters: FILTERS,
+      searchKeyword: '',
+      searchTimer: null,
     }
   },
 
@@ -286,6 +299,10 @@ export default {
         if (this.currentCityId) {
           params.city_id = this.currentCityId
         }
+        const kw = this.searchKeyword.trim()
+        if (kw) {
+          params.keyword = kw
+        }
         const data = await getRooms(params)
         const items = data.items || []
         this.rooms = reset ? items : [...this.rooms, ...items]
@@ -326,8 +343,17 @@ export default {
       uni.navigateTo({ url: '/pages/city-select/index' })
     },
 
-    onTapSearch() {
-      // Future: search page
+    onSearchInput() {
+      clearTimeout(this.searchTimer)
+      this.searchTimer = setTimeout(() => {
+        this.loadRooms(true)
+      }, 400)
+    },
+
+    clearSearch() {
+      this.searchKeyword = ''
+      clearTimeout(this.searchTimer)
+      this.loadRooms(true)
     },
 
     onTapSort() {
@@ -407,23 +433,42 @@ export default {
   background: $white;
   border: 1rpx solid $border-soft;
   box-shadow: $shadow-sm;
-  transition: transform 0.18s ease-out, background-color 0.18s ease-out;
-}
-
-.search-bar:active {
-  transform: scale(0.99);
-  background: #eef2ff;
 }
 
 .search-icon {
   font-size: 28rpx;
   color: $text-muted;
   margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 26rpx;
+  color: $text-primary;
+  min-width: 0;
 }
 
 .search-placeholder {
-  font-size: 26rpx;
   color: $text-muted;
+}
+
+.search-clear {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+
+.clear-text {
+  font-size: 28rpx;
+  color: $text-secondary;
+  line-height: 1;
 }
 
 .filter-scroll {

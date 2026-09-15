@@ -38,6 +38,7 @@ from app.api.routes.notification import router as notification_router
 from app.api.routes.review import router as review_router
 from app.api.routes.room_follow import router as room_follow_router
 from app.api.routes.teacher import router as teacher_router
+from app.api.routes.search import router as search_router
 from app.api.routes.seat import router as seat_router
 from app.api.routes.study_record import router as study_record_router
 from app.api.routes.study_room import router as study_room_router
@@ -399,6 +400,7 @@ app.include_router(notification_router)
 app.include_router(review_router)
 app.include_router(room_follow_router)
 app.include_router(teacher_router)
+app.include_router(search_router)
 
 
 @app.get("/health", tags=["health"])

@@ -23,6 +23,7 @@ async def list_study_rooms(
     page_size: int = DEFAULT_PAGE_SIZE,
     city_id: int | None = None,
     room_type: str | None = None,
+    keyword: str | None = None,
 ) -> StudyRoomListResponse:
     """Return paginated list of open study rooms."""
     page_size = min(page_size, MAX_PAGE_SIZE)
@@ -30,14 +31,16 @@ async def list_study_rooms(
 
     filters = [StudyRoom.status == "open"]
     if city_id is not None:
-        # 未分配城市的房间（如连锁综合室 city_id 为 NULL）视为全城可见，
-        # 使综合室能同时出现在按城市过滤的自习列表中
         filters.append(or_(StudyRoom.city_id == city_id, StudyRoom.city_id.is_(None)))
     if room_type is not None:
         filters.append(StudyRoom.room_type == room_type)
     else:
-        # 自习列表默认展示自习室与综合室；纯培训室只在培训页展示
         filters.append(StudyRoom.room_type.in_(["study", "comprehensive"]))
+    if keyword:
+        filters.append(or_(
+            StudyRoom.name.ilike(f"%{keyword}%"),
+            StudyRoom.address.ilike(f"%{keyword}%"),
+        ))
 
     count_result = await db.execute(
         select(func.count()).select_from(StudyRoom).where(*filters)

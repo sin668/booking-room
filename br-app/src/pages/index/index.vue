@@ -12,7 +12,7 @@
       </view>
       <view class="nav-search" @tap="onTapSearch">
         <view class="icon icon-search nav-search-icon" />
-        <text class="nav-search-placeholder">搜索自习室</text>
+        <text class="nav-search-placeholder">搜索自习室、课程、老师</text>
       </view>
       <view class="nav-bell" @tap="onTapBell">
         <view class="icon icon-bell nav-bell-icon" />
@@ -452,7 +452,7 @@ export default {
     },
 
     onTapSearch() {
-      // Future: search page
+      uni.navigateTo({ url: '/pages/search/index' })
     },
 
     onTapBell() {

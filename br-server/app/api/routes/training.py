@@ -20,10 +20,11 @@ async def list_training_rooms(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1),
     city_id: int | None = Query(None, ge=1),
+    keyword: str | None = Query(None, max_length=100),
     db: AsyncSession = Depends(get_db),
 ) -> TrainingRoomListResponse:
     return await training_service.list_training_rooms(
-        db, page=page, page_size=page_size, city_id=city_id
+        db, page=page, page_size=page_size, city_id=city_id, keyword=keyword
     )
 
 
@@ -35,10 +36,11 @@ async def list_training_courses(
         None,
         pattern="^(primaryschool|middleschool|postgraduate|civil_service|language|skills|professional)$",
     ),
+    keyword: str | None = Query(None, max_length=100),
     db: AsyncSession = Depends(get_db),
 ) -> CourseListResponse:
     return await training_service.list_courses(
-        db, page=page, page_size=page_size, category=category
+        db, page=page, page_size=page_size, category=category, keyword=keyword
     )
 
 

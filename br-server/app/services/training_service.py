@@ -78,6 +78,7 @@ async def list_training_rooms(
     page: int = 1,
     page_size: int = DEFAULT_PAGE_SIZE,
     city_id: int | None = None,
+    keyword: str | None = None,
 ) -> TrainingRoomListResponse:
     """返回分页培训室列表，每间培训室附带最多 3 门热门课程。
 
@@ -94,6 +95,8 @@ async def list_training_rooms(
     ]
     if city_id is not None:
         filters.append(or_(StudyRoom.city_id == city_id, StudyRoom.city_id.is_(None)))
+    if keyword:
+        filters.append(StudyRoom.name.ilike(f"%{keyword}%"))
 
     # Step1: 统计总数 + 分页查询培训室
     count_result = await db.execute(
@@ -281,6 +284,7 @@ async def list_courses(
     page: int = 1,
     page_size: int = DEFAULT_PAGE_SIZE,
     category: str | None = None,
+    keyword: str | None = None,
 ) -> CourseListResponse:
     """返回分页课程列表，附带教室名和教师信息。
 
@@ -291,11 +295,15 @@ async def list_courses(
 
     filters = [
         Course.status == "active",
-        # 没有进行中固定班课排课的课程不展示（分页总数同步排除）
         _has_in_progress_fixed_schedule(),
     ]
     if category is not None:
         filters.append(Course.category == category)
+    if keyword:
+        filters.append(or_(
+            Course.name.ilike(f"%{keyword}%"),
+            Teacher.name.ilike(f"%{keyword}%"),
+        ))
 
     count_result = await db.execute(
         select(func.count()).select_from(Course).where(*filters)

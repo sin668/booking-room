@@ -14,10 +14,21 @@
           <view class="icon icon-arrow-down city-pill-arrow" />
         </view>
         <view class="search-divider" />
-        <navigator url="/pages/search/index" class="search-input-wrap">
+        <view class="search-input-wrap">
           <view class="icon icon-search search-icon" />
-          <text class="search-placeholder-text">搜索课程、老师</text>
-        </navigator>
+          <input
+            class="search-input"
+            v-model="searchKeyword"
+            placeholder="搜索课程、老师"
+            placeholder-class="search-placeholder"
+            confirm-type="search"
+            @input="onSearchInput"
+            @confirm="onSearchInput"
+          />
+          <view v-if="searchKeyword" class="search-clear" @tap="clearSearch">
+            <text class="clear-text">×</text>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -343,6 +354,8 @@ const roomPage = ref(1)
 const roomTotal = ref(0)
 const coursePage = ref(1)
 const courseTotal = ref(0)
+const searchKeyword = ref('')
+let searchTimer = null
 
 const cityStore = useCityStore()
 const currentCityName = computed(() => cityStore.currentCityName)
@@ -351,6 +364,27 @@ let lastCityId = null
 
 function onTapCity() {
   uni.navigateTo({ url: '/pages/city-select/index' })
+}
+
+function onSearchInput() {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    if (activeTab.value === 'all') {
+      fetchTrainingRooms(true)
+    } else {
+      fetchCourses(true)
+    }
+  }, 400)
+}
+
+function clearSearch() {
+  searchKeyword.value = ''
+  clearTimeout(searchTimer)
+  if (activeTab.value === 'all') {
+    fetchTrainingRooms(true)
+  } else {
+    fetchCourses(true)
+  }
 }
 
 const tabs = [
@@ -469,6 +503,10 @@ async function fetchTrainingRooms(reset = false) {
     if (currentCityId.value) {
       params.city_id = currentCityId.value
     }
+    const kw = searchKeyword.value.trim()
+    if (kw) {
+      params.keyword = kw
+    }
     const data = await getTrainingRooms(params)
     trainingRooms.value = reset ? data.items : trainingRooms.value.concat(data.items)
     roomTotal.value = data.total || 0
@@ -488,11 +526,16 @@ async function fetchCourses(reset = false) {
   }
   loading.value = true
   try {
-    const data = await getTrainingCourses({
+    const params = {
       page: coursePage.value,
       page_size: 10,
       category: activeTab.value !== 'all' ? activeTab.value : undefined,
-    })
+    }
+    const kw = searchKeyword.value.trim()
+    if (kw) {
+      params.keyword = kw
+    }
+    const data = await getTrainingCourses(params)
     courses.value = reset ? data.items : courses.value.concat(data.items)
     courseTotal.value = data.total || 0
     if (!reset) coursePage.value++
@@ -637,13 +680,36 @@ onReachBottom(() => {
 .search-icon {
   font-size: 28rpx;
   color: $text-muted;
+  flex-shrink: 0;
 }
 
-.search-placeholder-text {
+.search-input {
   flex: 1;
+  min-width: 0;
   font-size: 27rpx;
-  color: #C8C9CB;
+  color: $text-primary;
   line-height: 1.4;
+}
+
+.search-placeholder {
+  color: #C8C9CB;
+}
+
+.search-clear {
+  width: 36rpx;
+  height: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.clear-text {
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1;
 }
 
 /* ── Category tabs ── */

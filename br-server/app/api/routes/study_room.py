@@ -16,10 +16,11 @@ async def list_study_rooms(
     room_type: str | None = Query(
         None, pattern="^(study|training|comprehensive)$"
     ),
+    keyword: str | None = Query(None, max_length=100),
     db: AsyncSession = Depends(get_db),
 ) -> StudyRoomListResponse:
     return await study_room_service.list_study_rooms(
-        db, page=page, page_size=page_size, city_id=city_id, room_type=room_type
+        db, page=page, page_size=page_size, city_id=city_id, room_type=room_type, keyword=keyword
     )
 
 

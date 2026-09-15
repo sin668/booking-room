@@ -42,6 +42,14 @@
         <view class="menu-section-label">
           <text class="menu-section-text">学习服务</text>
         </view>
+        <view class="menu-item" @tap="navigateTo('/pages/orders/index')">
+          <view class="menu-icon purple">
+            <view class="icon icon-list order-icon" />
+          </view>
+          <text class="menu-item-text">学习订单</text>
+          <text class="menu-item-meta">{{ inProgressOrderText }}</text>
+          <view class="icon icon-arrow-right menu-arrow" />
+        </view>
         <view class="menu-item" @tap="navigateTo('/pages/study-record/index')">
           <view class="menu-icon blue">
             <view class="history-icon" />
@@ -86,6 +94,14 @@
           </view>
           <text class="menu-item-text">我的学习码</text>
           <text class="menu-item-meta">到店核销</text>
+          <view class="icon icon-arrow-right menu-arrow" />
+        </view>
+        <view class="menu-item" @tap="navigateTo('/pages/certification/index')">
+          <view class="menu-icon orange">
+            <view class="icon icon-id-card cert-icon" />
+          </view>
+          <text class="menu-item-text">认证管理</text>
+          <text class="menu-item-meta">{{ verifiedCertificationText }}</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
         <view class="menu-item" @tap="navigateTo('/pages/recharge/index')">
@@ -158,6 +174,8 @@ import { getReviewList } from '@/api/review'
 import { getNotificationUnreadSummary } from '@/api/notifications'
 import { getAllFollowedCategories } from '@/services/followedRooms'
 import { formatAmount, formatMoney } from '@/utils/formatters'
+import { fetchBookingsPage } from '@/services/bookingPageService'
+import { getUserCertifications } from '@/api/certification'
 
 export default {
   data() {
@@ -171,6 +189,8 @@ export default {
       followTotalCount: 0,
       reviewCount: 0,
       unreadMessageCount: 0,
+      inProgressOrderCount: 0,
+      verifiedCertificationCount: 0,
     }
   },
   computed: {
@@ -194,6 +214,12 @@ export default {
     },
     unreadMessageSummary() {
       return this.unreadMessageCount > 0 ? `${this.unreadMessageCount}条未读` : ''
+    },
+    inProgressOrderText() {
+      return this.inProgressOrderCount > 0 ? `${this.inProgressOrderCount}项进行中` : ''
+    },
+    verifiedCertificationText() {
+      return this.verifiedCertificationCount > 0 ? `${this.verifiedCertificationCount}项已认证` : ''
     },
   },
   onShow() {
@@ -233,13 +259,15 @@ export default {
     async loadProfileStats() {
       const requestId = ++this.profileRequestId
       const month = this.currentMonthString()
-      const [balanceResult, couponResult, studyResult, , reviewResult, unreadResult] = await Promise.allSettled([
+      const [balanceResult, couponResult, studyResult, , reviewResult, unreadResult, orderResult, certResult] = await Promise.allSettled([
         getBalance(),
         getCoupons('available'),
         getMonthlySummary({ month }),
         this.userStore.fetchUserInfo(),
         getReviewList({ mine: true, page_size: 1 }),
         getNotificationUnreadSummary(),
+        fetchBookingsPage({ page: 1, page_size: 1, status: 'in_progress' }),
+        getUserCertifications(),
       ])
 
       if (requestId !== this.profileRequestId) return
@@ -268,6 +296,21 @@ export default {
       this.unreadMessageCount = unreadResult.status === 'fulfilled'
         ? (unreadResult.value?.total_unread || 0)
         : 0
+
+      // 进行中的订单数量
+      if (orderResult.status === 'fulfilled') {
+        this.inProgressOrderCount = orderResult.value?.total || 0
+      } else {
+        this.inProgressOrderCount = 0
+      }
+
+      // 已认证的数量
+      if (certResult.status === 'fulfilled') {
+        const certs = certResult.value || []
+        this.verifiedCertificationCount = certs.filter(c => c.status === 'approved').length
+      } else {
+        this.verifiedCertificationCount = 0
+      }
     },
     currentMonthString() {
       const now = new Date()
@@ -763,6 +806,16 @@ export default {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+}
+
+.order-icon {
+  font-size: 34rpx;
+  color: $purple;
+}
+
+.cert-icon {
+  font-size: 34rpx;
+  color: #e67900;
 }
 
 .member-card {

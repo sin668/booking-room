@@ -280,7 +280,7 @@ export default {
         { label: '钱包充值', iconClass: 'icon-wallet', bgColor: 'rgba(79,110,247,0.1)', color: '#4F6EF7', path: '/pages/recharge/index' },
         { label: '卡券套餐', iconClass: 'icon-ticket', bgColor: 'rgba(255,165,0,0.1)', color: '#FF8C00', path: '/pages/coupon/index' },
         { label: '学习记录', iconClass: 'icon-book', bgColor: 'rgba(7,193,96,0.1)', color: '#07C160', path: '/pages/study-record/index' },
-        { label: '自习室', iconClass: 'icon-location', bgColor: 'rgba(108,92,231,0.1)', color: '#6C5CE7', path: '/pages/booking/index', openType: 'switchTab' },
+        { label: '预约订单', iconClass: 'icon-list', bgColor: 'rgba(108,92,231,0.1)', color: '#6C5CE7', path: '/pages/orders/index' },
       ],
     }
   },

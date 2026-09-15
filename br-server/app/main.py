@@ -15,6 +15,7 @@ from app.api.routes.activity import router as activity_router
 from app.api.routes.admin_activity import router as admin_activity_router
 from app.api.routes.admin_auth import router as admin_auth_router
 from app.api.routes.admin_booking import router as admin_booking_router
+from app.api.routes.admin_certification import router as admin_certification_router
 from app.api.routes.admin_course import router as admin_course_router
 from app.api.routes.admin_teacher import router as admin_teacher_router
 from app.api.routes.admin_coupon import router as admin_coupon_router
@@ -33,6 +34,7 @@ from app.api.routes.booking import router as booking_router
 from app.api.routes.course_booking import router as course_booking_router
 from app.api.routes.coupon import router as coupon_router
 from app.api.routes.booking_verification import router as booking_verification_router
+from app.api.routes.certification import router as certification_router
 from app.api.routes.cities import router as cities_router
 from app.api.routes.notification import router as notification_router
 from app.api.routes.review import router as review_router
@@ -376,6 +378,7 @@ app.include_router(admin_review_router)
 app.include_router(admin_setting_router)
 app.include_router(admin_activity_router)
 app.include_router(admin_booking_router)
+app.include_router(admin_certification_router)
 app.include_router(admin_coupon_router)
 app.include_router(admin_study_room_router)
 app.include_router(admin_room_seats_router)
@@ -401,6 +404,7 @@ app.include_router(review_router)
 app.include_router(room_follow_router)
 app.include_router(teacher_router)
 app.include_router(search_router)
+app.include_router(certification_router)
 
 
 @app.get("/health", tags=["health"])

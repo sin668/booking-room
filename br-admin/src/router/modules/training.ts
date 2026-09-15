@@ -1,6 +1,6 @@
 import { RouteRecordRaw } from 'vue-router';
 import { Layout } from '@/router/constant';
-import { SchoolOutline } from '@vicons/ionicons5';
+import { SchoolOutline, IdCardOutline } from '@vicons/ionicons5';
 import { renderIcon } from '@/utils/index';
 
 const routes: Array<RouteRecordRaw> = [
@@ -50,6 +50,15 @@ const routes: Array<RouteRecordRaw> = [
           activeMenu: 'training_teachers',
         },
         component: () => import('@/views/training/teachers/edit.vue'),
+      },
+      {
+        path: 'certification-audit',
+        name: 'training_certification_audit',
+        meta: {
+          title: '认证审核',
+          icon: renderIcon(IdCardOutline),
+        },
+        component: () => import('@/views/training/certification-audit.vue'),
       },
     ],
   },

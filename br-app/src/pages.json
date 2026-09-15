@@ -171,6 +171,34 @@
         "navigationBarTitleText": "搜索",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/certification/index",
+      "style": {
+        "navigationBarTitleText": "认证管理",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/certification/real-name",
+      "style": {
+        "navigationBarTitleText": "实名认证",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/certification/education",
+      "style": {
+        "navigationBarTitleText": "学历认证",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/certification/teacher",
+      "style": {
+        "navigationBarTitleText": "教师资格认证",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

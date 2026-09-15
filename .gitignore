@@ -54,7 +54,11 @@ swarm-*
 .qoder/
 .code-review-graph/
 
-# graphify
-.graphify/cache/
+# graphify（带斜杠的规则会锚定到仓库根，故用 ** 覆盖各子包的 cache）
+**/.graphify/cache/
 graphify-out/*.log
 *.tmp.graphify
+
+# ai-memory local state (machine-specific)
+.ai-memory/.state.json
+.ai-memory/.embeddings.json

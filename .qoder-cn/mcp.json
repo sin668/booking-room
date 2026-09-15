@@ -9,6 +9,13 @@
         ".graphify/graph.json"
       ],
       "env": {}
+    },
+    "ai-memory": {
+      "command": "npx",
+      "args": [
+        "ai-memory-cli",
+        "serve"
+      ]
     }
   }
 }

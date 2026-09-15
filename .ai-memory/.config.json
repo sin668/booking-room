@@ -1,0 +1,38 @@
+{
+  "sources": {
+    "cursor": {
+      "enabled": true,
+      "projectName": "booking-room"
+    },
+    "claudeCode": {
+      "enabled": true
+    },
+    "windsurf": {
+      "enabled": true
+    },
+    "copilot": {
+      "enabled": true
+    },
+    "codex": {
+      "enabled": true
+    }
+  },
+  "extract": {
+    "types": [
+      "decision",
+      "architecture",
+      "convention",
+      "todo",
+      "issue"
+    ],
+    "ignoreConversations": [],
+    "minConversationLength": 5
+  },
+  "output": {
+    "dir": ".ai-memory",
+    "summaryFile": "SUMMARY.md",
+    "language": "zh"
+  },
+  "model": "",
+  "author": "sin668"
+}

@@ -380,6 +380,7 @@ import {
   validateIdentityCard,
 } from '@/utils/accountSecurity'
 import { NOTIFICATION_TYPE_CONFIGS, getNotificationPreferenceField } from '@/utils/notificationTypes'
+import { ensureLogin } from '@/utils/auth'
 
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{6,32}$/
 
@@ -482,6 +483,7 @@ export default {
     this.clearBindCountdown()
   },
   onShow() {
+    if (!ensureLogin()) return
     if (this.userStore.isLoggedIn) {
       this.userStore.fetchUserInfo().catch(() => {})
       this.loadNotificationPreferences()

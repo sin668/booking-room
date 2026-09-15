@@ -96,6 +96,7 @@
 
 <script>
 import { getCoupons } from '@/api/coupons'
+import { isLoggedIn } from '@/utils/auth'
 
 const TABS = [
   { label: '可使用', value: 'available' },
@@ -154,10 +155,12 @@ export default {
   },
 
   onLoad() {
+    if (!this.requireLogin()) return
     this.loadCoupons('available')
   },
 
   onShow() {
+    if (!this.requireLogin()) return
     this.loadCoupons(this.currentStatus, { silent: this.coupons.length > 0 })
     if (this.currentStatus !== 'available') {
       this.loadAvailableCount()
@@ -165,6 +168,13 @@ export default {
   },
 
   methods: {
+    requireLogin() {
+      if (isLoggedIn()) return true
+      uni.showToast({ title: '请先登录', icon: 'none' })
+      uni.navigateTo({ url: '/pages/login/login' })
+      return false
+    },
+
     async loadCoupons(status, options = {}) {
       const requestId = ++this.loadRequestId
       this.loading = !options.silent

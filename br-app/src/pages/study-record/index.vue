@@ -144,6 +144,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { onReachBottom } from '@dcloudio/uni-app'
 import { getMonthlySummary, getStudyRecordList } from '@/api/studyRecords'
+import { ensureLogin } from '@/utils/auth'
 
 const now = new Date()
 const currentYear = ref(now.getFullYear())
@@ -292,6 +293,7 @@ function nextMonth() {
 }
 
 onMounted(() => {
+  if (!ensureLogin()) return
   loadAll()
 })
 

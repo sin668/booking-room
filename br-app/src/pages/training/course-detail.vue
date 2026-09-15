@@ -285,6 +285,7 @@ import { getCourseDetail } from '@/api/training'
 import { getReviewList, getReviewSummary } from '@/api/review'
 import { buildStarChars, formatRelativeDay } from '@/utils/formatters'
 import { followCourse, isCourseFollowed, unfollowCourse } from '@/services/followedCourses'
+import { ensureLogin } from '@/utils/auth'
 
 export default {
   data() {
@@ -403,6 +404,7 @@ export default {
 
     async onToggleFav() {
       if (!this.courseId) return
+      if (!ensureLogin()) return
 
       if (this.isFav) {
         try {

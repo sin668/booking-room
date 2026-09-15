@@ -117,6 +117,7 @@
 <script>
 import { fetchWalletBalance, fetchWalletTransactionsPage } from '@/services/walletPageService'
 import { formatDateTime, formatMoney, formatWalletStatus } from '@/utils/formatters'
+import { ensureLogin } from '@/utils/auth'
 
 const PAGE_SIZE = 20
 
@@ -166,6 +167,7 @@ export default {
   },
 
   onLoad() {
+    if (!ensureLogin()) return
     this.loadBalance()
     this.loadTransactions({ reset: true })
   },

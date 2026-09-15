@@ -254,6 +254,7 @@ import { getNotificationUnreadSummary } from '@/api/notifications'
 import { useCityStore } from '@/store/modules/city'
 import { getAllFollowedCategories } from '@/services/followedRooms'
 import { formatRoomMinPrice } from '@/utils/formatters'
+import { isLoggedIn } from '@/utils/auth'
 
 const REAL_ROOM_COVERS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=720&h=520&fit=crop&q=85',
@@ -322,6 +323,11 @@ export default {
     },
 
     async loadNotificationUnreadSummary() {
+      // 游客无消息中心数据，跳过请求避免 401
+      if (!isLoggedIn()) {
+        this.hasNotification = false
+        return
+      }
       try {
         const summary = await getNotificationUnreadSummary()
         this.hasNotification = Number(summary?.total_unread || 0) > 0
@@ -349,6 +355,8 @@ export default {
     },
 
     async loadFollowedRooms() {
+      // 关注列表是登录态数据，游客跳过
+      if (!isLoggedIn()) return
       const cityId = this.currentCityId == null ? null : Number(this.currentCityId)
       const cityName = this.currentCityName || ''
       try {

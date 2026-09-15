@@ -175,6 +175,7 @@
 <script>
 import { getSeats } from '@/api/seats'
 import { getRoom } from '@/api/rooms'
+import { ensureLogin } from '@/utils/auth'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 const TIME_SLOTS = [
@@ -317,6 +318,9 @@ export default {
       this.isViewMode = true
       this.viewSeatId = Number(options.seat_id)
     }
+
+    // 查看模式仅浏览座位图；选择座位是下单链路，需要登录
+    if (!this.isViewMode && !ensureLogin()) return
 
     if (!this.hasTimeParams) {
       this.ensureSelectableTimeSlot()

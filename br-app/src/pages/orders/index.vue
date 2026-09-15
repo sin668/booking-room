@@ -270,6 +270,7 @@
 import { cancelBookingOrder, fetchBookingsPage } from '@/services/bookingPageService'
 import { cancelCourseBooking } from '@/api/courseBooking'
 import { BOOKING_TABS, PAYMENT_STATUS_LABELS, SEAT_ZONE_LABELS } from '@/constants/booking'
+import { ensureLogin } from '@/utils/auth'
 import { formatBookingStatus, formatCourseEndDate, formatCourseSchedule, formatCourseStartDate, formatHourCount, formatMoney } from '@/utils/formatters'
 
 const PAGE_SIZE = 20
@@ -293,6 +294,7 @@ export default {
   },
 
   onShow() {
+    if (!ensureLogin()) return
     this.resetAndLoad()
   },
 

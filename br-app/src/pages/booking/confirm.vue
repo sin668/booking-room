@@ -269,6 +269,7 @@ import {
   PAYMENT_POLL_MAX_ATTEMPTS,
 } from '@/constants/wallet'
 import { formatMoney } from '@/utils/formatters'
+import { ensureLogin } from '@/utils/auth'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 const ZONE_LABELS = {
@@ -410,6 +411,7 @@ export default {
   },
 
   onLoad(options) {
+    if (!ensureLogin()) return
     if (options.booking_id) {
       this.booking_id = Number(options.booking_id)
     }

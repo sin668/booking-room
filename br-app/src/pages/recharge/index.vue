@@ -108,6 +108,7 @@ import {
   redeemRechargePromoCode,
 } from '@/services/walletPageService'
 import { formatAmount, formatMoney } from '@/utils/formatters'
+import { ensureLogin } from '@/utils/auth'
 
 export default {
   data() {
@@ -155,6 +156,7 @@ export default {
   },
 
   onLoad(options = {}) {
+    if (!ensureLogin()) return
     this.applyVipSourceOptions(options)
     this.loadBalance()
   },

@@ -224,6 +224,7 @@
 <script>
 import { getAllFollowedCategories } from '@/services/followedRooms'
 import { formatRoomMinPrice } from '@/utils/formatters'
+import { ensureLogin } from '@/utils/auth'
 
 const ROOM_COVERS = [
   'https://images.unsplash.com/photo-1497366216548-37526070297c?w=720&h=520&fit=crop&q=85',
@@ -256,9 +257,14 @@ export default {
   onLoad() {
     const sysInfo = uni.getSystemInfoSync()
     this.statusBarHeight = sysInfo.statusBarHeight || 0
+    if (!ensureLogin()) return
     this.loadData()
   },
   onPullDownRefresh() {
+    if (!ensureLogin()) {
+      uni.stopPullDownRefresh()
+      return
+    }
     this.loadData().finally(() => {
       uni.stopPullDownRefresh()
     })

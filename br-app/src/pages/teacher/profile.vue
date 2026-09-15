@@ -211,6 +211,7 @@ import { getTeacherDetail } from '@/api/teacher'
 import { getReviewList } from '@/api/review'
 import { buildStarChars, formatRelativeDay } from '@/utils/formatters'
 import { followTeacher, unfollowTeacher, isTeacherFollowed } from '@/services/followedTeachers'
+import { ensureLogin } from '@/utils/auth'
 
 export default {
   data() {
@@ -339,6 +340,7 @@ export default {
 
     async onToggleFav() {
       if (!this.teacherId) return
+      if (!ensureLogin()) return
 
       if (this.isFav) {
         try {

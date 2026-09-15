@@ -115,6 +115,7 @@ import {
   markAllNotificationsRead,
 } from '@/api/notifications'
 import { NOTIFICATION_TYPE_CONFIGS, NOTIFICATION_TYPE_MAP, getNotificationPreferenceField } from '@/utils/notificationTypes'
+import { isLoggedIn } from '@/utils/auth'
 
 const PAGE_SIZE = 20
 
@@ -158,14 +159,23 @@ const emptyText = computed(() => {
 })
 
 onLoad(() => {
+  if (!requireLogin()) return
   loadInitialData()
 })
 
 onShow(() => {
+  if (!requireLogin()) return
   if (preferences.value) {
     loadPreferences()
   }
 })
+
+function requireLogin() {
+  if (isLoggedIn()) return true
+  uni.showToast({ title: '请先登录', icon: 'none' })
+  uni.navigateTo({ url: '/pages/login/login' })
+  return false
+}
 
 async function loadInitialData() {
   await Promise.all([

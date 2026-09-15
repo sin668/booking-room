@@ -235,6 +235,7 @@ import {
   formatSeatZone,
   formatShortTime,
 } from '@/utils/formatters'
+import { ensureLogin } from '@/utils/auth'
 
 const MAX_IMAGES = 9
 const MAX_TAGS = 5
@@ -436,6 +437,10 @@ export default {
   },
 
   onLoad(options) {
+    if (!ensureLogin()) {
+      this.loading = false
+      return
+    }
     const query = options || {}
     this.bookingId = query.booking_id ? Number(query.booking_id) : null
     if (!this.bookingId) {

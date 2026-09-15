@@ -86,7 +86,7 @@ async function refreshAccessToken() {
     removeToken()
     removeRefreshToken()
     rejectPendingRequests(error)
-    uni.reLaunch({ url: '/pages/login/login' })
+    // 不在请求层强制跳登录页：游客可继续浏览公开页面，登录门槛由页面/操作层决定
     throw new Error('登录已过期')
   } finally {
     isRefreshing = false

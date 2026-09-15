@@ -401,6 +401,7 @@ import { getCourseLessons, createCourseBooking } from '@/api/courseBooking'
 import { getBalance } from '@/api/wallet'
 import { getAvailableCouponsForBooking } from '@/api/coupons'
 import { formatMoney, formatCourseSchedule, formatCourseStartDate } from '@/utils/formatters'
+import { ensureLogin } from '@/utils/auth'
 import {
   PAYMENT_POLL_INTERVAL,
   PAYMENT_POLL_MAX_ATTEMPTS,
@@ -647,6 +648,7 @@ export default {
   },
 
   onLoad(options) {
+    if (!ensureLogin()) return
     this.courseId = options.course_id || options.id
     if (this.courseId) {
       this.loadCourseData()

@@ -3,9 +3,6 @@ import { getRefreshToken, getToken } from '@/utils/request'
 import { useUserStore } from '@/store/modules/user'
 import { useCityStore } from '@/store/modules/city'
 
-// 不需要登录的页面白名单
-const WHITE_LIST = ['/pages/login/login']
-
 export default {
   onLaunch() {
     const cityStore = useCityStore()

@@ -395,6 +395,7 @@ import {
 } from '@/api/roomFollows'
 import { fetchBookingRoom } from '@/services/bookingPageService'
 import { buildStarChars, formatCourseSchedule, formatCourseStartDate, formatRelativeDay } from '@/utils/formatters'
+import { isLoggedIn, ensureLogin } from '@/utils/auth'
 
 const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
@@ -587,6 +588,11 @@ export default {
     },
 
     async loadFollowStatus() {
+      // 关注状态是登录态数据，游客默认未关注
+      if (!isLoggedIn()) {
+        this.isFav = false
+        return
+      }
       try {
         const data = await apiGetFollowedRooms()
         const items = data?.items || []
@@ -693,6 +699,7 @@ export default {
 
     async onToggleFav() {
       if (!this.roomId) return
+      if (!ensureLogin()) return
 
       if (this.isFav) {
         try {

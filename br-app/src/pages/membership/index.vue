@@ -51,6 +51,7 @@ export default {
     handleOpenVip() {
       if (this.userStore.isVip) return
       if (!this.userStore.isLoggedIn) {
+        uni.showToast({ title: '请先登录', icon: 'none' })
         uni.navigateTo({ url: '/pages/login/login' })
         return
       }

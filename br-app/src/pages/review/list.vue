@@ -186,6 +186,7 @@
 <script>
 import { getReviewList, getReviewSummary } from '@/api/review'
 import { buildStarChars, formatErrorDetail, formatRelativeDay } from '@/utils/formatters'
+import { ensureLogin } from '@/utils/auth'
 
 const PAGE_SIZE = 20
 const SORTS = [
@@ -279,6 +280,8 @@ export default {
     this.teacherId = query.teacher_id ? Number(query.teacher_id) : null
     this.roomId = query.room_id ? Number(query.room_id) : null
     this.mine = query.mine === '1' || query.mine === 'true'
+    // 「我的评价」是登录态数据；公开评价列表游客可看
+    if (this.mine && !ensureLogin()) return
 
     const title = query.title
       ? decodeURIComponent(query.title)

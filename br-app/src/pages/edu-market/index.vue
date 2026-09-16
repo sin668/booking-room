@@ -286,6 +286,13 @@ function goDetail(id) {
 
 async function fetchListings(reset = false) {
   if (loading.value) return
+  
+  // Check if city changed to reset pagination
+  const newCityId = currentCity.value?.id
+  if (!reset && lastCityId !== undefined && lastCityId !== newCityId) {
+    reset = true
+  }
+  
   if (reset) {
     page.value = 1
   }
@@ -299,7 +306,7 @@ async function fetchListings(reset = false) {
     }
     if (activeType.value) params.listing_type = activeType.value
     if (activeSubject.value && activeSubject.value !== '全部') params.subject = activeSubject.value
-    if (currentCity.value?.name) params.city = currentCity.value.name
+    if (currentCity.value?.id) params.city_id = currentCity.value.id
     
     const data = await getEduListings(params)
     
@@ -309,6 +316,9 @@ async function fetchListings(reset = false) {
     const items = Array.isArray(data?.items) ? data.items : []
     listings.value = reset ? items : listings.value.concat(items)
     total.value = Number(data?.total) || 0
+    
+    // Update last city ID after successful fetch
+    lastCityId = newCityId
     
     if (!reset && items.length > 0) {
       page.value++

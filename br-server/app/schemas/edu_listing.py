@@ -21,7 +21,8 @@ class EduListingCreate(BaseModel):
     teaching_mode: str | None = Field(None, max_length=50)
     price: Decimal | None = Field(None, ge=0)
     price_unit: str | None = Field(None, max_length=20)
-    area: str | None = Field(None, max_length=100)
+    city_id: int | None = Field(None, ge=1, description="城市ID")
+    area: str | None = Field(None, max_length=100, description="详细区域（如朝阳区、浦东新区）")
     description: str | None = Field(None, max_length=2000)
     images: list[str] = Field(default_factory=list, max_length=3)
     available_times: list[str] = Field(default_factory=list, max_length=20)
@@ -57,6 +58,7 @@ class EduListingItem(BaseModel):
     teaching_mode: str | None = None
     price: Decimal | None = None
     price_unit: str | None = None
+    city_id: int | None = None
     area: str | None = None
     description: str | None = None
     images: list[str] = Field(default_factory=list)

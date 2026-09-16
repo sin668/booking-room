@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/v1/edu-listings", tags=["edu-listings"])
 async def list_edu_listings(
     listing_type: str | None = Query(None, pattern="^(tutor|training|demand)$"),
     subject: str | None = Query(None, max_length=50, description="按科目过滤"),
-    city: str | None = Query(None, max_length=100, description="按服务区域模糊过滤"),
+    city_id: int | None = Query(None, ge=1, description="按城市ID过滤"),
     sort: str = Query("new", pattern="^(new|price_asc|price_desc)$"),
     page: int = Query(1, ge=1),
     page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
@@ -31,7 +31,7 @@ async def list_edu_listings(
         db,
         listing_type=listing_type,
         subject=subject,
-        city=city,
+        city_id=city_id,
         sort=sort,
         page=page,
         page_size=page_size,

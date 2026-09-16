@@ -92,14 +92,27 @@
         </view>
 
         <view class="field">
-          <text class="field-label">服务区域</text>
+          <text class="field-label">服务城市<text class="field-star">*</text></text>
           <view class="city-selector" @tap="onSelectCity">
             <view class="icon icon-location city-selector-icon" />
-            <text :class="['city-selector-text', { 'city-placeholder': !form.area }]">
-              {{ form.area || '请选择服务区域' }}
+            <text :class="['city-selector-text', { 'city-placeholder': !form.city_name }]">
+              {{ form.city_name || '请选择服务城市' }}
             </text>
             <view class="icon icon-arrow-right city-selector-arrow" />
           </view>
+        </view>
+
+        <view class="field">
+          <text class="field-label">详细区域</text>
+          <input
+            v-model="form.area"
+            class="field-input field-input-large"
+            type="text"
+            placeholder="例如：朝阳区、浦东新区（选填）"
+            placeholder-class="field-ph"
+            maxlength="100"
+            confirm-type="next"
+          />
         </view>
 
         <view class="field">
@@ -219,6 +232,8 @@ export default {
         teaching_mode: '',
         price: '',
         price_unit: '元/小时',
+        city_id: null,
+        city_name: '',
         area: '',
         description: '',
         images: [],
@@ -260,17 +275,19 @@ export default {
     await this.cityStore.initCity()
     
     // Pre-fill with current city if available
-    if (this.cityStore.currentCity?.name) {
-      this.form.area = this.cityStore.currentCity.name
+    if (this.cityStore.currentCity) {
+      this.form.city_id = this.cityStore.currentCity.id
+      this.form.city_name = this.cityStore.currentCity.name
     }
     
     this.loadCertifications()
   },
 
   onShow() {
-    // Refresh area when returning from city select
-    if (this.cityStore?.currentCity?.name) {
-      this.form.area = this.cityStore.currentCity.name
+    // Refresh city when returning from city select
+    if (this.cityStore?.currentCity) {
+      this.form.city_id = this.cityStore.currentCity.id
+      this.form.city_name = this.cityStore.currentCity.name
     }
   },
 
@@ -342,6 +359,13 @@ export default {
 
     async onSubmit() {
       if (this.submitting) return
+      
+      // Validate city selection
+      if (!this.form.city_id) {
+        uni.showToast({ title: '请选择服务城市', icon: 'none' })
+        return
+      }
+      
       const title = this.form.title.trim()
       if (!title) {
         uni.showToast({ title: '请填写标题', icon: 'none' })
@@ -377,6 +401,7 @@ export default {
         teaching_mode: this.form.teaching_mode || null,
         price,
         price_unit: price ? (this.form.price_unit || null) : null,
+        city_id: this.form.city_id,
         area: this.form.area.trim() || null,
         description: this.form.description.trim() || null,
         images: this.form.images,

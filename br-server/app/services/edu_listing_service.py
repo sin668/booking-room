@@ -133,7 +133,7 @@ async def list_edu_listings(
     *,
     listing_type: str | None = None,
     subject: str | None = None,
-    city: str | None = None,
+    city_id: int | None = None,
     sort: str = "new",
     page: int = 1,
     page_size: int = DEFAULT_PAGE_SIZE,
@@ -144,8 +144,8 @@ async def list_edu_listings(
         conditions.append(EduListing.listing_type == listing_type)
     if subject and subject.strip():
         conditions.append(EduListing.subject == subject.strip())
-    if city and city.strip():
-        conditions.append(EduListing.area.ilike(f"%{city.strip()}%"))
+    if city_id:
+        conditions.append(EduListing.city_id == city_id)
 
     total = (
         await db.execute(select(func.count()).select_from(EduListing).where(*conditions))
@@ -232,6 +232,7 @@ async def create_edu_listing(
         teaching_mode=data.teaching_mode,
         price=data.price,
         price_unit=data.price_unit,
+        city_id=data.city_id,
         area=data.area,
         description=data.description,
         images=data.images or None,

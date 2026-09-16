@@ -10,7 +10,7 @@
               <div class="stat-value">{{ stats.pending }}</div>
             </div>
             <div class="stat-icon pending">
-              <n-icon size="24"><ClockOutline /></n-icon>
+              <n-icon size="24"><TimeOutline /></n-icon>
             </div>
           </div>
         </n-card>
@@ -189,7 +189,7 @@
 import { ref, reactive, onMounted, h } from 'vue'
 import { useMessage } from 'naive-ui'
 import {
-  ClockOutline,
+  TimeOutline,
   CheckmarkOutline,
   SchoolOutline,
   PersonOutline,

@@ -62,7 +62,7 @@ MENU_SEEDS = [
     MenuSeed("training.teachers", "menu", "老师管理", "training:teachers:view", "teachers", "TrainingTeachers", "/training/teachers/index", None, "TeamOutlined", 48, parent="training"),
     MenuSeed("training.teacher_edit", "menu", "编辑老师", "training:teachers:edit", "teachers/edit/:id?", "TrainingTeacherEdit", "/training/teachers/edit/index", None, "TeamOutlined", 49, hidden=True, parent="training"),
     MenuSeed("training.reviews", "menu", "评价审核", "training:reviews:view", "reviews", "TrainingReviews", "/training/reviews/index", None, "SchoolOutline", 50, parent="training"),
-    MenuSeed("training.certification_audit", "menu", "认证审核", "training:certification:audit", "certification-audit", "CertificationAudit", "/training/certification-audit/index", None, "ShieldCheckmarkOutline", 51, parent="training"),
+    MenuSeed("training.certification_audit", "menu", "认证审核", "training:certification:audit", "certification-audit", "CertificationAudit", "/training/certification-audit/index", None, "IdCardOutline", 51, parent="training"),
 ]
 
 BUTTON_SEEDS = [
@@ -115,6 +115,8 @@ BUTTON_SEEDS = [
     # _get_or_create_menu 会按 permission_code 命中菜单行并把它降级为 button（parent_id 指向自己），侧边栏菜单会消失
     ("training.reviews", "training:reviews:audit", "评价审核-审核"),
     ("training.reviews", "training:reviews:reply", "评价审核-回复"),
+    # view 权限码已由 training.certification_audit 菜单行自身持有
+    ("training.certification_audit", "training:certification:audit:action", "认证审核-审核"),
 ]
 
 BASIC_SETTING_DEFAULTS = {

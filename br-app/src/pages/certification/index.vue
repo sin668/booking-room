@@ -6,7 +6,7 @@
     <!-- Nav bar -->
     <view class="nav-bar">
       <view class="nav-back" @tap="goBack">
-        <view class="icon icon-arrow-left nav-back-icon" />
+        <view class="nav-back-arrow" />
       </view>
       <text class="nav-title">认证管理</text>
     </view>
@@ -284,9 +284,12 @@ export default {
   justify-content: center;
 }
 
-.nav-back-icon {
-  font-size: 36rpx;
-  color: #2D3436;
+.nav-back-arrow {
+  width: 20rpx;
+  height: 20rpx;
+  border-left: 4rpx solid #2D3436;
+  border-bottom: 4rpx solid #2D3436;
+  transform: rotate(45deg);
 }
 
 .nav-title {
@@ -475,6 +478,7 @@ export default {
 .cert-badge-text {
   font-size: 24rpx;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .cert-detail {

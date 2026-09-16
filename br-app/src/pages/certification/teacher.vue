@@ -55,7 +55,8 @@
 </template>
 
 <script>
-import { submitTeacherCertification } from '@/api/certification'
+import { getUserCertifications, submitTeacherCertification } from '@/api/certification'
+import { uploadImage } from '@/api/upload'
 
 export default {
   data() {
@@ -67,22 +68,50 @@ export default {
         certificate_image_url: '',
       },
       submitting: false,
+      uploading: false,
     }
   },
   onLoad() {
     const sysInfo = uni.getSystemInfoSync()
     this.statusBarHeight = sysInfo.statusBarHeight || 0
+    this.loadExistingData()
   },
   methods: {
-    chooseImage() {
+    async loadExistingData() {
+      try {
+        const certs = await getUserCertifications()
+        const teacherCert = certs.find(c => c.verification_type === 'teacher')
+        if (teacherCert) {
+          this.formData.teacher_certificate_number = teacherCert.teacher_certificate_number || ''
+          this.formData.teaching_subject = teacherCert.teaching_subject || ''
+          this.formData.certificate_image_url = teacherCert.certificate_image_url || ''
+        }
+      } catch (error) {
+        console.error('加载认证数据失败:', error)
+      }
+    },
+    async chooseImage() {
       uni.chooseImage({
         count: 1,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
-        success: (res) => {
-          // TODO: Upload to server and get URL
-          this.formData.certificate_image_url = res.tempFilePaths[0]
-          uni.showToast({ title: '图片已选择（需实现上传）', icon: 'none' })
+        success: async (res) => {
+          const filePath = res.tempFilePaths[0]
+          this.uploading = true
+          uni.showLoading({ title: '上传中...', mask: true })
+          try {
+            const result = await uploadImage(filePath, 'certification')
+            this.formData.certificate_image_url = result.url
+            uni.showToast({ title: '上传成功', icon: 'success' })
+          } catch (error) {
+            uni.showToast({
+              title: error.message || '图片上传失败',
+              icon: 'none',
+            })
+          } finally {
+            this.uploading = false
+            uni.hideLoading()
+          }
         },
       })
     },

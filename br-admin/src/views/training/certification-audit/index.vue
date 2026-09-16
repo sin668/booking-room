@@ -59,7 +59,7 @@
     <!-- Filters -->
     <n-card class="mb-4">
       <n-space align="center">
-        <n-radio-group v-model:value="statusFilter" @update:value="loadData">
+        <n-radio-group v-model:value="statusFilter" @update:value="handleFilterChange">
           <n-radio-button value="">全部</n-radio-button>
           <n-radio-button value="pending">待审核</n-radio-button>
           <n-radio-button value="approved">已通过</n-radio-button>
@@ -70,7 +70,7 @@
           placeholder="认证类型"
           style="width: 150px"
           :options="typeOptions"
-          @update:value="loadData"
+          @update:value="handleFilterChange"
         />
         <n-input
           v-model:value="searchKeyword"
@@ -191,7 +191,8 @@
 
 <script setup>
 import { ref, reactive, onMounted, h } from 'vue'
-import { useMessage } from 'naive-ui'
+import { useMessage, NTag } from 'naive-ui'
+import { TableAction } from '@/components/Table'
 import {
   TimeOutline,
   CheckmarkOutline,
@@ -257,6 +258,12 @@ const reviewRules = {
     message: '请输入拒绝原因',
     trigger: 'blur',
   },
+}
+
+const CERT_STATUS_TAGS = {
+  pending: { label: '待审核', type: 'warning' },
+  approved: { label: '已通过', type: 'success' },
+  rejected: { label: '已拒绝', type: 'error' },
 }
 
 // Table columns
@@ -329,13 +336,8 @@ const columns = [
     key: 'status',
     width: 100,
     render: (row) => {
-      const statusMap = {
-        pending: { text: '待审核', class: 'status-pending' },
-        approved: { text: '已通过', class: 'status-approved' },
-        rejected: { text: '已拒绝', class: 'status-rejected' },
-      }
-      const status = statusMap[row.status] || { text: row.status || '未知', class: '' }
-      return h('span', { class: ['status-tag', status.class] }, status.text)
+      const tag = CERT_STATUS_TAGS[row.status] || { label: row.status || '未知', type: 'default' }
+      return h(NTag, { type: tag.type, size: 'small' }, { default: () => tag.label })
     },
   },
   {
@@ -352,51 +354,28 @@ const columns = [
     width: 220,
     fixed: 'right',
     render: (row) => {
-      const buttons = []
-      
-      // 查看资料按钮（所有状态都有）
-      buttons.push(
-        h(
-          'n-button',
-          {
-            type: 'info',
-            size: 'small',
-            quaternary: true,
-            onClick: () => openReviewModal(row, 'view'),
-          },
-          () => '查看'
-        )
-      )
-      
-      // 待审核状态显示通过/驳回按钮
+      const actions = [
+        {
+          label: '查看',
+          type: 'info',
+          onClick: () => openReviewModal(row, 'view'),
+        },
+      ]
       if (row.status === 'pending') {
-        buttons.push(
-          h(
-            'n-button',
-            {
-              type: 'success',
-              size: 'small',
-              quaternary: true,
-              onClick: () => openReviewModal(row, 'approve'),
-            },
-            () => '通过'
-          )
-        )
-        buttons.push(
-          h(
-            'n-button',
-            {
-              type: 'error',
-              size: 'small',
-              quaternary: true,
-              onClick: () => openReviewModal(row, 'reject'),
-            },
-            () => '驳回'
-          )
+        actions.push(
+          {
+            label: '通过',
+            type: 'success',
+            onClick: () => openReviewModal(row, 'approve'),
+          },
+          {
+            label: '驳回',
+            type: 'error',
+            onClick: () => openReviewModal(row, 'reject'),
+          }
         )
       }
-      
-      return h('n-space', { size: 'small' }, () => buttons)
+      return h(TableAction, { actions })
     },
   },
 ]
@@ -429,6 +408,11 @@ async function loadData() {
   }
 }
 
+function handleFilterChange() {
+  pagination.page = 1
+  loadData()
+}
+
 function handlePageChange(page) {
   pagination.page = page
   loadData()
@@ -448,25 +432,20 @@ function openReviewModal(row, action = 'review') {
     user_phone: row.user_phone,
   }
   
-  // 根据操作模式设置弹窗状态
   if (action === 'view') {
-    // 查看模式：只显示资料，不可编辑
     isApproved.value = true
     modalTitle.value = '查看资料'
   } else if (action === 'approve') {
-    // 通过模式：预设 approved = true
     isApproved.value = false
     reviewForm.approved = true
     reviewForm.rejection_reason = ''
     modalTitle.value = '审核认证'
   } else if (action === 'reject') {
-    // 驳回模式：预设 approved = false
     isApproved.value = false
     reviewForm.approved = false
     reviewForm.rejection_reason = ''
     modalTitle.value = '审核认证'
   } else {
-    // 默认审核模式
     isApproved.value = row.status !== 'pending'
     reviewForm.approved = true
     reviewForm.rejection_reason = ''
@@ -611,29 +590,5 @@ onMounted(() => {
   font-size: 14px;
   color: #666;
   margin-bottom: 8px;
-}
-
-// Status tags
-.status-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.status-pending {
-  background-color: #fff7e6;
-  color: #fa8c16;
-}
-
-.status-approved {
-  background-color: #f6ffed;
-  color: #52c41a;
-}
-
-.status-rejected {
-  background-color: #fff1f0;
-  color: #f5222d;
 }
 </style>

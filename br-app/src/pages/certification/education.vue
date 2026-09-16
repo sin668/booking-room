@@ -76,7 +76,8 @@
 </template>
 
 <script>
-import { submitEducationCertification } from '@/api/certification'
+import { getUserCertifications, submitEducationCertification } from '@/api/certification'
+import { uploadImage } from '@/api/upload'
 
 export default {
   data() {
@@ -96,13 +97,33 @@ export default {
       },
       graduationYearStr: '',
       submitting: false,
+      uploading: false,
     }
   },
   onLoad() {
     const sysInfo = uni.getSystemInfoSync()
     this.statusBarHeight = sysInfo.statusBarHeight || 0
+    this.loadExistingData()
   },
   methods: {
+    async loadExistingData() {
+      try {
+        const certs = await getUserCertifications()
+        const eduCert = certs.find(c => c.verification_type === 'education')
+        if (eduCert) {
+          this.formData.school = eduCert.school || ''
+          this.formData.education_level = eduCert.education_level || ''
+          this.formData.major = eduCert.major || ''
+          this.formData.graduation_year = eduCert.graduation_year || null
+          this.formData.diploma_image_url = eduCert.diploma_image_url || ''
+          if (eduCert.graduation_year) {
+            this.graduationYearStr = String(eduCert.graduation_year)
+          }
+        }
+      } catch (error) {
+        console.error('加载认证数据失败:', error)
+      }
+    },
     onEducationChange(e) {
       const index = e.detail.value
       this.formData.education_level = this.educationLevels[index].value
@@ -119,16 +140,28 @@ export default {
         this.formData.graduation_year = null
       }
     },
-    chooseImage() {
+    async chooseImage() {
       uni.chooseImage({
         count: 1,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
-        success: (res) => {
-          // TODO: Upload to server and get URL
-          // For now, use local path as placeholder
-          this.formData.diploma_image_url = res.tempFilePaths[0]
-          uni.showToast({ title: '图片已选择（需实现上传）', icon: 'none' })
+        success: async (res) => {
+          const filePath = res.tempFilePaths[0]
+          this.uploading = true
+          uni.showLoading({ title: '上传中...', mask: true })
+          try {
+            const result = await uploadImage(filePath, 'certification')
+            this.formData.diploma_image_url = result.url
+            uni.showToast({ title: '上传成功', icon: 'success' })
+          } catch (error) {
+            uni.showToast({
+              title: error.message || '图片上传失败',
+              icon: 'none',
+            })
+          } finally {
+            this.uploading = false
+            uni.hideLoading()
+          }
         },
       })
     },

@@ -204,7 +204,7 @@
     {
       "path": "pages/edu-market/index",
       "style": {
-        "navigationBarTitleText": "教培供需",
+        "navigationBarTitleText": "广场",
         "navigationStyle": "custom"
       }
     },
@@ -257,9 +257,9 @@
       },
       {
         "pagePath": "pages/edu-market/index",
-        "text": "教培供需",
-        "iconPath": "static/tab/edu.png",
-        "selectedIconPath": "static/tab/edu-active.png"
+        "text": "广场",
+        "iconPath": "static/tab/plaza.png",
+        "selectedIconPath": "static/tab/plaza-active.png"
       },
       {
         "pagePath": "pages/profile/index",

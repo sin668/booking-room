@@ -126,5 +126,6 @@ class User(Base):
     identity_verifications: Mapped[list[UserIdentityVerification]] = relationship(
         "UserIdentityVerification",
         back_populates="user",
+        foreign_keys="[UserIdentityVerification.user_id]",
         lazy="selectin",
     )

@@ -3,9 +3,6 @@
     <!-- 自定义导航栏 -->
     <view class="nav-bar">
       <text class="nav-title">教培供需</text>
-      <view class="nav-publish" @tap="goPublish">
-        <text class="nav-publish-text">+ 发布</text>
-      </view>
     </view>
 
     <!-- 筛选区（固定） -->
@@ -19,6 +16,9 @@
           @tap="switchType(tab.key)"
         >
           <text class="tab-text">{{ tab.label }}</text>
+        </view>
+        <view class="nav-publish" @tap="goPublish">
+          <text class="nav-publish-text">+ 发布</text>
         </view>
       </view>
 
@@ -390,8 +390,9 @@ onReachBottom(() => {
 
 .nav-publish {
   position: absolute;
-  right: 28rpx;
-  top: 50%;
+  right: 24rpx;
+  top: 113%;
+  z-index: 91;
   transform: translateY(-50%);
   padding: 10rpx 24rpx;
   background: $gradient-primary;
@@ -425,6 +426,7 @@ onReachBottom(() => {
 
 .tab-bar {
   display: flex;
+  width: 78%;
 }
 
 .tab-item {

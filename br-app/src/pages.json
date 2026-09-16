@@ -37,7 +37,8 @@
     {
       "path": "pages/booking/index",
       "style": {
-        "navigationBarTitleText": "自习室"
+        "navigationBarTitleText": "自习室",
+        "navigationStyle": "custom"
       }
     },
     {
@@ -82,7 +83,8 @@
     {
       "path": "pages/profile/index",
       "style": {
-        "navigationBarTitleText": "我的"
+        "navigationBarTitleText": "我的",
+        "navigationStyle": "custom"
       }
     },
     {

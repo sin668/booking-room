@@ -1,6 +1,15 @@
 <template>
   <view class="page">
+    <!-- Status bar spacer -->
+    <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
+    
+    <!-- 自定义导航栏 -->
+    <view class="nav-bar">
+      <text class="nav-title">培训课程</text>
+    </view>
+
     <view class="hero-section">
+      <!-- 
       <view class="hero-topline">
         <view>
           <text class="hero-kicker">预约自习</text>
@@ -11,20 +20,28 @@
           <text class="hero-city-text">{{ currentCityName }}</text>
         </view>
       </view>
+      -->
 
       <view class="search-bar">
-        <view class="icon icon-search search-icon" />
-        <input
-          class="search-input"
-          v-model="searchKeyword"
-          placeholder="搜索自习室、商圈或地址"
-          placeholder-class="search-placeholder"
-          confirm-type="search"
-          @input="onSearchInput"
-          @confirm="onSearchInput"
-        />
-        <view v-if="searchKeyword" class="search-clear" @tap="clearSearch">
-          <text class="clear-text">×</text>
+        <view class="hero-city" @tap="onTapCity">
+          <view class="icon icon-location hero-city-icon" />
+          <text class="hero-city-text">{{ currentCityName }}</text>
+        </view>
+        <view class="search-divider" />
+        <view class="search-bar-inner">
+          <view class="icon icon-search search-icon" />
+          <input
+            class="search-input"
+            v-model="searchKeyword"
+            placeholder="搜索自习室、商圈或地址"
+            placeholder-class="search-placeholder"
+            confirm-type="search"
+            @input="onSearchInput"
+            @confirm="onSearchInput"
+          />
+          <view v-if="searchKeyword" class="search-clear" @tap="clearSearch">
+            <text class="clear-text">×</text>
+          </view>
         </view>
       </view>
 
@@ -369,8 +386,30 @@ export default {
   min-height: 100vh;
 }
 
+/* ── Nav bar ── */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 88rpx;
+  background: $surface;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1rpx 0 rgba(0, 0, 0, 0.03);
+}
+
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: $text-primary;
+  letter-spacing: 0.5rpx;
+}
+
 .hero-section {
-  padding: 28rpx 28rpx 22rpx;
+  padding: 70rpx 28rpx 28rpx 22rpx;
   background: linear-gradient(180deg, #fff 0%, $surface-soft 100%);
   box-shadow: 0 1rpx 0 rgba(79, 110, 247, 0.06);
 }
@@ -428,6 +467,20 @@ export default {
   align-items: center;
   height: 72rpx;
   margin-top: 26rpx;
+}
+
+.search-divider {
+  width: 1rpx;
+  height: 32rpx;
+  background: $border-soft;
+  flex-shrink: 0;
+  margin: 0 9rpx;
+}
+
+.search-bar-inner {
+  display: flex;
+  align-items: center;
+  height: 62rpx;
   padding: 0 24rpx;
   border-radius: 36rpx;
   background: $white;

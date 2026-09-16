@@ -626,6 +626,8 @@ onReachBottom(() => {
   display: flex;
   align-items: center;
   gap: 16rpx;
+  width: 75%;
+  height: 62rpx;
 }
 
 .city-pill {
@@ -667,14 +669,14 @@ onReachBottom(() => {
 }
 
 .search-input-wrap {
-  flex: 1;
-  min-width: 0;
-  background: $surface-soft;
-  border-radius: 999rpx;
-  padding: 14rpx 24rpx;
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  height: 62rpx;
+  padding: 0 24rpx;
+  border-radius: 36rpx;
+  background: $white;
+  border: 1rpx solid $border-soft;
+  box-shadow: $shadow-sm;
 }
 
 .search-icon {

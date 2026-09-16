@@ -14,10 +14,12 @@
         <view class="icon icon-search nav-search-icon" />
         <text class="nav-search-placeholder">搜索自习室、课程、老师</text>
       </view>
+      <!--
       <view class="nav-bell" @tap="onTapBell">
         <view class="icon icon-bell nav-bell-icon" />
         <view v-if="hasNotification" class="nav-bell-dot" />
       </view>
+      -->
     </view>
 
     <!-- Main content -->
@@ -481,6 +483,7 @@ export default {
   display: flex;
   align-items: center;
   height: 88rpx;
+  width: 73%;
   padding: 0 28rpx;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 1rpx 0 0 rgba(79, 110, 247, 0.06);
@@ -512,15 +515,15 @@ export default {
 }
 
 .nav-search {
-  flex: 1;
   display: flex;
   align-items: center;
-  height: 64rpx;
+  height: 62rpx;
   margin: 0 20rpx;
   padding: 0 24rpx;
-  background: $primary-soft;
-  border-radius: 32rpx;
+  border-radius: 36rpx;
+  background: $white;
   border: 1rpx solid $border-soft;
+  box-shadow: $shadow-sm;
 }
 
 .nav-search-icon {

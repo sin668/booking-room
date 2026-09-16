@@ -1,8 +1,16 @@
 <template>
   <view class="page">
+    <!-- Status bar spacer -->
+    <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
+
+    <!-- Nav bar -->
+    <view class="nav-bar">
+      <text class="nav-title">搜索</text>
+    </view>
+
     <view class="search-header">
-      <view class="search-back" @tap="goBack">
-        <view class="icon icon-arrow-right back-icon" />
+      <view class="nav-back" @tap="goBack">
+        <view class="nav-back-arrow" />
       </view>
       <view class="search-input-wrap">
         <view class="icon icon-search search-icon" />
@@ -231,6 +239,40 @@ function goTeacherDetail(teacher) {
 .page {
   min-height: 100vh;
   background: $bg-color;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 28rpx;
+  background: #fff;
+  position: relative;
+}
+
+.nav-back {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-arrow {
+  width: 20rpx;
+  height: 20rpx;
+  border-left: 4rpx solid #2D3436;
+  border-bottom: 4rpx solid #2D3436;
+  transform: rotate(45deg);
+}
+
+.nav-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2D3436;
 }
 
 .search-header {

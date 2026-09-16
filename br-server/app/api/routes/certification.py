@@ -140,11 +140,11 @@ async def submit_education_certification(
     db: AsyncSession = Depends(get_db),
 ):
     """提交学历认证"""
-    # 检查是否已完成实名认证
+    # 检查是否已完成实名认证（approved 或 verified 均视为已通过）
     stmt = select(UserIdentityVerification).where(
         UserIdentityVerification.user_id == user_id,
         UserIdentityVerification.verification_type == "real_name",
-        UserIdentityVerification.status == "approved"
+        UserIdentityVerification.status.in_(["approved", "verified"])
     )
     result = await db.execute(stmt)
     real_name_cert = result.scalar_one_or_none()
@@ -207,11 +207,11 @@ async def submit_teacher_certification(
     db: AsyncSession = Depends(get_db),
 ):
     """提交教师资格认证"""
-    # 检查是否已完成实名认证
+    # 检查是否已完成实名认证（approved 或 verified 均视为已通过）
     stmt = select(UserIdentityVerification).where(
         UserIdentityVerification.user_id == user_id,
         UserIdentityVerification.verification_type == "real_name",
-        UserIdentityVerification.status == "approved"
+        UserIdentityVerification.status.in_(["approved", "verified"])
     )
     result = await db.execute(stmt)
     real_name_cert = result.scalar_one_or_none()
@@ -226,7 +226,7 @@ async def submit_teacher_certification(
     stmt = select(UserIdentityVerification).where(
         UserIdentityVerification.user_id == user_id,
         UserIdentityVerification.verification_type == "education",
-        UserIdentityVerification.status == "approved"
+        UserIdentityVerification.status.in_(["approved", "verified"])
     )
     result = await db.execute(stmt)
     education_cert = result.scalar_one_or_none()

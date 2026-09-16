@@ -14,7 +14,7 @@ from app.core.database import get_db
 from app.models.user_identity_verification import UserIdentityVerification
 from app.models.user import User
 
-router = APIRouter(prefix="/admin/certifications", tags=["admin-certification"])
+router = APIRouter(prefix="/api/v1/admin/certifications", tags=["admin-certification"])
 
 
 class AdminCertificationResponse(BaseModel):

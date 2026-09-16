@@ -94,15 +94,13 @@
 
         <view class="field">
           <text class="field-label">服务区域</text>
-          <input
-            v-model="form.area"
-            class="field-input"
-            type="text"
-            placeholder="例如：广州市天河区 / 线上不限"
-            placeholder-class="field-ph"
-            maxlength="100"
-            confirm-type="done"
-          />
+          <view class="city-selector" @tap="onSelectCity">
+            <view class="icon icon-location city-selector-icon" />
+            <text :class="['city-selector-text', { 'city-placeholder': !form.area }]">
+              {{ form.area || '请选择服务区域' }}
+            </text>
+            <view class="icon icon-arrow-right city-selector-arrow" />
+          </view>
         </view>
 
         <view class="field">
@@ -175,6 +173,7 @@ import { getUserCertifications } from '@/api/certification'
 import { uploadImage } from '@/api/upload'
 import { ensureLogin } from '@/utils/auth'
 import { formatErrorDetail } from '@/utils/formatters'
+import { useCityStore } from '@/store/modules/city'
 
 const MAX_IMAGES = 3
 const SUBJECTS = ['英语', '数学', '物理', '化学', '语文', '编程', '钢琴', '美术', '其他']
@@ -213,6 +212,7 @@ export default {
       certifications: [],
       uploading: false,
       submitting: false,
+      cityStore: null,
       form: {
         listing_type: 'tutor',
         title: '',
@@ -251,17 +251,28 @@ export default {
     },
   },
 
-  onLoad() {
+  async onLoad() {
     if (!ensureLogin()) return
     const sysInfo = uni.getSystemInfoSync()
     this.statusBarHeight = sysInfo.statusBarHeight || 0
-    try {
-      const stored = uni.getStorageSync('current_city')
-      if (stored?.name) this.form.area = stored.name
-    } catch {
-      // 忽略城市预填失败
+    
+    // Initialize city store
+    this.cityStore = useCityStore()
+    await this.cityStore.initCity()
+    
+    // Pre-fill with current city if available
+    if (this.cityStore.currentCity?.name) {
+      this.form.area = this.cityStore.currentCity.name
     }
+    
     this.loadCertifications()
+  },
+
+  onShow() {
+    // Refresh area when returning from city select
+    if (this.cityStore?.currentCity?.name) {
+      this.form.area = this.cityStore.currentCity.name
+    }
   },
 
   methods: {
@@ -285,6 +296,10 @@ export default {
       } else {
         this.form.available_times.splice(idx, 1)
       }
+    },
+
+    onSelectCity() {
+      uni.navigateTo({ url: '/pages/city-select/index' })
     },
 
     goCertify() {
@@ -558,6 +573,48 @@ export default {
   font-size: 27rpx;
   line-height: 1.6;
   color: $text-primary;
+}
+
+.city-selector {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 18rpx 22rpx;
+  background: $surface-soft;
+  border: 1rpx solid $border-soft;
+  border-radius: $radius-md;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.city-selector:active {
+  background: $bg-color;
+  border-color: $primary;
+}
+
+.city-selector-icon {
+  font-size: 24rpx;
+  color: $primary;
+  flex-shrink: 0;
+}
+
+.city-selector-text {
+  flex: 1;
+  font-size: 27rpx;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.city-placeholder {
+  color: #C8C9CB;
+}
+
+.city-selector-arrow {
+  font-size: 20rpx;
+  color: $text-muted;
+  flex-shrink: 0;
 }
 
 .chip-row {

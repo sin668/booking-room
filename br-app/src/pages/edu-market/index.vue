@@ -301,18 +301,24 @@ async function fetchListings(reset = false) {
     if (activeSubject.value && activeSubject.value !== '全部') params.subject = activeSubject.value
     if (currentCity.value?.name) params.city = currentCity.value.name
     
-    console.log('[EduMarket] Fetching listings with params:', params)
     const data = await getEduListings(params)
-    console.log('[EduMarket] Response:', data)
     
     if (requestId !== listRequestId) return
-    const items = data.items || []
-    console.log('[EduMarket] Items count:', items.length, 'Total:', data.total)
+    
+    // Ensure data structure is correct
+    const items = Array.isArray(data?.items) ? data.items : []
     listings.value = reset ? items : listings.value.concat(items)
-    total.value = data.total || 0
-    if (!reset) page.value++
+    total.value = Number(data?.total) || 0
+    
+    if (!reset && items.length > 0) {
+      page.value++
+    }
   } catch (error) {
     console.error('[EduMarket] Fetch error:', error)
+    uni.showToast({ 
+      title: '加载失败，请重试', 
+      icon: 'none' 
+    })
     if (requestId !== listRequestId) return
     if (reset) {
       listings.value = []

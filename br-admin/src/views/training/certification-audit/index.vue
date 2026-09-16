@@ -351,31 +351,18 @@ const columns = [
   {
     title: '操作',
     key: 'actions',
-    width: 220,
+    width: 100,
     fixed: 'right',
     render: (row) => {
-      const actions = [
-        {
-          label: '查看',
-          type: 'info',
-          onClick: () => openReviewModal(row, 'view'),
-        },
-      ]
-      if (row.status === 'pending') {
-        actions.push(
+      return h(TableAction, {
+        actions: [
           {
-            label: '通过',
-            type: 'success',
-            onClick: () => openReviewModal(row, 'approve'),
+            label: '审核',
+            type: 'primary',
+            onClick: () => openReviewModal(row),
           },
-          {
-            label: '驳回',
-            type: 'error',
-            onClick: () => openReviewModal(row, 'reject'),
-          }
-        )
-      }
-      return h(TableAction, { actions })
+        ],
+      })
     },
   },
 ]
@@ -425,31 +412,22 @@ function handlePageSizeChange(pageSize) {
 }
 
 // Review modal
-function openReviewModal(row, action = 'review') {
+function openReviewModal(row) {
   currentCert.value = row
   currentUser.value = {
     user_nickname: row.user_nickname,
     user_phone: row.user_phone,
   }
   
-  if (action === 'view') {
-    isApproved.value = true
-    modalTitle.value = '查看资料'
-  } else if (action === 'approve') {
+  // 待审核状态显示审核表单，已审核状态显示只读
+  if (row.status === 'pending') {
     isApproved.value = false
     reviewForm.approved = true
-    reviewForm.rejection_reason = ''
-    modalTitle.value = '审核认证'
-  } else if (action === 'reject') {
-    isApproved.value = false
-    reviewForm.approved = false
     reviewForm.rejection_reason = ''
     modalTitle.value = '审核认证'
   } else {
-    isApproved.value = row.status !== 'pending'
-    reviewForm.approved = true
-    reviewForm.rejection_reason = ''
-    modalTitle.value = '审核认证'
+    isApproved.value = true
+    modalTitle.value = '查看资料'
   }
   
   showReviewModal.value = true

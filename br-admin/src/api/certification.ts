@@ -26,10 +26,9 @@ export interface CertificationItem {
 
 export interface CertificationListParams {
   page?: number;
-  pageSize?: number;
-  verification_type?: string;
-  status?: string;
-  keyword?: string;
+  page_size?: number;
+  status_filter?: string;
+  type_filter?: string;
 }
 
 export async function getCertifications(params?: CertificationListParams) {

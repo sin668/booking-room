@@ -12,7 +12,7 @@ import {
   UserOutlined,
   WalletOutlined,
 } from '@vicons/antd';
-import { SchoolOutline } from '@vicons/ionicons5';
+import { SchoolOutline, IdCardOutline } from '@vicons/ionicons5';
 
 //前端路由图标映射表
 export const constantRouterIcon = {
@@ -28,4 +28,5 @@ export const constantRouterIcon = {
   CalendarOutlined: renderIcon(CalendarOutlined),
   WalletOutlined: renderIcon(WalletOutlined),
   SchoolOutline: renderIcon(SchoolOutline),
+  IdCardOutline: renderIcon(IdCardOutline),
 };

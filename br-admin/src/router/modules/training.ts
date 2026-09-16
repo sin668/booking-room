@@ -58,7 +58,7 @@ const routes: Array<RouteRecordRaw> = [
           title: '认证审核',
           icon: renderIcon(IdCardOutline),
         },
-        component: () => import('@/views/training/certification-audit.vue'),
+        component: () => import('@/views/training/certification-audit/index.vue'),
       },
     ],
   },

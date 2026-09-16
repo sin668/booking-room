@@ -73,3 +73,46 @@ async def test_dynamic_routes_exclude_buttons_and_disabled_nodes(client: AsyncCl
     assert resp.status_code == 200
     names = {item["name"] for item in resp.json()}
     assert names == {"Dashboard"}
+
+
+@pytest.mark.asyncio
+async def test_directory_requires_non_empty_path_and_name(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr("app.core.config.settings.ADMIN_TOKEN", "test-admin-token")
+
+    missing_path = await client.post(
+        "/api/v1/admin/menus",
+        headers=legacy_headers(),
+        json={"type": "directory", "title": "Empty", "name": "Empty", "component": "LAYOUT"},
+    )
+    assert missing_path.status_code == 422
+
+    blank_path = await client.post(
+        "/api/v1/admin/menus",
+        headers=legacy_headers(),
+        json={"type": "directory", "title": "Root", "path": "/", "name": "Root", "component": "LAYOUT"},
+    )
+    assert blank_path.status_code == 422
+
+    missing_name = await client.post(
+        "/api/v1/admin/menus",
+        headers=legacy_headers(),
+        json={"type": "directory", "title": "NoName", "path": "foo", "component": "LAYOUT"},
+    )
+    assert missing_name.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_menu_type_requires_path_and_name(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr("app.core.config.settings.ADMIN_TOKEN", "test-admin-token")
+
+    resp = await client.post(
+        "/api/v1/admin/menus",
+        headers=legacy_headers(),
+        json={
+            "type": "menu",
+            "title": "BadMenu",
+            "component": "/dashboard/console/console",
+        },
+    )
+    assert resp.status_code == 422
+

@@ -49,9 +49,22 @@ class AdminMenuService:
         self._db = db
 
     @staticmethod
-    def validate_node(menu_type: str | None, component: str | None, permission_code: str | None) -> None:
-        if menu_type in {"directory", "menu"} and component not in COMPONENT_WHITELIST:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="菜单组件不在白名单中")
+    def validate_node(
+        menu_type: str | None,
+        component: str | None,
+        permission_code: str | None,
+        path: str | None = None,
+        name: str | None = None,
+    ) -> None:
+        if menu_type in {"directory", "menu"}:
+            if component not in COMPONENT_WHITELIST:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="菜单组件不在白名单中")
+            # 前端 generateRoutes 会把空 path 拼成 '/'，而 filterRouter 显式排除 '/'，
+            # 导致整个目录连同子菜单从侧边栏消失，因此必须强制非空
+            if not path or not path.strip() or path.strip() == "/":
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="目录/菜单路径不能为空")
+            if not name or not name.strip():
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="目录/菜单名称不能为空")
         if menu_type == "button" and not permission_code:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="按钮权限码不能为空")
 
@@ -60,7 +73,7 @@ class AdminMenuService:
         return self._build_model_tree(menus)
 
     async def create(self, data: AdminMenuCreate) -> AdminMenu:
-        self.validate_node(data.type, data.component, data.permission_code)
+        self.validate_node(data.type, data.component, data.permission_code, data.path, data.name)
         if data.permission_code and await self._permission_code_exists(data.permission_code):
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="菜单权限码已存在")
         menu = AdminMenu(**data.model_dump())
@@ -79,7 +92,9 @@ class AdminMenuService:
         final_type = updates.get("type", menu.type)
         final_component = updates.get("component", menu.component)
         final_permission_code = updates.get("permission_code", menu.permission_code)
-        self.validate_node(final_type, final_component, final_permission_code)
+        final_path = updates.get("path", menu.path)
+        final_name = updates.get("name", menu.name)
+        self.validate_node(final_type, final_component, final_permission_code, final_path, final_name)
         if (
             final_permission_code
             and final_permission_code != menu.permission_code

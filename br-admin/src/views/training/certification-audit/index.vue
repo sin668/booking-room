@@ -58,13 +58,13 @@
 
     <!-- Filters -->
     <n-card class="mb-4">
-      <n-space align="center">
-        <n-radio-group v-model:value="statusFilter">
-          <n-radio-button value="">全部</n-radio-button>
-          <n-radio-button value="pending">待审核</n-radio-button>
-          <n-radio-button value="approved">已通过</n-radio-button>
-          <n-radio-button value="rejected">已拒绝</n-radio-button>
-        </n-radio-group>
+      <n-tabs v-model:value="statusFilter" type="segment" animated @update:value="onStatusTabChange">
+        <n-tab-pane name="" tab="全部" />
+        <n-tab-pane name="pending" tab="待审核" />
+        <n-tab-pane name="approved" tab="已通过" />
+        <n-tab-pane name="rejected" tab="已拒绝" />
+      </n-tabs>
+      <n-space align="center" style="margin-top: 16px;">
         <n-select
           v-model:value="typeFilter"
           placeholder="认证类型"
@@ -405,6 +405,13 @@ watch([statusFilter, typeFilter], ([newStatus, newType]) => {
 })
 
 function handleFilterChange() {
+  pagination.page = 1
+  loadData()
+}
+
+function onStatusTabChange(value) {
+  console.log('[Certification Audit] Status tab changed:', value)
+  statusFilter.value = value
   pagination.page = 1
   loadData()
 }

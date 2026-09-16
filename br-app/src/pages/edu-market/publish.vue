@@ -8,7 +8,7 @@
       <view class="nav-back" @tap="goBack">
         <view class="nav-back-arrow" />
       </view>
-      <text class="nav-title">发布教培信息</text>
+      <text class="nav-title">发布信息</text>
       <text class="nav-submit" :class="{ 'nav-submit-off': submitting }" @tap="onSubmit">发布</text>
     </view>
 
@@ -129,7 +129,7 @@
         </view>
 
         <view class="field">
-          <text class="field-label">可授课时间</text>
+          <text class="field-label">可上课时间</text>
           <view class="chip-row">
             <text
               v-for="t in TIME_SLOTS"
@@ -195,9 +195,9 @@ const TIME_SLOTS = ['工作日白天', '工作日晚', '周末上午', '周末�
 
 // 类型 → 所需认证（与后端 REQUIRED_CERTIFICATION 对齐）
 const TYPE_OPTIONS = [
-  { key: 'tutor', label: '家教(教人)', req: '需学历认证', icon: 'icon-graduation-cap', cert: 'education', certLabel: '学历认证', certRoute: '/pages/certification/education' },
+  { key: 'tutor', label: '家教', req: '需学历认证', icon: 'icon-graduation-cap', cert: 'education', certLabel: '学历认证', certRoute: '/pages/certification/education' },
   { key: 'training', label: '培训班', req: '需教师资格', icon: 'icon-chalkboard-user', cert: 'teacher', certLabel: '教师资格认证', certRoute: '/pages/certification/teacher' },
-  { key: 'demand', label: '求教(被教)', req: '需实名认证', icon: 'icon-user', cert: 'real_name', certLabel: '实名认证', certRoute: '/pages/certification/real-name' },
+  { key: 'demand', label: '求教', req: '需实名认证', icon: 'icon-user', cert: 'real_name', certLabel: '实名认证', certRoute: '/pages/certification/real-name' },
 ]
 
 function chooseImagePaths(count) {

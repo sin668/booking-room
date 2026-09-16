@@ -221,7 +221,7 @@ function formatPrice(price) {
 }
 
 function shortUnit(unit) {
-  return String(unit || '').replace(/^元/, '/')
+  return String(unit || '').replace(/^元/, '')
 }
 
 function certBadges(card) {

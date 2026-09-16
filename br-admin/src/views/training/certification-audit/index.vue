@@ -58,7 +58,7 @@
 
     <!-- Filters -->
     <n-card class="mb-4">
-      <n-tabs v-model:value="statusFilter" type="segment" animated @update:value="onStatusTabChange">
+      <n-tabs v-model:value="statusFilter" type="segment" animated>
         <n-tab-pane name="" tab="全部" />
         <n-tab-pane name="pending" tab="待审核" />
         <n-tab-pane name="approved" tab="已通过" />
@@ -405,13 +405,6 @@ watch([statusFilter, typeFilter], ([newStatus, newType]) => {
 })
 
 function handleFilterChange() {
-  pagination.page = 1
-  loadData()
-}
-
-function onStatusTabChange(value) {
-  console.log('[Certification Audit] Status tab changed:', value)
-  statusFilter.value = value
   pagination.page = 1
   loadData()
 }

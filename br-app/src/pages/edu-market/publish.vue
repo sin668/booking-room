@@ -36,13 +36,12 @@
           <text class="field-label">标题<text class="field-star">*</text></text>
           <input
             v-model="form.title"
-            class="field-input"
+            class="field-input field-input-large"
             type="text"
             :placeholder="titlePlaceholder"
             placeholder-class="field-ph"
             maxlength="100"
-            confirm-type="done"
-            @confirm="onSubmit"
+            confirm-type="next"
           />
         </view>
 
@@ -75,11 +74,11 @@
           <view class="price-row">
             <input
               v-model="form.price"
-              class="field-input price-input"
+              class="field-input field-input-large price-input"
               type="digit"
               placeholder="面议可不填"
               placeholder-class="field-ph"
-              confirm-type="done"
+              confirm-type="next"
             />
             <view class="chip-row price-units">
               <text
@@ -107,11 +106,11 @@
           <text class="field-label">详细描述</text>
           <textarea
             v-model="form.description"
-            class="field-textarea"
+            class="field-textarea field-textarea-large"
             placeholder="介绍教学经验、教学特色、目标学员等，真实详细的描述更容易被联系"
             placeholder-class="field-ph"
             maxlength="2000"
-            confirm-type="done"
+            confirm-type="next"
             auto-height
           />
         </view>
@@ -550,12 +549,25 @@ export default {
 .field-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 18rpx 22rpx;
+  padding: 24rpx 28rpx;
   background: $surface-soft;
-  border: 1rpx solid $border-soft;
+  border: 2rpx solid $border-soft;
   border-radius: $radius-md;
-  font-size: 27rpx;
+  font-size: 30rpx;
   color: $text-primary;
+  transition: all 0.2s ease;
+}
+
+.field-input:focus {
+  border-color: $primary;
+  background: $surface;
+}
+
+.field-input-large {
+  padding: 28rpx 32rpx;
+  font-size: 32rpx;
+  min-height: 96rpx;
+  line-height: 1.5;
 }
 
 .field-ph {
@@ -565,26 +577,39 @@ export default {
 .field-textarea {
   width: 100%;
   box-sizing: border-box;
-  height: 180rpx;
-  padding: 18rpx 22rpx;
+  min-height: 240rpx;
+  padding: 28rpx 32rpx;
   background: $surface-soft;
-  border: 1rpx solid $border-soft;
+  border: 2rpx solid $border-soft;
   border-radius: $radius-md;
-  font-size: 27rpx;
-  line-height: 1.6;
+  font-size: 30rpx;
+  line-height: 1.7;
   color: $text-primary;
+  transition: all 0.2s ease;
+}
+
+.field-textarea:focus {
+  border-color: $primary;
+  background: $surface;
+}
+
+.field-textarea-large {
+  min-height: 360rpx;
+  padding: 32rpx 36rpx;
+  font-size: 32rpx;
 }
 
 .city-selector {
   display: flex;
   align-items: center;
   gap: 12rpx;
-  padding: 18rpx 22rpx;
+  padding: 24rpx 28rpx;
   background: $surface-soft;
-  border: 1rpx solid $border-soft;
+  border: 2rpx solid $border-soft;
   border-radius: $radius-md;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 96rpx;
 }
 
 .city-selector:active {
@@ -592,19 +617,19 @@ export default {
   border-color: $primary;
 }
 
-.city-selector-icon {
-  font-size: 24rpx;
-  color: $primary;
-  flex-shrink: 0;
-}
-
 .city-selector-text {
   flex: 1;
-  font-size: 27rpx;
+  font-size: 30rpx;
   color: $text-primary;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.city-selector-icon {
+  font-size: 28rpx;
+  color: $primary;
+  flex-shrink: 0;
 }
 
 .city-placeholder {
@@ -612,7 +637,7 @@ export default {
 }
 
 .city-selector-arrow {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: $text-muted;
   flex-shrink: 0;
 }

@@ -36,7 +36,7 @@
           <text class="field-label">标题<text class="field-star">*</text></text>
           <input
             v-model="form.title"
-            class="field-input field-input-large"
+            class="field-input"
             type="text"
             :placeholder="titlePlaceholder"
             placeholder-class="field-ph"
@@ -74,7 +74,7 @@
           <view class="price-row">
             <input
               v-model="form.price"
-              class="field-input field-input-large price-input"
+              class="field-input price-input"
               type="digit"
               placeholder="面议可不填"
               placeholder-class="field-ph"
@@ -106,7 +106,7 @@
           <text class="field-label">详细区域</text>
           <input
             v-model="form.area"
-            class="field-input field-input-large"
+            class="field-input"
             type="text"
             placeholder="例如：朝阳区、浦东新区（选填）"
             placeholder-class="field-ph"
@@ -574,11 +574,12 @@ export default {
 .field-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 24rpx 28rpx;
+  padding: 18rpx 18rpx;
+  min-height: 70rpx;
   background: $surface-soft;
   border: 2rpx solid $border-soft;
   border-radius: $radius-md;
-  font-size: 30rpx;
+  font-size: 24rpx;
   color: $text-primary;
   transition: all 0.2s ease;
 }
@@ -586,13 +587,6 @@ export default {
 .field-input:focus {
   border-color: $primary;
   background: $surface;
-}
-
-.field-input-large {
-  padding: 28rpx 32rpx;
-  font-size: 32rpx;
-  min-height: 96rpx;
-  line-height: 1.5;
 }
 
 .field-ph {
@@ -619,22 +613,22 @@ export default {
 }
 
 .field-textarea-large {
-  min-height: 360rpx;
-  padding: 32rpx 36rpx;
-  font-size: 32rpx;
+  min-height: 260rpx;
+  padding: 18rpx 18rpx;
+  font-size: 24rpx;
 }
 
 .city-selector {
   display: flex;
   align-items: center;
   gap: 12rpx;
-  padding: 24rpx 28rpx;
+  padding: 0rpx 8rpx;
   background: $surface-soft;
   border: 2rpx solid $border-soft;
   border-radius: $radius-md;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 96rpx;
+  min-height: 70rpx;
 }
 
 .city-selector:active {
@@ -644,7 +638,7 @@ export default {
 
 .city-selector-text {
   flex: 1;
-  font-size: 30rpx;
+  font-size: 24rpx;
   color: $text-primary;
   overflow: hidden;
   text-overflow: ellipsis;

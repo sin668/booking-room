@@ -383,15 +383,15 @@ export default {
 }
 
 .badge-tutor {
-  background: $primary-light;
+  background: rgba(79, 110, 247, 0.92);
 }
 
 .badge-training {
-  background: $primary-light;
+  background: rgba(108, 92, 231, 0.92);
 }
 
 .badge-demand {
-  background: $orange-light;
+  background: rgba(255, 140, 0, 0.92);
 }
 
 .type-badge-icon {

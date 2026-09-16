@@ -59,7 +59,7 @@
     <!-- Filters -->
     <n-card class="mb-4">
       <n-space align="center">
-        <n-radio-group v-model:value="statusFilter" @update:value="handleFilterChange">
+        <n-radio-group v-model:value="statusFilter">
           <n-radio-button value="">全部</n-radio-button>
           <n-radio-button value="pending">待审核</n-radio-button>
           <n-radio-button value="approved">已通过</n-radio-button>
@@ -70,7 +70,6 @@
           placeholder="认证类型"
           style="width: 150px"
           :options="typeOptions"
-          @update:value="handleFilterChange"
         />
         <n-input
           v-model:value="searchKeyword"
@@ -190,7 +189,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, h } from 'vue'
+import { ref, reactive, onMounted, h, watch } from 'vue'
 import { useMessage, NTag } from 'naive-ui'
 import { TableAction } from '@/components/Table'
 import {
@@ -394,6 +393,12 @@ async function loadData() {
     loading.value = false
   }
 }
+
+// Watch filter changes
+watch([statusFilter, typeFilter], () => {
+  pagination.page = 1
+  loadData()
+})
 
 function handleFilterChange() {
   pagination.page = 1

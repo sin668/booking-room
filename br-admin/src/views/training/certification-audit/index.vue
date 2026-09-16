@@ -100,7 +100,7 @@
     </n-card>
 
     <!-- Review modal -->
-    <n-modal v-model:show="showReviewModal" preset="dialog" title="审核认证">
+    <n-modal v-model:show="showReviewModal" preset="dialog" :title="modalTitle">
       <div class="review-content">
         <div class="review-user">
           <n-avatar round :size="48" :src="currentUser.user_avatar" />
@@ -182,6 +182,10 @@
         </n-space>
       </template>
     </n-modal>
+    <!-- Image preview modal -->
+    <n-modal v-model:show="showImagePreview" preset="card" title="证书照片预览" style="width: 600px;">
+      <n-image :src="previewImage" width="100%" object-fit="contain" />
+    </n-modal>
   </div>
 </template>
 
@@ -232,6 +236,7 @@ const pagination = reactive({
 
 // Review modal
 const showReviewModal = ref(false)
+const modalTitle = ref('审核认证')
 const currentCert = ref({})
 const currentUser = ref({})
 const isApproved = ref(false)
@@ -241,6 +246,10 @@ const reviewForm = reactive({
   approved: true,
   rejection_reason: '',
 })
+
+// Image preview
+const showImagePreview = ref(false)
+const previewImage = ref('')
 
 const reviewRules = {
   rejection_reason: {
@@ -294,17 +303,39 @@ const columns = [
     },
   },
   {
+    title: '证书照片',
+    key: 'cert_images',
+    width: 120,
+    render: (row) => {
+      let imageUrl = null
+      if (row.verification_type === 'education') {
+        imageUrl = row.diploma_image_url
+      } else if (row.verification_type === 'teacher') {
+        imageUrl = row.certificate_image_url
+      }
+      if (!imageUrl) return h('span', { style: 'color: #999' }, '-')
+      return h('img', {
+        src: imageUrl,
+        style: 'width: 48px; height: 48px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid #eee;',
+        onClick: () => {
+          previewImage.value = imageUrl
+          showImagePreview.value = true
+        },
+      })
+    },
+  },
+  {
     title: '状态',
     key: 'status',
     width: 100,
     render: (row) => {
       const statusMap = {
-        pending: { text: '待审核', type: 'warning' },
-        approved: { text: '已通过', type: 'success' },
-        rejected: { text: '已拒绝', type: 'error' },
+        pending: { text: '待审核', class: 'status-pending' },
+        approved: { text: '已通过', class: 'status-approved' },
+        rejected: { text: '已拒绝', class: 'status-rejected' },
       }
-      const status = statusMap[row.status] || { text: row.status, type: 'default' }
-      return h('n-tag', { type: status.type, size: 'small' }, () => status.text)
+      const status = statusMap[row.status] || { text: row.status || '未知', class: '' }
+      return h('span', { class: ['status-tag', status.class] }, status.text)
     },
   },
   {
@@ -318,21 +349,54 @@ const columns = [
   {
     title: '操作',
     key: 'actions',
-    width: 120,
+    width: 220,
     fixed: 'right',
     render: (row) => {
-      if (row.status === 'pending') {
-        return h(
+      const buttons = []
+      
+      // 查看资料按钮（所有状态都有）
+      buttons.push(
+        h(
           'n-button',
           {
-            type: 'primary',
+            type: 'info',
             size: 'small',
-            onClick: () => openReviewModal(row),
+            quaternary: true,
+            onClick: () => openReviewModal(row, 'view'),
           },
-          () => '审核'
+          () => '查看'
+        )
+      )
+      
+      // 待审核状态显示通过/驳回按钮
+      if (row.status === 'pending') {
+        buttons.push(
+          h(
+            'n-button',
+            {
+              type: 'success',
+              size: 'small',
+              quaternary: true,
+              onClick: () => openReviewModal(row, 'approve'),
+            },
+            () => '通过'
+          )
+        )
+        buttons.push(
+          h(
+            'n-button',
+            {
+              type: 'error',
+              size: 'small',
+              quaternary: true,
+              onClick: () => openReviewModal(row, 'reject'),
+            },
+            () => '驳回'
+          )
         )
       }
-      return h('span', { class: 'text-gray-400' }, '已审核')
+      
+      return h('n-space', { size: 'small' }, () => buttons)
     },
   },
 ]
@@ -377,15 +441,38 @@ function handlePageSizeChange(pageSize) {
 }
 
 // Review modal
-function openReviewModal(row) {
+function openReviewModal(row, action = 'review') {
   currentCert.value = row
   currentUser.value = {
     user_nickname: row.user_nickname,
     user_phone: row.user_phone,
   }
-  isApproved.value = row.status !== 'pending'
-  reviewForm.approved = true
-  reviewForm.rejection_reason = ''
+  
+  // 根据操作模式设置弹窗状态
+  if (action === 'view') {
+    // 查看模式：只显示资料，不可编辑
+    isApproved.value = true
+    modalTitle.value = '查看资料'
+  } else if (action === 'approve') {
+    // 通过模式：预设 approved = true
+    isApproved.value = false
+    reviewForm.approved = true
+    reviewForm.rejection_reason = ''
+    modalTitle.value = '审核认证'
+  } else if (action === 'reject') {
+    // 驳回模式：预设 approved = false
+    isApproved.value = false
+    reviewForm.approved = false
+    reviewForm.rejection_reason = ''
+    modalTitle.value = '审核认证'
+  } else {
+    // 默认审核模式
+    isApproved.value = row.status !== 'pending'
+    reviewForm.approved = true
+    reviewForm.rejection_reason = ''
+    modalTitle.value = '审核认证'
+  }
+  
   showReviewModal.value = true
 }
 
@@ -524,5 +611,29 @@ onMounted(() => {
   font-size: 14px;
   color: #666;
   margin-bottom: 8px;
+}
+
+// Status tags
+.status-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status-pending {
+  background-color: #fff7e6;
+  color: #fa8c16;
+}
+
+.status-approved {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.status-rejected {
+  background-color: #fff1f0;
+  color: #f5222d;
 }
 </style>

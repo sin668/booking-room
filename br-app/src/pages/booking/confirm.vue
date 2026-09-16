@@ -624,7 +624,7 @@ export default {
     },
 
     onDone() {
-      uni.switchTab({ url: '/pages/orders/index' })
+      uni.redirectTo({ url: '/pages/orders/index' })
     },
 
     showBookingSuccess(booking) {

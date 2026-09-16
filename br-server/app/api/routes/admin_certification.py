@@ -53,6 +53,7 @@ class AdminCertificationResponse(BaseModel):
 async def list_certifications(
     status_filter: Optional[str] = Query(None, description="状态过滤：pending/approved/rejected"),
     type_filter: Optional[str] = Query(None, description="类型过滤：real_name/education/teacher"),
+    keyword: Optional[str] = Query(None, max_length=100, description="按昵称/手机号/学校模糊匹配"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     context: AdminContext = Depends(get_current_admin),
@@ -65,9 +66,26 @@ async def list_certifications(
         conditions.append(UserIdentityVerification.status == status_filter)
     if type_filter:
         conditions.append(UserIdentityVerification.verification_type == type_filter)
-    
+
+    trimmed = (keyword or "").strip()
+    if trimmed:
+        from sqlalchemy import or_
+        pattern = f"%{trimmed}%"
+        conditions.append(
+            or_(
+                User.nickname.ilike(pattern),
+                User.phone.ilike(pattern),
+                UserIdentityVerification.school.ilike(pattern),
+            )
+        )
+
+    # keyword 命中 User 字段时，count 查询同样需要 join users
+    needs_user_join = bool(trimmed)
+
     # Count query
     count_stmt = select(func.count(UserIdentityVerification.id))
+    if needs_user_join:
+        count_stmt = count_stmt.join(User, UserIdentityVerification.user_id == User.id)
     if conditions:
         from sqlalchemy import and_
         count_stmt = count_stmt.where(and_(*conditions))

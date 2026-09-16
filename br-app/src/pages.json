@@ -200,6 +200,27 @@
         "navigationBarTitleText": "教师资格认证",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/edu-market/index",
+      "style": {
+        "navigationBarTitleText": "教培供需",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/edu-market/publish",
+      "style": {
+        "navigationBarTitleText": "发布教培信息",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/edu-market/detail",
+      "style": {
+        "navigationBarTitleText": "详情",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {
@@ -235,10 +256,10 @@
         "selectedIconPath": "static/tab/training-active.png"
       },
       {
-        "pagePath": "pages/orders/index",
-        "text": "订单",
-        "iconPath": "static/tab/order.png",
-        "selectedIconPath": "static/tab/order-active.png"
+        "pagePath": "pages/edu-market/index",
+        "text": "教培供需",
+        "iconPath": "static/tab/edu.png",
+        "selectedIconPath": "static/tab/edu-active.png"
       },
       {
         "pagePath": "pages/profile/index",

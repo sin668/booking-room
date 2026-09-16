@@ -38,6 +38,7 @@ COMPONENT_WHITELIST = {
     "/training/courses/edit/index",
     "/training/reviews/index",
     "/training/certification-audit/index",
+    "/edu-market/list/index",
 }
 
 

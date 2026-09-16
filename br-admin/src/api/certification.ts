@@ -1,5 +1,11 @@
 import { Alova } from '@/utils/http/alova/index';
-import { ADMIN_NATIVE_META } from '@/api/contracts/admin';
+import {
+  ADMIN_NATIVE_META,
+  normalizePageParams,
+  toBasicTableResult,
+  type AdminPageResponse,
+  type BasicTableResult,
+} from '@/api/contracts/admin';
 
 export interface CertificationItem {
   id: string;
@@ -26,19 +32,35 @@ export interface CertificationItem {
 
 export interface CertificationListParams {
   page?: number;
+  pageSize?: number;
   page_size?: number;
+  /** 状态过滤：pending | approved | rejected，空串表示全部 */
   status_filter?: string;
+  /** 类型过滤：real_name | education | teacher，空串表示全部 */
   type_filter?: string;
+  /** 按昵称/手机号/学校模糊搜索 */
+  keyword?: string;
 }
 
-export async function getCertifications(params?: CertificationListParams) {
-  return Alova.Get('/v1/admin/certifications', {
-    params: params || {},
-    meta: ADMIN_NATIVE_META,
-  });
+// normalizePageParams 内部已做 compactQuery，空串筛选项会被自动剔除
+export async function getCertifications(
+  params?: CertificationListParams
+): Promise<BasicTableResult<CertificationItem>> {
+  const result = await Alova.Get<AdminPageResponse<CertificationItem>>(
+    '/v1/admin/certifications',
+    {
+      params: normalizePageParams(params || {}),
+      meta: ADMIN_NATIVE_META,
+    }
+  );
+
+  return toBasicTableResult(result);
 }
 
-export function reviewCertification(certId: string, data: { approved: boolean; rejection_reason?: string }) {
+export function reviewCertification(
+  certId: string,
+  data: { approved: boolean; rejection_reason?: string }
+) {
   return Alova.Patch(`/v1/admin/certifications/${certId}/review`, data, {
     meta: ADMIN_NATIVE_META,
   });

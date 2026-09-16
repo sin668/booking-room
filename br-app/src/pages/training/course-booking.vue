@@ -934,7 +934,7 @@ export default {
 
     onDone() {
       this.showSuccessModal = false
-      uni.switchTab({ url: '/pages/orders/index' })
+      uni.redirectTo({ url: '/pages/orders/index' })
     },
 
     goBack() {

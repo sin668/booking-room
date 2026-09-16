@@ -109,3 +109,32 @@ export const REVIEW_RATING_BAND_OPTIONS: BusinessOption[] = [
   { label: '中评（3星）', value: 'mid' },
   { label: '差评（1-2星）', value: 'bad' },
 ];
+
+// 教培供需类型：后端 query 名为 type，空串走 compactQuery 剔除表示全部
+export const EDU_LISTING_TYPE_OPTIONS: BusinessOption[] = [
+  { label: '全部', value: '' },
+  { label: '家教', value: 'tutor' },
+  { label: '培训班', value: 'training' },
+  { label: '求教', value: 'demand' },
+];
+
+export const EDU_LISTING_TYPE_TAGS: Record<string, BusinessTagConfig> = {
+  tutor: { label: '家教', type: 'info' },
+  training: { label: '培训班', type: 'warning' },
+  demand: { label: '求教', type: 'success' },
+};
+
+export const EDU_LISTING_STATUS_OPTIONS: BusinessOption[] = [
+  { label: '全部', value: '' },
+  { label: '待审核', value: 'pending' },
+  { label: '已通过', value: 'approved' },
+  { label: '已驳回', value: 'rejected' },
+  { label: '已下架', value: 'offline' },
+];
+
+export const EDU_LISTING_STATUS_TAGS: Record<string, BusinessTagConfig> = {
+  pending: { label: '待审核', type: 'warning' },
+  approved: { label: '已通过', type: 'success' },
+  rejected: { label: '已驳回', type: 'error' },
+  offline: { label: '已下架', type: 'default' },
+};

@@ -63,6 +63,8 @@ MENU_SEEDS = [
     MenuSeed("training.teacher_edit", "menu", "编辑老师", "training:teachers:edit", "teachers/edit/:id?", "TrainingTeacherEdit", "/training/teachers/edit/index", None, "TeamOutlined", 49, hidden=True, parent="training"),
     MenuSeed("training.reviews", "menu", "评价审核", "training:reviews:view", "reviews", "TrainingReviews", "/training/reviews/index", None, "SchoolOutline", 50, parent="training"),
     MenuSeed("training.certification_audit", "menu", "认证审核", "training:certification:audit", "certification-audit", "CertificationAudit", "/training/certification-audit/index", None, "IdCardOutline", 51, parent="training"),
+    MenuSeed("edu_market", "directory", "教培供需", "edu:manage", "edu-market", "EduMarket", "LAYOUT", "/edu-market", "AppstoreOutlined", 65),
+    MenuSeed("edu_market.list", "menu", "信息审核", "edu:listing:view", "list", "EduMarketList", "/edu-market/list/index", None, "SchoolOutline", 66, parent="edu_market"),
 ]
 
 BUTTON_SEEDS = [
@@ -117,6 +119,8 @@ BUTTON_SEEDS = [
     ("training.reviews", "training:reviews:reply", "评价审核-回复"),
     # view 权限码已由 training.certification_audit 菜单行自身持有
     ("training.certification_audit", "training:certification:audit:action", "认证审核-审核"),
+    # view 权限码已由 edu_market.list 菜单行自身持有（edu:listing:view）；审核按钮用独立码避免降级菜单
+    ("edu_market.list", "edu:listing:audit", "信息审核-审核"),
 ]
 
 BASIC_SETTING_DEFAULTS = {

@@ -18,6 +18,7 @@ from app.models.coupon import Coupon, UserCoupon
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
+from app.models.edu_listing import EduListing
 from app.models.notification import Notification, NotificationPreference
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
@@ -448,6 +449,130 @@ async def seed_notifications(session: AsyncSession) -> None:
             print(f"  + Notification: {item['type']} / {item['title']} -> {user.username}")
 
 
+# 教培供需演示数据：教（tutor 家教 / training 培训班）与学（demand 求教）混排，
+# 含 approved（广场可见）与 pending（待后台审核）两种状态
+SEED_EDU_LISTINGS = [
+    {
+        "listing_type": "tutor",
+        "title": "初中数学一对一家教，重点中学在职老师",
+        "subject": "数学",
+        "teaching_mode": "上门/线上",
+        "price": Decimal("200.00"),
+        "price_unit": "元/小时",
+        "area": "广州市天河区",
+        "description": "十年教龄，专注中考冲刺，擅长几何与函数专题突破，可免费试听一节课。",
+        "available_times": ["工作日晚 19:00-21:00", "周末全天"],
+        "status": "approved",
+        "view_count": 36,
+    },
+    {
+        "listing_type": "tutor",
+        "title": "小学英语口语陪练，海归硕士",
+        "subject": "英语",
+        "teaching_mode": "线上",
+        "price": Decimal("120.00"),
+        "price_unit": "元/小时",
+        "area": "线上不限",
+        "description": "英国留学归来，专注少儿英语启蒙与口语表达，寓教于乐。",
+        "available_times": ["周末上午", "周三/周五晚"],
+        "status": "approved",
+        "view_count": 18,
+    },
+    {
+        "listing_type": "training",
+        "title": "高考物理冲刺班，小班教学 6 人成班",
+        "subject": "物理",
+        "teaching_mode": "线下面授",
+        "price": Decimal("3800.00"),
+        "price_unit": "元/期",
+        "area": "广州市越秀区",
+        "description": "针对高考物理重难点，配套内部讲义与真题精讲，历年学员平均提分 30+。",
+        "available_times": ["周六全天", "周日全天"],
+        "status": "approved",
+        "view_count": 52,
+    },
+    {
+        "listing_type": "training",
+        "title": "少儿编程 Scratch 启蒙班",
+        "subject": "编程",
+        "teaching_mode": "线下面授",
+        "price": Decimal("1600.00"),
+        "price_unit": "元/期",
+        "area": "深圳市南山区",
+        "description": "面向 6-10 岁儿童，项目制学习，培养逻辑思维与创造力。",
+        "available_times": ["周日上午", "周日下午"],
+        "status": "pending",
+        "view_count": 0,
+    },
+    {
+        "listing_type": "demand",
+        "title": "求推荐靠谱的高中化学家教",
+        "subject": "化学",
+        "teaching_mode": "上门",
+        "price": Decimal("250.00"),
+        "price_unit": "元/小时（可议）",
+        "area": "广州市海珠区",
+        "description": "孩子高二，化学基础薄弱，希望找有耐心的老师周末上门辅导，预算可议。",
+        "available_times": ["周末"],
+        "status": "approved",
+        "view_count": 24,
+    },
+    {
+        "listing_type": "demand",
+        "title": "想找成人钢琴入门培训班",
+        "subject": "钢琴",
+        "teaching_mode": "线下",
+        "price": None,
+        "price_unit": None,
+        "area": "深圳市福田区",
+        "description": "零基础成人，想利用下班时间学钢琴，求推荐合适的培训班或私教。",
+        "available_times": ["工作日晚"],
+        "status": "pending",
+        "view_count": 0,
+    },
+]
+
+
+async def seed_edu_listings(session: AsyncSession) -> None:
+    """幂等写入教培供需演示数据，按 (发布者, 标题) 去重。"""
+    users = (
+        await session.execute(
+            select(User).where(User.user_type == "app", User.status == "active")
+        )
+    ).scalars().all()
+    if not users:
+        users = [await _get_or_create_demo_user(session)]
+
+    for idx, item in enumerate(SEED_EDU_LISTINGS):
+        publisher = users[idx % len(users)]
+        existing = await session.execute(
+            select(EduListing).where(
+                EduListing.user_id == publisher.id,
+                EduListing.title == item["title"],
+            )
+        )
+        if existing.scalar_one_or_none() is not None:
+            continue
+        session.add(
+            EduListing(
+                user_id=publisher.id,
+                listing_type=item["listing_type"],
+                title=item["title"],
+                subject=item["subject"],
+                teaching_mode=item["teaching_mode"],
+                price=item["price"],
+                price_unit=item["price_unit"],
+                area=item["area"],
+                description=item["description"],
+                images=[],
+                available_times=item["available_times"],
+                status=item["status"],
+                view_count=item["view_count"],
+            )
+        )
+        print(f"  + EduListing: {item['listing_type']} / {item['title']} -> {publisher.username}")
+
+
 async def seed_all() -> None:
     async with async_session() as session:
         for banner in SEED_BANNERS:
@@ -557,6 +682,7 @@ async def seed_all() -> None:
 
         await seed_coupons(session)
         await seed_notifications(session)
+        await seed_edu_listings(session)
 
         await session.commit()
         print("Seed data complete.")

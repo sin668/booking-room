@@ -313,7 +313,7 @@ function isTabPage(url) {
   return [
     '/pages/index/index',
     '/pages/booking/index',
-    '/pages/orders/index',
+    '/pages/edu-market/index',
     '/pages/profile/index',
   ].includes(url.split('?')[0])
 }

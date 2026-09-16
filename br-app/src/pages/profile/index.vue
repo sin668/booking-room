@@ -239,7 +239,7 @@ export default {
       uni.navigateTo({ url })
     },
     goToOrders() {
-      uni.switchTab({ url: '/pages/orders/index' })
+      uni.navigateTo({ url: '/pages/orders/index' })
     },
     handleMemberCardTap() {
       if (this.userStore.isVip) return

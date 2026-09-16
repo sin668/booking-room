@@ -300,13 +300,19 @@ async function fetchListings(reset = false) {
     if (activeType.value) params.listing_type = activeType.value
     if (activeSubject.value && activeSubject.value !== '全部') params.subject = activeSubject.value
     if (currentCity.value?.name) params.city = currentCity.value.name
+    
+    console.log('[EduMarket] Fetching listings with params:', params)
     const data = await getEduListings(params)
+    console.log('[EduMarket] Response:', data)
+    
     if (requestId !== listRequestId) return
     const items = data.items || []
+    console.log('[EduMarket] Items count:', items.length, 'Total:', data.total)
     listings.value = reset ? items : listings.value.concat(items)
     total.value = data.total || 0
     if (!reset) page.value++
-  } catch {
+  } catch (error) {
+    console.error('[EduMarket] Fetch error:', error)
     if (requestId !== listRequestId) return
     if (reset) {
       listings.value = []
@@ -356,7 +362,7 @@ onReachBottom(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1rpx 0 rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
 }
 
 .nav-title {
@@ -374,7 +380,14 @@ onReachBottom(() => {
   padding: 10rpx 24rpx;
   background: $gradient-primary;
   border-radius: 999rpx;
-  box-shadow: $shadow-md;
+  box-shadow: 0 4rpx 12rpx rgba(79, 110, 247, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-publish:active {
+  transform: translateY(-50%) scale(0.96);
+  box-shadow: 0 2rpx 8rpx rgba(79, 110, 247, 0.15);
 }
 
 .nav-publish-text {
@@ -391,7 +404,7 @@ onReachBottom(() => {
   right: 0;
   z-index: 90;
   background: $surface;
-  border-bottom: 1rpx solid $border-soft;
+  box-shadow: 0 1rpx 0 rgba(0, 0, 0, 0.03);
 }
 
 .tab-bar {
@@ -405,6 +418,12 @@ onReachBottom(() => {
   justify-content: center;
   padding: 22rpx 0;
   position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.tab-item:active {
+  background: rgba(79, 110, 247, 0.04);
 }
 
 .tab-text {
@@ -445,6 +464,12 @@ onReachBottom(() => {
   background: $primary-soft;
   border-radius: 999rpx;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.city-pill:active {
+  transform: scale(0.97);
 }
 
 .city-pill-icon {
@@ -482,6 +507,12 @@ onReachBottom(() => {
   font-size: 22rpx;
   color: $text-secondary;
   white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subject-chip:active {
+  transform: scale(0.96);
 }
 
 .subject-chip-on {
@@ -496,6 +527,14 @@ onReachBottom(() => {
   align-items: center;
   gap: 4rpx;
   flex-shrink: 0;
+  padding: 8rpx 12rpx;
+  border-radius: 999rpx;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.sort-pill:active {
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .sort-pill-text {
@@ -533,13 +572,15 @@ onReachBottom(() => {
   background: $surface;
   border-radius: 24rpx;
   overflow: hidden;
-  box-shadow: $shadow-card;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
   border: 1rpx solid $border-soft;
-  transition: transform 0.18s $ease-out;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .card:active {
   transform: scale(0.98);
+  box-shadow: 0 1rpx 6rpx rgba(0, 0, 0, 0.08);
 }
 
 .card-cover {
@@ -847,7 +888,7 @@ onReachBottom(() => {
   border-radius: 24rpx;
   background: $surface;
   border: 1rpx solid $border-soft;
-  box-shadow: $shadow-card;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 }
 
 .empty-icon-circle {
@@ -883,7 +924,14 @@ onReachBottom(() => {
   padding: 16rpx 48rpx;
   background: $gradient-primary;
   border-radius: 999rpx;
-  box-shadow: $shadow-md;
+  box-shadow: 0 4rpx 12rpx rgba(79, 110, 247, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.empty-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2rpx 8rpx rgba(79, 110, 247, 0.15);
 }
 
 .empty-btn-text {

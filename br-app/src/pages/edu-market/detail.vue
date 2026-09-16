@@ -232,12 +232,13 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: $bg-color;
+  background: linear-gradient(180deg, #FAF5FF 0%, #F5F3FF 100%);
 }
 
 /* ── 导航 ── */
 .nav-overlay {
-  background: $surface;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12rpx);
   flex-shrink: 0;
 }
 
@@ -246,9 +247,11 @@ export default {
   align-items: center;
   height: 88rpx;
   padding: 0 28rpx;
-  background: $surface;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12rpx);
   position: relative;
   flex-shrink: 0;
+  box-shadow: 0 4rpx 16rpx rgba(124, 58, 237, 0.06), 0 1rpx 0 rgba(124, 58, 237, 0.04);
 }
 
 .nav-btn {
@@ -257,13 +260,21 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:active {
+  background: rgba(124, 58, 237, 0.06);
+  transform: scale(0.95);
 }
 
 .nav-back-arrow {
   width: 20rpx;
   height: 20rpx;
-  border-left: 4rpx solid $text-primary;
-  border-bottom: 4rpx solid $text-primary;
+  border-left: 4rpx solid #4C1D95;
+  border-bottom: 4rpx solid #4C1D95;
   transform: rotate(45deg);
 }
 
@@ -272,8 +283,8 @@ export default {
   left: 50%;
   transform: translateX(-50%);
   font-size: 32rpx;
-  font-weight: 600;
-  color: $text-primary;
+  font-weight: 700;
+  color: #4C1D95;
 }
 
 .content {
@@ -284,70 +295,73 @@ export default {
 /* ── Hero ── */
 .hero {
   width: 100%;
-  height: 420rpx;
+  height: 460rpx;
   overflow: hidden;
-  background: #eef1fb;
+  background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+  position: relative;
 }
 
 .hero-img {
   width: 100%;
-  height: 420rpx;
+  height: 460rpx;
 }
 
 .hero-ph {
   width: 100%;
-  height: 420rpx;
+  height: 460rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16rpx;
+  gap: 18rpx;
 }
 
 .ph-tutor {
-  background: linear-gradient(135deg, #E8EDFF 0%, #DCE4FF 100%);
+  background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
 }
 
 .ph-training {
-  background: linear-gradient(135deg, #EFEAFF 0%, #E4DCFF 100%);
+  background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
 }
 
 .ph-demand {
-  background: linear-gradient(135deg, #FFF3E0 0%, #FFE8CC 100%);
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
 }
 
 .hero-ph-icon {
-  font-size: 110rpx;
-  opacity: 0.5;
+  font-size: 120rpx;
+  opacity: 0.55;
 }
 
 .ph-tutor .hero-ph-icon {
-  color: $primary;
+  color: #7C3AED;
 }
 
 .ph-training .hero-ph-icon {
-  color: $purple;
+  color: #8B5CF6;
 }
 
 .ph-demand .hero-ph-icon {
-  color: $orange;
+  color: #F59E0B;
 }
 
 .hero-ph-subject {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: $text-secondary;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #6B7280;
   opacity: 0.85;
+  letter-spacing: 0.5rpx;
 }
 
 /* ── 信息卡 ── */
 .info-card {
   position: relative;
   z-index: 10;
-  margin-top: -28rpx;
-  padding: 32rpx 28rpx 28rpx;
-  background: $surface;
+  margin-top: -32rpx;
+  padding: 36rpx 28rpx 32rpx;
+  background: #FFFFFF;
   border-radius: 32rpx 32rpx 0 0;
+  box-shadow: 0 -4rpx 20rpx rgba(124, 58, 237, 0.08);
 }
 
 .info-tags {
@@ -361,59 +375,42 @@ export default {
   display: flex;
   align-items: center;
   gap: 6rpx;
-  padding: 6rpx 18rpx;
+  padding: 8rpx 20rpx;
   border-radius: 999rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
 }
 
 .badge-tutor {
-  background: $primary-light;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.95) 0%, rgba(109, 40, 217, 0.95) 100%);
 }
 
 .badge-training {
-  background: rgba(108, 92, 231, 0.12);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.95) 0%, rgba(124, 58, 237, 0.95) 100%);
 }
 
 .badge-demand {
-  background: $orange-light;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%);
 }
 
 .type-badge-icon {
   font-size: 20rpx;
-}
-
-.badge-tutor .type-badge-icon {
-  color: $primary;
-}
-
-.badge-training .type-badge-icon {
-  color: $purple;
-}
-
-.badge-demand .type-badge-icon {
-  color: $orange;
+  color: #FFFFFF;
 }
 
 .type-badge-text {
   font-size: 21rpx;
   font-weight: 600;
-}
-
-.badge-tutor .type-badge-text {
-  color: $primary;
-}
-
-.badge-training .type-badge-text {
-  color: $purple;
-}
-
-.badge-demand .type-badge-text {
-  color: $orange;
+  color: #FFFFFF;
+  letter-spacing: 0.3rpx;
 }
 
 .cert-badge {
   display: flex;
   align-items: center;
-  gap: 4rpx;
+  gap: 5rpx;
+  padding: 6rpx 12rpx;
+  background: rgba(124, 58, 237, 0.06);
+  border-radius: 8rpx;
 }
 
 .cert-badge-icon {
@@ -421,65 +418,68 @@ export default {
 }
 
 .cert-edu {
-  color: $orange;
+  color: #F59E0B;
 }
 
 .cert-tea {
-  color: $success;
+  color: #10B981;
 }
 
 .cert-badge-text {
   font-size: 20rpx;
-  color: $text-secondary;
+  color: #6B7280;
+  font-weight: 500;
 }
 
 .info-title {
   display: block;
-  margin-top: 18rpx;
-  font-size: 36rpx;
+  margin-top: 20rpx;
+  font-size: 38rpx;
   font-weight: 700;
-  line-height: 1.4;
-  color: $text-primary;
+  line-height: 1.45;
+  color: #1F2937;
+  letter-spacing: 0.3rpx;
 }
 
 .info-price-row {
   display: flex;
   align-items: baseline;
   gap: 4rpx;
-  margin-top: 16rpx;
+  margin-top: 18rpx;
 }
 
 .info-price-symbol {
-  font-size: 26rpx;
+  font-size: 28rpx;
   font-weight: 700;
-  color: $danger;
+  color: #EF4444;
 }
 
 .info-price {
-  font-size: 46rpx;
+  font-size: 48rpx;
   font-weight: 800;
-  color: $danger;
+  color: #EF4444;
   line-height: 1;
+  letter-spacing: -0.5rpx;
 }
 
 .info-price-unit {
   font-size: 22rpx;
-  color: $text-muted;
+  color: #9CA3AF;
   margin-left: 4rpx;
 }
 
 .info-price-neg {
-  font-size: 34rpx;
+  font-size: 36rpx;
   font-weight: 700;
-  color: $danger;
+  color: #EF4444;
 }
 
 .info-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 28rpx;
-  margin-top: 22rpx;
+  gap: 32rpx;
+  margin-top: 24rpx;
 }
 
 .meta-item {
@@ -490,67 +490,74 @@ export default {
 
 .meta-icon {
   font-size: 22rpx;
-  color: $primary;
+  color: #7C3AED;
 }
 
 .meta-text {
   font-size: 22rpx;
-  color: $text-secondary;
+  color: #6B7280;
+  font-weight: 500;
 }
 
 /* ── 通用块卡片 ── */
 .block-card {
   margin: 20rpx 24rpx 0;
-  padding: 28rpx;
-  background: $surface;
-  border-radius: $radius-xl;
-  box-shadow: $shadow-card;
+  padding: 32rpx;
+  background: #FFFFFF;
+  border-radius: 28rpx;
+  box-shadow: 0 6rpx 24rpx rgba(124, 58, 237, 0.08), 0 2rpx 8rpx rgba(124, 58, 237, 0.04);
+  border: 2rpx solid rgba(124, 58, 237, 0.06);
 }
 
 .block-title {
   display: block;
   font-size: 28rpx;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: 16rpx;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 18rpx;
+  letter-spacing: 0.3rpx;
 }
 
 .block-desc {
   display: block;
-  font-size: 26rpx;
-  line-height: 1.7;
-  color: $text-secondary;
+  font-size: 27rpx;
+  line-height: 1.8;
+  color: #4B5563;
+  letter-spacing: 0.2rpx;
 }
 
 /* ── 发布者 ── */
 .publisher {
   display: flex;
   align-items: center;
-  gap: 20rpx;
+  gap: 22rpx;
 }
 
 .publisher-avatar {
-  width: 92rpx;
-  height: 92rpx;
+  width: 96rpx;
+  height: 96rpx;
   border-radius: 50%;
-  border: 2rpx solid $primary-light;
+  border: 3rpx solid rgba(124, 58, 237, 0.2);
   flex-shrink: 0;
+  box-shadow: 0 4rpx 12rpx rgba(124, 58, 237, 0.12);
 }
 
 .publisher-avatar-ph {
-  width: 92rpx;
-  height: 92rpx;
+  width: 96rpx;
+  height: 96rpx;
   border-radius: 50%;
-  background: $surface-soft;
+  background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border: 3rpx solid rgba(124, 58, 237, 0.15);
+  box-shadow: 0 4rpx 12rpx rgba(124, 58, 237, 0.08);
 }
 
 .publisher-avatar-icon {
-  font-size: 44rpx;
-  color: $text-muted;
+  font-size: 48rpx;
+  color: #9CA3AF;
 }
 
 .publisher-info {
@@ -561,31 +568,36 @@ export default {
 .publisher-name-row {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 14rpx;
 }
 
 .publisher-name {
   font-size: 28rpx;
-  font-weight: 600;
-  color: $text-primary;
+  font-weight: 700;
+  color: #1F2937;
+  letter-spacing: 0.3rpx;
 }
 
 .publisher-cert {
-  padding: 3rpx 12rpx;
-  background: $orange-light;
-  border-radius: 8rpx;
+  padding: 4rpx 14rpx;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 2rpx solid rgba(245, 158, 11, 0.2);
+  border-radius: 10rpx;
+  box-shadow: 0 2rpx 8rpx rgba(245, 158, 11, 0.1);
 }
 
 .publisher-cert-text {
   font-size: 18rpx;
-  color: #CC7A00;
+  color: #92400E;
+  font-weight: 600;
 }
 
 .publisher-sub {
   display: block;
-  margin-top: 6rpx;
+  margin-top: 8rpx;
   font-size: 22rpx;
-  color: $text-muted;
+  color: #9CA3AF;
+  font-weight: 500;
 }
 
 /* ── 标签 ── */
@@ -593,15 +605,17 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 14rpx;
-  margin-top: 20rpx;
+  margin-top: 22rpx;
 }
 
 .tag {
-  padding: 8rpx 20rpx;
-  background: $bg-color;
-  border-radius: $radius-sm;
-  font-size: 21rpx;
-  color: $text-secondary;
+  padding: 10rpx 22rpx;
+  background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+  border: 2rpx solid #E5E7EB;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+  color: #6B7280;
+  font-weight: 500;
 }
 
 .time-row {
@@ -611,25 +625,30 @@ export default {
 }
 
 .time-chip {
-  padding: 10rpx 22rpx;
-  background: $primary-soft;
-  border-radius: $radius-sm;
+  padding: 12rpx 24rpx;
+  background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+  border: 2rpx solid rgba(124, 58, 237, 0.2);
+  border-radius: 12rpx;
   font-size: 22rpx;
-  color: $primary;
+  color: #7C3AED;
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(124, 58, 237, 0.08);
 }
 
 /* ── 图片集 ── */
 .gallery {
   display: flex;
   flex-wrap: wrap;
-  gap: 14rpx;
+  gap: 16rpx;
 }
 
 .gallery-img {
-  width: 200rpx;
-  height: 200rpx;
-  border-radius: $radius-md;
-  background: $bg-color;
+  width: 210rpx;
+  height: 210rpx;
+  border-radius: 18rpx;
+  background: #F9FAFB;
+  border: 2rpx solid rgba(124, 58, 237, 0.06);
+  box-shadow: 0 2rpx 8rpx rgba(124, 58, 237, 0.06);
 }
 
 /* ── 底部操作栏 ── */
@@ -638,11 +657,12 @@ export default {
   align-items: center;
   gap: 28rpx;
   flex-shrink: 0;
-  padding: 16rpx 28rpx;
-  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  background: $surface;
-  border-top: 1rpx solid $border-soft;
-  box-shadow: $shadow-bottom;
+  padding: 18rpx 28rpx;
+  padding-bottom: calc(18rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12rpx);
+  border-top: 2rpx solid rgba(124, 58, 237, 0.06);
+  box-shadow: 0 -4rpx 20rpx rgba(124, 58, 237, 0.08);
 }
 
 .action-ico {
@@ -650,38 +670,51 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 4rpx;
+  cursor: pointer;
+  padding: 8rpx;
+  border-radius: 12rpx;
+  transition: all 0.2s ease;
+}
+
+.action-ico:active {
+  background: rgba(124, 58, 237, 0.06);
+  transform: scale(0.95);
 }
 
 .action-ico-icon {
   font-size: 34rpx;
-  color: $text-muted;
+  color: #9CA3AF;
 }
 
 .action-ico-text {
   font-size: 18rpx;
-  color: $text-muted;
+  color: #9CA3AF;
+  font-weight: 500;
 }
 
 .action-primary {
   flex: 1;
-  height: 88rpx;
+  height: 92rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: $gradient-primary;
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
   border-radius: 999rpx;
-  box-shadow: $shadow-float;
+  box-shadow: 0 8rpx 24rpx rgba(124, 58, 237, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-primary:active {
-  opacity: 0.9;
-  transform: scale(0.99);
+  transform: scale(0.97);
+  box-shadow: 0 4rpx 16rpx rgba(124, 58, 237, 0.24);
 }
 
 .action-primary-text {
   font-size: 30rpx;
-  font-weight: 600;
-  color: $white;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 0.5rpx;
 }
 
 .bottom-space {

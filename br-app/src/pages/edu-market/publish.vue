@@ -37,9 +37,12 @@
           <input
             v-model="form.title"
             class="field-input"
+            type="text"
             :placeholder="titlePlaceholder"
             placeholder-class="field-ph"
             maxlength="100"
+            confirm-type="done"
+            @confirm="onSubmit"
           />
         </view>
 
@@ -76,6 +79,7 @@
               type="digit"
               placeholder="面议可不填"
               placeholder-class="field-ph"
+              confirm-type="done"
             />
             <view class="chip-row price-units">
               <text
@@ -93,9 +97,11 @@
           <input
             v-model="form.area"
             class="field-input"
+            type="text"
             placeholder="例如：广州市天河区 / 线上不限"
             placeholder-class="field-ph"
             maxlength="100"
+            confirm-type="done"
           />
         </view>
 
@@ -107,6 +113,8 @@
             placeholder="介绍教学经验、教学特色、目标学员等，真实详细的描述更容易被联系"
             placeholder-class="field-ph"
             maxlength="2000"
+            confirm-type="done"
+            auto-height
           />
         </view>
 

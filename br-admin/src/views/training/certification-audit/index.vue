@@ -381,16 +381,13 @@ async function loadData() {
       params.type_filter = typeFilter.value
     }
 
-    console.log('[Certification Audit] Loading data with params:', params)
     const res = await getCertifications(params)
-    console.log('[Certification Audit] Response:', res)
     tableData.value = res.items || []
     pagination.itemCount = res.total || 0
 
     // Update stats (simplified - in real app, fetch from API)
     stats.pending = res.items?.filter(i => i.status === 'pending').length || 0
   } catch (error) {
-    console.error('[Certification Audit] Load error:', error)
     message.error(error.message || '加载失败')
   } finally {
     loading.value = false
@@ -398,8 +395,7 @@ async function loadData() {
 }
 
 // Watch filter changes
-watch([statusFilter, typeFilter], ([newStatus, newType]) => {
-  console.log('[Certification Audit] Filters changed:', { status: newStatus, type: newType })
+watch([statusFilter, typeFilter], () => {
   pagination.page = 1
   loadData()
 })

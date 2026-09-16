@@ -232,7 +232,7 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: linear-gradient(180deg, #FAF5FF 0%, #F5F3FF 100%);
+  background: $bg-color;
 }
 
 /* ── 导航 ── */
@@ -251,7 +251,7 @@ export default {
   backdrop-filter: blur(12rpx);
   position: relative;
   flex-shrink: 0;
-  box-shadow: 0 4rpx 16rpx rgba(124, 58, 237, 0.06), 0 1rpx 0 rgba(124, 58, 237, 0.04);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06), 0 1rpx 0 rgba(0, 0, 0, 0.04);
 }
 
 .nav-btn {
@@ -266,15 +266,15 @@ export default {
 }
 
 .nav-btn:active {
-  background: rgba(124, 58, 237, 0.06);
+  background: $primary-soft;
   transform: scale(0.95);
 }
 
 .nav-back-arrow {
   width: 20rpx;
   height: 20rpx;
-  border-left: 4rpx solid #4C1D95;
-  border-bottom: 4rpx solid #4C1D95;
+  border-left: 4rpx solid $text-primary;
+  border-bottom: 4rpx solid $text-primary;
   transform: rotate(45deg);
 }
 
@@ -284,7 +284,7 @@ export default {
   transform: translateX(-50%);
   font-size: 32rpx;
   font-weight: 700;
-  color: #4C1D95;
+  color: $text-primary;
 }
 
 .content {
@@ -297,7 +297,7 @@ export default {
   width: 100%;
   height: 460rpx;
   overflow: hidden;
-  background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+  background: linear-gradient(135deg, $surface-soft 0%, $bg-color 100%);
   position: relative;
 }
 
@@ -317,38 +317,39 @@ export default {
 }
 
 .ph-tutor {
-  background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+  background: linear-gradient(135deg, $primary-soft 0%, rgba($primary, 0.1) 100%);
 }
 
 .ph-training {
-  background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+  background: linear-gradient(135deg, $surface-soft 0%, $bg-color 100%);
 }
 
 .ph-demand {
-  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  background: linear-gradient(135deg, $orange-light 0%, rgba($orange, 0.1) 100%);
 }
 
 .hero-ph-icon {
   font-size: 120rpx;
   opacity: 0.55;
+  color: $primary;
 }
 
 .ph-tutor .hero-ph-icon {
-  color: #7C3AED;
+  color: $primary;
 }
 
 .ph-training .hero-ph-icon {
-  color: #8B5CF6;
+  color: $primary;
 }
 
 .ph-demand .hero-ph-icon {
-  color: #F59E0B;
+  color: $orange;
 }
 
 .hero-ph-subject {
   font-size: 32rpx;
   font-weight: 700;
-  color: #6B7280;
+  color: $text-secondary;
   opacity: 0.85;
   letter-spacing: 0.5rpx;
 }
@@ -359,9 +360,9 @@ export default {
   z-index: 10;
   margin-top: -32rpx;
   padding: 36rpx 28rpx 32rpx;
-  background: #FFFFFF;
+  background: $surface;
   border-radius: 32rpx 32rpx 0 0;
-  box-shadow: 0 -4rpx 20rpx rgba(124, 58, 237, 0.08);
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 
 .info-tags {
@@ -378,29 +379,30 @@ export default {
   padding: 8rpx 20rpx;
   border-radius: 999rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+  background: $primary-light;
 }
 
 .badge-tutor {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.95) 0%, rgba(109, 40, 217, 0.95) 100%);
+  background: $primary-light;
 }
 
 .badge-training {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.95) 0%, rgba(124, 58, 237, 0.95) 100%);
+  background: $primary-light;
 }
 
 .badge-demand {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%);
+  background: $orange-light;
 }
 
 .type-badge-icon {
   font-size: 20rpx;
-  color: #FFFFFF;
+  color: $white;
 }
 
 .type-badge-text {
   font-size: 21rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: $white;
   letter-spacing: 0.3rpx;
 }
 
@@ -409,7 +411,7 @@ export default {
   align-items: center;
   gap: 5rpx;
   padding: 6rpx 12rpx;
-  background: rgba(124, 58, 237, 0.06);
+  background: $primary-soft;
   border-radius: 8rpx;
 }
 
@@ -418,16 +420,16 @@ export default {
 }
 
 .cert-edu {
-  color: #F59E0B;
+  color: $orange;
 }
 
 .cert-tea {
-  color: #10B981;
+  color: $success;
 }
 
 .cert-badge-text {
   font-size: 20rpx;
-  color: #6B7280;
+  color: $text-secondary;
   font-weight: 500;
 }
 
@@ -437,7 +439,7 @@ export default {
   font-size: 38rpx;
   font-weight: 700;
   line-height: 1.45;
-  color: #1F2937;
+  color: $text-primary;
   letter-spacing: 0.3rpx;
 }
 
@@ -451,27 +453,27 @@ export default {
 .info-price-symbol {
   font-size: 28rpx;
   font-weight: 700;
-  color: #EF4444;
+  color: $danger;
 }
 
 .info-price {
   font-size: 48rpx;
   font-weight: 800;
-  color: #EF4444;
+  color: $danger;
   line-height: 1;
   letter-spacing: -0.5rpx;
 }
 
 .info-price-unit {
   font-size: 22rpx;
-  color: #9CA3AF;
+  color: $text-muted;
   margin-left: 4rpx;
 }
 
 .info-price-neg {
   font-size: 36rpx;
   font-weight: 700;
-  color: #EF4444;
+  color: $danger;
 }
 
 .info-meta {
@@ -490,12 +492,12 @@ export default {
 
 .meta-icon {
   font-size: 22rpx;
-  color: #7C3AED;
+  color: $primary;
 }
 
 .meta-text {
   font-size: 22rpx;
-  color: #6B7280;
+  color: $text-secondary;
   font-weight: 500;
 }
 
@@ -503,17 +505,16 @@ export default {
 .block-card {
   margin: 20rpx 24rpx 0;
   padding: 32rpx;
-  background: #FFFFFF;
+  background: $surface;
   border-radius: 28rpx;
-  box-shadow: 0 6rpx 24rpx rgba(124, 58, 237, 0.08), 0 2rpx 8rpx rgba(124, 58, 237, 0.04);
-  border: 2rpx solid rgba(124, 58, 237, 0.06);
+  box-shadow: $shadow-card;
 }
 
 .block-title {
   display: block;
   font-size: 28rpx;
   font-weight: 700;
-  color: #1F2937;
+  color: $text-primary;
   margin-bottom: 18rpx;
   letter-spacing: 0.3rpx;
 }
@@ -522,7 +523,7 @@ export default {
   display: block;
   font-size: 27rpx;
   line-height: 1.8;
-  color: #4B5563;
+  color: $text-secondary;
   letter-spacing: 0.2rpx;
 }
 
@@ -537,27 +538,27 @@ export default {
   width: 96rpx;
   height: 96rpx;
   border-radius: 50%;
-  border: 3rpx solid rgba(124, 58, 237, 0.2);
+  border: 3rpx solid $border-soft;
   flex-shrink: 0;
-  box-shadow: 0 4rpx 12rpx rgba(124, 58, 237, 0.12);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.12);
 }
 
 .publisher-avatar-ph {
   width: 96rpx;
   height: 96rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+  background: $primary-soft;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 3rpx solid rgba(124, 58, 237, 0.15);
-  box-shadow: 0 4rpx 12rpx rgba(124, 58, 237, 0.08);
+  border: 3rpx solid $border-soft;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
 .publisher-avatar-icon {
   font-size: 48rpx;
-  color: #9CA3AF;
+  color: $text-muted;
 }
 
 .publisher-info {
@@ -574,16 +575,16 @@ export default {
 .publisher-name {
   font-size: 28rpx;
   font-weight: 700;
-  color: #1F2937;
+  color: $text-primary;
   letter-spacing: 0.3rpx;
 }
 
 .publisher-cert {
   padding: 4rpx 14rpx;
-  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-  border: 2rpx solid rgba(245, 158, 11, 0.2);
+  background: $orange-light;
+  border: 2rpx solid rgba($orange, 0.2);
   border-radius: 10rpx;
-  box-shadow: 0 2rpx 8rpx rgba(245, 158, 11, 0.1);
+  box-shadow: 0 2rpx 8rpx rgba($orange, 0.1);
 }
 
 .publisher-cert-text {
@@ -596,7 +597,7 @@ export default {
   display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: #9CA3AF;
+  color: $text-muted;
   font-weight: 500;
 }
 
@@ -610,11 +611,11 @@ export default {
 
 .tag {
   padding: 10rpx 22rpx;
-  background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
-  border: 2rpx solid #E5E7EB;
+  background: $bg-color;
+  border: 2rpx solid $border-soft;
   border-radius: 12rpx;
   font-size: 22rpx;
-  color: #6B7280;
+  color: $text-secondary;
   font-weight: 500;
 }
 
@@ -626,13 +627,13 @@ export default {
 
 .time-chip {
   padding: 12rpx 24rpx;
-  background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
-  border: 2rpx solid rgba(124, 58, 237, 0.2);
+  background: $primary-light;
+  border: 2rpx solid rgba($primary, 0.2);
   border-radius: 12rpx;
   font-size: 22rpx;
-  color: #7C3AED;
+  color: $primary;
   font-weight: 600;
-  box-shadow: 0 2rpx 8rpx rgba(124, 58, 237, 0.08);
+  box-shadow: 0 2rpx 8rpx rgba($primary, 0.08);
 }
 
 /* ── 图片集 ── */
@@ -646,9 +647,9 @@ export default {
   width: 210rpx;
   height: 210rpx;
   border-radius: 18rpx;
-  background: #F9FAFB;
-  border: 2rpx solid rgba(124, 58, 237, 0.06);
-  box-shadow: 0 2rpx 8rpx rgba(124, 58, 237, 0.06);
+  background: $bg-color;
+  border: 2rpx solid $border-soft;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
 }
 
 /* ── 底部操作栏 ── */
@@ -661,8 +662,8 @@ export default {
   padding-bottom: calc(18rpx + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(12rpx);
-  border-top: 2rpx solid rgba(124, 58, 237, 0.06);
-  box-shadow: 0 -4rpx 20rpx rgba(124, 58, 237, 0.08);
+  border-top: 2rpx solid $border-soft;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 
 .action-ico {
@@ -677,18 +678,18 @@ export default {
 }
 
 .action-ico:active {
-  background: rgba(124, 58, 237, 0.06);
+  background: $primary-soft;
   transform: scale(0.95);
 }
 
 .action-ico-icon {
   font-size: 34rpx;
-  color: #9CA3AF;
+  color: $text-muted;
 }
 
 .action-ico-text {
   font-size: 18rpx;
-  color: #9CA3AF;
+  color: $text-muted;
   font-weight: 500;
 }
 
@@ -698,22 +699,22 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  background: $primary;
   border-radius: 999rpx;
-  box-shadow: 0 8rpx 24rpx rgba(124, 58, 237, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8rpx 24rpx rgba($primary, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.2);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-primary:active {
   transform: scale(0.97);
-  box-shadow: 0 4rpx 16rpx rgba(124, 58, 237, 0.24);
+  box-shadow: 0 4rpx 16rpx rgba($primary, 0.24);
 }
 
 .action-primary-text {
   font-size: 30rpx;
   font-weight: 700;
-  color: #FFFFFF;
+  color: $white;
   letter-spacing: 0.5rpx;
 }
 

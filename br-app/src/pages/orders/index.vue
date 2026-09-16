@@ -1,5 +1,16 @@
 <template>
   <view class="page">
+    <!-- Status bar spacer -->
+    <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
+
+    <!-- Nav bar -->
+    <view class="nav-bar">
+      <view class="nav-back" @tap="goBack">
+        <view class="icon icon-arrow-left nav-back-icon" />
+      </view>
+      <text class="nav-title">订单</text>
+    </view>
+
     <!-- Status filter tabs -->
     <view class="tabs">
       <view
@@ -279,6 +290,7 @@ const SCHEDULE_TRUNCATE_THRESHOLD = 12
 export default {
   data() {
     return {
+      statusBarHeight: 0,
       tabs: BOOKING_TABS,
       currentTab: 'all',
       orders: [],
@@ -295,6 +307,8 @@ export default {
 
   onShow() {
     if (!ensureLogin()) return
+    const sysInfo = uni.getSystemInfoSync()
+    this.statusBarHeight = sysInfo.statusBarHeight || 0
     this.resetAndLoad()
   },
 
@@ -550,6 +564,15 @@ export default {
     goBooking() {
       uni.switchTab({ url: '/pages/booking/index' })
     },
+
+    goBack() {
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack()
+      } else {
+        uni.switchTab({ url: '/pages/index/index' })
+      }
+    },
   },
 }
 </script>
@@ -560,6 +583,37 @@ export default {
   background: linear-gradient(180deg, #fff 0, $bg-warm 180rpx, $bg-color 420rpx);
   display: flex;
   flex-direction: column;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 28rpx;
+  background: #fff;
+  position: relative;
+}
+
+.nav-back {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
+  font-size: 36rpx;
+  color: #2D3436;
+}
+
+.nav-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2D3436;
 }
 
 /* Tabs */
@@ -609,7 +663,6 @@ export default {
 /* Scroll view */
 .order-scroll {
   flex: 1;
-  height: calc(100vh - 88rpx);
 }
 
 /* Loading skeleton */

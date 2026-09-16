@@ -75,7 +75,8 @@
     {
       "path": "pages/orders/index",
       "style": {
-        "navigationBarTitleText": "订单"
+        "navigationBarTitleText": "订单",
+        "navigationStyle": "custom"
       }
     },
     {

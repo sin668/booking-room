@@ -26,13 +26,13 @@ class EducationCertificationRequest(BaseModel):
     education_level: str = Field(..., description="学历：本科/硕士/博士")
     major: Optional[str] = Field(None, max_length=100, description="专业")
     graduation_year: Optional[int] = Field(None, ge=1950, le=2030, description="毕业年份")
-    diploma_image_url: Optional[str] = Field(None, max_length=512, description="学历证书图片URL")
+    diploma_image_url: str = Field(..., max_length=512, description="学历证书图片URL")
 
 
 class TeacherCertificationRequest(BaseModel):
     teacher_certificate_number: str = Field(..., min_length=10, max_length=50, description="教师资格证号")
     teaching_subject: Optional[str] = Field(None, max_length=50, description="任教科目")
-    certificate_image_url: Optional[str] = Field(None, max_length=512, description="教师资格证书图片URL")
+    certificate_image_url: str = Field(..., max_length=512, description="教师资格证书图片URL")
 
 
 class CertificationResponse(BaseModel):

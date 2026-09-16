@@ -50,7 +50,7 @@
           />
         </view>
         <view class="form-item">
-          <text class="form-label">学历证书照片（可选）</text>
+          <text class="form-label">学历证书照片</text>
           <view class="upload-area" @tap="chooseImage">
             <image v-if="formData.diploma_image_url" class="uploaded-image" :src="formData.diploma_image_url" mode="aspectFill" />
             <view v-else class="upload-placeholder">
@@ -139,6 +139,10 @@ export default {
       }
       if (!this.formData.education_level) {
         uni.showToast({ title: '请选择学历', icon: 'none' })
+        return
+      }
+      if (!this.formData.diploma_image_url) {
+        uni.showToast({ title: '请上传学历证书照片', icon: 'none' })
         return
       }
 

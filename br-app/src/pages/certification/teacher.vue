@@ -29,7 +29,7 @@
           />
         </view>
         <view class="form-item">
-          <text class="form-label">教师资格证书照片（可选）</text>
+          <text class="form-label">教师资格证书照片</text>
           <view class="upload-area" @tap="chooseImage">
             <image v-if="formData.certificate_image_url" class="uploaded-image" :src="formData.certificate_image_url" mode="aspectFill" />
             <view v-else class="upload-placeholder">
@@ -93,6 +93,10 @@ export default {
       }
       if (this.formData.teacher_certificate_number.length < 10) {
         uni.showToast({ title: '教师资格证号格式不正确', icon: 'none' })
+        return
+      }
+      if (!this.formData.certificate_image_url) {
+        uni.showToast({ title: '请上传教师资格证书照片', icon: 'none' })
         return
       }
 

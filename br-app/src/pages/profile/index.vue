@@ -42,9 +42,9 @@
         <view class="menu-section-label">
           <text class="menu-section-text">学习服务</text>
         </view>
-        <view class="menu-item" @tap="navigateTo('/pages/orders/index')">
+        <view class="menu-item" @tap="goToOrders">
           <view class="menu-icon purple">
-            <view class="icon icon-list order-icon" />
+            <view class="order-clipboard-icon" />
           </view>
           <text class="menu-item-text">学习订单</text>
           <text class="menu-item-meta">{{ inProgressOrderText }}</text>
@@ -98,7 +98,7 @@
         </view>
         <view class="menu-item" @tap="navigateTo('/pages/certification/index')">
           <view class="menu-icon orange">
-            <view class="icon icon-id-card cert-icon" />
+            <view class="cert-shield-icon" />
           </view>
           <text class="menu-item-text">认证管理</text>
           <text class="menu-item-meta">{{ verifiedCertificationText }}</text>
@@ -237,6 +237,9 @@ export default {
     },
     navigateTo(url) {
       uni.navigateTo({ url })
+    },
+    goToOrders() {
+      uni.switchTab({ url: '/pages/orders/index' })
     },
     handleMemberCardTap() {
       if (this.userStore.isVip) return
@@ -808,14 +811,65 @@ export default {
   transform: translate(-50%, -50%);
 }
 
-.order-icon {
-  font-size: 34rpx;
-  color: $purple;
+.order-clipboard-icon {
+  width: 30rpx;
+  height: 36rpx;
+  border: 4rpx solid $purple;
+  border-radius: 6rpx;
+  position: relative;
 }
 
-.cert-icon {
-  font-size: 34rpx;
-  color: #e67900;
+.order-clipboard-icon::before {
+  content: '';
+  position: absolute;
+  top: -8rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16rpx;
+  height: 8rpx;
+  border-radius: 4rpx 4rpx 0 0;
+  background: $purple;
+}
+
+.order-clipboard-icon::after {
+  content: '';
+  position: absolute;
+  left: 6rpx;
+  right: 6rpx;
+  top: 10rpx;
+  height: 4rpx;
+  border-radius: 2rpx;
+  background: $purple;
+  box-shadow: 0 8rpx 0 $purple, 0 16rpx 0 $purple;
+}
+
+.cert-shield-icon {
+  width: 34rpx;
+  height: 38rpx;
+  position: relative;
+}
+
+.cert-shield-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #e67900;
+  clip-path: polygon(50% 0%, 100% 12%, 100% 60%, 50% 100%, 0% 60%, 0% 12%);
+}
+
+.cert-shield-icon::after {
+  content: '';
+  position: absolute;
+  left: 10rpx;
+  top: 12rpx;
+  width: 14rpx;
+  height: 8rpx;
+  border-left: 4rpx solid $white;
+  border-bottom: 4rpx solid $white;
+  transform: rotate(-45deg);
 }
 
 .member-card {

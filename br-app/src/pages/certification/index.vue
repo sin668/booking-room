@@ -359,13 +359,16 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16rpx;
 }
 
 .cert-title-row {
   display: flex;
   align-items: center;
-  gap: 24rpx;
+  gap: 20rpx;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .cert-icon {
@@ -416,6 +419,9 @@ export default {
   font-weight: 600;
   color: #2D3436;
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cert-requirement {
@@ -423,6 +429,9 @@ export default {
   color: #999;
   display: block;
   margin-top: 4rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cert-badge {

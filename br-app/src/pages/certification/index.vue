@@ -35,11 +35,11 @@
               <text class="cert-requirement">所有用户必须完成</text>
             </view>
           </view>
-          <view :class="['cert-badge', `badge-${realNameCert?.status || 'none'}`]">
+          <view :class="['cert-badge', `badge-${certStatus(realNameCert)}`]">
             <text class="cert-badge-text">{{ getCertStatusText(realNameCert) }}</text>
           </view>
         </view>
-        <view v-if="realNameCert?.status === 'approved'" class="cert-detail">
+        <view v-if="isApproved(realNameCert)" class="cert-detail">
           <view class="detail-row">
             <text class="detail-label">姓名</text>
             <text class="detail-value">{{ realNameCert.real_name }}</text>
@@ -62,11 +62,11 @@
               <text class="cert-requirement">认证后可发布家教信息（教人）</text>
             </view>
           </view>
-          <view :class="['cert-badge', `badge-${educationCert?.status || 'none'}`]">
+          <view :class="['cert-badge', `badge-${certStatus(educationCert)}`]">
             <text class="cert-badge-text">{{ getCertStatusText(educationCert) }}</text>
           </view>
         </view>
-        <view v-if="educationCert?.status === 'approved'" class="cert-detail">
+        <view v-if="isApproved(educationCert)" class="cert-detail">
           <view class="detail-row">
             <text class="detail-label">学校</text>
             <text class="detail-value">{{ educationCert.school }}</text>
@@ -93,11 +93,11 @@
               <text class="cert-requirement">认证后可发布培训班和家教信息</text>
             </view>
           </view>
-          <view :class="['cert-badge', `badge-${teacherCert?.status || 'none'}`]">
+          <view :class="['cert-badge', `badge-${certStatus(teacherCert)}`]">
             <text class="cert-badge-text">{{ getCertStatusText(teacherCert) }}</text>
           </view>
         </view>
-        <view v-if="teacherCert?.status === 'approved'" class="cert-detail">
+        <view v-if="isApproved(teacherCert)" class="cert-detail">
           <view class="detail-row">
             <text class="detail-label">证书号</text>
             <text class="detail-value">{{ maskCertificateNumber(teacherCert.teacher_certificate_number) }}</text>
@@ -165,7 +165,7 @@ export default {
       return this.certifications.find(c => c.verification_type === 'teacher')
     },
     verifiedCount() {
-      return this.certifications.filter(c => c.status === 'approved').length
+      return this.certifications.filter(c => this.isApproved(c)).length
     },
   },
   onShow() {
@@ -184,11 +184,21 @@ export default {
         this.certifications = []
       }
     },
+    certStatus(cert) {
+      if (!cert) return 'none'
+      // 账号安全服务（设置页实名认证）写入 verified，与认证模块的 approved 语义等价
+      if (cert.status === 'verified') return 'approved'
+      return cert.status
+    },
+    isApproved(cert) {
+      return Boolean(cert) && ['approved', 'verified'].includes(cert.status)
+    },
     getCertStatusText(cert) {
       if (!cert) return '去认证'
       const statusMap = {
         pending: '审核中',
         approved: '已认证',
+        verified: '已认证',
         rejected: '已拒绝',
       }
       return statusMap[cert.status] || '去认证'
@@ -199,7 +209,7 @@ export default {
       return `${number.substring(0, 4)}****${number.substring(number.length - 4)}`
     },
     onTapRealName() {
-      if (this.realNameCert?.status === 'approved') {
+      if (this.isApproved(this.realNameCert)) {
         uni.showToast({ title: '已完成实名认证', icon: 'none' })
         return
       }
@@ -207,7 +217,7 @@ export default {
     },
     onTapEducation() {
       // Check if real name is approved
-      if (!this.realNameCert || this.realNameCert.status !== 'approved') {
+      if (!this.isApproved(this.realNameCert)) {
         uni.showModal({
           title: '提示',
           content: '请先完成实名认证',
@@ -215,8 +225,8 @@ export default {
         })
         return
       }
-      
-      if (this.educationCert?.status === 'approved') {
+
+      if (this.isApproved(this.educationCert)) {
         uni.showToast({ title: '已完成学历认证', icon: 'none' })
         return
       }
@@ -224,7 +234,7 @@ export default {
     },
     onTapTeacher() {
       // Check if real name is approved
-      if (!this.realNameCert || this.realNameCert.status !== 'approved') {
+      if (!this.isApproved(this.realNameCert)) {
         uni.showModal({
           title: '提示',
           content: '请先完成实名认证',
@@ -232,9 +242,9 @@ export default {
         })
         return
       }
-      
+
       // Check if education is approved
-      if (!this.educationCert || this.educationCert.status !== 'approved') {
+      if (!this.isApproved(this.educationCert)) {
         uni.showModal({
           title: '提示',
           content: '请先完成学历认证，或同时提交学历认证和教师资格认证',
@@ -247,8 +257,8 @@ export default {
         })
         return
       }
-      
-      if (this.teacherCert?.status === 'approved') {
+
+      if (this.isApproved(this.teacherCert)) {
         uni.showToast({ title: '已完成教师资格认证', icon: 'none' })
         return
       }
@@ -304,6 +314,7 @@ export default {
 .content {
   height: calc(100vh - var(--status-bar-height, 44px) - 88rpx);
   padding: 20rpx 32rpx 40rpx;
+  box-sizing: border-box;
 }
 
 .status-header {

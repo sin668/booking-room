@@ -3,7 +3,7 @@
     <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
     <view class="nav-bar">
       <view class="nav-back" @tap="goBack">
-        <view class="icon icon-arrow-left nav-back-icon" />
+        <view class="nav-back-arrow" />
       </view>
       <text class="nav-title">学历认证</text>
     </view>
@@ -188,9 +188,12 @@ export default {
   justify-content: center;
 }
 
-.nav-back-icon {
-  font-size: 36rpx;
-  color: #2D3436;
+.nav-back-arrow {
+  width: 20rpx;
+  height: 20rpx;
+  border-left: 4rpx solid #2D3436;
+  border-bottom: 4rpx solid #2D3436;
+  transform: rotate(45deg);
 }
 
 .nav-title {
@@ -205,6 +208,7 @@ export default {
 .content {
   height: calc(100vh - var(--status-bar-height, 44px) - 88rpx);
   padding: 32rpx;
+  box-sizing: border-box;
 }
 
 .form-card {
@@ -238,6 +242,7 @@ export default {
   border-radius: 16rpx;
   font-size: 28rpx;
   color: #2D3436;
+  box-sizing: border-box;
 }
 
 .picker-input {
@@ -249,6 +254,7 @@ export default {
   padding: 0 24rpx;
   background: #F5F6FA;
   border-radius: 16rpx;
+  box-sizing: border-box;
 }
 
 .picker-value {

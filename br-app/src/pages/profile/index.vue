@@ -310,7 +310,7 @@ export default {
       // 已认证的数量
       if (certResult.status === 'fulfilled') {
         const certs = certResult.value || []
-        this.verifiedCertificationCount = certs.filter(c => c.status === 'approved').length
+        this.verifiedCertificationCount = certs.filter(c => ['approved', 'verified'].includes(c.status)).length
       } else {
         this.verifiedCertificationCount = 0
       }

@@ -317,15 +317,15 @@ export default {
 }
 
 .ph-tutor {
-  background: linear-gradient(135deg, $primary-soft 0%, rgba($primary, 0.1) 100%);
+  background: linear-gradient(135deg, $primary-soft 0%, rgba($primary, 0.2) 100%);
 }
 
 .ph-training {
-  background: linear-gradient(135deg, $surface-soft 0%, $bg-color 100%);
+  background: linear-gradient(135deg, $primary-soft 0%, rgba($purple, 0.2) 100%);
 }
 
 .ph-demand {
-  background: linear-gradient(135deg, $orange-light 0%, rgba($orange, 0.1) 100%);
+  background: linear-gradient(135deg, $primary-soft 0%, rgba($orange, 0.2) 100%);
 }
 
 .hero-ph-icon {
@@ -339,7 +339,7 @@ export default {
 }
 
 .ph-training .hero-ph-icon {
-  color: $primary;
+  color: $purple;
 }
 
 .ph-demand .hero-ph-icon {

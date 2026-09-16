@@ -74,7 +74,7 @@
         <n-input
           v-model:value="searchKeyword"
           placeholder="搜索用户..."
-          style="width: 200px"
+          style="width: 300px"
           clearable
           @keyup.enter="loadData"
         >
@@ -478,6 +478,8 @@ onMounted(() => {
 
 .status-tabs {
   flex-shrink: 0;
+  width: 40%;
+  margin-top: 14px;
 }
 
 .stat-card {

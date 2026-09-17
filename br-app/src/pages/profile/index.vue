@@ -416,6 +416,7 @@ export default {
   gap: 5rpx;
   background: rgba(255, 255, 255, 0.16);
   border: 1rpx solid rgba(255, 255, 255, 0.24);
+  z-index: 5;
 }
 
 .settings-dot {

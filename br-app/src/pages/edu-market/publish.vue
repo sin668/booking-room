@@ -9,7 +9,7 @@
         <view class="nav-back-arrow" />
       </view>
       <text class="nav-title">发布信息</text>
-      <text class="nav-submit" :class="{ 'nav-submit-off': submitting }" @tap="onSubmit">发布</text>
+      <view style="width: 72rpx" />
     </view>
 
     <scroll-view class="content" scroll-y>
@@ -176,6 +176,17 @@
 
       <view class="bottom-space" />
     </scroll-view>
+
+    <!-- 底部提交栏 -->
+    <view class="submit-bar">
+      <view class="submit-hint">
+        <text class="hint-label">发布要求</text>
+        <text class="hint-value" :class="{ 'hint-ok': canSubmit }">{{ submitHint }}</text>
+      </view>
+      <view class="submit-btn" :class="{ 'submit-btn-off': !canSubmit }" @tap="onSubmit">
+        <text class="submit-btn-text">{{ submitText }}</text>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -262,6 +273,19 @@ export default {
     missingCert() {
       if (this.isCertApproved) return null
       return { label: this.activeTypeOption.certLabel, route: this.activeTypeOption.certRoute }
+    },
+    canSubmit() {
+      const title = this.form.title.trim()
+      return Boolean(title) && this.isCertApproved && this.form.city_id
+    },
+    submitHint() {
+      if (!this.form.title.trim()) return '请填写标题'
+      if (!this.form.city_id) return '请选择服务城市'
+      if (!this.isCertApproved) return `需完成${this.activeTypeOption.certLabel}`
+      return '可以发布'
+    },
+    submitText() {
+      return this.submitting ? '提交中…' : '发布'
     },
   },
 
@@ -842,5 +866,75 @@ export default {
 
 .bottom-space {
   height: 60rpx;
+}
+
+/* ── 底部提交栏 ── */
+.submit-bar {
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+  flex-shrink: 0;
+  padding: 18rpx 28rpx;
+  padding-bottom: calc(18rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12rpx);
+  border-top: 2rpx solid $border-soft;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
+}
+
+.submit-hint {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  min-width: 0;
+}
+
+.hint-label {
+  font-size: 20rpx;
+  color: $text-muted;
+  font-weight: 500;
+}
+
+.hint-value {
+  font-size: 24rpx;
+  color: $text-secondary;
+  font-weight: 600;
+}
+
+.hint-ok {
+  color: $success;
+}
+
+.submit-btn {
+  height: 88rpx;
+  padding: 0 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $primary;
+  border-radius: 999rpx;
+  box-shadow: 0 8rpx 24rpx rgba($primary, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.submit-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 4rpx 16rpx rgba($primary, 0.24);
+}
+
+.submit-btn-off {
+  background: $border-color;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.submit-btn-text {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: $white;
+  letter-spacing: 0.5rpx;
 }
 </style>

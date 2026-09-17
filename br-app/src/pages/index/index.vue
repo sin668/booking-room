@@ -483,7 +483,6 @@ export default {
   display: flex;
   align-items: center;
   height: 88rpx;
-  width: 73%;
   padding: 0 28rpx;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 1rpx 0 0 rgba(79, 110, 247, 0.06);

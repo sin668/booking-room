@@ -618,7 +618,7 @@ onReachBottom(() => {
   right: 0;
   z-index: 90;
   background: $surface;
-  padding: 14rpx 28rpx 16rpx;
+  padding: 13rpx 28rpx 16rpx;
   border-bottom: 1rpx solid $border-soft;
 }
 
@@ -626,7 +626,7 @@ onReachBottom(() => {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  width: 75%;
+  width: 77%;
   height: 62rpx;
 }
 
@@ -682,15 +682,15 @@ onReachBottom(() => {
 .search-icon {
   font-size: 28rpx;
   color: $text-muted;
+  margin-right: 8rpx;
   flex-shrink: 0;
 }
 
 .search-input {
   flex: 1;
-  min-width: 0;
-  font-size: 27rpx;
+  font-size: 26rpx;
   color: $text-primary;
-  line-height: 1.4;
+  min-width: 0;
 }
 
 .search-placeholder {

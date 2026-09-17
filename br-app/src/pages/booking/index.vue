@@ -8,7 +8,7 @@
       <text class="nav-title">培训课程</text>
     </view>
 
-    <view class="hero-section">
+    <view class="search-section">
       <!-- 
       <view class="hero-topline">
         <view>
@@ -23,9 +23,10 @@
       -->
 
       <view class="search-bar">
-        <view class="hero-city" @tap="onTapCity">
-          <view class="icon icon-location hero-city-icon" />
-          <text class="hero-city-text">{{ currentCityName }}</text>
+        <view class="city-pill" @tap="onTapCity">
+          <view class="icon icon-location city-pill-icon" />
+          <text class="city-pill-text">{{ currentCityName }}</text>
+          <view class="icon icon-arrow-down city-pill-arrow" />
         </view>
         <view class="search-divider" />
         <view class="search-bar-inner">
@@ -33,7 +34,7 @@
           <input
             class="search-input"
             v-model="searchKeyword"
-            placeholder="搜索自习室、商圈或地址"
+            placeholder="搜索自习室、地址"
             placeholder-class="search-placeholder"
             confirm-type="search"
             @input="onSearchInput"
@@ -408,58 +409,41 @@ export default {
   letter-spacing: 0.5rpx;
 }
 
-.hero-section {
-  padding: 70rpx 28rpx 28rpx 22rpx;
+.search-section {
+  padding: 70rpx 28rpx 28rpx 28rpx;
   background: linear-gradient(180deg, #fff 0%, $surface-soft 100%);
   box-shadow: 0 1rpx 0 rgba(79, 110, 247, 0.06);
 }
 
-.hero-topline {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.hero-kicker {
-  display: block;
-  font-size: 22rpx;
-  color: $text-muted;
-}
-
-.hero-title {
-  display: block;
-  margin-top: 8rpx;
-  font-size: 40rpx;
-  line-height: 1.15;
-  font-weight: 800;
-  color: $text-primary;
-}
-
-.hero-city {
+.city-pill {
   display: flex;
   align-items: center;
-  height: 56rpx;
-  padding: 0 18rpx;
-  border-radius: 28rpx;
+  gap: 6rpx;
+  padding: 10rpx 16rpx;
   background: $primary-soft;
-  border: 1rpx solid $border-soft;
-  transition: transform 0.18s ease-out;
+  border-radius: 999rpx;
+  flex-shrink: 0;
 }
 
-.hero-city:active {
-  transform: scale(0.96);
-}
-
-.hero-city-icon {
+.city-pill-icon {
   font-size: 24rpx;
   color: $primary;
 }
 
-.hero-city-text {
-  margin-left: 6rpx;
+.city-pill-text {
   font-size: 24rpx;
-  font-weight: 600;
+  font-weight: 500;
   color: $primary;
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.city-pill-arrow {
+  font-size: 18rpx;
+  color: $primary;
+  opacity: 0.7;
 }
 
 .search-bar {
@@ -474,13 +458,14 @@ export default {
   height: 32rpx;
   background: $border-soft;
   flex-shrink: 0;
-  margin: 0 9rpx;
+  margin: 0 16rpx;
 }
 
 .search-bar-inner {
   display: flex;
   align-items: center;
   height: 62rpx;
+  width: 43%;
   padding: 0 24rpx;
   border-radius: 36rpx;
   background: $white;
@@ -491,7 +476,7 @@ export default {
 .search-icon {
   font-size: 28rpx;
   color: $text-muted;
-  margin-right: 12rpx;
+  margin-right: 8rpx;
   flex-shrink: 0;
 }
 

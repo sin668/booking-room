@@ -882,6 +882,7 @@ function openAgreement(type) {
   height: 32rpx;
   background: $border-color;
   flex-shrink: 0;
+  margin-right: 15rpx;
 }
 
 // 密码显隐

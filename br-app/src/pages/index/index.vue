@@ -12,14 +12,12 @@
       </view>
       <view class="nav-search" @tap="onTapSearch">
         <view class="icon icon-search nav-search-icon" />
-        <text class="nav-search-placeholder">搜索自习室、课程、老师</text>
-      </view>
-      <!--
+        <text class="nav-search-placeholder">搜索学习室、课程</text>
+      </view> 
       <view class="nav-bell" @tap="onTapBell">
         <view class="icon icon-bell nav-bell-icon" />
         <view v-if="hasNotification" class="nav-bell-dot" />
       </view>
-      -->
     </view>
 
     <!-- Main content -->

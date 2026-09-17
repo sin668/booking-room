@@ -4,14 +4,12 @@
 
     <view class="nav-bar">
       <view class="nav-back press-effect" @tap="goBack">
-        <text class="nav-back-text">‹</text>
+        <view class="nav-back-arrow" />
       </view>
       <text class="nav-title">消息通知</text>
-      <view
-        :class="['mark-all', { disabled: !hasUnreadInScope || markAllLoading }]"
-        @tap="markAllRead"
-      >
-        <text class="mark-all-text">{{ markAllLoading ? '处理中' : '全部已读' }}</text>
+      <view :class="['mark-all', { disabled: !hasUnreadInScope || markAllLoading }]"
+        @tap="markAllRead">
+        <!-- <text class="mark-all-text">{{ markAllLoading ? '处理中' : '全部已读' }}</text> -->
       </view>
     </view>
 
@@ -374,26 +372,28 @@ function goBack() {
 }
 
 .nav-bar {
-  height: 96rpx;
-  padding: 0 28rpx;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: #ffffff;
-  border-bottom: 1rpx solid #edf0f5;
+  height: 88rpx;
+  padding: 0 28rpx;
+  background: #fff;
+  position: relative;
 }
 
 .nav-back {
-  width: 64rpx;
-  height: 64rpx;
+  width: 72rpx;
+  height: 72rpx;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
-.nav-back-text {
-  font-size: 56rpx;
-  line-height: 56rpx;
-  color: #263238;
+.nav-back-arrow {
+  width: 20rpx;
+  height: 20rpx;
+  border-left: 4rpx solid #2D3436;
+  border-bottom: 4rpx solid #2D3436;
+  transform: rotate(45deg);
 }
 
 .nav-title {
@@ -411,7 +411,7 @@ function goBack() {
   align-items: center;
   justify-content: center;
   border-radius: 28rpx;
-  background: #eef3ff;
+  /*background: #eef3ff;*/
 }
 
 .mark-all.disabled {

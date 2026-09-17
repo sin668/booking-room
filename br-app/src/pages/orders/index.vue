@@ -587,7 +587,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(180deg, #fff 0, $bg-warm 180rpx, $bg-color 420rpx);
   display: flex;
   flex-direction: column;
@@ -674,6 +674,7 @@ export default {
 /* Scroll view */
 .order-scroll {
   flex: 1;
+  height: 0;
 }
 
 /* Loading skeleton */

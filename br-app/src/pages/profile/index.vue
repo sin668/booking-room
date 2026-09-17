@@ -405,8 +405,8 @@ export default {
 
 .settings-entry {
   position: absolute;
-  top: 28rpx;
-  right: 32rpx;
+  top: 102rpx;
+  right: 180rpx;
   width: 56rpx;
   height: 56rpx;
   border-radius: 50%;

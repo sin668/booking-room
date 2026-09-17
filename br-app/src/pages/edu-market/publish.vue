@@ -887,7 +887,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 4rpx;
-  min-width: 0;
+  max-width: 190rpx;
 }
 
 .hint-label {
@@ -907,17 +907,15 @@ export default {
 }
 
 .submit-btn {
+  flex: 1;
   height: 88rpx;
-  padding: 0 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: $primary;
+  background: $gradient-primary;
   border-radius: 999rpx;
-  box-shadow: 0 8rpx 24rpx rgba($primary, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  flex-shrink: 0;
+  box-shadow: $shadow-float;
+  transition: opacity 0.2s $ease-out, box-shadow 0.2s $ease-out;
 }
 
 .submit-btn:active {

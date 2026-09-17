@@ -312,6 +312,14 @@ export default {
     this.resetAndLoad()
   },
 
+  onLoad(options) {
+    this.currentTab = 'all';
+    if (options.currentTab) {
+      this.currentTab = options.currentTab;
+    }
+    this.onSwitchTab(this.currentTab);
+  },
+
   methods: {
     scheduleText(order) {
       return formatCourseSchedule(order?.schedule)

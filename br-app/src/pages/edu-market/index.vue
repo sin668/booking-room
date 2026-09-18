@@ -66,7 +66,7 @@
       </view>
 
       <!-- 空状态 -->
-      <view v-else-if="!loading && listings.length === 0" class="empty-state">
+      <view v-else-if="!loading && !hasAnyItem" class="empty-state">
         <view class="empty-icon-circle">
           <view class="icon icon-chalkboard-user empty-icon" />
         </view>
@@ -238,15 +238,21 @@ function certBadges(card) {
   return badges
 }
 
+// 按当前城市过滤后的用户待审核/驳回置顶记录（未选城市时保留全部）
+const visiblePending = computed(() => {
+  const activeCityId = currentCity.value?.id
+  return myPending.value.filter((item) => !activeCityId || item.city_id === activeCityId)
+})
+
+// 是否有任何可展示的内容（已通过列表 + 置顶待审核）
+const hasAnyItem = computed(() => visiblePending.value.length > 0 || listings.value.length > 0)
+
 // JS 拆两列：按累计估算高度放入较矮的一列
 const columns = computed(() => {
   const cols = [[], []]
   const heights = [0, 0]
   // 待审核信息排在最前，并跟随当前城市过滤（否则其他城市的待审核记录会误显示）
-  const activeCityId = currentCity.value?.id
-  const pendingItems = myPending.value
-    .filter((item) => !activeCityId || item.city_id === activeCityId)
-    .map((item) => ({ ...item, _isPending: true }))
+  const pendingItems = visiblePending.value.map((item) => ({ ...item, _isPending: true }))
   const allItems = [...pendingItems, ...listings.value]
   allItems.forEach((item, idx) => {
     const coverH = COVER_HEIGHTS[idx % COVER_HEIGHTS.length]

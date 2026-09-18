@@ -1036,7 +1036,9 @@ onPullDownRefresh(async () => {
 }
 
 .animate-in {
-  animation: fadeInUp 0.42s $ease-out backwards;
+  /* 不使用 backwards 填充：小程序对动态插入节点可能不触发动画，
+     backwards 会把节点卡在 opacity:0 导致不可见 */
+  animation: fadeInUp 0.42s $ease-out;
 }
 
 .delay-1 { animation-delay: 0.06s; }

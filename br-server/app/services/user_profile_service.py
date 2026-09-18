@@ -51,6 +51,12 @@ class UserProfileService:
             user.nickname = update_data["nickname"]
         if "avatar" in update_data:
             user.avatar = update_data["avatar"]
+        if "gender" in update_data:
+            user.gender = update_data["gender"]
+        if "birthday" in update_data:
+            user.birthday = update_data["birthday"]
+        if "signature" in update_data:
+            user.signature = update_data["signature"]
 
         await self._db.flush()
         await self._db.refresh(user)

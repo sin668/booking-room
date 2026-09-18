@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 import random
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Index, Numeric, String, func
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Index, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -82,6 +82,18 @@ class User(Base):
     )
     avatar: Mapped[str | None] = mapped_column(
         String(512),
+        nullable=True,
+    )
+    gender: Mapped[str | None] = mapped_column(
+        String(10),
+        nullable=True,
+    )
+    birthday: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+    )
+    signature: Mapped[str | None] = mapped_column(
+        Text,
         nullable=True,
     )
     is_super_admin: Mapped[bool] = mapped_column(

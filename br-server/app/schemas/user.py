@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -88,6 +88,9 @@ class UserProfileResponse(BaseModel):
     username_updated_at: datetime | None = None
     nickname: str | None = None
     avatar: str | None = None
+    gender: str | None = None
+    birthday: date | None = None
+    signature: str | None = None
     status: str
     user_type: str
     membership_level: str = "none"
@@ -100,6 +103,9 @@ class UserProfileUpdate(BaseModel):
     username: str | None = Field(None, min_length=6, max_length=32)
     nickname: str | None = Field(None, max_length=50)
     avatar: str | None = Field(None, max_length=512)
+    gender: str | None = Field(None, max_length=10)
+    birthday: date | None = None
+    signature: str | None = Field(None, max_length=200)
 
     model_config = ConfigDict(extra="forbid")
 

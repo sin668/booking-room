@@ -37,7 +37,7 @@
         <view class="section-title-wrap">
           <text class="section-title">个人资料</text>
         </view>
-        <view class="simple-row press-effect" @tap="showUnsupported('昵称修改暂未开放')">
+        <view class="simple-row press-effect" @tap="openNicknameEditor">
           <text class="row-label">昵称</text>
           <view class="row-value-wrap">
             <text class="row-value">{{ displayNickname }}</text>
@@ -59,24 +59,24 @@
             <text class="chevron">›</text>
           </view>
         </view>
-        <view class="simple-row press-effect" @tap="showUnsupported('性别设置暂未开放')">
+        <view class="simple-row press-effect" @tap="openGenderEditor">
           <text class="row-label">性别</text>
           <view class="row-value-wrap">
-            <text class="row-value muted">未设置</text>
+            <text class="row-value" :class="{ muted: !displayGender }">{{ displayGender || '未设置' }}</text>
             <text class="chevron">›</text>
           </view>
         </view>
-        <view class="simple-row press-effect" @tap="showUnsupported('生日设置暂未开放')">
+        <view class="simple-row press-effect" @tap="openBirthdayEditor">
           <text class="row-label">生日</text>
           <view class="row-value-wrap">
-            <text class="row-value muted">未设置</text>
+            <text class="row-value" :class="{ muted: !displayBirthday }">{{ displayBirthday || '未设置' }}</text>
             <text class="chevron">›</text>
           </view>
         </view>
-        <view class="simple-row press-effect" @tap="showUnsupported('个性签名暂未开放')">
+        <view class="simple-row press-effect" @tap="openSignatureEditor">
           <text class="row-label">个性签名</text>
           <view class="row-value-wrap value-limited">
-            <text class="row-value muted">越努力越幸运</text>
+            <text class="row-value" :class="{ muted: !displaySignature }">{{ displaySignature || '介绍一下自己吧' }}</text>
             <text class="chevron">›</text>
           </view>
         </view>
@@ -217,6 +217,91 @@
         <view class="sheet-actions">
           <button class="sheet-cancel" @tap="closeUsernameEditor">取消</button>
           <button class="sheet-confirm" :loading="savingUsername" :disabled="savingUsername" @tap="saveUsername">保存</button>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="showNicknameSheet" class="sheet-mask" @tap="closeNicknameEditor">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">修改昵称</text>
+        <text class="sheet-desc">昵称将展示在个人主页和评论区</text>
+        <input
+          v-model="nicknameDraft"
+          class="username-input"
+          maxlength="50"
+          placeholder="请输入昵称"
+          placeholder-class="input-placeholder"
+          confirm-type="done"
+          @confirm="saveNickname"
+        />
+        <text v-if="nicknameError" class="input-error">{{ nicknameError }}</text>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="closeNicknameEditor">取消</button>
+          <button class="sheet-confirm" :loading="savingNickname" :disabled="savingNickname" @tap="saveNickname">保存</button>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="showGenderSheet" class="sheet-mask" @tap="closeGenderEditor">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">选择性别</text>
+        <view class="gender-options">
+          <view
+            v-for="item in genderOptions"
+            :key="item.value"
+            class="gender-option"
+            :class="{ active: genderDraft === item.value }"
+            @tap="genderDraft = item.value"
+          >
+            <text class="gender-option-text">{{ item.label }}</text>
+            <view v-if="genderDraft === item.value" class="gender-check">
+              <text class="gender-check-text">✓</text>
+            </view>
+          </view>
+        </view>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="closeGenderEditor">取消</button>
+          <button class="sheet-confirm" :loading="savingGender" :disabled="savingGender" @tap="saveGender">保存</button>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="showBirthdaySheet" class="sheet-mask" @tap="closeBirthdayEditor">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">设置生日</text>
+        <text class="sheet-desc">设置后将在个人主页展示</text>
+        <picker mode="date" :value="birthdayDraft" :start="'1920-01-01'" :end="todayDateStr" @change="onBirthdayPick">
+          <view class="birthday-picker">
+            <text class="birthday-picker-text" :class="{ muted: !birthdayDraft }">{{ birthdayDraft || '请选择日期' }}</text>
+          </view>
+        </picker>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="closeBirthdayEditor">取消</button>
+          <button class="sheet-confirm" :loading="savingBirthday" :disabled="savingBirthday" @tap="saveBirthday">保存</button>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="showSignatureSheet" class="sheet-mask" @tap="closeSignatureEditor">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">个性签名</text>
+        <text class="sheet-desc">一句话介绍自己</text>
+        <textarea
+          v-model="signatureDraft"
+          class="signature-textarea"
+          maxlength="200"
+          placeholder="写点什么吧..."
+          placeholder-class="input-placeholder"
+        />
+        <text class="input-hint">{{ signatureDraft.length }}/200</text>
+        <text v-if="signatureError" class="input-error">{{ signatureError }}</text>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="closeSignatureEditor">取消</button>
+          <button class="sheet-confirm" :loading="savingSignature" :disabled="savingSignature" @tap="saveSignature">保存</button>
         </view>
       </view>
     </view>
@@ -447,6 +532,25 @@ export default {
       showDeactivationSheet: false,
       deactivationSubmitting: false,
       deactivationError: '',
+      showNicknameSheet: false,
+      nicknameDraft: '',
+      nicknameError: '',
+      savingNickname: false,
+      showGenderSheet: false,
+      genderDraft: '',
+      savingGender: false,
+      genderOptions: [
+        { label: '男', value: 'male' },
+        { label: '女', value: 'female' },
+        { label: '保密', value: 'secret' },
+      ],
+      showBirthdaySheet: false,
+      birthdayDraft: '',
+      savingBirthday: false,
+      showSignatureSheet: false,
+      signatureDraft: '',
+      signatureError: '',
+      savingSignature: false,
     }
   },
   computed: {
@@ -477,6 +581,25 @@ export default {
     },
     deactivationRiskTexts() {
       return formatDeactivationRiskReasons(this.securitySummary.deactivation_risks)
+    },
+    displayGender() {
+      const gender = this.userStore.gender
+      if (!gender) return ''
+      const map = { male: '男', female: '女', secret: '保密' }
+      return map[gender] || gender
+    },
+    displayBirthday() {
+      return this.userStore.birthday || ''
+    },
+    displaySignature() {
+      return this.userStore.signature || ''
+    },
+    todayDateStr() {
+      const d = new Date()
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
     },
   },
   beforeUnmount() {
@@ -959,6 +1082,117 @@ export default {
         }
       } finally {
         this.deactivationSubmitting = false
+      }
+    },
+    openNicknameEditor() {
+      this.nicknameDraft = this.userStore.nickname || ''
+      this.nicknameError = ''
+      this.showNicknameSheet = true
+    },
+    closeNicknameEditor() {
+      if (this.savingNickname) return
+      this.showNicknameSheet = false
+      this.nicknameError = ''
+    },
+    async saveNickname() {
+      const nickname = this.nicknameDraft.trim()
+      if (!nickname) {
+        this.nicknameError = '昵称不能为空'
+        return
+      }
+      if (nickname === this.userStore.nickname) {
+        this.showNicknameSheet = false
+        return
+      }
+      this.savingNickname = true
+      this.nicknameError = ''
+      try {
+        await this.userStore.updateProfile({ nickname })
+        this.showNicknameSheet = false
+        this.showToast('昵称已更新')
+      } catch (error) {
+        this.nicknameError = typeof error?.detail === 'string' ? error.detail : '昵称保存失败，请重试'
+      } finally {
+        this.savingNickname = false
+      }
+    },
+    openGenderEditor() {
+      this.genderDraft = this.userStore.gender || ''
+      this.showGenderSheet = true
+    },
+    closeGenderEditor() {
+      if (this.savingGender) return
+      this.showGenderSheet = false
+    },
+    async saveGender() {
+      if (this.genderDraft === this.userStore.gender) {
+        this.showGenderSheet = false
+        return
+      }
+      this.savingGender = true
+      try {
+        await this.userStore.updateProfile({ gender: this.genderDraft || null })
+        this.showGenderSheet = false
+        this.showToast('性别已更新')
+      } catch {
+        this.showToast('性别保存失败，请重试')
+      } finally {
+        this.savingGender = false
+      }
+    },
+    openBirthdayEditor() {
+      this.birthdayDraft = this.userStore.birthday || ''
+      this.showBirthdaySheet = true
+    },
+    closeBirthdayEditor() {
+      if (this.savingBirthday) return
+      this.showBirthdaySheet = false
+    },
+    onBirthdayPick(e) {
+      this.birthdayDraft = e.detail.value
+    },
+    async saveBirthday() {
+      if (this.birthdayDraft === this.userStore.birthday) {
+        this.showBirthdaySheet = false
+        return
+      }
+      this.savingBirthday = true
+      try {
+        await this.userStore.updateProfile({ birthday: this.birthdayDraft || null })
+        this.showBirthdaySheet = false
+        this.showToast('生日已更新')
+      } catch {
+        this.showToast('生日保存失败，请重试')
+      } finally {
+        this.savingBirthday = false
+      }
+    },
+    openSignatureEditor() {
+      this.signatureDraft = this.userStore.signature || ''
+      this.signatureError = ''
+      this.showSignatureSheet = true
+    },
+    closeSignatureEditor() {
+      if (this.savingSignature) return
+      this.showSignatureSheet = false
+      this.signatureError = ''
+    },
+    async saveSignature() {
+      const signature = this.signatureDraft.trim()
+      if (signature === this.userStore.signature) {
+        this.showSignatureSheet = false
+        return
+      }
+      this.savingSignature = true
+      this.signatureError = ''
+      try {
+        await this.userStore.updateProfile({ signature: signature || null })
+        this.showSignatureSheet = false
+        this.showToast('签名已更新')
+      } catch {
+        this.showToast('签名保存失败，请重试')
+      } finally {
+        this.savingSignature = false
       }
     },
   },
@@ -1582,5 +1816,83 @@ export default {
 
 .press-effect:active {
   transform: scale(0.98);
+}
+
+.gender-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.gender-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  border-radius: 16rpx;
+  background: #f9fafb;
+  border: 2rpx solid transparent;
+  transition: all 0.2s ease;
+}
+
+.gender-option.active {
+  background: rgba($primary, 0.08);
+  border-color: rgba($primary, 0.3);
+}
+
+.gender-option-text {
+  font-size: 28rpx;
+  color: $text-primary;
+  font-weight: 500;
+}
+
+.gender-check {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: $primary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gender-check-text {
+  font-size: 20rpx;
+  color: $white;
+  font-weight: 700;
+}
+
+.birthday-picker {
+  margin-top: 24rpx;
+  padding: 24rpx 28rpx;
+  background: #f9fafb;
+  border-radius: 16rpx;
+  border: 2rpx solid $border-soft;
+}
+
+.birthday-picker-text {
+  font-size: 28rpx;
+  color: $text-primary;
+  font-weight: 500;
+}
+
+.birthday-picker-text.muted {
+  color: $text-muted;
+}
+
+.signature-textarea {
+  width: 100%;
+  min-height: 160rpx;
+  margin-top: 24rpx;
+  padding: 20rpx 24rpx;
+  background: #f9fafb;
+  border-radius: 16rpx;
+  border: 2rpx solid $border-soft;
+  font-size: 28rpx;
+  color: $text-primary;
+  line-height: 1.6;
+  box-sizing: border-box;
+  resize: none;
 }
 </style>

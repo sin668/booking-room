@@ -232,8 +232,18 @@ export default {
     goLogin() {
       uni.navigateTo({ url: '/pages/login/login' })
     },
-    async handleLogout() {
-      await this.userStore.logout()
+    handleLogout() {
+      uni.showModal({
+        title: '确认退出登陆？',
+        content: '退出后需要重新登录才能使用预约功能',
+        confirmText: '确认退出',
+        confirmColor: '#f87171',
+        success: async (res) => {
+          if (res.confirm) {
+            await this.userStore.logout()
+          }
+        },
+      })
     },
     navigateTo(url) {
       uni.navigateTo({ url })

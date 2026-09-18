@@ -131,7 +131,7 @@
         <view class="icon icon-eye-off action-ico-icon" />
         <text class="action-ico-text">咨询</text>
       </view>
-      <view v-if="isOwner" class="action-primary action-edit" @tap="goEdit">
+      <view v-if="isOwner" class="action-primary" @tap="goEdit">
         <text class="action-primary-text">编辑</text>
       </view>
       <view v-else class="action-primary" @tap="onContact">
@@ -727,15 +727,6 @@ export default {
 .action-primary:active {
   transform: scale(0.97);
   box-shadow: 0 4rpx 16rpx rgba($primary, 0.24);
-}
-
-.action-edit {
-  background: linear-gradient(135deg, $orange 0%, darken($orange, 8%) 100%);
-  box-shadow: 0 8rpx 24rpx rgba($orange, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.2);
-}
-
-.action-edit:active {
-  box-shadow: 0 4rpx 16rpx rgba($orange, 0.24);
 }
 
 .action-primary-text {

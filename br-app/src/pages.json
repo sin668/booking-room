@@ -207,7 +207,9 @@
       "path": "pages/edu-market/index",
       "style": {
         "navigationBarTitleText": "广场",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
       }
     },
     {

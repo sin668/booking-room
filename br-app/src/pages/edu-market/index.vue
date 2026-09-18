@@ -158,7 +158,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onMounted } from 'vue'
-import { onReachBottom, onShow } from '@dcloudio/uni-app'
+import { onPullDownRefresh, onReachBottom, onShow } from '@dcloudio/uni-app'
 import { getEduListings, getMyEduListings } from '@/api/eduMarket'
 import { ensureLogin } from '@/utils/auth'
 import { useCityStore } from '@/store/modules/city'
@@ -390,6 +390,14 @@ onShow(() => {
 onReachBottom(() => {
   if (hasMore.value && !loading.value) {
     fetchListings(false)
+  }
+})
+
+onPullDownRefresh(async () => {
+  try {
+    await Promise.all([fetchListings(true), fetchMyPending()])
+  } finally {
+    uni.stopPullDownRefresh()
   }
 })
 </script>

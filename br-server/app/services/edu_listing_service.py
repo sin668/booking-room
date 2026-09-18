@@ -111,6 +111,7 @@ async def assemble_items(
                 teaching_mode=listing.teaching_mode,
                 price=listing.price,
                 price_unit=listing.price_unit,
+                city_id=listing.city_id,
                 area=listing.area,
                 description=listing.description,
                 images=listing.images,

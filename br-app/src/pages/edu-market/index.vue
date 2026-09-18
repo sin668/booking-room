@@ -242,8 +242,11 @@ function certBadges(card) {
 const columns = computed(() => {
   const cols = [[], []]
   const heights = [0, 0]
-  // 待审核信息排在最前
-  const pendingItems = myPending.value.map((item) => ({ ...item, _isPending: true }))
+  // 待审核信息排在最前，并跟随当前城市过滤（否则其他城市的待审核记录会误显示）
+  const activeCityId = currentCity.value?.id
+  const pendingItems = myPending.value
+    .filter((item) => !activeCityId || item.city_id === activeCityId)
+    .map((item) => ({ ...item, _isPending: true }))
   const allItems = [...pendingItems, ...listings.value]
   allItems.forEach((item, idx) => {
     const coverH = COVER_HEIGHTS[idx % COVER_HEIGHTS.length]

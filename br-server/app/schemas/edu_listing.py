@@ -69,6 +69,7 @@ class EduListingItem(BaseModel):
     publisher_id: UUID | None = None
     publisher_nickname: str | None = None
     publisher_avatar: str | None = None
+    publisher_phone: str | None = None
     publisher_education_verified: bool | None = None
     publisher_teacher_verified: bool | None = None
     created_at: datetime
@@ -80,6 +81,39 @@ class EduListingItem(BaseModel):
     def none_to_empty_list(cls, v):
         # 数据库列可空，契约要求序列化为 [] 而非 null
         return v or []
+
+
+class EduListingUpdate(BaseModel):
+    """编辑供需信息请求。"""
+
+    title: str | None = Field(None, min_length=1, max_length=100)
+    subject: str | None = Field(None, max_length=50)
+    teaching_mode: str | None = Field(None, max_length=50)
+    price: Decimal | None = Field(None, ge=0)
+    price_unit: str | None = Field(None, max_length=20)
+    city_id: int | None = Field(None, ge=1)
+    area: str | None = Field(None, max_length=100)
+    description: str | None = Field(None, max_length=2000)
+    images: list[str] = Field(default_factory=list, max_length=3)
+    available_times: list[str] = Field(default_factory=list, max_length=20)
+
+    @field_validator("title")
+    @classmethod
+    def strip_title(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("标题不能为空")
+        return stripped
+
+    @field_validator("images", "available_times", mode="before")
+    @classmethod
+    def bound_item_length(cls, v: list[str], info) -> list[str]:
+        limit = MAX_IMAGE_URL_LENGTH if info.field_name == "images" else MAX_TIME_SLOT_LENGTH
+        if any(len(item) > limit for item in v):
+            raise ValueError("单项长度超出限制")
+        return [item.strip() for item in v if item.strip()]
 
 
 class EduListingListResponse(BaseModel):

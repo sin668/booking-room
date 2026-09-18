@@ -25,6 +25,7 @@ from app.schemas.edu_listing import (
     EduListingCreate,
     EduListingItem,
     EduListingListResponse,
+    EduListingUpdate,
 )
 from app.utils.timezone import booking_now
 
@@ -120,6 +121,7 @@ async def assemble_items(
                 publisher_id=listing.user_id,
                 publisher_nickname=user.nickname if user else None,
                 publisher_avatar=user.avatar if user else None,
+                publisher_phone=user.phone if user else None,
                 publisher_education_verified=cert.get("education") if with_certification else None,
                 publisher_teacher_verified=cert.get("teacher") if with_certification else None,
                 created_at=listing.created_at,
@@ -241,6 +243,30 @@ async def create_edu_listing(
         view_count=0,
     )
     db.add(listing)
+    await db.flush()
+    await db.refresh(listing)
+    return (await assemble_items(db, [listing]))[0]
+
+
+async def update_edu_listing(
+    db: AsyncSession, listing_id: int, user_id: uuid.UUID, data: EduListingUpdate
+) -> EduListingItem:
+    """编辑供需信息：仅发布者本人可编辑，编辑后重置为 pending 重新审核。"""
+    listing = await db.get(EduListing, listing_id)
+    if listing is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="供需信息不存在")
+    if listing.user_id != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="只能编辑自己发布的信息")
+
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(listing, field, value)
+
+    if listing.status == EduListingStatus.REJECTED.value:
+        listing.status = EduListingStatus.PENDING.value
+        listing.reject_reason = None
+    listing.updated_at = booking_now()
+
     await db.flush()
     await db.refresh(listing)
     return (await assemble_items(db, [listing]))[0]

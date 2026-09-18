@@ -8,13 +8,13 @@
       <view class="nav-back" @tap="goBack">
         <view class="nav-back-arrow" />
       </view>
-      <text class="nav-title">发布信息</text>
+      <text class="nav-title">{{ isEdit ? '编辑信息' : '发布信息' }}</text>
       <view style="width: 72rpx" />
     </view>
 
     <scroll-view class="content" scroll-y>
       <!-- 类型选择 -->
-      <view class="section">
+      <view class="section" v-if="!isEdit">
         <text class="section-label">选择发布类型</text>
         <view class="type-row">
           <view
@@ -26,6 +26,16 @@
             <view class="icon type-icon" :class="opt.icon" />
             <text class="type-name">{{ opt.label }}</text>
             <text class="type-req">{{ opt.req }}</text>
+          </view>
+        </view>
+      </view>
+      <view class="section" v-else>
+        <text class="section-label">发布类型</text>
+        <view class="type-row">
+          <view :class="['type-card', 'type-card-on', 'type-card-disabled']">
+            <view class="icon type-icon" :class="activeTypeOption.icon" />
+            <text class="type-name">{{ activeTypeLabel }}</text>
+            <text class="type-req">不可修改</text>
           </view>
         </view>
       </view>
@@ -165,13 +175,13 @@
         <view class="icon icon-shield cert-notice-icon" />
         <view class="cert-notice-body">
           <text class="cert-notice-title">认证提醒</text>
-          <text class="cert-notice-text">发布{{ activeTypeLabel }}需先完成{{ missingCert.label }}</text>
+          <text class="cert-notice-text">{{ isEdit ? '编辑' : '发布' }}{{ activeTypeLabel }}需先完成{{ missingCert.label }}</text>
         </view>
         <text class="cert-notice-link">去认证 ›</text>
       </view>
       <view v-else class="plain-notice">
         <view class="icon icon-shield plain-notice-icon" />
-        <text class="plain-notice-text">信息将经过审核后展示，请勿包含广告、联系方式或不实内容</text>
+        <text class="plain-notice-text">{{ isEdit ? '修改后将重新审核，请确保内容合规' : '信息将经过审核后展示，请勿包含广告、联系方式或不实内容' }}</text>
       </view>
 
       <view class="bottom-space" />
@@ -180,7 +190,7 @@
     <!-- 底部提交栏 -->
     <view class="submit-bar">
       <view class="submit-hint">
-        <text class="hint-label">发布要求</text>
+        <text class="hint-label">{{ isEdit ? '编辑要求' : '发布要求' }}</text>
         <text class="hint-value" :class="{ 'hint-ok': canSubmit }">{{ submitHint }}</text>
       </view>
       <view class="submit-btn" :class="{ 'submit-btn-off': !canSubmit }" @tap="onSubmit">
@@ -191,7 +201,7 @@
 </template>
 
 <script>
-import { createEduListing } from '@/api/eduMarket'
+import { createEduListing, getEduListingDetail, updateEduListing } from '@/api/eduMarket'
 import { getUserCertifications } from '@/api/certification'
 import { uploadImage } from '@/api/upload'
 import { ensureLogin } from '@/utils/auth'
@@ -235,6 +245,8 @@ export default {
       certifications: [],
       uploading: false,
       submitting: false,
+      editId: null,
+      loading: false,
       cityStore: null,
       form: {
         listing_type: 'tutor',
@@ -254,6 +266,9 @@ export default {
   },
 
   computed: {
+    isEdit() {
+      return !!this.editId
+    },
     activeTypeOption() {
       return TYPE_OPTIONS.find((o) => o.key === this.form.listing_type) || TYPE_OPTIONS[0]
     },
@@ -282,33 +297,41 @@ export default {
       if (!this.form.title.trim()) return '请填写标题'
       if (!this.form.city_id) return '请选择服务城市'
       if (!this.isCertApproved) return `需完成${this.activeTypeOption.certLabel}`
-      return '可以发布'
+      return this.isEdit ? '保存后重新审核' : '审核通过才会公开展示'
     },
     submitText() {
-      return this.submitting ? '提交中…' : '发布'
+      if (this.submitting) return this.isEdit ? '保存中…' : '提交中…'
+      return this.isEdit ? '保存' : '发布'
     },
   },
 
-  async onLoad() {
+  async onLoad(options) {
     if (!ensureLogin()) return
     const sysInfo = uni.getSystemInfoSync()
     this.statusBarHeight = sysInfo.statusBarHeight || 0
     
-    // Initialize city store
+    const query = options || {}
+    if (query.id) {
+      this.editId = Number(query.id)
+    }
+    
     this.cityStore = useCityStore()
     await this.cityStore.initCity()
     
-    // Pre-fill with current city if available
-    if (this.cityStore.currentCity) {
-      this.form.city_id = this.cityStore.currentCity.id
-      this.form.city_name = this.cityStore.currentCity.name
+    if (this.editId) {
+      await this.loadForEdit()
+    } else {
+      if (this.cityStore.currentCity) {
+        this.form.city_id = this.cityStore.currentCity.id
+        this.form.city_name = this.cityStore.currentCity.name
+      }
     }
     
     this.loadCertifications()
   },
 
   onShow() {
-    // Refresh city when returning from city select
+    if (!this._cityManuallySelected && this.isEdit) return
     if (this.cityStore?.currentCity) {
       this.form.city_id = this.cityStore.currentCity.id
       this.form.city_name = this.cityStore.currentCity.name
@@ -322,6 +345,31 @@ export default {
         this.certifications = data || []
       } catch {
         this.certifications = []
+      }
+    },
+
+    async loadForEdit() {
+      this.loading = true
+      try {
+        const detail = await getEduListingDetail(this.editId)
+        this.form.listing_type = detail.listing_type
+        this.form.title = detail.title || ''
+        this.form.subject = detail.subject || ''
+        this.form.teaching_mode = detail.teaching_mode || ''
+        this.form.price = detail.price != null ? String(detail.price) : ''
+        this.form.price_unit = detail.price_unit || '元/小时'
+        this.form.city_id = detail.city_id || null
+        this.form.area = detail.area || ''
+        this.form.description = detail.description || ''
+        this.form.images = Array.isArray(detail.images) ? [...detail.images] : []
+        this.form.available_times = Array.isArray(detail.available_times) ? [...detail.available_times] : []
+        const city = this.cityStore.cities.find((c) => c.id === detail.city_id)
+        this.form.city_name = city ? city.name : ''
+      } catch (error) {
+        uni.showToast({ title: formatErrorDetail(error, '加载信息失败'), icon: 'none' })
+        setTimeout(() => uni.navigateBack(), 1200)
+      } finally {
+        this.loading = false
       }
     },
 
@@ -339,6 +387,7 @@ export default {
     },
 
     onSelectCity() {
+      this._cityManuallySelected = true
       uni.navigateTo({ url: '/pages/city-select/index' })
     },
 
@@ -434,11 +483,17 @@ export default {
 
       this.submitting = true
       try {
-        await createEduListing(payload)
-        uni.showToast({ title: '提交成功，审核通过后展示', icon: 'none' })
+        if (this.isEdit) {
+          delete payload.listing_type
+          await updateEduListing(this.editId, payload)
+          uni.showToast({ title: '保存成功，将重新审核', icon: 'none' })
+        } else {
+          await createEduListing(payload)
+          uni.showToast({ title: '提交成功，审核通过后展示', icon: 'none' })
+        }
         setTimeout(() => uni.navigateBack(), 1200)
       } catch (error) {
-        uni.showToast({ title: formatErrorDetail(error, '发布失败'), icon: 'none' })
+        uni.showToast({ title: formatErrorDetail(error, this.isEdit ? '保存失败' : '发布失败'), icon: 'none' })
       } finally {
         this.submitting = false
       }
@@ -558,6 +613,11 @@ export default {
 
 .type-card-on .type-name {
   color: $primary;
+}
+
+.type-card-disabled {
+  opacity: 0.7;
+  max-width: 200rpx;
 }
 
 .type-req {
@@ -887,7 +947,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 4rpx;
-  max-width: 190rpx;
+  max-width: 230rpx;
 }
 
 .hint-label {
@@ -897,7 +957,7 @@ export default {
 }
 
 .hint-value {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: $text-secondary;
   font-weight: 600;
 }

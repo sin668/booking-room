@@ -1,4 +1,4 @@
-import { get, post } from '@/utils/request'
+import { get, post, put } from '@/utils/request'
 
 /**
  * 教培供需综合广场列表（教/学混排，仅已通过信息，游客可访问）
@@ -32,4 +32,13 @@ export function getMyEduListings(params) {
  */
 export function createEduListing(data) {
   return post('/api/v1/edu-listings', data)
+}
+
+/**
+ * 编辑供需信息（仅发布者可编辑，编辑后重置为待审核）
+ * @param {number} id
+ * @param {Object} data - 同 createEduListing，listing_type 不可改
+ */
+export function updateEduListing(id, data) {
+  return put(`/api/v1/edu-listings/${id}`, data)
 }

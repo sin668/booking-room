@@ -101,6 +101,9 @@
               <view :class="['card-type-badge', `badge-${card.listing_type}`]">
                 <text class="card-type-text">{{ typeMeta(card.listing_type).label }}</text>
               </view>
+              <view v-if="card._isPending" :class="['card-status-badge', `status-${card.status}`]">
+                <text class="card-status-text">{{ card.status === 'rejected' ? '已拒绝' : '待审核' }}</text>
+              </view>
             </view>
 
             <!-- 信息 -->
@@ -156,9 +159,10 @@
 import { ref, computed } from 'vue'
 import { onMounted } from 'vue'
 import { onReachBottom, onShow } from '@dcloudio/uni-app'
-import { getEduListings } from '@/api/eduMarket'
+import { getEduListings, getMyEduListings } from '@/api/eduMarket'
 import { ensureLogin } from '@/utils/auth'
 import { useCityStore } from '@/store/modules/city'
+import { useUserStore } from '@/store/modules/user'
 
 const TYPE_TABS = [
   { key: '', label: '全部' },
@@ -195,9 +199,12 @@ const PAGE_SIZE = 10
 let listRequestId = 0
 
 const cityStore = useCityStore()
+const userStore = useUserStore()
 const currentCityName = computed(() => cityStore.currentCityName)
 const currentCity = computed(() => cityStore.currentCity)
 let lastCityId
+
+const myPending = ref([])
 
 const sortLabel = computed(() => {
   const opt = SORT_OPTIONS.find((o) => o.key === activeSort.value)
@@ -235,7 +242,10 @@ function certBadges(card) {
 const columns = computed(() => {
   const cols = [[], []]
   const heights = [0, 0]
-  listings.value.forEach((item, idx) => {
+  // 待审核信息排在最前
+  const pendingItems = myPending.value.map((item) => ({ ...item, _isPending: true }))
+  const allItems = [...pendingItems, ...listings.value]
+  allItems.forEach((item, idx) => {
     const coverH = COVER_HEIGHTS[idx % COVER_HEIGHTS.length]
     const titleLines = (item.title || '').length > 13 ? 2 : 1
     const est = coverH + 140 + titleLines * 32
@@ -339,10 +349,25 @@ async function fetchListings(reset = false) {
   }
 }
 
+async function fetchMyPending() {
+  if (!userStore.isLoggedIn) {
+    myPending.value = []
+    return
+  }
+  try {
+    const data = await getMyEduListings({ page: 1, page_size: 20 })
+    const items = Array.isArray(data?.items) ? data.items : []
+    myPending.value = items.filter((item) => item.status === 'pending' || item.status === 'rejected')
+  } catch {
+    myPending.value = []
+  }
+}
+
 onMounted(async () => {
   await cityStore.initCity()
   lastCityId = currentCity.value?.id
   fetchListings(true)
+  fetchMyPending()
 })
 
 onShow(() => {
@@ -350,6 +375,7 @@ onShow(() => {
     lastCityId = currentCity.value?.id
     fetchListings(true)
   }
+  fetchMyPending()
 })
 
 onReachBottom(() => {
@@ -680,6 +706,28 @@ onReachBottom(() => {
 }
 
 .card-type-text {
+  font-size: 19rpx;
+  font-weight: 600;
+  color: $white;
+}
+
+.card-status-badge {
+  position: absolute;
+  top: 14rpx;
+  right: 14rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+}
+
+.status-pending {
+  background: rgba(255, 165, 0, 0.92);
+}
+
+.status-rejected {
+  background: rgba(220, 53, 69, 0.92);
+}
+
+.card-status-text {
   font-size: 19rpx;
   font-weight: 600;
   color: $white;

@@ -131,7 +131,10 @@
         <view class="icon icon-eye-off action-ico-icon" />
         <text class="action-ico-text">咨询</text>
       </view>
-      <view class="action-primary" @tap="onContact">
+      <view v-if="isOwner" class="action-primary action-edit" @tap="goEdit">
+        <text class="action-primary-text">编辑</text>
+      </view>
+      <view v-else class="action-primary" @tap="onContact">
         <text class="action-primary-text">立即联系</text>
       </view>
     </view>
@@ -141,6 +144,7 @@
 <script>
 import { getEduListingDetail } from '@/api/eduMarket'
 import { formatErrorDetail } from '@/utils/formatters'
+import { useUserStore } from '@/store/modules/user'
 
 const TYPE_META = {
   tutor: { label: '家教', icon: 'icon-graduation-cap', role: '个人家教' },
@@ -173,6 +177,11 @@ export default {
       if (this.detail.publisher_education_verified) badges.push({ text: '学历认证', cls: 'cert-edu' })
       if (this.detail.publisher_teacher_verified) badges.push({ text: '教师资格', cls: 'cert-tea' })
       return badges
+    },
+    isOwner() {
+      const userStore = useUserStore()
+      const currentUserId = userStore.userInfo?.id
+      return currentUserId && this.detail.publisher_id && currentUserId === this.detail.publisher_id
     },
   },
 
@@ -217,7 +226,16 @@ export default {
     },
 
     onContact() {
-      uni.showToast({ title: '平台沟通功能即将上线', icon: 'none' })
+      const phone = this.detail.publisher_phone
+      if (!phone) {
+        uni.showToast({ title: '发布者暂未设置联系电话', icon: 'none' })
+        return
+      }
+      uni.makePhoneCall({ phoneNumber: phone })
+    },
+
+    goEdit() {
+      uni.navigateTo({ url: `/pages/edu-market/publish?id=${this.listingId}` })
     },
 
     goBack() {
@@ -709,6 +727,15 @@ export default {
 .action-primary:active {
   transform: scale(0.97);
   box-shadow: 0 4rpx 16rpx rgba($primary, 0.24);
+}
+
+.action-edit {
+  background: linear-gradient(135deg, $orange 0%, darken($orange, 8%) 100%);
+  box-shadow: 0 8rpx 24rpx rgba($orange, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.2);
+}
+
+.action-edit:active {
+  box-shadow: 0 4rpx 16rpx rgba($orange, 0.24);
 }
 
 .action-primary-text {

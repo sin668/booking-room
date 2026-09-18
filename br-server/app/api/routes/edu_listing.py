@@ -9,6 +9,7 @@ from app.schemas.edu_listing import (
     EduListingCreate,
     EduListingItem,
     EduListingListResponse,
+    EduListingUpdate,
 )
 from app.services import edu_listing_service
 from app.services.edu_listing_service import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
@@ -66,3 +67,14 @@ async def create_edu_listing(
 ) -> EduListingItem:
     """发布供需信息：后端强制认证前置校验。"""
     return await edu_listing_service.create_edu_listing(db, user_id, data)
+
+
+@router.put("/{listing_id}", response_model=EduListingItem)
+async def update_edu_listing(
+    listing_id: int,
+    data: EduListingUpdate,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+) -> EduListingItem:
+    """编辑供需信息：仅发布者本人可编辑，编辑后重置为待审核。"""
+    return await edu_listing_service.update_edu_listing(db, listing_id, user_id, data)

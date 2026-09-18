@@ -137,6 +137,10 @@ export function post(url, data) {
   return request({ url, method: 'POST', data })
 }
 
+export function put(url, data) {
+  return request({ url, method: 'PUT', data })
+}
+
 export function patch(url, data) {
   return request({ url, method: 'PATCH', data })
 }

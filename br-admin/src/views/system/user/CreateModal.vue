@@ -103,14 +103,13 @@
     subBtuText: '保存',
   });
 
-  function openModalWithType(type?: string) {
-    resetFields();
+  async function openModalWithType(type?: string) {
     const userType = type || 'app';
     const dynamicSchemas = userType === 'admin' ? adminSchemas : appSchemas;
-    setSchema([baseSchema, ...dynamicSchemas]);
+    await setSchema([baseSchema, ...dynamicSchemas]);
+    await resetFields();
     openModal();
-    // Reset user_type after schema update so the radio reflects the correct value
-    setFieldsValue({ user_type: userType });
+    await setFieldsValue({ user_type: userType });
   }
 
   async function okModal() {

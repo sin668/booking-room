@@ -83,12 +83,13 @@
     subBtuText: '保存',
   });
 
-  function showModal(record: any) {
+  async function showModal(record: any) {
     currentId = record?.id;
     openModal();
-    nextTick(() => {
-      record && setFieldsValue({ ...record });
-    });
+    await nextTick();
+    if (record) {
+      await setFieldsValue({ ...record });
+    }
   }
 
   async function handleAvatarUpload({

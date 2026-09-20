@@ -449,15 +449,14 @@
       <view class="sheet" @tap.stop>
         <view class="sheet-handle" />
         <text class="sheet-title">微信绑定</text>
-        <text class="sheet-desc">绑定微信后可使用微信手机号快捷登录</text>
+        <text class="sheet-desc">绑定微信后可使用微信快捷登录</text>
         <button
           class="wechat-bind-btn"
-          open-type="getPhoneNumber"
-          :loading="bindingWechatPhone"
-          :disabled="bindingWechatPhone"
-          @getphonenumber="handleWechatPhoneAuth"
+          :loading="bindingWechat"
+          :disabled="bindingWechat"
+          @tap="submitWechatBind"
         >
-          微信手机号一键绑定
+          一键绑定微信
         </button>
         <view v-if="bindError" class="bind-error-box">
           <text class="bind-error-text">{{ bindError }}</text>
@@ -553,6 +552,7 @@ export default {
       logoutLoading: false,
       showPhoneBindSheet: false,
       showWechatBindSheet: false,
+      bindingWechat: false,
       showSmsBinding: false,
       bindingWechatPhone: false,
       bindingBySms: false,
@@ -811,9 +811,38 @@ export default {
       this.showWechatBindSheet = true
     },
     closeWechatBinding() {
-      if (this.bindingWechatPhone) return
+      if (this.bindingWechat) return
       this.showWechatBindSheet = false
       this.bindError = ''
+    },
+    submitWechatBind() {
+      if (this.bindingWechat) return
+      this.bindingWechat = true
+      this.bindError = ''
+      uni.login({
+        provider: 'weixin',
+        success: async (res) => {
+          if (!res.code) {
+            this.bindError = '未获取到微信授权凭证，请重试'
+            this.bindingWechat = false
+            return
+          }
+          try {
+            await this.userStore.bindWechat(res.code)
+            this.showWechatBindSheet = false
+            this.showToast('微信绑定成功')
+            this.loadAccountSecuritySummary()
+          } catch (error) {
+            this.bindError = error?.detail || error?.message || '微信绑定失败，请稍后重试'
+          } finally {
+            this.bindingWechat = false
+          }
+        },
+        fail: () => {
+          this.bindError = '当前环境不支持微信授权，请在微信中打开'
+          this.bindingWechat = false
+        },
+      })
     },
     closePhoneBinding() {
       if (this.bindingWechatPhone || this.bindingBySms) return

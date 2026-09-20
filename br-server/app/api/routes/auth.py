@@ -152,6 +152,21 @@ async def bind_wechat_phone_by_sms(
     return token_response
 
 
+@router.post("/wechat/bind")
+async def bind_wechat(
+    body: WechatLoginRequest,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+) -> dict:
+    """Link a WeChat openid to the current authenticated user."""
+    return await WechatAuthService(
+        db=db,
+        redis=redis,
+        config=settings,
+    ).bind_wechat(user_id, body.code)
+
+
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh(
     request: Request,

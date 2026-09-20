@@ -36,6 +36,13 @@ export function bindWechatPhone(data) {
 }
 
 /**
+ * 微信账号绑定（关联 openid）
+ */
+export function bindWechat(data) {
+  return post('/api/v1/auth/wechat/bind', data)
+}
+
+/**
  * 短信备用绑定手机号
  */
 export function bindPhoneBySms(data) {

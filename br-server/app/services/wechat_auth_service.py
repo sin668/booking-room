@@ -155,6 +155,33 @@ class WechatAuthService:
         await self._revoke_all_refresh_tokens(current_user.id)
         await self._db.flush()
 
+    async def bind_wechat(self, user_id: UUID, code: str) -> dict:
+        session = await self._exchange_login_code(code)
+        openid = session.openid
+
+        current_user = await self._get_user_by_id(user_id)
+        self._ensure_login_allowed(current_user)
+
+        if current_user.wechat_openid == openid:
+            return {"wechat_bound": True, "message": "微信已绑定"}
+
+        if current_user.wechat_openid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="当前账号已绑定其他微信，请先解绑",
+            )
+
+        existing = await self._get_user_by_openid(openid)
+        if existing and existing.id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="该微信已绑定其他账号",
+            )
+
+        current_user.wechat_openid = openid
+        await self._db.flush()
+        return {"wechat_bound": True, "message": "微信绑定成功"}
+
     async def _exchange_login_code(self, code: str):
         try:
             return await self._wechat_client.jscode2session(code)

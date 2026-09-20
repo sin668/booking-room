@@ -106,6 +106,11 @@ export const useUserStore = defineStore('user', {
       return this.applyPhoneBindingResult(res)
     },
 
+    /** 微信账号绑定（关联 openid） */
+    async bindWechat(code) {
+      return authApi.bindWechat({ code })
+    },
+
     /** 短信备用绑定手机号 */
     async bindPhoneBySms(phone, smsCode) {
       const res = await authApi.bindPhoneBySms({ phone, sms_code: smsCode })

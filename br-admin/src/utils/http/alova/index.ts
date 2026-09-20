@@ -97,6 +97,14 @@ export const Alova = createAlova({
   },
   responded: {
     onSuccess: async (response, method) => {
+      // 204 No Content 或其他无响应体的情况
+      if (response.status === 204 || response.headers.get('content-length') === '0') {
+        if (!response.ok) {
+          throw new Error(response.statusText || 'Request failed');
+        }
+        return null;
+      }
+
       const res = (response.json && (await response.json())) || response.body;
       const message = res?.message || res?.detail || response.statusText;
 

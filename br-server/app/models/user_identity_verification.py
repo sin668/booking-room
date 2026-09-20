@@ -56,7 +56,7 @@ class UserIdentityVerification(Base):
     rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True, comment="拒绝原因")
     submitted_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="审核时间")
-    reviewer_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True, comment="审核人ID")
+    reviewer_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, comment="审核人ID")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,

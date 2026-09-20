@@ -445,6 +445,29 @@
       </view>
     </view>
 
+    <view v-if="showWechatBindSheet" class="sheet-mask" @tap="closeWechatBinding">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">微信绑定</text>
+        <text class="sheet-desc">绑定微信后可使用微信手机号快捷登录</text>
+        <button
+          class="wechat-bind-btn"
+          open-type="getPhoneNumber"
+          :loading="bindingWechatPhone"
+          :disabled="bindingWechatPhone"
+          @getphonenumber="handleWechatPhoneAuth"
+        >
+          微信手机号一键绑定
+        </button>
+        <view v-if="bindError" class="bind-error-box">
+          <text class="bind-error-text">{{ bindError }}</text>
+        </view>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="closeWechatBinding">取消</button>
+        </view>
+      </view>
+    </view>
+
     <view v-if="showPasswordSheet" class="sheet-mask" @tap="closePasswordSheet">
       <view class="sheet" @tap.stop>
         <view class="sheet-handle" />
@@ -529,6 +552,7 @@ export default {
       showLogoutSheet: false,
       logoutLoading: false,
       showPhoneBindSheet: false,
+      showWechatBindSheet: false,
       showSmsBinding: false,
       bindingWechatPhone: false,
       bindingBySms: false,
@@ -783,7 +807,13 @@ export default {
         this.showToast('微信已绑定')
         return
       }
-      this.openPhoneBinding()
+      this.bindError = ''
+      this.showWechatBindSheet = true
+    },
+    closeWechatBinding() {
+      if (this.bindingWechatPhone) return
+      this.showWechatBindSheet = false
+      this.bindError = ''
     },
     closePhoneBinding() {
       if (this.bindingWechatPhone || this.bindingBySms) return
@@ -795,9 +825,10 @@ export default {
     async handleWechatPhoneAuth(event) {
       if (this.bindingWechatPhone || this.bindingBySms) return
       const detail = event?.detail || {}
+      const fromWechatSheet = this.showWechatBindSheet
       if (!detail.code) {
         this.bindError = this.mapPhoneBindError(detail, 'wechat')
-        this.showSmsBinding = true
+        if (!fromWechatSheet) this.showSmsBinding = true
         return
       }
 
@@ -805,10 +836,17 @@ export default {
       this.bindError = ''
       try {
         await this.userStore.bindWechatPhone(detail.code)
-        this.onPhoneBindSuccess()
+        if (fromWechatSheet) {
+          this.showWechatBindSheet = false
+          this.bindError = ''
+          this.showToast('微信绑定成功')
+          this.loadAccountSecuritySummary()
+        } else {
+          this.onPhoneBindSuccess()
+        }
       } catch (error) {
         this.bindError = this.mapPhoneBindError(error, 'wechat')
-        this.showSmsBinding = true
+        if (!fromWechatSheet) this.showSmsBinding = true
       } finally {
         this.bindingWechatPhone = false
       }

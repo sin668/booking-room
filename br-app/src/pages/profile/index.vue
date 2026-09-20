@@ -8,7 +8,8 @@
           <view class="settings-dot" />
         </view>
         <view class="avatar">
-          <text class="avatar-text">{{ avatarText }}</text>
+          <image v-if="userStore.avatar" class="avatar-image" :src="userStore.avatar" mode="aspectFill" />
+          <text v-else class="avatar-text">{{ avatarText }}</text>
         </view>
         <view class="user-info">
           <view class="name-row">
@@ -18,6 +19,7 @@
             </view>
           </view>
           <text class="phone">已累计学习 {{ studyHoursText }}</text>
+          <text v-if="userStore.signature" class="signature">{{ signatureDisplay }}</text>
         </view>
       </view>
 
@@ -196,6 +198,10 @@ export default {
   computed: {
     avatarText() {
       return (this.userStore.nickname || this.userStore.phone || 'U').charAt(0).toUpperCase()
+    },
+    signatureDisplay() {
+      const sig = this.userStore.signature || ''
+      return sig.length > 20 ? sig.slice(0, 20) + '......' : sig
     },
     walletBalanceText() {
       return this.formatMoney(this.walletBalance)
@@ -456,6 +462,12 @@ export default {
   color: $white;
 }
 
+.avatar-image {
+  width: 122rpx;
+  height: 122rpx;
+  border-radius: 50%;
+}
+
 .user-info {
   position: relative;
   z-index: 1;
@@ -496,6 +508,17 @@ export default {
   color: rgba(255, 255, 255, 0.72);
   display: block;
   margin-top: 10rpx;
+}
+
+.signature {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.56);
+  display: block;
+  margin-top: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .stats-card {

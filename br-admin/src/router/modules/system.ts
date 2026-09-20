@@ -31,6 +31,24 @@ const routes: Array<RouteRecordRaw> = [
         },
         component: () => import('@/views/system/role/role.vue'),
       },
+      {
+        path: 'user',
+        name: 'system_user',
+        meta: {
+          title: '用户管理',
+        },
+        component: () => import('@/views/system/user/index.vue'),
+      },
+      {
+        path: 'user/edit/:id?',
+        name: 'system_user_edit',
+        meta: {
+          title: '编辑用户',
+          hideInMenu: true,
+          activeMenu: 'system_user',
+        },
+        component: () => import('@/views/system/user/edit.vue'),
+      },
     ],
   },
 ];

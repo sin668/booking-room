@@ -58,27 +58,21 @@
       </BasicTable>
     </n-card>
 
-    <CreateModal ref="createModalRef" @success="reloadTable" />
-    <EditModal ref="editModalRef" @success="reloadTable" />
     <RoleModal ref="roleModalRef" @success="reloadTable" />
   </div>
 </template>
 
 <script lang="ts" setup>
   import { h, reactive, ref } from 'vue';
-  import { useMessage } from 'naive-ui';
+  import { useRouter } from 'vue-router';
   import { BasicTable, TableAction } from '@/components/Table';
   import { getUserList, deleteUser, resetUserPassword, toggleUserStatus } from '@/api/system/user';
   import { columns } from './columns';
   import { PlusOutlined } from '@vicons/antd';
-  import CreateModal from './CreateModal.vue';
-  import EditModal from './EditModal.vue';
   import RoleModal from './RoleModal.vue';
 
-  const message = useMessage();
+  const router = useRouter();
   const actionRef = ref();
-  const createModalRef = ref();
-  const editModalRef = ref();
   const roleModalRef = ref();
 
   const params = reactive({
@@ -168,11 +162,11 @@
   }
 
   function addUser() {
-    createModalRef.value.openModal();
+    router.push({ name: 'system_user_edit' });
   }
 
   function handleEdit(record: any) {
-    editModalRef.value.showModal(record);
+    router.push({ name: 'system_user_edit', params: { id: record.id } });
   }
 
   function handleAssignRole(record: any) {
@@ -198,35 +192,15 @@
   }
 
   function handleResetPassword(record: any) {
-    let newPassword = '';
     window['$dialog'].warning({
       title: '重置密码',
-      content: () =>
-        h('div', {}, [
-          h(
-            'p',
-            { class: 'mb-2' },
-            `确定要重置用户「${record.nickname || record.phone}」的密码吗？`
-          ),
-          h('n-input', {
-            type: 'password',
-            showPasswordOn: 'click',
-            placeholder: '请输入新密码',
-            onUpdateValue: (val: string) => {
-              newPassword = val;
-            },
-          }),
-        ]),
+      content: `确定要将用户「${record.nickname || record.phone}」的密码重置为默认密码吗？`,
       positiveText: '确认重置',
       negativeText: '取消',
       onPositiveClick: async () => {
-        if (!newPassword) {
-          window['$message'].warning('请输入新密码');
-          return false;
-        }
         try {
-          await resetUserPassword(record.id, newPassword);
-          window['$message'].success('密码重置成功');
+          await resetUserPassword(record.id, 'Abc12345');
+          window['$message'].success('密码已重置为 Abc12345');
         } catch (error: any) {
           window['$message'].error(error?.message || '重置失败');
         }

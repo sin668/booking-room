@@ -6,6 +6,7 @@ Create Date: 2026-09-20 15:00:00.000000
 
 """
 from alembic import op
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -16,11 +17,22 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.drop_constraint(
-        'user_identity_verifications_reviewer_id_fkey',
-        'user_identity_verifications',
-        type_='foreignkey'
-    )
+    conn = op.get_bind()
+    # Find the actual constraint name
+    result = conn.execute(text("""
+        SELECT con.conname
+        FROM pg_constraint con
+        JOIN pg_class rel ON rel.oid = con.conrelid
+        JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+        WHERE nsp.nspname = 'public'
+          AND rel.relname = 'user_identity_verifications'
+          AND con.contype = 'f'
+          AND con.conname LIKE '%reviewer_id%'
+    """))
+    row = result.fetchone()
+    if row:
+        constraint_name = row[0]
+        op.drop_constraint(constraint_name, 'user_identity_verifications', type_='foreignkey')
     op.create_foreign_key(
         'user_identity_verifications_reviewer_id_fkey',
         'user_identity_verifications',
@@ -32,11 +44,21 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        'user_identity_verifications_reviewer_id_fkey',
-        'user_identity_verifications',
-        type_='foreignkey'
-    )
+    conn = op.get_bind()
+    result = conn.execute(text("""
+        SELECT con.conname
+        FROM pg_constraint con
+        JOIN pg_class rel ON rel.oid = con.conrelid
+        JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+        WHERE nsp.nspname = 'public'
+          AND rel.relname = 'user_identity_verifications'
+          AND con.contype = 'f'
+          AND con.conname LIKE '%reviewer_id%'
+    """))
+    row = result.fetchone()
+    if row:
+        constraint_name = row[0]
+        op.drop_constraint(constraint_name, 'user_identity_verifications', type_='foreignkey')
     op.create_foreign_key(
         'user_identity_verifications_reviewer_id_fkey',
         'user_identity_verifications',

@@ -41,7 +41,6 @@ class AdminCurrentResponse(BaseModel):
     username: str
     nickname: str | None = None
     email: str | None = None
-    mobile: str | None = None
     avatar: str | None = None
     is_super_admin: bool
     roles: list[AdminRoleSummary]
@@ -53,7 +52,6 @@ class AdminCurrentResponse(BaseModel):
 class AdminProfileUpdate(BaseModel):
     nickname: str | None = Field(None, max_length=50)
     email: str | None = Field(None, max_length=255)
-    mobile: str | None = Field(None, max_length=20)
     avatar: str | None = Field(None, max_length=512)
 
     model_config = ConfigDict(extra="forbid")
@@ -81,7 +79,6 @@ def admin_profile_from_model(admin: Any) -> dict[str, Any]:
         "username": admin.username,
         "nickname": admin.nickname,
         "email": admin.email,
-        "mobile": admin.mobile,
         "avatar": admin.avatar,
         "is_super_admin": admin.is_super_admin,
         "created_at": admin.created_at,

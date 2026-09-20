@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -14,15 +15,13 @@ from app.models.user import User
 from app.schemas.user import UserProfileUpdate
 from app.services.username_service import UsernameService
 
-
-USERNAME_COOLDOWN = timedelta(hours=24)
-USERNAME_COOLDOWN_DETAIL = "用户名修改后 24 小时内不可再次修改"
+PROFILE_COOLDOWN = timedelta(days=30)
 
 
 @dataclass
-class UsernameCooldownError(Exception):
+class ProfileCooldownError(Exception):
     retry_after_seconds: int
-    detail: str = USERNAME_COOLDOWN_DETAIL
+    detail: str = ""
 
 
 class UserProfileService:
@@ -47,6 +46,9 @@ class UserProfileService:
         if "username" in update_data and update_data["username"] != user.username:
             await self._update_username(user, update_data["username"])
 
+        if "email" in update_data:
+            self._update_email(user, update_data["email"])
+
         if "nickname" in update_data:
             user.nickname = update_data["nickname"]
         if "avatar" in update_data:
@@ -64,7 +66,7 @@ class UserProfileService:
 
     async def _update_username(self, user: User, username: str) -> None:
         self._username_service.validate_editable_username(username)
-        self._enforce_username_cooldown(user)
+        self._enforce_cooldown(user.username_updated_at, "用户名修改后 30 天内不可再次修改")
 
         if await self._username_service.username_exists(username, exclude_user_id=user.id):
             raise HTTPException(
@@ -75,13 +77,41 @@ class UserProfileService:
         user.username = username
         user.username_updated_at = datetime.now()
 
-    def _enforce_username_cooldown(self, user: User) -> None:
-        if user.username_updated_at is None:
+    def _update_email(self, user: User, email: str | None) -> None:
+        if email is not None and email != user.email:
+            if email and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="邮箱格式不正确",
+                )
+        user.email = email
+
+    async def change_phone(self, user_id: uuid.UUID, new_phone: str) -> User:
+        user = await self.get_current_user(user_id)
+        self._enforce_cooldown(user.phone_updated_at, "手机号修改后 30 天内不可再次修改")
+
+        existing = await self._db.execute(
+            select(User).where(User.phone == new_phone, User.id != user_id)
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="该手机号已被其他账号使用",
+            )
+
+        user.phone = new_phone
+        user.phone_updated_at = datetime.now()
+        await self._db.flush()
+        await self._db.refresh(user)
+        return user
+
+    def _enforce_cooldown(self, updated_at: datetime | None, detail: str) -> None:
+        if updated_at is None:
             return
 
-        elapsed = datetime.now() - user.username_updated_at
-        if elapsed >= USERNAME_COOLDOWN:
+        elapsed = datetime.now() - updated_at
+        if elapsed >= PROFILE_COOLDOWN:
             return
 
-        retry_after = max(1, int((USERNAME_COOLDOWN - elapsed).total_seconds()))
-        raise UsernameCooldownError(retry_after_seconds=retry_after)
+        retry_after = max(1, int((PROFILE_COOLDOWN - elapsed).total_seconds()))
+        raise ProfileCooldownError(retry_after_seconds=retry_after, detail=detail)

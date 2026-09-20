@@ -68,7 +68,6 @@ class UserResponse(BaseModel):
     username: str | None = None
     username_updated_at: datetime | None = None
     email: str | None = None
-    mobile: str | None = None
     avatar: str | None = None
     balance: int = 0
     membership_level: str = "none"
@@ -86,6 +85,8 @@ class UserProfileResponse(BaseModel):
     phone: str | None = None
     username: str
     username_updated_at: datetime | None = None
+    phone_updated_at: datetime | None = None
+    email: str | None = None
     nickname: str | None = None
     avatar: str | None = None
     gender: str | None = None
@@ -101,6 +102,7 @@ class UserProfileResponse(BaseModel):
 
 class UserProfileUpdate(BaseModel):
     username: str | None = Field(None, min_length=6, max_length=32)
+    email: str | None = Field(None, max_length=255)
     nickname: str | None = Field(None, max_length=50)
     avatar: str | None = Field(None, max_length=512)
     gender: str | None = Field(None, max_length=10)
@@ -136,6 +138,16 @@ class ChangePasswordRequest(BaseModel):
 
 class ChangePasswordResponse(BaseModel):
     message: str
+
+
+class ChangePhoneRequest(BaseModel):
+    phone: str = Field(pattern=r"^1[3-9]\d{9}$")
+    sms_code: str = Field(min_length=6, max_length=6)
+
+
+class ChangePhoneResponse(BaseModel):
+    message: str
+    phone: str
 
 
 class IdentityVerificationRequest(BaseModel):

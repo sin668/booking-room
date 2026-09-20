@@ -28,6 +28,8 @@ export const useUserStore = defineStore('user', {
     birthday: (state) => state.userInfo?.birthday || '',
     signature: (state) => state.userInfo?.signature || '',
     usernameUpdatedAt: (state) => state.userInfo?.username_updated_at || null,
+    phoneUpdatedAt: (state) => state.userInfo?.phone_updated_at || null,
+    email: (state) => state.userInfo?.email || '',
     membershipLevel: (state) => state.userInfo?.membership_level || 'none',
     isVip: (state) => ['vip', 'svip'].includes(state.userInfo?.membership_level || 'none'),
   },
@@ -89,6 +91,13 @@ export const useUserStore = defineStore('user', {
       const user = await userProfileApi.updateMe(payload)
       this.userInfo = user
       return user
+    },
+
+    /** 修改手机号 */
+    async changePhone(phone, smsCode) {
+      const res = await userProfileApi.changePhone({ phone, sms_code: smsCode })
+      await this.fetchUserInfo()
+      return res
     },
 
     /** 微信手机号授权绑定 */

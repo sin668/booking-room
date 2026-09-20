@@ -72,12 +72,12 @@ class User(Base):
         DateTime,
         nullable=True,
     )
-    email: Mapped[str | None] = mapped_column(
-        String(255),
+    phone_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
         nullable=True,
     )
-    mobile: Mapped[str | None] = mapped_column(
-        String(20),
+    email: Mapped[str | None] = mapped_column(
+        String(255),
         nullable=True,
     )
     avatar: Mapped[str | None] = mapped_column(

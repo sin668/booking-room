@@ -26,7 +26,7 @@
               <text class="vip-text">VIP</text>
             </view>
           </view>
-          <text class="profile-id">ID: {{ displayUsername || '未设置' }}</text>
+          <text class="profile-id">ID: {{ userStore.username || '未设置' }}</text>
         </view>
         <view class="edit-icon" @tap="openUsernameEditor">
           <text class="edit-icon-text">✎</text>
@@ -44,10 +44,10 @@
             <text class="chevron">›</text>
           </view>
         </view>
-        <view class="simple-row press-effect" @tap="openUsernameEditor">
-          <text class="row-label">用户名</text>
+        <view class="simple-row press-effect" @tap="openEmailEditor">
+          <text class="row-label">邮箱</text>
           <view class="row-value-wrap">
-            <text class="row-value">{{ displayUsername || '去设置' }}</text>
+            <text class="row-value" :class="{ muted: !userStore.email }">{{ userStore.email || '去设置' }}</text>
             <text class="chevron">›</text>
           </view>
         </view>
@@ -96,14 +96,6 @@
           <text class="row-label">微信绑定</text>
           <view class="status-pill" :class="securitySummary.wechat_bound ? 'success' : 'warning'">
             <text class="status-pill-text" :class="securitySummary.wechat_bound ? 'success-text' : 'warning-text'">{{ wechatStatusText }}</text>
-          </view>
-          <text class="chevron">›</text>
-        </view>
-        <view class="icon-row press-effect" @tap="openIdentitySheet">
-          <view class="row-icon blue"><text class="row-icon-text">证</text></view>
-          <text class="row-label">实名认证</text>
-          <view class="status-pill" :class="securitySummary.identity_status === 'verified' ? 'primary' : 'warning'">
-            <text class="status-pill-text" :class="securitySummary.identity_status === 'verified' ? 'primary-text' : 'warning-text'">{{ identityStatusText }}</text>
           </view>
           <text class="chevron">›</text>
         </view>
@@ -202,7 +194,7 @@
       <view class="sheet" @tap.stop>
         <view class="sheet-handle" />
         <text class="sheet-title">修改用户名</text>
-        <text class="sheet-desc">用户名修改后 24 小时内不可再次修改</text>
+        <text class="sheet-desc">用户名修改后 30 天内不可再次修改</text>
         <input
           v-model="usernameDraft"
           class="username-input"
@@ -217,6 +209,28 @@
         <view class="sheet-actions">
           <button class="sheet-cancel" @tap="closeUsernameEditor">取消</button>
           <button class="sheet-confirm" :loading="savingUsername" :disabled="savingUsername" @tap="saveUsername">保存</button>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="showEmailSheet" class="sheet-mask" @tap="closeEmailEditor">
+      <view class="sheet" @tap.stop>
+        <view class="sheet-handle" />
+        <text class="sheet-title">修改邮箱</text>
+        <text class="sheet-desc">邮箱用于接收通知和账号找回</text>
+        <input
+          v-model="emailDraft"
+          class="username-input"
+          maxlength="255"
+          placeholder="请输入邮箱地址"
+          placeholder-class="input-placeholder"
+          confirm-type="done"
+          @confirm="saveEmail"
+        />
+        <text v-if="emailError" class="input-error">{{ emailError }}</text>
+        <view class="sheet-actions">
+          <button class="sheet-cancel" @tap="closeEmailEditor">取消</button>
+          <button class="sheet-confirm" :loading="savingEmail" :disabled="savingEmail" @tap="saveEmail">保存</button>
         </view>
       </view>
     </view>
@@ -321,32 +335,17 @@
     <view v-if="showPhoneBindSheet" class="sheet-mask" @tap="closePhoneBinding">
       <view class="sheet" @tap.stop>
         <view class="sheet-handle" />
-        <text class="sheet-title">绑定手机号</text>
+        <text class="sheet-title">{{ hasBoundPhone ? '修改手机号' : '绑定手机号' }}</text>
         <text class="sheet-desc">绑定后可用于账号找回、订单通知和余额安全校验</text>
 
-        <button
-          v-if="!hasBoundPhone"
-          class="wechat-bind-btn"
-          open-type="getPhoneNumber"
-          :loading="bindingWechatPhone"
-          :disabled="bindingWechatPhone || bindingBySms"
-          @getphonenumber="handleWechatPhoneAuth"
-        >
-          微信手机号一键绑定
-        </button>
-
-        <view v-if="bindError" class="bind-error-box">
-          <text class="bind-error-text">{{ bindError }}</text>
-        </view>
-
-        <view v-if="showSmsBinding" class="sms-bind-form">
+        <view v-if="hasBoundPhone" class="sms-bind-form">
           <view class="bind-input-row">
             <input
               v-model="bindPhoneForm.phone"
               class="bind-input"
               type="number"
               maxlength="11"
-              placeholder="请输入手机号"
+              placeholder="请输入新手机号"
               placeholder-class="input-placeholder"
             />
           </view>
@@ -370,9 +369,71 @@
           </view>
         </view>
 
-        <view class="sheet-actions">
-          <button class="sheet-cancel" @tap="showSmsBinding = true">短信绑定</button>
+        <template v-else>
           <button
+            class="wechat-bind-btn"
+            open-type="getPhoneNumber"
+            :loading="bindingWechatPhone"
+            :disabled="bindingWechatPhone || bindingBySms"
+            @getphonenumber="handleWechatPhoneAuth"
+          >
+            微信手机号一键绑定
+          </button>
+
+          <view v-if="bindError" class="bind-error-box">
+            <text class="bind-error-text">{{ bindError }}</text>
+          </view>
+
+          <view v-if="showSmsBinding" class="sms-bind-form">
+            <view class="bind-input-row">
+              <input
+                v-model="bindPhoneForm.phone"
+                class="bind-input"
+                type="number"
+                maxlength="11"
+                placeholder="请输入手机号"
+                placeholder-class="input-placeholder"
+              />
+            </view>
+            <view class="bind-input-row code-input-row">
+              <input
+                v-model="bindPhoneForm.smsCode"
+                class="bind-input"
+                type="number"
+                maxlength="6"
+                placeholder="请输入验证码"
+                placeholder-class="input-placeholder"
+              />
+              <button
+                class="bind-code-btn"
+                :disabled="bindCodeCountdown > 0 || sendingBindCode"
+                :loading="sendingBindCode"
+                @tap="sendBindSmsCode"
+              >
+                {{ bindCodeCountdown > 0 ? bindCodeCountdown + 's' : '获取验证码' }}
+              </button>
+            </view>
+          </view>
+        </template>
+
+        <view v-if="bindError" class="bind-error-box">
+          <text class="bind-error-text">{{ bindError }}</text>
+        </view>
+
+        <view class="sheet-actions">
+          <button v-if="!hasBoundPhone" class="sheet-cancel" @tap="showSmsBinding = true">短信绑定</button>
+          <button class="sheet-cancel" @tap="closePhoneBinding">取消</button>
+          <button
+            v-if="hasBoundPhone"
+            class="sheet-confirm"
+            :loading="bindingBySms"
+            :disabled="bindingBySms"
+            @tap="submitPhoneChange"
+          >
+            确认修改
+          </button>
+          <button
+            v-else
             class="sheet-confirm"
             :loading="bindingBySms"
             :disabled="!showSmsBinding || bindingWechatPhone || bindingBySms"
@@ -402,32 +463,6 @@
       </view>
     </view>
 
-    <view v-if="showIdentitySheet" class="sheet-mask" @tap="closeIdentitySheet">
-      <view class="sheet" @tap.stop>
-        <view class="sheet-handle" />
-        <text class="sheet-title">实名认证</text>
-        <text v-if="securitySummary.identity_status === 'verified'" class="sheet-desc">已认证：{{ securitySummary.identity_masked || '--' }}</text>
-        <text v-else class="sheet-desc">认证成功后将用于账号安全校验</text>
-        <view v-if="securitySummary.identity_status !== 'verified'" class="security-form">
-          <input v-model="identityForm.realName" class="security-input" placeholder="真实姓名" placeholder-class="input-placeholder" />
-          <input v-model="identityForm.idCardNumber" class="security-input" maxlength="18" placeholder="身份证号" placeholder-class="input-placeholder" />
-        </view>
-        <text v-if="identityError" class="input-error">{{ identityError }}</text>
-        <view class="sheet-actions">
-          <button class="sheet-cancel" @tap="closeIdentitySheet">关闭</button>
-          <button
-            v-if="securitySummary.identity_status !== 'verified'"
-            class="sheet-confirm"
-            :loading="identitySubmitting"
-            :disabled="identitySubmitting"
-            @tap="submitIdentity"
-          >
-            提交认证
-          </button>
-        </view>
-      </view>
-    </view>
-
     <view v-if="showDeactivationSheet" class="sheet-mask" @tap="closeDeactivationSheet">
       <view class="sheet" @tap.stop>
         <view class="sheet-handle" />
@@ -453,21 +488,20 @@
 </template>
 
 <script>
-import { changePassword, deactivateAccount, getAccountSecuritySummary, submitIdentityVerification } from '@/api/accountSecurity'
+import { changePassword, deactivateAccount, getAccountSecuritySummary } from '@/api/accountSecurity'
 import { getNotificationPreferences, updateNotificationPreferences } from '@/api/notifications'
 import { uploadImage } from '@/api/upload'
 import { useUserStore } from '@/store/modules/user'
 import {
   formatDeactivationRiskReasons,
-  formatIdentityVerificationStatus,
   formatWechatBindingStatus,
   mapAccountSecurityError,
-  validateIdentityCard,
 } from '@/utils/accountSecurity'
 import { NOTIFICATION_TYPE_CONFIGS, getNotificationPreferenceField } from '@/utils/notificationTypes'
 import { ensureLogin } from '@/utils/auth'
 
-const USERNAME_PATTERN = /^[A-Za-z0-9_]{6,32}$/
+const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+const USERNAME_PATTERN = /^[a-zA-Z0-9_]{6,32}$/
 
 export default {
   data() {
@@ -484,6 +518,10 @@ export default {
       savingNotificationPreferenceKey: '',
       darkMode: false,
       cacheSize: '23.6 MB',
+      showEmailSheet: false,
+      emailDraft: '',
+      emailError: '',
+      savingEmail: false,
       showUsernameSheet: false,
       usernameDraft: '',
       usernameError: '',
@@ -522,13 +560,6 @@ export default {
         newPassword: '',
         confirmPassword: '',
       },
-      showIdentitySheet: false,
-      identitySubmitting: false,
-      identityError: '',
-      identityForm: {
-        realName: '',
-        idCardNumber: '',
-      },
       showDeactivationSheet: false,
       deactivationSubmitting: false,
       deactivationError: '',
@@ -557,9 +588,6 @@ export default {
     displayNickname() {
       return this.userStore.nickname || '学习达人'
     },
-    displayUsername() {
-      return this.userStore.username || ''
-    },
     avatarText() {
       return (this.displayNickname || this.userStore.phone || 'U').charAt(0).toUpperCase()
     },
@@ -574,10 +602,6 @@ export default {
     wechatStatusText() {
       if (this.securityLoading) return '--'
       return formatWechatBindingStatus(this.securitySummary)
-    },
-    identityStatusText() {
-      if (this.securityLoading) return '--'
-      return formatIdentityVerificationStatus(this.securitySummary.identity_status)
     },
     deactivationRiskTexts() {
       return formatDeactivationRiskReasons(this.securitySummary.deactivation_risks)
@@ -749,10 +773,6 @@ export default {
       this.showToast('缓存已清除')
     },
     openPhoneBinding() {
-      if (this.hasBoundPhone) {
-        this.showToast('手机号暂不支持在应用内修改')
-        return
-      }
       this.bindError = ''
       this.showSmsBinding = false
       this.resetBindForm()
@@ -903,8 +923,41 @@ export default {
       }
       return text || '手机号绑定失败，请稍后重试'
     },
+    openEmailEditor() {
+      this.emailDraft = this.userStore.email || ''
+      this.emailError = ''
+      this.showEmailSheet = true
+    },
+    closeEmailEditor() {
+      if (this.savingEmail) return
+      this.showEmailSheet = false
+      this.emailError = ''
+    },
+    async saveEmail() {
+      const email = this.emailDraft.trim()
+      if (email && !EMAIL_PATTERN.test(email)) {
+        this.emailError = '邮箱格式不正确'
+        return
+      }
+      if (email === (this.userStore.email || '')) {
+        this.showEmailSheet = false
+        return
+      }
+
+      this.savingEmail = true
+      this.emailError = ''
+      try {
+        await this.userStore.updateProfile({ email: email || null })
+        this.showEmailSheet = false
+        this.showToast('邮箱已更新')
+      } catch (error) {
+        this.emailError = typeof error?.detail === 'string' ? error.detail : '邮箱保存失败，请重试'
+      } finally {
+        this.savingEmail = false
+      }
+    },
     openUsernameEditor() {
-      this.usernameDraft = this.displayUsername
+      this.usernameDraft = this.userStore.username || ''
       this.usernameError = ''
       this.showUsernameSheet = true
     },
@@ -915,12 +968,11 @@ export default {
     },
     async saveUsername() {
       const username = this.usernameDraft.trim()
-      this.usernameDraft = username
       if (!USERNAME_PATTERN.test(username)) {
-        this.usernameError = '用户名仅支持 6-32 位字母、数字或下划线'
+        this.usernameError = '仅支持 6-32 位字母、数字或下划线'
         return
       }
-      if (username === this.displayUsername) {
+      if (username === this.userStore.username) {
         this.showUsernameSheet = false
         return
       }
@@ -938,18 +990,54 @@ export default {
       }
     },
     mapUsernameError(error) {
-      const detail = typeof error?.detail === 'string' ? error.detail : ''
       if (error?.retry_after_seconds !== undefined) {
         return `用户名修改冷却中，请在 ${this.formatCooldown(error.retry_after_seconds)} 后再试`
       }
-      if (detail.includes('已存在')) return '该用户名已存在'
-      if (detail.includes('6-32') || detail.includes('下划线')) return '用户名仅支持 6-32 位字母、数字或下划线'
-      return detail || '用户名保存失败，请稍后再试'
+      const detail = typeof error?.detail === 'string' ? error.detail : ''
+      if (detail.includes('已被占用') || detail.includes('已存在')) return '该用户名已被占用'
+      return detail || '用户名保存失败，请重试'
+    },
+    async submitPhoneChange() {
+      if (this.bindingBySms) return
+      const phoneError = this.validateBindPhone()
+      if (phoneError) {
+        this.bindError = phoneError
+        return
+      }
+      if (!/^\d{6}$/.test(this.bindPhoneForm.smsCode)) {
+        this.bindError = '请输入 6 位短信验证码'
+        return
+      }
+
+      this.bindingBySms = true
+      this.bindError = ''
+      try {
+        await this.userStore.changePhone(this.bindPhoneForm.phone, this.bindPhoneForm.smsCode)
+        this.showPhoneBindSheet = false
+        this.resetBindForm()
+        this.showToast('手机号已更新')
+      } catch (error) {
+        this.bindError = this.mapPhoneChangeError(error)
+      } finally {
+        this.bindingBySms = false
+      }
+    },
+    mapPhoneChangeError(error) {
+      if (error?.retry_after_seconds !== undefined) {
+        return `手机号修改冷却中，请在 ${this.formatCooldown(error.retry_after_seconds)} 后再试`
+      }
+      const detail = typeof error?.detail === 'string' ? error.detail : ''
+      if (detail.includes('验证码')) return '验证码无效或已过期，请重新获取'
+      if (detail.includes('已被其他') || detail.includes('已存在')) return '该手机号已被其他账号使用'
+      return detail || '手机号修改失败，请稍后重试'
     },
     formatCooldown(secondsValue) {
       const totalMinutes = Math.max(1, Math.ceil(Number(secondsValue || 0) / 60))
-      const hours = Math.floor(totalMinutes / 60)
+      const days = Math.floor(totalMinutes / 1440)
+      const hours = Math.floor((totalMinutes % 1440) / 60)
       const minutes = totalMinutes % 60
+      if (days > 0 && hours > 0) return `${days} 天 ${hours} 小时`
+      if (days > 0) return `${days} 天`
       if (hours > 0 && minutes > 0) return `${hours} 小时 ${minutes} 分钟`
       if (hours > 0) return `${hours} 小时`
       return `${minutes} 分钟`
@@ -1001,44 +1089,6 @@ export default {
         this.passwordError = mapAccountSecurityError(error, 'password')
       } finally {
         this.passwordSubmitting = false
-      }
-    },
-    openIdentitySheet() {
-      this.identityError = ''
-      this.identityForm.realName = ''
-      this.identityForm.idCardNumber = ''
-      this.showIdentitySheet = true
-    },
-    closeIdentitySheet() {
-      if (this.identitySubmitting) return
-      this.showIdentitySheet = false
-      this.identityError = ''
-    },
-    async submitIdentity() {
-      if (this.identitySubmitting) return
-      const realName = this.identityForm.realName.trim()
-      const idCardNumber = this.identityForm.idCardNumber.trim().toUpperCase()
-      if (!realName) {
-        this.identityError = '请输入真实姓名'
-        return
-      }
-      if (!validateIdentityCard(idCardNumber)) {
-        this.identityError = '身份证号格式不正确'
-        return
-      }
-      this.identitySubmitting = true
-      this.identityError = ''
-      try {
-        await submitIdentityVerification({
-          real_name: realName,
-          id_card_number: idCardNumber,
-        })
-        await this.loadAccountSecuritySummary()
-        this.showToast('实名认证已完成')
-      } catch (error) {
-        this.identityError = mapAccountSecurityError(error, 'identity')
-      } finally {
-        this.identitySubmitting = false
       }
     },
     openDeactivationSheet() {

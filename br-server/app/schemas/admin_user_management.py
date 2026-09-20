@@ -69,7 +69,6 @@ class AdminUserCreate(BaseModel):
 class AdminUserUpdate(BaseModel):
     nickname: str | None = Field(None, max_length=50)
     email: str | None = Field(None, max_length=255)
-    mobile: str | None = Field(None, max_length=20)
     avatar: str | None = Field(None, max_length=512)
     balance: Decimal | None = None
     role_ids: list[int] | None = None
@@ -86,7 +85,6 @@ class AdminUserDetail(BaseModel):
     user_type: str
     username: str | None = None
     email: str | None = None
-    mobile: str | None = None
     avatar: str | None = None
     status: str
     balance: int = 0

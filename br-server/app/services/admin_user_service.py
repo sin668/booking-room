@@ -206,7 +206,6 @@ class AdminUserService:
             user_type=user.user_type,
             username=user.username,
             email=user.email,
-            mobile=user.mobile,
             avatar=user.avatar,
             status=user.status,
             balance=int(user.balance) if user.balance else 0,

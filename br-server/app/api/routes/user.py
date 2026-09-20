@@ -12,14 +12,17 @@ from app.schemas.user import (
     AccountSecuritySummary,
     ChangePasswordRequest,
     ChangePasswordResponse,
+    ChangePhoneRequest,
+    ChangePhoneResponse,
     IdentityVerificationRequest,
     IdentityVerificationResponse,
     UserProfileResponse,
     UserProfileUpdate,
 )
 from app.core.config import settings
-from app.services.user_profile_service import UserProfileService, UsernameCooldownError
+from app.services.user_profile_service import UserProfileService, ProfileCooldownError
 from app.services.user_security_service import UserSecurityService
+from app.services.sms_service import SMSService
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
@@ -43,7 +46,7 @@ async def update_me(
     """Update the current authenticated user's safe profile fields."""
     try:
         user = await UserProfileService(db).update_profile(user_id, data)
-    except UsernameCooldownError as exc:
+    except ProfileCooldownError as exc:
         return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             content={
@@ -52,6 +55,34 @@ async def update_me(
             },
         )
     return UserProfileResponse.model_validate(user)
+
+
+@router.patch("/me/phone", response_model=ChangePhoneResponse)
+async def change_phone(
+    data: ChangePhoneRequest,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+) -> ChangePhoneResponse | JSONResponse:
+    """Change current user's phone number with SMS verification."""
+    sms_ok = await SMSService(redis=redis, config=settings).verify_code(data.phone, data.sms_code)
+    if not sms_ok:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "验证码无效或已过期"},
+        )
+
+    try:
+        user = await UserProfileService(db).change_phone(user_id, data.phone)
+    except ProfileCooldownError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={
+                "detail": exc.detail,
+                "retry_after_seconds": exc.retry_after_seconds,
+            },
+        )
+    return ChangePhoneResponse(message="手机号已更新", phone=user.phone or "")
 
 
 @router.get("/me/security", response_model=AccountSecuritySummary)

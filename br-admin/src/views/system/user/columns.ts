@@ -45,7 +45,7 @@ export const columns = [
     },
   },
   {
-    title: '用户类型',
+    title: '用户来源',
     key: 'user_type',
     width: 100,
     render(row) {
@@ -56,7 +56,7 @@ export const columns = [
           size: 'small',
         },
         {
-          default: () => (row.user_type === 'admin' ? '管理员' : 'App用户'),
+          default: () => (row.user_type === 'admin' ? '后台创建' : 'App注册'),
         }
       );
     },

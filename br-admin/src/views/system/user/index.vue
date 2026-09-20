@@ -83,8 +83,8 @@
 
   const userTypeOptions = [
     { label: '全部', value: null },
-    { label: 'App用户', value: 'app' },
-    { label: '管理员', value: 'admin' },
+    { label: 'App注册', value: 'app' },
+    { label: '后台创建', value: 'admin' },
   ];
 
   const statusOptions = [

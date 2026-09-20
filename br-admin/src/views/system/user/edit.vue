@@ -30,35 +30,19 @@
           </template>
           <n-form :model="formValues" :rules="rules" ref="formRef" label-placement="top">
             <n-grid :cols="2" :x-gap="16">
-              <n-form-item-gi label="用户类型" path="user_type">
-                <n-radio-group v-model:value="formValues.user_type" :disabled="isEdit">
-                  <n-space>
-                    <n-radio value="app">App用户</n-radio>
-                    <n-radio value="admin">管理员</n-radio>
-                  </n-space>
-                </n-radio-group>
-              </n-form-item-gi>
-              <n-form-item-gi
-                v-if="formValues.user_type === 'app'"
-                label="手机号"
-                path="phone"
-              >
-                <n-input
-                  v-model:value="formValues.phone"
-                  placeholder="请输入手机号"
-                  :maxlength="20"
-                  :disabled="isEdit"
-                />
-              </n-form-item-gi>
-              <n-form-item-gi
-                v-if="formValues.user_type === 'admin'"
-                label="用户名"
-                path="username"
-              >
+              <n-form-item-gi label="用户名" path="username">
                 <n-input
                   v-model:value="formValues.username"
                   placeholder="请输入用户名"
                   :maxlength="50"
+                  :disabled="isEdit"
+                />
+              </n-form-item-gi>
+              <n-form-item-gi label="手机号" path="phone">
+                <n-input
+                  v-model:value="formValues.phone"
+                  placeholder="请输入手机号"
+                  :maxlength="20"
                   :disabled="isEdit"
                 />
               </n-form-item-gi>
@@ -150,7 +134,7 @@
   const saving = ref(false);
 
   const formValues = reactive({
-    user_type: 'app',
+    user_type: 'admin',
     phone: '',
     username: '',
     password: '',
@@ -166,11 +150,6 @@
     };
     if (!isEdit.value) {
       base.password = { required: true, message: '请输入密码', trigger: 'blur' };
-    }
-    if (formValues.user_type === 'app' && !isEdit.value) {
-      base.phone = { required: true, message: '请输入手机号', trigger: 'blur' };
-    }
-    if (formValues.user_type === 'admin' && !isEdit.value) {
       base.username = { required: true, message: '请输入用户名', trigger: 'blur' };
     }
     return base;
@@ -265,14 +244,13 @@
         saved = true;
       } else {
         const payload: Record<string, any> = {
-          user_type: formValues.user_type,
+          user_type: 'admin',
+          username: formValues.username,
           password: formValues.password,
           nickname: formValues.nickname || undefined,
         };
-        if (formValues.user_type === 'app') {
+        if (formValues.phone) {
           payload.phone = formValues.phone;
-        } else {
-          payload.username = formValues.username;
         }
         await createUser(payload);
         window['$message']?.success('用户创建成功');

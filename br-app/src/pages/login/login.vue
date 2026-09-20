@@ -142,7 +142,7 @@
 
       <!-- ===== 注册表单 ===== -->
       <view v-else class="form">
-        <!-- 昵称 -->
+        <!-- 昵称 
         <view class="field">
           <text class="field-label">昵称</text>
           <view class="input-wrap">
@@ -158,6 +158,7 @@
             <text class="input-hint">2-20字</text>
           </view>
         </view>
+        -->
 
         <!-- 手机号 -->
         <view class="field">
@@ -479,11 +480,11 @@ function handleLogin() {
 
 // ===== 注册 =====
 function handleRegister() {
-  // 昵称（选填但填写后需校验长度）
+  /* 昵称（选填但填写后需校验长度）
   if (regForm.nickname && (regForm.nickname.length < 2 || regForm.nickname.length > 20)) {
     showToast('昵称长度为2-20个字符')
     return
-  }
+  } */
 
   const phoneErr = validatePhone(regForm.phone)
   if (phoneErr) {

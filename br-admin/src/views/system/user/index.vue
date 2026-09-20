@@ -101,7 +101,7 @@
   ];
 
   const actionColumn = reactive({
-    width: 160,
+    width: 220,
     title: '操作',
     key: 'action',
     fixed: 'right',

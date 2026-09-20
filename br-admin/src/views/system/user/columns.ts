@@ -4,6 +4,14 @@ import type { AdminRoleSummary } from '@/api/system/user';
 
 export const columns = [
   {
+    title: 'ID',
+    key: 'index',
+    width: 60,
+    render(row, index) {
+      return index + 1;
+    },
+  },
+  {
     title: '用户名',
     key: 'username',
     width: 120,

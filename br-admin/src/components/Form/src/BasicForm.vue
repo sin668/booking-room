@@ -256,6 +256,10 @@
         propsRef.value = deepMerge(unref(propsRef) || {}, formProps);
       }
 
+      function setSchema(schemas: FormSchema[]) {
+        schemaRef.value = schemas;
+      }
+
       const formActionType: Partial<FormActionType> = {
         getFieldsValue,
         setFieldsValue,
@@ -263,6 +267,7 @@
         validate,
         clearValidate,
         setProps,
+        setSchema,
         submit: handleSubmit,
       };
 

@@ -25,9 +25,10 @@
     },
     {
       field: 'password',
-      component: 'NInputPassword',
+      component: 'NInput',
       label: '密码',
       componentProps: {
+        type: 'password',
         placeholder: '请输入密码',
         showPasswordOn: 'click',
       },
@@ -55,9 +56,10 @@
     },
     {
       field: 'password',
-      component: 'NInputPassword',
+      component: 'NInput',
       label: '密码',
       componentProps: {
+        type: 'password',
         placeholder: '请输入密码',
         showPasswordOn: 'click',
       },

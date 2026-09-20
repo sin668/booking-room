@@ -101,7 +101,7 @@
   ];
 
   const actionColumn = reactive({
-    width: 260,
+    width: 160,
     title: '操作',
     key: 'action',
     fixed: 'right',
@@ -116,11 +116,6 @@
             ifShow: () => true,
           },
           {
-            label: '分配角色',
-            onClick: handleAssignRole.bind(null, record),
-            ifShow: () => true,
-          },
-          {
             label: '重置密码',
             onClick: handleResetPassword.bind(null, record),
             auth: ['system:user:reset-password'],
@@ -128,6 +123,10 @@
           },
         ],
         dropDownActions: [
+          {
+            label: '分配角色',
+            key: 'assignRole',
+          },
           {
             label: '切换状态',
             key: 'toggleStatus',
@@ -140,6 +139,7 @@
           },
         ],
         select: (key: string) => {
+          if (key === 'assignRole') handleAssignRole(record);
           if (key === 'toggleStatus') handleToggleStatus(record);
           if (key === 'delete') handleDelete(record);
         },

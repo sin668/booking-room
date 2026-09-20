@@ -4,12 +4,6 @@ import type { AdminRoleSummary } from '@/api/system/user';
 
 export const columns = [
   {
-    title: 'ID',
-    key: 'id',
-    width: 80,
-    ellipsis: { tooltip: true },
-  },
-  {
     title: '用户名',
     key: 'username',
     width: 120,

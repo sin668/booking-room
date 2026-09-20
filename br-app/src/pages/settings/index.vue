@@ -336,7 +336,7 @@
       <view class="sheet" @tap.stop>
         <view class="sheet-handle" />
         <text class="sheet-title">{{ hasBoundPhone ? '修改手机号' : '绑定手机号' }}</text>
-        <text class="sheet-desc">绑定后可用于账号找回、订单通知和余额安全校验</text>
+        <text class="sheet-desc">{{ hasBoundPhone ? '手机号修改后 30 天内不可再次修改' : '绑定后可用于账号找回、订单通知和余额安全校验' }}</text>
 
         <view v-if="hasBoundPhone" class="sms-bind-form">
           <view class="bind-input-row">

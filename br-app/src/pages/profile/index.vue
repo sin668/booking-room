@@ -403,7 +403,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 24rpx;
-  padding: 68rpx 32rpx 76rpx;
+  padding: 108rpx 32rpx 76rpx;
   background: $gradient-primary;
   overflow: hidden;
 }

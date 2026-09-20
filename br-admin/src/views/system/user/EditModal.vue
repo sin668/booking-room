@@ -43,19 +43,20 @@
       },
     },
     {
+      field: 'phone',
+      component: 'NInput',
+      label: '手机号',
+      componentProps: {
+        disabled: true,
+        placeholder: '未绑定',
+      },
+    },
+    {
       field: 'email',
       component: 'NInput',
       label: '邮箱',
       componentProps: {
         placeholder: '请输入邮箱',
-      },
-    },
-    {
-      field: 'mobile',
-      component: 'NInput',
-      label: '手机号',
-      componentProps: {
-        placeholder: '请输入手机号',
       },
     },
     {
@@ -118,7 +119,8 @@
     const formRes = await submit();
     if (formRes && currentId != null) {
       try {
-        await updateUser(currentId, formRes);
+        const { phone: _phone, ...payload } = formRes;
+        await updateUser(currentId, payload);
         closeModal();
         emit('success');
       } catch {

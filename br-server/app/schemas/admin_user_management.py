@@ -30,6 +30,8 @@ class AdminUserListItem(BaseModel):
     phone: str | None = None
     nickname: str | None = None
     user_type: str
+    username: str | None = None
+    email: str | None = None
     status: str
     avatar: str | None = None
     created_at: datetime

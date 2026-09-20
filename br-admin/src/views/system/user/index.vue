@@ -101,12 +101,12 @@
   ];
 
   const actionColumn = reactive({
-    width: 340,
+    width: 260,
     title: '操作',
     key: 'action',
     fixed: 'right',
     render(record) {
-      return h(TableAction, {
+      return h(TableAction as any, {
         style: 'button',
         actions: [
           {
@@ -126,19 +126,23 @@
             auth: ['system:user:reset-password'],
             ifShow: () => true,
           },
+        ],
+        dropDownActions: [
           {
             label: '切换状态',
-            onClick: handleToggleStatus.bind(null, record),
+            key: 'toggleStatus',
             auth: ['system:user:status'],
-            ifShow: () => true,
           },
           {
             label: '删除',
-            onClick: handleDelete.bind(null, record),
+            key: 'delete',
             auth: ['system:user:delete'],
-            ifShow: () => true,
           },
         ],
+        select: (key: string) => {
+          if (key === 'toggleStatus') handleToggleStatus(record);
+          if (key === 'delete') handleDelete(record);
+        },
       });
     },
   });

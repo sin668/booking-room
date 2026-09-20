@@ -34,7 +34,6 @@ export interface AdminUserInfo {
   username: string;
   nickname?: string;
   email?: string;
-  mobile?: string;
   avatar?: string;
   roles?: AdminRoleSummary[];
   permissions?: AdminPermission[];
@@ -43,7 +42,6 @@ export interface AdminUserInfo {
 export interface AdminProfileParams {
   nickname?: string;
   email?: string;
-  mobile?: string;
   avatar?: string;
 }
 
@@ -58,6 +56,8 @@ export interface UserListItem {
   phone: string;
   nickname: string | null;
   user_type: string;
+  username: string | null;
+  email: string | null;
   status: string;
   avatar: string | null;
   created_at: string;
@@ -69,7 +69,6 @@ export interface UserListItem {
 export interface UserDetail extends UserListItem {
   username: string | null;
   email: string | null;
-  mobile: string | null;
   balance: number;
   is_super_admin: boolean;
   wechat_openid: string | null;
@@ -99,7 +98,6 @@ export interface UserCreateParams {
 export interface UserUpdateParams {
   nickname?: string;
   email?: string;
-  mobile?: string;
   avatar?: string;
   balance?: number;
   role_ids?: number[];

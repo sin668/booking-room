@@ -6,21 +6,46 @@ export const columns = [
   {
     title: 'ID',
     key: 'id',
+    width: 80,
+    ellipsis: { tooltip: true },
+  },
+  {
+    title: '用户名',
+    key: 'username',
+    width: 120,
+    render(row) {
+      return row.username || '-';
+    },
   },
   {
     title: '手机号',
     key: 'phone',
+    width: 130,
+    render(row) {
+      return row.phone || '-';
+    },
   },
   {
     title: '昵称',
     key: 'nickname',
+    width: 120,
     render(row) {
       return row.nickname || '-';
     },
   },
   {
+    title: '邮箱',
+    key: 'email',
+    width: 180,
+    ellipsis: { tooltip: true },
+    render(row) {
+      return row.email || '-';
+    },
+  },
+  {
     title: '用户类型',
     key: 'user_type',
+    width: 100,
     render(row) {
       return h(
         NTag,
@@ -35,12 +60,9 @@ export const columns = [
     },
   },
   {
-    title: '余额',
-    key: 'balance',
-  },
-  {
     title: '状态',
     key: 'status',
+    width: 80,
     render(row) {
       const map: Record<string, { type: 'success' | 'error' | 'warning'; label: string }> = {
         active: { type: 'success', label: '正常' },
@@ -54,6 +76,7 @@ export const columns = [
   {
     title: '角色',
     key: 'roles',
+    width: 160,
     render(row) {
       const roles: AdminRoleSummary[] = row.roles || [];
       if (!roles.length) return '-';
@@ -79,5 +102,6 @@ export const columns = [
   {
     title: '注册时间',
     key: 'created_at',
+    width: 170,
   },
 ];

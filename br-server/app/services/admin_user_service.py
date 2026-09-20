@@ -67,6 +67,8 @@ class AdminUserService:
                 phone=user.phone,
                 nickname=user.nickname,
                 user_type=user.user_type,
+                username=user.username,
+                email=user.email,
                 status=user.status,
                 avatar=user.avatar,
                 created_at=user.created_at,

@@ -2,7 +2,9 @@
 
 ## Purpose
 培训课程列表 API 提供培训室列表和分类课程列表的查询接口，支撑 br-app 培训课程列表页面的数据展示，包括培训室附带的热门推荐课程。
+
 ## Requirements
+
 ### Requirement: Teacher database model
 
 系统 SHALL 创建 `teachers` 表，包含字段：`id`（主键，自增）、`name`（VARCHAR(50)，教师姓名，非空）、`avatar`（VARCHAR(512)，教师头像 URL，可空）、`title`（VARCHAR(50)，职称/头衔，可空，如 "考研政治 · 8年教龄"）、`rating`（DECIMAL(3,1)，评分，默认 0.0）、`created_at`、`updated_at`。
@@ -75,7 +77,7 @@
 
 ### Requirement: List training courses API
 
-系统 SHALL 提供 `GET /api/v1/training/courses` 接口，返回按分类过滤的课程分页列表。支持查询参数 `page`（默认 1）、`page_size`（默认 10，最大 50）、`category`（可选，枚举值 "primaryschool"/"middleschool"/"postgraduate"/"civil_service"/"language"/"skills"/"professional"）。仅返回 `status=active` 的课程。当 `category` 为空时返回全部分类的课程。
+系统 SHALL 提供 `GET /api/v1/training/courses` 接口，返回按分类过滤的课程分页列表。支持查询参数 `page`（默认 1）、`page_size`（默认 10，最大 50）、`category`（可选，枚举值 "primaryschool"/"middleschool"/"postgraduate"/"civil_service"/"language"/"skills"/"professional"）、`city_id`（可选，整数，≥1）。仅返回 `status=active` 的课程。当 `category` 为空时返回全部分类的课程。当传入 `city_id` 时，按课程所属培训室的城市过滤：仅返回所属培训室 `city_id` 等于指定值，或所属培训室未设置城市（`city_id` 为 null）的课程，与培训室列表的城市过滤口径一致。
 
 #### Scenario: Successful list request with default pagination
 
@@ -91,6 +93,18 @@
 
 - **WHEN** 客户端发送 `GET /api/v1/training/courses?category=nonexistent`
 - **THEN** 返回 HTTP 200，`items` 为空数组，`total` 为 0
+
+#### Scenario: Filter courses by city
+
+- **GIVEN** 课程 A 所属培训室 `city_id=1`，课程 B 所属培训室 `city_id=2`，两者均为 `status=active` 且有进行中的固定班课排课
+- **WHEN** 客户端发送 `GET /api/v1/training/courses?city_id=1`
+- **THEN** 返回 HTTP 200，`items` 仅包含课程 A，不包含课程 B，`total` 等于命中城市的课程数
+
+#### Scenario: Courses in rooms without city always visible
+
+- **GIVEN** 课程 C 所属培训室 `city_id` 为 null（未设置城市），且为 `status=active` 并有进行中的固定班课排课
+- **WHEN** 客户端发送 `GET /api/v1/training/courses?city_id=1`
+- **THEN** 返回 HTTP 200，`items` 包含课程 C
 
 ### Requirement: Training room response schema
 
@@ -139,4 +153,3 @@
 - **GIVEN** 课程 `tags` 字段值为 null
 - **WHEN** 客户端请求课程列表
 - **THEN** 该课程的 `tags` 字段返回为空数组 `[]`
-

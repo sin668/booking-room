@@ -36,11 +36,17 @@ async def list_training_courses(
         None,
         pattern="^(primaryschool|middleschool|postgraduate|civil_service|language|skills|professional)$",
     ),
+    city_id: int | None = Query(None, ge=1),
     keyword: str | None = Query(None, max_length=100),
     db: AsyncSession = Depends(get_db),
 ) -> CourseListResponse:
     return await training_service.list_courses(
-        db, page=page, page_size=page_size, category=category, keyword=keyword
+        db,
+        page=page,
+        page_size=page_size,
+        category=category,
+        city_id=city_id,
+        keyword=keyword,
     )
 
 

@@ -284,11 +284,13 @@ async def list_courses(
     page: int = 1,
     page_size: int = DEFAULT_PAGE_SIZE,
     category: str | None = None,
+    city_id: int | None = None,
     keyword: str | None = None,
 ) -> CourseListResponse:
     """返回分页课程列表，附带教室名和教师信息。
 
     单条查询：JOIN StudyRoom + CourseSchedule + Teacher。
+    city_id 过滤与培训室列表口径一致：所属培训室为指定城市或未设置城市均可见。
     """
     page_size = min(page_size, MAX_PAGE_SIZE)
     offset = (page - 1) * page_size
@@ -299,15 +301,19 @@ async def list_courses(
     ]
     if category is not None:
         filters.append(Course.category == category)
+    if city_id is not None:
+        filters.append(or_(StudyRoom.city_id == city_id, StudyRoom.city_id.is_(None)))
     if keyword:
         filters.append(or_(
             Course.name.ilike(f"%{keyword}%"),
             Teacher.name.ilike(f"%{keyword}%"),
         ))
 
-    count_result = await db.execute(
-        select(func.count()).select_from(Course).where(*filters)
-    )
+    # city_id 条件引用 StudyRoom，count 需显式 JOIN，否则隐式笛卡尔积放大 total
+    count_stmt = select(func.count()).select_from(Course)
+    if city_id is not None:
+        count_stmt = count_stmt.join(StudyRoom, Course.room_id == StudyRoom.id)
+    count_result = await db.execute(count_stmt.where(*filters))
     total = count_result.scalar_one()
 
     result = await db.execute(

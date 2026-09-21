@@ -234,6 +234,12 @@
                 :src="course.cover_image"
                 mode="aspectFill"
               />
+              <view class="cover-status open">
+                <text class="cover-status-text">可预约</text>
+              </view>
+              <view class="cover-chip">
+                <text class="cover-chip-text">课程</text>
+              </view>
             </view>
             <view class="course-info">
               <view class="course-info-top">
@@ -531,6 +537,9 @@ async function fetchCourses(reset = false) {
       page_size: 10,
       category: activeTab.value !== 'all' ? activeTab.value : undefined,
     }
+    if (currentCityId.value) {
+      params.city_id = currentCityId.value
+    }
     const kw = searchKeyword.value.trim()
     if (kw) {
       params.keyword = kw
@@ -563,7 +572,11 @@ onMounted(async () => {
 onShow(() => {
   if (currentCityId.value !== lastCityId) {
     lastCityId = currentCityId.value
-    fetchTrainingRooms(true)
+    if (activeTab.value === 'all') {
+      fetchTrainingRooms(true)
+    } else {
+      fetchCourses(true)
+    }
   }
 })
 

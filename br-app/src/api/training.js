@@ -10,7 +10,7 @@ export function getTrainingRooms(params) {
 
 /**
  * 获取培训课程列表
- * @param {Object} params - { page, page_size, category }
+ * @param {Object} params - { page, page_size, category, city_id, keyword }
  */
 export function getTrainingCourses(params) {
   return get('/api/v1/training/courses', params)

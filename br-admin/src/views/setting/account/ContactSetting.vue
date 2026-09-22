@@ -34,7 +34,7 @@
             <n-button
               type="primary"
               ghost
-              :disabled="phoneCooldown > 0 || codeCountdown > 0 || sendingCode"
+              :disabled="phoneCooldown > 0 || codeCountdown > 0 || sendingCode || phoneUnchanged"
               :loading="sendingCode"
               @click="handleSendCode"
             >
@@ -88,6 +88,7 @@
   const subLoading = ref(false);
   const sendingCode = ref(false);
   const phoneCooldown = ref(0);
+  const currentPhone = ref('');
   const codeCountdown = ref(0);
   let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -117,9 +118,14 @@
       : '请输入新的联系电话'
   );
 
+  const phoneUnchanged = computed(
+    () => !!currentPhone.value && formValue.phone === currentPhone.value
+  );
+
   async function loadProfile() {
     const result = await userApi.getUserInfo();
     phoneCooldown.value = cooldownRemainingDays(result.phone_updated_at);
+    currentPhone.value = result.phone || '';
     formValue.phone = result.phone || '';
   }
 

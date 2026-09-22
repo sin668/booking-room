@@ -33,12 +33,25 @@
           </div>
         </n-form-item>
 
-        <n-form-item label="用户名" path="username">
-          <n-input v-model:value="formValue.username" :placeholder="usernamePlaceholder" />
-        </n-form-item>
-
-        <n-form-item label="联系电话" path="phone">
-          <n-input v-model:value="formValue.phone" :placeholder="phonePlaceholder" />
+        <n-form-item path="username">
+          <template #label>
+            <div class="flex items-center">
+              用户名
+              <n-tooltip trigger="hover">
+                <template #trigger>
+                  <n-icon size="16" class="ml-1 text-gray-400 cursor-pointer">
+                    <QuestionCircleOutlined />
+                  </n-icon>
+                </template>
+                用户名修改后 30 天内不可再次修改
+              </n-tooltip>
+            </div>
+          </template>
+          <n-input
+            v-model:value="formValue.username"
+            :placeholder="usernamePlaceholder"
+            :disabled="usernameCooldown > 0"
+          />
         </n-form-item>
 
         <n-form-item label="昵称" path="nickname">
@@ -93,6 +106,7 @@
 <script lang="ts" setup>
   import { computed, onMounted, reactive, ref } from 'vue';
   import { useMessage, type UploadFileInfo } from 'naive-ui';
+  import { QuestionCircleOutlined } from '@vicons/antd';
   import * as userApi from '@/api/system/user';
   import { useUser } from '@/store/modules/user';
   import { uploadImage } from '@/api/upload';
@@ -113,11 +127,6 @@
       message: '请输入用户名',
       trigger: 'blur',
     },
-    phone: {
-      required: true,
-      message: '请输入联系电话',
-      trigger: 'blur',
-    },
   };
   const formRef: any = ref(null);
   const message = useMessage();
@@ -134,7 +143,6 @@
     username: '',
     nickname: '',
     email: '',
-    phone: '',
     avatar: '',
     gender: null as string | null,
     birthday: null as string | null,
@@ -142,17 +150,11 @@
   });
 
   const usernameCooldown = ref(0);
-  const phoneCooldown = ref(0);
 
   const usernamePlaceholder = computed(() =>
     usernameCooldown.value > 0
       ? `用户名修改后 30 天内不可再次修改（剩余 ${usernameCooldown.value} 天）`
       : '请输入用户名'
-  );
-  const phonePlaceholder = computed(() =>
-    phoneCooldown.value > 0
-      ? `手机号修改后 30 天内不可再次修改（剩余 ${phoneCooldown.value} 天）`
-      : '请输入联系电话'
   );
 
   async function loadProfile() {
@@ -161,14 +163,12 @@
       username: result.username || '',
       nickname: result.nickname || result.username || '',
       email: result.email || '',
-      phone: result.phone || '',
       avatar: result.avatar || '',
       gender: result.gender || null,
       birthday: result.birthday || null,
       signature: result.signature || '',
     });
     usernameCooldown.value = cooldownRemainingDays(result.username_updated_at);
-    phoneCooldown.value = cooldownRemainingDays(result.phone_updated_at);
   }
 
   async function handleAvatarUpload({
@@ -204,7 +204,6 @@
           userStore.setNickname(result.nickname || result.username || formValue.nickname);
           userStore.setAvatar(result.avatar || '');
           usernameCooldown.value = cooldownRemainingDays(result.username_updated_at);
-          phoneCooldown.value = cooldownRemainingDays(result.phone_updated_at);
           message.success('保存成功');
         } catch (error: any) {
           message.error(error?.message || '保存失败');

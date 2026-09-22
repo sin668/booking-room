@@ -49,11 +49,20 @@ export interface AdminProfileParams {
   username?: string;
   nickname?: string;
   email?: string;
-  phone?: string | null;
   avatar?: string;
   gender?: string | null;
   birthday?: string | null;
   signature?: string | null;
+}
+
+export interface AdminChangePhoneParams {
+  phone: string;
+  sms_code: string;
+}
+
+export interface AdminChangePhoneResult {
+  message: string;
+  phone: string;
 }
 
 export interface AdminPasswordParams {
@@ -150,6 +159,23 @@ export function updatePassword(params: AdminPasswordParams) {
 /** @description: 用户修改密码 */
 export function changePassword(params: AdminPasswordParams) {
   return updatePassword(params);
+}
+
+/** @description: 发送手机号验证码（对接 C 端公共 send-code，验证码可选 captcha） */
+export function sendSmsCode(phone: string) {
+  return Alova.Post('/v1/auth/send-code', { phone }, {
+    meta: {
+      ...nativeMeta,
+      ignoreToken: true,
+    },
+  });
+}
+
+/** @description: 修改联系电话（需手机验证码校验） */
+export function changeAdminPhone(params: AdminChangePhoneParams) {
+  return Alova.Patch<AdminChangePhoneResult>('/v1/admin/auth/phone', params, {
+    meta: nativeMeta,
+  });
 }
 
 /** @description: 用户登出 */

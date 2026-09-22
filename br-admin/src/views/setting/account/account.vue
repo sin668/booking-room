@@ -19,6 +19,7 @@
         <n-card :bordered="false" size="small" :title="state.typeTitle" class="proCard">
           <BasicSetting v-if="state.type === 1" />
           <SafetySetting v-if="state.type === 2" />
+          <ContactSetting v-if="state.type === 3" />
         </n-card>
       </n-grid-item>
     </n-grid>
@@ -28,6 +29,7 @@
   import { reactive, ref } from 'vue';
   import BasicSetting from './BasicSetting.vue';
   import SafetySetting from './SafetySetting.vue';
+  import ContactSetting from './ContactSetting.vue';
 
   const typeTabList = [
     {
@@ -39,6 +41,11 @@
       name: '安全设置',
       desc: '密码修改',
       key: 2,
+    },
+    {
+      name: '联系方式设置',
+      desc: '手机号验证码修改',
+      key: 3,
     },
   ];
 

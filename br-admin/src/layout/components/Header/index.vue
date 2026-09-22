@@ -172,7 +172,7 @@
       });
 
       const username = computed(
-        () => userStore.info?.username || userStore.getNickname || ''
+        () => userStore.getNickname || userStore.info?.username || ''
       );
 
       const userAvatar = computed(() => userStore.getAvatar);

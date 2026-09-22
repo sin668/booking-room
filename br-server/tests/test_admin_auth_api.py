@@ -78,6 +78,183 @@ async def test_profile_update_does_not_accept_username(client: AsyncClient, admi
 
 
 @pytest.mark.asyncio
+async def test_profile_update_does_not_accept_mobile(client: AsyncClient, admin_user):
+    token = AdminAuthService.create_access_token(admin_user.id)
+
+    resp = await client.put(
+        "/api/v1/admin/auth/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"mobile": "13900139000"},
+    )
+
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_me_returns_phone(client: AsyncClient, admin_user):
+    token = AdminAuthService.create_access_token(admin_user.id)
+
+    me = await client.get(
+        "/api/v1/admin/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert me.status_code == 200
+    body = me.json()
+    assert "phone" in body
+    assert body["username_updated_at"] is None
+    assert body["phone_updated_at"] is None
+
+
+@pytest.mark.asyncio
+async def test_profile_update_persists_phone(client: AsyncClient, admin_user, db_session):
+    token = AdminAuthService.create_access_token(admin_user.id)
+
+    resp = await client.put(
+        "/api/v1/admin/auth/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"nickname": "New Nick", "email": "new@example.com", "phone": "13700137000"},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["phone"] == "13700137000"
+    assert resp.json()["nickname"] == "New Nick"
+    assert resp.json()["phone_updated_at"] is not None
+    await db_session.refresh(admin_user)
+    assert admin_user.phone == "13700137000"
+
+
+@pytest.mark.asyncio
+async def test_profile_update_unchanged_phone_skips_cooldown(
+    client: AsyncClient, admin_user, db_session
+):
+    from datetime import datetime
+
+    admin_user.phone = "13700137000"
+    admin_user.phone_updated_at = datetime.now()
+    await db_session.commit()
+    token = AdminAuthService.create_access_token(admin_user.id)
+
+    resp = await client.put(
+        "/api/v1/admin/auth/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"phone": "13700137000", "nickname": "Still me"},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["nickname"] == "Still me"
+
+
+@pytest.mark.asyncio
+async def test_profile_update_persists_username(client: AsyncClient, admin_user, db_session):
+    token = AdminAuthService.create_access_token(admin_user.id)
+
+    resp = await client.put(
+        "/api/v1/admin/auth/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"username": "new_admin_01"},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["username"] == "new_admin_01"
+    assert resp.json()["username_updated_at"] is not None
+    await db_session.refresh(admin_user)
+    assert admin_user.username == "new_admin_01"
+
+
+@pytest.mark.asyncio
+async def test_profile_update_rejects_invalid_username_format(client: AsyncClient, admin_user):
+    token = AdminAuthService.create_access_token(admin_user.id)
+
+    resp = await client.put(
+        "/api/v1/admin/auth/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"username": "bad name!"},
+    )
+
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_profile_update_rejects_duplicate_username(client: AsyncClient, admin_user, db_session):
+    db_session.add(
+        User(user_type="app", username="taken_name", password_hash="x", nickname="Other")
+    )
+    await db_session.commit()
+    token = AdminAuthService.create_access_token(admin_user.id)
+
+    resp = await client.put(
+        "/api/v1/admin/auth/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"username": "taken_name"},
+    )
+
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_profile_update_username_cooldown_returns_429(client: AsyncClient, admin_user):
+    token = AdminAuthService.create_access_token(admin_user.id)
+
+    first = await client.put(
+        "/api/v1/admin/auth/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"username": "first_change"},
+    )
+    assert first.status_code == 200
+
+    second = await client.put(
+        "/api/v1/admin/auth/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"username": "second_chang3"},
+    )
+
+    assert second.status_code == 429
+    body = second.json()
+    assert "30 天" in body["detail"]
+    assert body["retry_after_seconds"] > 0
+
+
+@pytest.mark.asyncio
+async def test_profile_update_persists_gender_birthday_signature(
+    client: AsyncClient, admin_user, db_session
+):
+    token = AdminAuthService.create_access_token(admin_user.id)
+
+    resp = await client.put(
+        "/api/v1/admin/auth/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"gender": "male", "birthday": "1995-06-01", "signature": "hello admin"},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["gender"] == "male"
+    assert resp.json()["birthday"] == "1995-06-01"
+    assert resp.json()["signature"] == "hello admin"
+    await db_session.refresh(admin_user)
+    assert admin_user.signature == "hello admin"
+
+
+@pytest.mark.asyncio
+async def test_profile_update_rejects_conflicting_phone(client: AsyncClient, admin_user, db_session):
+    db_session.add(
+        User(user_type="app", phone="13800138000", password_hash="x", nickname="Other")
+    )
+    await db_session.commit()
+    token = AdminAuthService.create_access_token(admin_user.id)
+
+    resp = await client.put(
+        "/api/v1/admin/auth/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"phone": "13800138000"},
+    )
+
+    assert resp.status_code == 409
+    await db_session.refresh(admin_user)
+    assert admin_user.phone == ""
+
+
+@pytest.mark.asyncio
 async def test_password_update_validates_confirmation(client: AsyncClient, admin_user):
     token = AdminAuthService.create_access_token(admin_user.id)
 

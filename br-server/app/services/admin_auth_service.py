@@ -13,6 +13,7 @@ from app.models.admin_menu import AdminMenu
 from app.models.admin_role import AdminRole
 from app.models.user import User
 from app.schemas.admin_auth import AdminPermissionItem, AdminRoleSummary
+from app.services.user_profile_service import UserProfileService
 
 
 class AdminAuthService:
@@ -137,6 +138,17 @@ class AdminAuthService:
         return {item.value for item in await self.permissions_for(admin)}
 
     async def update_profile(self, admin: User, values: dict) -> User:
+        values = dict(values)
+        profile_service = UserProfileService(self._db)
+
+        username = values.pop("username", None)
+        if username and username != admin.username:
+            await profile_service.update_username(admin, username)
+
+        phone = values.pop("phone", None)
+        if phone and phone != admin.phone:
+            await profile_service.update_phone(admin, phone)
+
         for key, value in values.items():
             setattr(admin, key, value)
         await self._db.flush()

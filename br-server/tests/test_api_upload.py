@@ -175,7 +175,7 @@ class TestUploadAPI:
         assert data["content_type"] == "image/png"
 
     @pytest.mark.asyncio
-    async def test_app_upload_rejects_non_avatar_scope(
+    async def test_app_upload_accepts_registered_scope(
         self,
         client: AsyncClient,
         monkeypatch,
@@ -189,8 +189,8 @@ class TestUploadAPI:
             data={"scope": "room-cover"},
         )
 
-        assert resp.status_code == 422
-        assert resp.json()["detail"] == "上传场景不支持"
+        assert resp.status_code == 200
+        assert resp.json()["url"].startswith("/uploads/images/room-cover/")
 
     @pytest.mark.asyncio
     async def test_app_upload_review_scope(
@@ -234,7 +234,7 @@ class TestUploadAPI:
         assert "文件大小不能超过5MB" in resp.json()["detail"]
 
     @pytest.mark.asyncio
-    async def test_app_upload_rejects_common_scope(
+    async def test_app_upload_rejects_unregistered_scope(
         self,
         client: AsyncClient,
         monkeypatch,
@@ -245,7 +245,7 @@ class TestUploadAPI:
         resp = await client.post(
             "/api/v1/upload/image",
             files={"file": ("any.png", io.BytesIO(PNG_BYTES), "image/png")},
-            data={"scope": "common"},
+            data={"scope": "not-registered"},
         )
 
         assert resp.status_code == 422

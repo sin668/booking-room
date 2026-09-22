@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -41,7 +41,13 @@ class AdminCurrentResponse(BaseModel):
     username: str
     nickname: str | None = None
     email: str | None = None
+    phone: str | None = None
     avatar: str | None = None
+    gender: str | None = None
+    birthday: date | None = None
+    signature: str | None = None
+    username_updated_at: datetime | None = None
+    phone_updated_at: datetime | None = None
     is_super_admin: bool
     roles: list[AdminRoleSummary]
     permissions: list[AdminPermissionItem]
@@ -50,9 +56,14 @@ class AdminCurrentResponse(BaseModel):
 
 
 class AdminProfileUpdate(BaseModel):
+    username: str | None = Field(None, max_length=50)
     nickname: str | None = Field(None, max_length=50)
     email: str | None = Field(None, max_length=255)
+    phone: str | None = Field(None, max_length=11)
     avatar: str | None = Field(None, max_length=512)
+    gender: str | None = Field(None, max_length=10)
+    birthday: date | None = None
+    signature: str | None = Field(None, max_length=200)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -79,7 +90,13 @@ def admin_profile_from_model(admin: Any) -> dict[str, Any]:
         "username": admin.username,
         "nickname": admin.nickname,
         "email": admin.email,
+        "phone": admin.phone,
         "avatar": admin.avatar,
+        "gender": admin.gender,
+        "birthday": admin.birthday,
+        "signature": admin.signature,
+        "username_updated_at": admin.username_updated_at,
+        "phone_updated_at": admin.phone_updated_at,
         "is_super_admin": admin.is_super_admin,
         "created_at": admin.created_at,
         "updated_at": admin.updated_at,

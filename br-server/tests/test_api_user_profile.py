@@ -110,7 +110,7 @@ async def test_update_username_rejects_cooldown(profile_client, db_session):
 
     assert resp.status_code == 429
     data = resp.json()
-    assert data["detail"] == "用户名修改后 24 小时内不可再次修改"
+    assert data["detail"] == "用户名修改后 30 天内不可再次修改"
     assert data["retry_after_seconds"] > 0
 
 

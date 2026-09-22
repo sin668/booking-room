@@ -44,7 +44,7 @@ class UserProfileService:
         update_data = data.model_dump(exclude_unset=True)
 
         if "username" in update_data and update_data["username"] != user.username:
-            await self._update_username(user, update_data["username"])
+            await self.update_username(user, update_data["username"])
 
         if "email" in update_data:
             self._update_email(user, update_data["email"])
@@ -64,9 +64,9 @@ class UserProfileService:
         await self._db.refresh(user)
         return user
 
-    async def _update_username(self, user: User, username: str) -> None:
+    async def update_username(self, user: User, username: str) -> None:
         self._username_service.validate_editable_username(username)
-        self._enforce_cooldown(user.username_updated_at, "用户名修改后 30 天内不可再次修改")
+        self.enforce_cooldown(user.username_updated_at, "用户名修改后 30 天内不可再次修改")
 
         if await self._username_service.username_exists(username, exclude_user_id=user.id):
             raise HTTPException(
@@ -76,6 +76,21 @@ class UserProfileService:
 
         user.username = username
         user.username_updated_at = datetime.now()
+
+    async def update_phone(self, user: User, new_phone: str) -> None:
+        self.enforce_cooldown(user.phone_updated_at, "手机号修改后 30 天内不可再次修改")
+
+        existing = await self._db.execute(
+            select(User).where(User.phone == new_phone, User.id != user.id)
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="该手机号已被其他账号使用",
+            )
+
+        user.phone = new_phone
+        user.phone_updated_at = datetime.now()
 
     def _update_email(self, user: User, email: str | None) -> None:
         if email is not None and email != user.email:
@@ -88,24 +103,12 @@ class UserProfileService:
 
     async def change_phone(self, user_id: uuid.UUID, new_phone: str) -> User:
         user = await self.get_current_user(user_id)
-        self._enforce_cooldown(user.phone_updated_at, "手机号修改后 30 天内不可再次修改")
-
-        existing = await self._db.execute(
-            select(User).where(User.phone == new_phone, User.id != user_id)
-        )
-        if existing.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="该手机号已被其他账号使用",
-            )
-
-        user.phone = new_phone
-        user.phone_updated_at = datetime.now()
+        await self.update_phone(user, new_phone)
         await self._db.flush()
         await self._db.refresh(user)
         return user
 
-    def _enforce_cooldown(self, updated_at: datetime | None, detail: str) -> None:
+    def enforce_cooldown(self, updated_at: datetime | None, detail: str) -> None:
         if updated_at is None:
             return
 

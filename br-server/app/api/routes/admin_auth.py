@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import AdminContext, get_current_admin_context
@@ -15,6 +16,7 @@ from app.schemas.admin_auth import (
 )
 from app.models.user import User
 from app.services.admin_auth_service import AdminAuthService
+from app.services.user_profile_service import ProfileCooldownError
 
 router = APIRouter(prefix="/api/v1/admin/auth", tags=["admin-auth"])
 
@@ -62,10 +64,19 @@ async def update_profile(
     data: AdminProfileUpdate,
     context: AdminContext = Depends(get_current_admin_context),
     db: AsyncSession = Depends(get_db),
-) -> AdminCurrentResponse:
+) -> AdminCurrentResponse | JSONResponse:
     service = AdminAuthService(db, settings)
     admin = await service.get_admin_by_id(context.admin_id)
-    admin = await service.update_profile(admin, data.model_dump(exclude_unset=True))
+    try:
+        admin = await service.update_profile(admin, data.model_dump(exclude_unset=True))
+    except ProfileCooldownError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={
+                "detail": exc.detail,
+                "retry_after_seconds": exc.retry_after_seconds,
+            },
+        )
     return AdminCurrentResponse(
         **admin_profile_from_model(admin),
         roles=service.roles_for(admin),

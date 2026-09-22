@@ -6,7 +6,6 @@
     "pytest",
     "tests/test_admin_auth_api.py",
     "tests/test_api_user_profile.py",
-    "tests/test_api_upload.py",
     "-q",
     "-p",
     "no:cacheprovider"

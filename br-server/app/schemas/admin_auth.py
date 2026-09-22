@@ -59,7 +59,6 @@ class AdminProfileUpdate(BaseModel):
     username: str | None = Field(None, max_length=50)
     nickname: str | None = Field(None, max_length=50)
     email: str | None = Field(None, max_length=255)
-    phone: str | None = Field(None, max_length=11)
     avatar: str | None = Field(None, max_length=512)
     gender: str | None = Field(None, max_length=10)
     birthday: date | None = None

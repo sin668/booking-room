@@ -145,10 +145,6 @@ class AdminAuthService:
         if username and username != admin.username:
             await profile_service.update_username(admin, username)
 
-        phone = values.pop("phone", None)
-        if phone and phone != admin.phone:
-            await profile_service.update_phone(admin, phone)
-
         for key, value in values.items():
             setattr(admin, key, value)
         await self._db.flush()

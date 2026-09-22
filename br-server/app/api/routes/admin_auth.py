@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import AdminContext, get_current_admin_context
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.redis import get_redis
 from app.schemas.admin_auth import (
     AdminCurrentResponse,
     AdminLoginRequest,
@@ -14,9 +15,11 @@ from app.schemas.admin_auth import (
     AdminTokenResponse,
     admin_profile_from_model,
 )
+from app.schemas.user import ChangePhoneRequest, ChangePhoneResponse
 from app.models.user import User
 from app.services.admin_auth_service import AdminAuthService
-from app.services.user_profile_service import ProfileCooldownError
+from app.services.sms_service import SMSService
+from app.services.user_profile_service import ProfileCooldownError, UserProfileService
 
 router = APIRouter(prefix="/api/v1/admin/auth", tags=["admin-auth"])
 
@@ -82,6 +85,37 @@ async def update_profile(
         roles=service.roles_for(admin),
         permissions=await service.permissions_for(admin),
     )
+
+
+@router.patch("/phone", response_model=ChangePhoneResponse)
+async def change_phone(
+    data: ChangePhoneRequest,
+    context: AdminContext = Depends(get_current_admin_context),
+    db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
+) -> ChangePhoneResponse | JSONResponse:
+    """Change current admin's phone number with SMS verification."""
+    service = AdminAuthService(db, settings)
+    admin = await service.get_admin_by_id(context.admin_id)
+
+    sms_ok = await SMSService(redis=redis, config=settings).verify_code(data.phone, data.sms_code)
+    if not sms_ok:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "验证码无效或已过期"},
+        )
+
+    try:
+        user = await UserProfileService(db).change_phone(admin.id, data.phone)
+    except ProfileCooldownError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={
+                "detail": exc.detail,
+                "retry_after_seconds": exc.retry_after_seconds,
+            },
+        )
+    return ChangePhoneResponse(message="手机号已更新", phone=user.phone or "")
 
 
 @router.put("/password", response_model=AdminMessageResponse, status_code=status.HTTP_200_OK)

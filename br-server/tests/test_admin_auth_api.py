@@ -107,7 +107,7 @@ async def test_me_returns_phone(client: AsyncClient, admin_user):
 
 
 @pytest.mark.asyncio
-async def test_profile_update_persists_phone(client: AsyncClient, admin_user, db_session):
+async def test_profile_update_rejects_phone_field(client: AsyncClient, admin_user):
     token = AdminAuthService.create_access_token(admin_user.id)
 
     resp = await client.put(
@@ -116,29 +116,23 @@ async def test_profile_update_persists_phone(client: AsyncClient, admin_user, db
         json={"nickname": "New Nick", "email": "new@example.com", "phone": "13700137000"},
     )
 
-    assert resp.status_code == 200
-    assert resp.json()["phone"] == "13700137000"
-    assert resp.json()["nickname"] == "New Nick"
-    assert resp.json()["phone_updated_at"] is not None
-    await db_session.refresh(admin_user)
-    assert admin_user.phone == "13700137000"
+    assert resp.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_profile_update_unchanged_phone_skips_cooldown(
+async def test_profile_update_unchanged_username_skips_cooldown(
     client: AsyncClient, admin_user, db_session
 ):
     from datetime import datetime
 
-    admin_user.phone = "13700137000"
-    admin_user.phone_updated_at = datetime.now()
+    admin_user.username_updated_at = datetime.now()
     await db_session.commit()
     token = AdminAuthService.create_access_token(admin_user.id)
 
     resp = await client.put(
         "/api/v1/admin/auth/profile",
         headers={"Authorization": f"Bearer {token}"},
-        json={"phone": "13700137000", "nickname": "Still me"},
+        json={"username": "admin", "nickname": "Still me"},
     )
 
     assert resp.status_code == 200
@@ -249,9 +243,120 @@ async def test_profile_update_rejects_conflicting_phone(client: AsyncClient, adm
         json={"phone": "13800138000"},
     )
 
-    assert resp.status_code == 409
+    assert resp.status_code == 422
     await db_session.refresh(admin_user)
     assert admin_user.phone == ""
+
+
+@pytest.mark.asyncio
+class TestAdminPhoneChangeWithSms:
+    async def _patch_sms(self, monkeypatch, verify_ok: bool):
+        import app.api.routes.admin_auth as admin_auth_route
+
+        class FakeSMS:
+            def __init__(self, redis=None, config=None):
+                pass
+
+            async def verify_code(self, phone, code):
+                return verify_ok
+
+        monkeypatch.setattr(admin_auth_route, "SMSService", FakeSMS)
+
+    async def test_change_phone_with_valid_code(
+        self, client: AsyncClient, admin_user, db_session, monkeypatch
+    ):
+        await self._patch_sms(monkeypatch, verify_ok=True)
+        token = AdminAuthService.create_access_token(admin_user.id)
+
+        resp = await client.patch(
+            "/api/v1/admin/auth/phone",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"phone": "13700137000", "sms_code": "123456"},
+        )
+
+        assert resp.status_code == 200
+        assert resp.json() == {"message": "手机号已更新", "phone": "13700137000"}
+        await db_session.refresh(admin_user)
+        assert admin_user.phone == "13700137000"
+        assert admin_user.phone_updated_at is not None
+
+    async def test_change_phone_rejects_invalid_code(
+        self, client: AsyncClient, admin_user, db_session, monkeypatch
+    ):
+        await self._patch_sms(monkeypatch, verify_ok=False)
+        token = AdminAuthService.create_access_token(admin_user.id)
+
+        resp = await client.patch(
+            "/api/v1/admin/auth/phone",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"phone": "13700137000", "sms_code": "000000"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == "验证码无效或已过期"
+        await db_session.refresh(admin_user)
+        assert admin_user.phone == ""
+
+    async def test_change_phone_rejects_malformed_payload(
+        self, client: AsyncClient, admin_user
+    ):
+        token = AdminAuthService.create_access_token(admin_user.id)
+
+        bad_phone = await client.patch(
+            "/api/v1/admin/auth/phone",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"phone": "12345", "sms_code": "123456"},
+        )
+        bad_code = await client.patch(
+            "/api/v1/admin/auth/phone",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"phone": "13700137000", "sms_code": "123"},
+        )
+
+        assert bad_phone.status_code == 422
+        assert bad_code.status_code == 422
+
+    async def test_change_phone_conflict_returns_409(
+        self, client: AsyncClient, admin_user, db_session, monkeypatch
+    ):
+        db_session.add(
+            User(user_type="app", phone="13800138000", password_hash="x", nickname="Other")
+        )
+        await db_session.commit()
+        await self._patch_sms(monkeypatch, verify_ok=True)
+        token = AdminAuthService.create_access_token(admin_user.id)
+
+        resp = await client.patch(
+            "/api/v1/admin/auth/phone",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"phone": "13800138000", "sms_code": "123456"},
+        )
+
+        assert resp.status_code == 409
+        await db_session.refresh(admin_user)
+        assert admin_user.phone == ""
+
+    async def test_change_phone_cooldown_returns_429(
+        self, client: AsyncClient, admin_user, db_session, monkeypatch
+    ):
+        from datetime import datetime
+
+        admin_user.phone = "13700137000"
+        admin_user.phone_updated_at = datetime.now()
+        await db_session.commit()
+        await self._patch_sms(monkeypatch, verify_ok=True)
+        token = AdminAuthService.create_access_token(admin_user.id)
+
+        resp = await client.patch(
+            "/api/v1/admin/auth/phone",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"phone": "13900139000", "sms_code": "123456"},
+        )
+
+        assert resp.status_code == 429
+        body = resp.json()
+        assert "30 天" in body["detail"]
+        assert body["retry_after_seconds"] > 0
 
 
 @pytest.mark.asyncio

@@ -1,14 +1,21 @@
 {
   "version": 1,
-  "argv": ["npm", "run", "build:mp-weixin"],
-  "cwd": "br-app",
-  "files": [
-    "br-app/src",
-    "br-app/scripts",
-    "br-app/package.json",
-    "br-app/package-lock.json",
-    "br-app/vite.config.js",
-    "br-app/index.html"
+  "argv": [
+    "/opt/miniconda3/envs/booking-room/bin/python",
+    "-m",
+    "pytest",
+    "tests/test_admin_auth_api.py",
+    "tests/test_api_user_profile.py",
+    "tests/test_api_upload.py",
+    "-q",
+    "-p",
+    "no:cacheprovider"
   ],
-  "env": ["PATH", "NODE_ENV", "NODE_OPTIONS"]
+  "cwd": "br-server",
+  "files": [
+    "br-server/app",
+    "br-server/tests",
+    "br-server/pyproject.toml"
+  ],
+  "env": ["PATH", "PYTHONDONTWRITEBYTECODE"]
 }

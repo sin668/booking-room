@@ -34,15 +34,26 @@ export interface AdminUserInfo {
   username: string;
   nickname?: string;
   email?: string;
+  phone?: string | null;
   avatar?: string;
+  gender?: string | null;
+  birthday?: string | null;
+  signature?: string | null;
+  username_updated_at?: string | null;
+  phone_updated_at?: string | null;
   roles?: AdminRoleSummary[];
   permissions?: AdminPermission[];
 }
 
 export interface AdminProfileParams {
+  username?: string;
   nickname?: string;
   email?: string;
+  phone?: string | null;
   avatar?: string;
+  gender?: string | null;
+  birthday?: string | null;
+  signature?: string | null;
 }
 
 export interface AdminPasswordParams {

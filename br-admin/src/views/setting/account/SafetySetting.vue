@@ -1,5 +1,5 @@
 <template>
-  <n-grid cols="1" responsive="screen" class="-mt-4">
+  <n-grid cols="1" responsive="screen">
     <n-grid-item>
       <n-form :label-width="100" :model="formValue" :rules="rules" ref="formRef">
         <n-form-item label="旧密码" path="old_password">

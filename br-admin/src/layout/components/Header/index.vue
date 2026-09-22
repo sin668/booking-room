@@ -101,7 +101,7 @@
       <div class="layout-header-trigger layout-header-trigger-min">
         <n-dropdown trigger="hover" @select="avatarSelect" :options="avatarOptions">
           <div class="avatar">
-            <n-avatar :src="websiteConfig.logo">
+            <n-avatar round :src="userAvatar || websiteConfig.logo">
               <template #icon>
                 <UserOutlined />
               </template>
@@ -164,13 +164,18 @@
       const drawerSetting = ref();
 
       const state = reactive({
-        username: userStore?.info?.username ?? '',
         fullscreenIcon: 'FullscreenOutlined',
         navMode,
         navTheme,
         headerSetting,
         crumbsSetting,
       });
+
+      const username = computed(
+        () => userStore.info?.username || userStore.getNickname || ''
+      );
+
+      const userAvatar = computed(() => userStore.getAvatar);
 
       const getInverted = computed(() => {
         return ['light', 'header-dark'].includes(unref(navTheme))
@@ -311,7 +316,7 @@
       const avatarSelect = (key) => {
         switch (key) {
           case 1:
-            router.push({ name: 'Setting' });
+            router.push('/setting/account');
             break;
           case 2:
             doLogout();
@@ -330,6 +335,8 @@
 
       return {
         ...toRefs(state),
+        username,
+        userAvatar,
         iconList,
         toggleFullScreen,
         doLogout,

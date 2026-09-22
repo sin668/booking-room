@@ -358,20 +358,10 @@ export default {
       // 关注列表是登录态数据，游客跳过
       if (!isLoggedIn()) return
       const cityId = this.currentCityId == null ? null : Number(this.currentCityId)
-      const cityName = this.currentCityName || ''
       try {
-        const categories = await getAllFollowedCategories()
-        this.followedStudyRooms = categories.studyRooms
-          .filter((room) => {
-            if (cityId !== null && room.city_id !== null && room.city_id !== undefined && room.city_id !== '') {
-              return Number(room.city_id) === cityId
-            }
-            if (cityName && room.city_name) {
-              return room.city_name === cityName
-            }
-            return !room.city_id && !room.city_name
-          })
-          .slice(0, 2)
+        // 城市过滤由服务端统一处理（含无城市归属房间的豁免），与培训课程页口径一致
+        const categories = await getAllFollowedCategories(cityId)
+        this.followedStudyRooms = categories.studyRooms.slice(0, 2)
         this.followedTrainingRooms = categories.trainingRooms.slice(0, 2)
         this.followedCourses = categories.courses.slice(0, 2)
         this.followedTeachers = categories.teachers.slice(0, 2)

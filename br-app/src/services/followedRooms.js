@@ -24,8 +24,8 @@ export function normalizeRoom(room = {}) {
 /**
  * 从后端 API 获取关注房间列表（异步）
  */
-export async function getFollowedRooms(followType = 'room') {
-  const data = await fetchPersistedFollowedRooms(followType)
+export async function getFollowedRooms(followType = 'room', cityId = null) {
+  const data = await fetchPersistedFollowedRooms(followType, cityId)
   const items = data?.items || []
   return items.map(normalizeRoom).filter(Boolean)
 }
@@ -46,12 +46,13 @@ export function getFollowedRoomsSummary(rooms = []) {
 
 /**
  * 获取所有分类的关注列表（自习室、培训室、课程、教师）
+ * cityId 传入时由服务端按城市过滤；不传则返回全部
  */
-export async function getAllFollowedCategories() {
+export async function getAllFollowedCategories(cityId = null) {
   const [roomItems, courseItems, teacherItems] = await Promise.allSettled([
-    getFollowedRooms('room'),
-    getFollowedRooms('course'),
-    getFollowedRooms('teacher'),
+    getFollowedRooms('room', cityId),
+    getFollowedRooms('course', cityId),
+    getFollowedRooms('teacher', cityId),
   ])
 
   const allRooms = roomItems.status === 'fulfilled' ? roomItems.value : []

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.city import City
@@ -11,6 +11,7 @@ from app.models.course_schedule import CourseSchedule
 from app.models.room_follow import RoomFollow
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
+from app.models.teacher_room import TeacherRoom
 from app.schemas.room_follow import FollowedRoomListResponse, FollowedRoomResponse
 
 
@@ -35,32 +36,54 @@ def _to_followed_room(
     )
 
 
+def _city_or_null_condition(city_id: int):
+    """城市匹配；未设置城市的房间在任何城市过滤下都可见。"""
+    return or_(StudyRoom.city_id == city_id, StudyRoom.city_id.is_(None))
+
+
 async def list_followed_rooms(
     db: AsyncSession,
     user_id: uuid.UUID,
     follow_type: str = "room",
+    city_id: int | None = None,
 ) -> FollowedRoomListResponse:
     if follow_type == "teacher":
         # Teacher follows: join with teachers table
+        teacher_filters = [
+            RoomFollow.user_id == user_id,
+            RoomFollow.follow_type == "teacher",
+        ]
+        if city_id is not None:
+            # 教师任一归属房间城市匹配即可见；无任何房间关联的教师始终可见
+            has_city_room = exists(
+                select(1)
+                .select_from(TeacherRoom)
+                .join(StudyRoom, TeacherRoom.room_id == StudyRoom.id)
+                .where(
+                    TeacherRoom.teacher_id == Teacher.id,
+                    _city_or_null_condition(city_id),
+                )
+            )
+            has_any_room = exists(
+                select(1)
+                .select_from(TeacherRoom)
+                .where(TeacherRoom.teacher_id == Teacher.id)
+            )
+            teacher_filters.append(or_(has_city_room, ~has_any_room))
+
         count = (
             await db.execute(
                 select(func.count())
                 .select_from(RoomFollow)
                 .join(Teacher, RoomFollow.room_id == Teacher.id)
-                .where(
-                    RoomFollow.user_id == user_id,
-                    RoomFollow.follow_type == "teacher",
-                )
+                .where(*teacher_filters)
             )
         ).scalar_one()
 
         result = await db.execute(
             select(RoomFollow, Teacher)
             .join(Teacher, RoomFollow.room_id == Teacher.id)
-            .where(
-                RoomFollow.user_id == user_id,
-                RoomFollow.follow_type == "teacher",
-            )
+            .where(*teacher_filters)
             .order_by(RoomFollow.created_at.desc(), RoomFollow.id.desc())
         )
         items = [
@@ -86,20 +109,19 @@ async def list_followed_rooms(
         # Course follows: join with courses table
         # 只关联“进行中的固定班课”排课（schedule_type=fixed, schedule_status=in_progress），
         # 与 br-app 其他课程页面过滤口径一致；无进行中排课的课程仍展示但无排课数据
-        count = (
-            await db.execute(
-                select(func.count())
-                .select_from(RoomFollow)
-                .join(Course, RoomFollow.room_id == Course.id)
-                .where(
-                    RoomFollow.user_id == user_id,
-                    RoomFollow.follow_type == "course",
-                    Course.status == "active",
-                )
-            )
-        ).scalar_one()
-
-        result = await db.execute(
+        course_filters = [
+            RoomFollow.user_id == user_id,
+            RoomFollow.follow_type == "course",
+            Course.status == "active",
+        ]
+        # city_id 条件引用 StudyRoom，count/列表都需显式 JOIN，否则隐式笛卡尔积放大 total
+        count_stmt = (
+            select(func.count())
+            .select_from(RoomFollow)
+            .join(Course, RoomFollow.room_id == Course.id)
+            .where(*course_filters)
+        )
+        list_stmt = (
             select(RoomFollow, Course, CourseSchedule)
             .join(Course, RoomFollow.room_id == Course.id)
             .outerjoin(
@@ -110,13 +132,21 @@ async def list_followed_rooms(
                     CourseSchedule.schedule_status == "in_progress",
                 ),
             )
-            .where(
-                RoomFollow.user_id == user_id,
-                RoomFollow.follow_type == "course",
-                Course.status == "active",
-            )
+            .where(*course_filters)
             .order_by(RoomFollow.created_at.desc(), RoomFollow.id.desc())
         )
+        if city_id is not None:
+            city_cond = _city_or_null_condition(city_id)
+            count_stmt = count_stmt.join(
+                StudyRoom, Course.room_id == StudyRoom.id
+            ).where(city_cond)
+            list_stmt = list_stmt.join(
+                StudyRoom, Course.room_id == StudyRoom.id
+            ).where(city_cond)
+
+        count = (await db.execute(count_stmt)).scalar_one()
+
+        result = await db.execute(list_stmt)
         items = [
             FollowedRoomResponse(
                 id=course.id,
@@ -136,16 +166,20 @@ async def list_followed_rooms(
         ]
         return FollowedRoomListResponse(items=items, total=count)
 
+    room_filters = [
+        RoomFollow.user_id == user_id,
+        RoomFollow.follow_type == follow_type,
+        StudyRoom.status == "open",
+    ]
+    if city_id is not None:
+        room_filters.append(_city_or_null_condition(city_id))
+
     count = (
         await db.execute(
             select(func.count())
             .select_from(RoomFollow)
             .join(StudyRoom, RoomFollow.room_id == StudyRoom.id)
-            .where(
-                RoomFollow.user_id == user_id,
-                RoomFollow.follow_type == follow_type,
-                StudyRoom.status == "open",
-            )
+            .where(*room_filters)
         )
     ).scalar_one()
 
@@ -153,11 +187,7 @@ async def list_followed_rooms(
         select(RoomFollow, StudyRoom, City.name.label("city_name"))
         .join(StudyRoom, RoomFollow.room_id == StudyRoom.id)
         .outerjoin(City, StudyRoom.city_id == City.id)
-        .where(
-            RoomFollow.user_id == user_id,
-            RoomFollow.follow_type == follow_type,
-            StudyRoom.status == "open",
-        )
+        .where(*room_filters)
         .order_by(RoomFollow.created_at.desc(), RoomFollow.id.desc())
     )
     items = [

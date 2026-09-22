@@ -14,10 +14,13 @@ router = APIRouter(prefix="/api/v1/room-follows", tags=["room-follows"])
 @router.get("", response_model=FollowedRoomListResponse)
 async def list_followed_rooms(
     follow_type: str = Query("room", pattern="^(room|course|teacher)$"),
+    city_id: int | None = Query(None, ge=1),
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> FollowedRoomListResponse:
-    return await room_follow_service.list_followed_rooms(db, user_id, follow_type=follow_type)
+    return await room_follow_service.list_followed_rooms(
+        db, user_id, follow_type=follow_type, city_id=city_id
+    )
 
 
 @router.post("/{room_id}", response_model=FollowedRoomResponse)

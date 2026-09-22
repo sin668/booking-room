@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.city import City
 from app.models.course import Course
+from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 
@@ -80,14 +81,12 @@ async def seed_detail_data(db_session: AsyncSession):
     db_session.add_all([teacher1, teacher2])
     await db_session.flush()
 
-    # 课程（培训中心A）
+    # 课程（培训中心A；teacher_id / price 已迁移到 course_schedules）
     courses = [
         Course(
             room_id=training_room.id,
-            teacher_id=teacher1.id,
             name="考研政治冲刺",
             category="postgraduate",
-            price=80.0,
             rating=4.9,
             enrollment_count=300,
             is_hot=True,
@@ -97,10 +96,8 @@ async def seed_detail_data(db_session: AsyncSession):
         ),
         Course(
             room_id=training_room.id,
-            teacher_id=teacher1.id,  # 同一教师，用于去重测试
-            name="考研英语强化",
+            name="考研英语强化",  # 与课程 1 同一教师，用于去重测试
             category="postgraduate",
-            price=70.0,
             rating=4.8,
             enrollment_count=200,
             is_hot=True,
@@ -110,10 +107,8 @@ async def seed_detail_data(db_session: AsyncSession):
         ),
         Course(
             room_id=training_room.id,
-            teacher_id=teacher2.id,
             name="公务员行测精讲",
             category="civil_service",
-            price=60.0,
             rating=4.7,
             enrollment_count=150,
             is_hot=False,
@@ -123,10 +118,8 @@ async def seed_detail_data(db_session: AsyncSession):
         ),
         Course(
             room_id=training_room.id,
-            teacher_id=None,  # 无教师课程
-            name="自主练习题",
+            name="自主练习题",  # 无教师课程
             category="skills",
-            price=40.0,
             rating=4.5,
             enrollment_count=50,
             is_hot=False,
@@ -137,10 +130,8 @@ async def seed_detail_data(db_session: AsyncSession):
         # 非 active 课程（不应出现）
         Course(
             room_id=training_room.id,
-            teacher_id=None,
             name="已下线课程",
             category="skills",
-            price=30.0,
             rating=4.0,
             enrollment_count=10,
             is_hot=False,
@@ -150,6 +141,19 @@ async def seed_detail_data(db_session: AsyncSession):
         ),
     ]
     db_session.add_all(courses)
+    await db_session.flush()
+
+    # 4 门 active 课程各建一条进行中固定班课排课；已下线课程不建
+    course_schedule_specs = [
+        (teacher1.id, 80.0),
+        (teacher1.id, 70.0),
+        (teacher2.id, 60.0),
+        (None, 40.0),
+    ]
+    db_session.add_all([
+        CourseSchedule(course_id=course.id, teacher_id=teacher_id, price=price)
+        for course, (teacher_id, price) in zip(courses, course_schedule_specs)
+    ])
     await db_session.flush()
 
     return {

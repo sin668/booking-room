@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.city import City
 from app.models.course import Course
+from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 
@@ -31,17 +32,34 @@ async def seed_training_data(db_session: AsyncSession):
     db_session.add_all([r1, r2, r3, r4, r5])
     await db_session.flush()
 
+    # teacher_id / price 已迁移到 course_schedules，每门课补一条进行中固定班课排课
     courses = [
-        Course(room_id=r1.id, teacher_id=t1.id, name="考研政治冲刺班", category="postgraduate", price=80.00, rating=4.9, enrollment_count=328, tags="考研,政治", status="active", is_hot=True, sort_order=1),
-        Course(room_id=r1.id, teacher_id=t2.id, name="公务员行测精讲", category="civil_service", price=60.00, rating=4.8, enrollment_count=156, tags="公考,行测", status="active", is_hot=True, sort_order=2),
-        Course(room_id=r1.id, teacher_id=t3.id, name="雅思口语1v1冲刺", category="language", price=120.00, rating=5.0, enrollment_count=89, tags="雅思,口语", status="active", is_hot=True, sort_order=3),
-        Course(room_id=r1.id, teacher_id=t3.id, name="雅思口语进阶班", category="language", price=100.00, rating=4.8, enrollment_count=50, tags="雅思,口语", status="active", is_hot=True, sort_order=4),
-        Course(room_id=r2.id, teacher_id=None, name="小学数学同步辅导", category="primaryschool", price=45.00, rating=4.6, enrollment_count=78, tags="小学,数学", status="active", is_hot=True, sort_order=1),
-        Course(room_id=r3.id, teacher_id=t1.id, name="考研政治冲刺班", category="postgraduate", price=80.00, rating=4.9, enrollment_count=200, tags=None, status="active", is_hot=False, sort_order=1),
-        Course(room_id=r3.id, teacher_id=None, name="初中物理提升班", category="middleschool", price=55.00, rating=4.7, enrollment_count=95, tags="", status="active", is_hot=False, sort_order=2),
+        Course(room_id=r1.id, name="考研政治冲刺班", category="postgraduate", rating=4.9, enrollment_count=328, tags="考研,政治", status="active", is_hot=True, sort_order=1),
+        Course(room_id=r1.id, name="公务员行测精讲", category="civil_service", rating=4.8, enrollment_count=156, tags="公考,行测", status="active", is_hot=True, sort_order=2),
+        Course(room_id=r1.id, name="雅思口语1v1冲刺", category="language", rating=5.0, enrollment_count=89, tags="雅思,口语", status="active", is_hot=True, sort_order=3),
+        Course(room_id=r1.id, name="雅思口语进阶班", category="language", rating=4.8, enrollment_count=50, tags="雅思,口语", status="active", is_hot=True, sort_order=4),
+        Course(room_id=r2.id, name="小学数学同步辅导", category="primaryschool", rating=4.6, enrollment_count=78, tags="小学,数学", status="active", is_hot=True, sort_order=1),
+        Course(room_id=r3.id, name="考研政治冲刺班", category="postgraduate", rating=4.9, enrollment_count=200, tags=None, status="active", is_hot=False, sort_order=1),
+        Course(room_id=r3.id, name="初中物理提升班", category="middleschool", rating=4.7, enrollment_count=95, tags="", status="active", is_hot=False, sort_order=2),
+    ]
+    course_schedule_specs = [
+        (t1.id, 80.00),
+        (t2.id, 60.00),
+        (t3.id, 120.00),
+        (t3.id, 100.00),
+        (None, 45.00),
+        (t1.id, 80.00),
+        (None, 55.00),
     ]
     db_session.add_all(courses)
     await db_session.flush()
+    db_session.add_all([
+        CourseSchedule(course_id=course.id, teacher_id=teacher_id, price=price)
+        for course, (teacher_id, price) in zip(courses, course_schedule_specs)
+    ])
+    await db_session.flush()
+
+    return {"city": maoming}
 
 
 class TestTrainingRoomsAPI:
@@ -53,11 +71,15 @@ class TestTrainingRoomsAPI:
         assert len(data["items"]) == 3
 
     async def test_list_training_rooms_filter_city(self, client: AsyncClient, seed_training_data):
-        resp = await client.get("/api/v1/training/rooms?city_id=1")
+        city_id = seed_training_data["city"].id
+        resp = await client.get(f"/api/v1/training/rooms?city_id={city_id}")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total"] == 1
-        assert data["items"][0]["name"] == "去K书培训中心"
+        # 过滤语义：指定城市的房间 + 未设置城市的房间均可见
+        assert data["total"] == 3
+        names = {item["name"] for item in data["items"]}
+        assert "去K书培训中心" in names
+        assert all(item["city_id"] in (city_id, None) for item in data["items"])
 
     async def test_comprehensive_room_appears(self, client: AsyncClient, seed_training_data):
         resp = await client.get("/api/v1/training/rooms")

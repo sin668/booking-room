@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.city import City
 from app.models.course import Course
+from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 
@@ -46,39 +47,53 @@ async def seed_training_data(db_session: AsyncSession):
     db_session.add_all(teachers)
     await db_session.flush()
 
+    # teacher_id / price 已迁移到 course_schedules（fixed + in_progress 才在 C 端展示）
     courses = [
         Course(
-            room_id=rooms[0].id, teacher_id=teachers[0].id,
-            name="考研政治冲刺", category="postgraduate", price=80.0,
+            room_id=rooms[0].id,
+            name="考研政治冲刺", category="postgraduate",
             rating=4.9, enrollment_count=300, is_hot=True, sort_order=1,
             status="active", tags="考研,政治",
         ),
         Course(
-            room_id=rooms[0].id, teacher_id=teachers[1].id,
-            name="公务员行测精讲", category="civil_service", price=60.0,
+            room_id=rooms[0].id,
+            name="公务员行测精讲", category="civil_service",
             rating=4.8, enrollment_count=150, is_hot=True, sort_order=2,
             status="active", tags="公考,行测",
         ),
         Course(
-            room_id=rooms[0].id, teacher_id=None,
-            name="小学数学辅导", category="primaryschool", price=45.0,
+            room_id=rooms[0].id,
+            name="小学数学辅导", category="primaryschool",
             rating=4.5, enrollment_count=80, is_hot=True, sort_order=3,
             status="active", tags="小学,数学",
         ),
         Course(
-            room_id=rooms[1].id, teacher_id=teachers[1].id,
-            name="技能提升课程", category="skills", price=55.0,
+            room_id=rooms[1].id,
+            name="技能提升课程", category="skills",
             rating=4.7, enrollment_count=100, is_hot=True, sort_order=1,
             status="active", tags="技能,提升",
         ),
         Course(
-            room_id=rooms[0].id, teacher_id=teachers[0].id,
-            name="非热门课程", category="postgraduate", price=30.0,
+            room_id=rooms[0].id,
+            name="非热门课程", category="postgraduate",
             rating=4.0, enrollment_count=10, is_hot=False, sort_order=4,
             status="active", tags="非热门",
         ),
     ]
     db_session.add_all(courses)
+    await db_session.flush()
+
+    course_schedule_specs = [
+        (teachers[0].id, 80.0),
+        (teachers[1].id, 60.0),
+        (None, 45.0),
+        (teachers[1].id, 55.0),
+        (teachers[0].id, 30.0),
+    ]
+    db_session.add_all([
+        CourseSchedule(course_id=course.id, teacher_id=teacher_id, price=price)
+        for course, (teacher_id, price) in zip(courses, course_schedule_specs)
+    ])
     await db_session.flush()
 
     return {"city": city, "rooms": rooms, "teachers": teachers, "courses": courses}

@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.city import City
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
+from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 
@@ -43,10 +44,10 @@ async def seed_course_detail_data(db_session: AsyncSession):
     db_session.add(teacher)
     await db_session.flush()
 
-    # 主课程（含 description）
+    # 主课程（含 description；teacher_id / price 已迁移到 course_schedules）
     course = Course(
-        room_id=room.id, teacher_id=teacher.id,
-        name="考研政治冲刺", category="postgraduate", price=80.0,
+        room_id=room.id,
+        name="考研政治冲刺", category="postgraduate",
         rating=4.9, enrollment_count=300, sort_order=1,
         status="active", tags="考研,政治",
         description="本课程为考研政治冲刺阶段专项训练",
@@ -54,6 +55,9 @@ async def seed_course_detail_data(db_session: AsyncSession):
     )
     db_session.add(course)
     await db_session.flush()
+    db_session.add(
+        CourseSchedule(course_id=course.id, teacher_id=teacher.id, price=80.0)
+    )
 
     # 课时
     lessons = [
@@ -63,17 +67,17 @@ async def seed_course_detail_data(db_session: AsyncSession):
     ]
     db_session.add_all(lessons)
 
-    # 同分类其他课程（用于 related_courses）
+    # 同分类其他课程（用于 related_courses，需进行中固定班课排课才展示）
     related = [
         Course(
-            room_id=room.id, teacher_id=teacher.id,
-            name="考研英语强化", category="postgraduate", price=70.0,
+            room_id=room.id,
+            name="考研英语强化", category="postgraduate",
             rating=4.8, enrollment_count=200, sort_order=2,
             status="active", tags="考研,英语",
         ),
         Course(
-            room_id=room.id, teacher_id=None,
-            name="考研数学基础", category="postgraduate", price=60.0,
+            room_id=room.id,
+            name="考研数学基础", category="postgraduate",
             rating=4.5, enrollment_count=100, sort_order=3,
             status="active", tags="考研,数学",
         ),
@@ -82,8 +86,8 @@ async def seed_course_detail_data(db_session: AsyncSession):
 
     # 不同分类课程（不应出现在 related）
     other_cat = Course(
-        room_id=room.id, teacher_id=None,
-        name="公务员行测精讲", category="civil_service", price=55.0,
+        room_id=room.id,
+        name="公务员行测精讲", category="civil_service",
         rating=4.7, enrollment_count=150, sort_order=4,
         status="active", tags="公考",
     )
@@ -91,13 +95,20 @@ async def seed_course_detail_data(db_session: AsyncSession):
 
     # 已下线课程（不应出现）
     inactive = Course(
-        room_id=room.id, teacher_id=None,
-        name="已下线课程", category="postgraduate", price=30.0,
+        room_id=room.id,
+        name="已下线课程", category="postgraduate",
         rating=4.0, enrollment_count=10, sort_order=99,
         status="inactive", tags="已下线",
     )
     db_session.add(inactive)
 
+    await db_session.flush()
+
+    db_session.add_all([
+        CourseSchedule(course_id=related[0].id, teacher_id=teacher.id, price=70.0),
+        CourseSchedule(course_id=related[1].id, teacher_id=None, price=60.0),
+        CourseSchedule(course_id=other_cat.id, teacher_id=None, price=55.0),
+    ])
     await db_session.flush()
 
     return {
@@ -121,8 +132,8 @@ async def seed_course_no_teacher_no_room(db_session: AsyncSession):
     await db_session.flush()
 
     course = Course(
-        room_id=room.id, teacher_id=None,
-        name="无教师课程", category="skills", price=50.0,
+        room_id=room.id,
+        name="无教师课程", category="skills",
         rating=4.0, enrollment_count=20, sort_order=1,
         status="active", tags="技能",
     )
@@ -449,22 +460,32 @@ class TestCourseDetailRoute:
         await db_session.flush()
 
         main_course = Course(
-            room_id=room.id, teacher_id=teacher.id,
-            name="主课程", category="postgraduate", price=80.0,
+            room_id=room.id,
+            name="主课程", category="postgraduate",
             rating=4.9, enrollment_count=300, sort_order=0,
             status="active",
         )
         db_session.add(main_course)
         await db_session.flush()
+        db_session.add(
+            CourseSchedule(course_id=main_course.id, teacher_id=teacher.id, price=80.0)
+        )
 
-        # 创建 8 门同分类相关课程
+        # 创建 8 门同分类相关课程（各带进行中固定班课排课才会进入 related）
+        related_courses = []
         for i in range(8):
-            db_session.add(Course(
-                room_id=room.id, teacher_id=teacher.id,
-                name=f"相关课程{i}", category="postgraduate", price=50.0 + i,
+            related_courses.append(Course(
+                room_id=room.id,
+                name=f"相关课程{i}", category="postgraduate",
                 rating=4.0, enrollment_count=100 + i, sort_order=i + 1,
                 status="active",
             ))
+        db_session.add_all(related_courses)
+        await db_session.flush()
+        db_session.add_all([
+            CourseSchedule(course_id=c.id, teacher_id=teacher.id, price=50.0 + i)
+            for i, c in enumerate(related_courses)
+        ])
         await db_session.flush()
 
         resp = await client.get(f"/api/v1/training/courses/{main_course.id}")

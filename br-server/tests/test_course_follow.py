@@ -56,7 +56,6 @@ async def seed_course_follow_data(db_session: AsyncSession) -> dict:
         name="考研数学强化",
         room_id=room.id,
         category="postgraduate",
-        price=99.0,
         rating=4.8,
         enrollment_count=200,
         status="active",

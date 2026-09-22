@@ -47,7 +47,6 @@ async def seed_course(db_session: AsyncSession, seed_room: StudyRoom) -> Course:
         name="测试课程",
         room_id=seed_room.id,
         category="math",
-        price=99.0,
         status="active",
     )
     db_session.add(course)

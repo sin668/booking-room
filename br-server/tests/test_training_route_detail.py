@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.city import City
 from app.models.course import Course
+from app.models.course_schedule import CourseSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 
@@ -89,54 +90,66 @@ async def seed_detail_data(db_session: AsyncSession):
     db_session.add_all([teacher1, teacher2])
     await db_session.flush()
 
-    # ── 课程 ────────────────────────────────────────────────────
+    # ── 课程（teacher_id / price / schedule 已迁移到 course_schedules） ──
     courses = [
         # 培训室课程 1：teacher1，有 tags
         Course(
-            room_id=training_room.id, teacher_id=teacher1.id,
+            room_id=training_room.id,
             name="考研政治冲刺班",
             cover_image="https://example.com/c1.jpg",
-            category="postgraduate", price=80.0, rating=4.9,
-            enrollment_count=120, schedule="每周二 14:00",
+            category="postgraduate", rating=4.9,
+            enrollment_count=120,
             tags="热销,小班", status="active", is_hot=True, sort_order=1,
         ),
         # 培训室课程 2：同一 teacher1（用于去重测试），有 tags
         Course(
-            room_id=training_room.id, teacher_id=teacher1.id,
+            room_id=training_room.id,
             name="考研政治基础班",
             cover_image="https://example.com/c2.jpg",
-            category="postgraduate", price=60.0, rating=4.7,
-            enrollment_count=80, schedule="每周三 19:00",
+            category="postgraduate", rating=4.7,
+            enrollment_count=80,
             tags="基础", status="active", is_hot=False, sort_order=2,
         ),
         # 培训室课程 3：teacher2
         Course(
-            room_id=training_room.id, teacher_id=teacher2.id,
+            room_id=training_room.id,
             name="公务员行测精讲",
             cover_image="https://example.com/c3.jpg",
-            category="civil_service", price=60.0, rating=4.8,
-            enrollment_count=95, schedule="每周三 19:00",
+            category="civil_service", rating=4.8,
+            enrollment_count=95,
             tags="新课,行测", status="active", is_hot=True, sort_order=3,
         ),
         # 培训室课程 4：无教师，tags=None
         Course(
-            room_id=training_room.id, teacher_id=None,
+            room_id=training_room.id,
             name="自习辅导",
             cover_image=None, category="skills",
-            price=30.0, rating=4.5, enrollment_count=40,
-            schedule="每日", tags=None, status="active",
+            rating=4.5, enrollment_count=40,
+            tags=None, status="active",
             is_hot=False, sort_order=4,
         ),
         # 综合室课程 1
         Course(
-            room_id=comprehensive_room.id, teacher_id=teacher1.id,
+            room_id=comprehensive_room.id,
             name="考研综合辅导",
-            category="postgraduate", price=70.0, rating=4.6,
+            category="postgraduate", rating=4.6,
             enrollment_count=60, status="active",
             is_hot=False, sort_order=1, tags="考研",
         ),
     ]
+    course_schedule_specs = [
+        (teacher1.id, 80.0),
+        (teacher1.id, 60.0),
+        (teacher2.id, 60.0),
+        (None, 30.0),
+        (teacher1.id, 70.0),
+    ]
     db_session.add_all(courses)
+    await db_session.flush()
+    db_session.add_all([
+        CourseSchedule(course_id=course.id, teacher_id=teacher_id, price=price)
+        for course, (teacher_id, price) in zip(courses, course_schedule_specs)
+    ])
     await db_session.commit()
 
     return {

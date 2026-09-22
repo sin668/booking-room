@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import get_current_user_id
 from app.models.city import City
 from app.models.course import Course
+from app.models.course_schedule import CourseSchedule
 from app.models.room_follow import RoomFollow
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
@@ -72,6 +73,13 @@ async def seed_city_follow_data(db_session: AsyncSession) -> dict:
     teacher_b = Teacher(name="老师乙", title="英语", rating=4.7)
     teacher_orphan = Teacher(name="无房间老师", title="政治", rating=4.6)
     db_session.add_all([course_a, course_b, teacher_a, teacher_b, teacher_orphan])
+    await db_session.flush()
+
+    # 关注课程仅在有进行中固定班课排课时展示（defaults: fixed/in_progress）
+    db_session.add_all([
+        CourseSchedule(course_id=course_a.id, price=50.0),
+        CourseSchedule(course_id=course_b.id, price=60.0),
+    ])
     await db_session.flush()
 
     db_session.add_all([

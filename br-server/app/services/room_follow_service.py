@@ -13,6 +13,7 @@ from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.models.teacher_room import TeacherRoom
 from app.schemas.room_follow import FollowedRoomListResponse, FollowedRoomResponse
+from app.services.training_service import _has_in_progress_fixed_schedule
 
 
 def _to_followed_room(
@@ -107,12 +108,13 @@ async def list_followed_rooms(
 
     if follow_type == "course":
         # Course follows: join with courses table
-        # 只关联“进行中的固定班课”排课（schedule_type=fixed, schedule_status=in_progress），
-        # 与 br-app 其他课程页面过滤口径一致；无进行中排课的课程仍展示但无排课数据
+        # 与 C 端其他课程页面口径一致：仅展示存在「进行中的固定班课」排课
+        # (schedule_type=fixed, schedule_status=in_progress) 的关注课程
         course_filters = [
             RoomFollow.user_id == user_id,
             RoomFollow.follow_type == "course",
             Course.status == "active",
+            _has_in_progress_fixed_schedule(),
         ]
         # city_id 条件引用 StudyRoom，count/列表都需显式 JOIN，否则隐式笛卡尔积放大 total
         count_stmt = (

@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id
 from app.models.course import Course
+from app.models.course_schedule import CourseSchedule
 from app.models.room_follow import RoomFollow
 from app.models.study_room import StudyRoom
 from app.models.user import User
@@ -61,6 +62,10 @@ async def seed_course_follow_data(db_session: AsyncSession) -> dict:
         status="active",
     )
     db_session.add(course)
+    await db_session.flush()
+
+    # 关注课程仅在有进行中固定班课排课时展示（defaults: fixed/in_progress）
+    db_session.add(CourseSchedule(course_id=course.id, price=88.0))
     await db_session.flush()
 
     return {"room": room, "course": course}
@@ -191,6 +196,75 @@ async def test_list_follow_type_course_returns_only_course_follows(
     data = response.json()
     assert data["total"] == 1
     assert data["items"][0]["id"] == course.id
+
+
+# ---------------------------------------------------------------------------
+# 无进行中固定班课排课的关注课程隐藏（followed-courses-schedule-filter）
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_followed_course_without_in_progress_fixed_schedule_hidden(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_course_follow_data: dict,
+) -> None:
+    """无排课 / pending_start / completed / custom 排课的关注课程均隐藏，不计入 total。"""
+    room = seed_course_follow_data["room"]
+    course = seed_course_follow_data["course"]
+
+    no_schedule = Course(
+        name="无排课课程", room_id=room.id, category="skills", status="active",
+    )
+    pending = Course(
+        name="待开始课程", room_id=room.id, category="skills", status="active",
+    )
+    completed = Course(
+        name="已结课课程", room_id=room.id, category="skills", status="active",
+    )
+    custom_only = Course(
+        name="仅定制排课课程", room_id=room.id, category="skills", status="active",
+    )
+    db_session.add_all([no_schedule, pending, completed, custom_only])
+    await db_session.flush()
+
+    db_session.add_all([
+        CourseSchedule(course_id=pending.id, price=50.0, schedule_status="pending_start"),
+        CourseSchedule(course_id=completed.id, price=50.0, schedule_status="completed"),
+        CourseSchedule(course_id=custom_only.id, price=50.0, schedule_type="custom"),
+    ])
+    db_session.add(RoomFollow(user_id=USER_ID, room_id=course.id, follow_type="course"))
+    for c in (no_schedule, pending, completed, custom_only):
+        db_session.add(RoomFollow(user_id=USER_ID, room_id=c.id, follow_type="course"))
+    await db_session.flush()
+
+    response = await auth_client.get("/api/v1/room-follows?follow_type=course")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["id"] == course.id
+    # 有进行中固定班课排课时价格取排课 price
+    assert float(data["items"][0]["min_price"]) == 88.0
+
+
+@pytest.mark.asyncio
+async def test_room_and_teacher_follows_unaffected_by_schedule_filter(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_course_follow_data: dict,
+) -> None:
+    """room/teacher 关注列表不受排课过滤影响。"""
+    room = seed_course_follow_data["room"]
+    db_session.add(RoomFollow(user_id=USER_ID, room_id=room.id, follow_type="room"))
+    await db_session.flush()
+
+    response = await auth_client.get("/api/v1/room-follows?follow_type=room")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["id"] == room.id
 
 
 # ---------------------------------------------------------------------------

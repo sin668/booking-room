@@ -1,5 +1,5 @@
 <template>
-  <n-grid cols="1" responsive="screen">
+  <n-grid cols="2 s:2 m:2 l:3 xl:3 2xl:3" responsive="screen">
     <n-grid-item>
       <n-form :label-width="100" :model="formValue" :rules="rules" ref="formRef">
         <n-form-item path="phone">
@@ -57,9 +57,6 @@
           <n-text v-if="phoneCooldown > 0" depth="3" class="text-xs">
             联系电话修改后 30 天内不可再次修改，剩余 {{ phoneCooldown }} 天
           </n-text>
-          <n-text v-else-if="currentPhone" depth="3" class="text-xs">
-            当前手机号：{{ currentPhone }}
-          </n-text>
         </div>
       </n-form>
     </n-grid-item>
@@ -90,7 +87,6 @@
   const userStore = useUser();
   const subLoading = ref(false);
   const sendingCode = ref(false);
-  const currentPhone = ref('');
   const phoneCooldown = ref(0);
   const codeCountdown = ref(0);
   let countdownTimer: ReturnType<typeof setInterval> | null = null;
@@ -123,11 +119,8 @@
 
   async function loadProfile() {
     const result = await userApi.getUserInfo();
-    currentPhone.value = result.phone || '';
     phoneCooldown.value = cooldownRemainingDays(result.phone_updated_at);
-    if (phoneCooldown.value > 0) {
-      formValue.phone = '';
-    }
+    formValue.phone = result.phone || '';
   }
 
   function startCountdown() {

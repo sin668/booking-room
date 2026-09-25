@@ -157,7 +157,7 @@
           </view>
 
           <view v-if="mine && targetText(item)" class="review-target">
-            <view class="icon icon-book review-target-icon" />
+            <view class="icon review-target-icon" :class="targetIcon(item)" />
             <text class="review-target-text">{{ targetText(item) }}</text>
           </view>
 
@@ -333,7 +333,15 @@ export default {
     },
 
     targetText(item) {
+      if (item.booking_type === 'seat') {
+        const seat = item.seat_number ? `${item.seat_number}号座位` : ''
+        return [item.room_name, seat].filter(Boolean).join(' · ')
+      }
       return [item.course_name, item.teacher_name].filter(Boolean).join(' · ')
+    },
+
+    targetIcon(item) {
+      return item.booking_type === 'seat' ? 'icon-location' : 'icon-book'
     },
 
     buildParams() {

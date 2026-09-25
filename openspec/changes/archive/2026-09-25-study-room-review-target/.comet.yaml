@@ -16,11 +16,11 @@ plan: null
 verify_result: pass
 verify_failures: 0
 verification_report: docs/superpowers/reports/2026-09-25-study-room-review-target-verify.md
-branch_status: pending
+branch_status: handled
 created_at: 2026-09-25
 verified_at: 2026-09-25
-archive_confirmation: pending
-archived: false
+archive_confirmation: confirmed
+archived: true
 bound_branch: main
 direct_override: null
 handoff_context: null
@@ -28,4 +28,4 @@ handoff_hash: null
 classic_profile: tweak
 classic_migration: 1
 run_id: 92a7c52b-4279-4490-ad5f-780e4f274738
-check_epoch: 3
+check_epoch: 5

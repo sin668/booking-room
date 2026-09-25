@@ -1,20 +1,34 @@
 {
-  "version": 1,
-  "argv": [
-    "/opt/miniconda3/envs/booking-room/bin/python",
-    "-m",
-    "pytest",
-    "tests/test_admin_auth_api.py",
-    "tests/test_api_user_profile.py",
-    "-q",
-    "-p",
-    "no:cacheprovider"
-  ],
-  "cwd": "br-server",
-  "files": [
-    "br-server/app",
-    "br-server/tests",
-    "br-server/pyproject.toml"
-  ],
-  "env": ["PATH", "PYTHONDONTWRITEBYTECODE"]
+  "version": 2,
+  "commands": [
+    {
+      "argv": [
+        "/opt/miniconda3/envs/booking-room/bin/python",
+        "-m",
+        "pytest",
+        "tests/test_admin_auth_api.py",
+        "tests/test_api_user_profile.py",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "cwd": "br-server",
+      "files": [
+        "br-server/app",
+        "br-server/tests",
+        "br-server/pyproject.toml"
+      ],
+      "env": ["PATH", "PYTHONDONTWRITEBYTECODE"]
+    },
+    {
+      "argv": ["npm", "run", "build:mp-weixin"],
+      "cwd": "br-app",
+      "files": [
+        "br-app/src",
+        "br-app/package.json",
+        "br-app/scripts"
+      ],
+      "env": ["PATH"]
+    }
+  ]
 }

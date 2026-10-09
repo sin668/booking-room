@@ -233,6 +233,52 @@
       }
     }
   ],
+  "subPackages": [
+    {
+      "root": "TUIKit",
+      "pages": [
+        {
+          "path": "components/TUIConversation/index",
+          "style": { "navigationBarTitleText": "消息" }
+        },
+        {
+          "path": "components/TUIChat/index",
+          "style": {
+            "navigationBarTitleText": "聊天",
+            "app-plus": {
+              "softinputMode": "adjustResize"
+            }
+          }
+        },
+        {
+          "path": "components/TUIChat/video-play",
+          "style": { "navigationBarTitleText": "聊天" }
+        },
+        {
+          "path": "components/TUIChat/web-view",
+          "style": { "navigationBarTitleText": "聊天" }
+        },
+        {
+          "path": "components/TUIContact/index",
+          "style": { "navigationBarTitleText": "联系人" }
+        },
+        {
+          "path": "components/TUIGroup/index",
+          "style": { "navigationBarTitleText": "群聊" }
+        },
+        {
+          "path": "components/TUISearch/index",
+          "style": { "navigationBarTitleText": "聊天记录" }
+        }
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/index/index": {
+      "network": "all",
+      "packages": ["TUIKit"]
+    }
+  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "去静界",

@@ -123,6 +123,7 @@ async def assemble_items(
                 publisher_nickname=user.nickname if user else None,
                 publisher_avatar=user.avatar if user else None,
                 publisher_phone=user.phone if user else None,
+                publisher_username=user.username if user else None,
                 publisher_education_verified=cert.get("education") if with_certification else None,
                 publisher_teacher_verified=cert.get("teacher") if with_certification else None,
                 created_at=listing.created_at,

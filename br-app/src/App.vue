@@ -2,23 +2,23 @@
 import { getRefreshToken, getToken } from '@/utils/request'
 import { useUserStore } from '@/store/modules/user'
 import { useCityStore } from '@/store/modules/city'
+import { ensureIM } from '@/utils/im'
 
 export default {
   onLaunch() {
     const cityStore = useCityStore()
     cityStore.initCity()
 
-    // 自动登录：检查本地 Token 并恢复用户状态
     const token = getToken()
     const refreshToken = getRefreshToken()
     if (token || refreshToken) {
       const userStore = useUserStore()
-      userStore.autoLogin()
+      userStore.autoLogin().then((ok) => {
+        if (ok) ensureIM()
+      })
     }
   },
-
   onShow() {},
-
   onHide() {},
 }
 </script>

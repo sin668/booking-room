@@ -145,6 +145,7 @@
 import { getEduListingDetail } from '@/api/eduMarket'
 import { formatErrorDetail } from '@/utils/formatters'
 import { useUserStore } from '@/store/modules/user'
+import { ensureIM } from '@/utils/im'
 
 const TYPE_META = {
   tutor: { label: '家教', icon: 'icon-graduation-cap', role: '个人家教' },
@@ -198,12 +199,7 @@ export default {
     this.loadDetail()
   },
 
-  onShow() {
-    if (this._returningFromContact) {
-      this._returningFromContact = false
-      this.showPhoneFallback()
-    }
-  },
+  onShow() {},
 
   methods: {
     formatPrice(price) {
@@ -228,22 +224,36 @@ export default {
       uni.previewImage({ current, urls })
     },
 
+    async openChat() {
+      const username = this.detail.publisher_username
+      if (!username) {
+        this.showPhoneFallback()
+        return
+      }
+      uni.showLoading({ title: '正在连接...' })
+      const ok = await ensureIM()
+      uni.hideLoading()
+      if (!ok) {
+        uni.showToast({ title: '消息服务初始化失败', icon: 'none' })
+        return
+      }
+      uni.navigateTo({
+        url: `/TUIKit/components/TUIChat/index?conversationID=C2C${username}`,
+      })
+    },
+
     onConsult() {
-      uni.showToast({ title: '可在平台内与对方沟通', icon: 'none' })
+      this.openChat()
     },
 
     onContact() {
-      this._returningFromContact = true
-      const phone = this.detail.publisher_phone || ''
-      uni.navigateTo({
-        url: `/pages/edu-market/contact?phone=${encodeURIComponent(phone)}`,
-      })
+      this.openChat()
     },
 
     showPhoneFallback() {
       const phone = this.detail.publisher_phone
       if (!phone) {
-        uni.showToast({ title: '发布者暂未设置联系电话', icon: 'none' })
+        uni.showToast({ title: '发布者暂未设置联系方式', icon: 'none' })
         return
       }
       uni.showModal({

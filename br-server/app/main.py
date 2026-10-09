@@ -37,6 +37,7 @@ from app.api.routes.coupon import router as coupon_router
 from app.api.routes.edu_listing import router as edu_listing_router
 from app.api.routes.booking_verification import router as booking_verification_router
 from app.api.routes.certification import router as certification_router
+from app.api.routes.chat import router as chat_router
 from app.api.routes.cities import router as cities_router
 from app.api.routes.notification import router as notification_router
 from app.api.routes.review import router as review_router
@@ -408,6 +409,7 @@ app.include_router(room_follow_router)
 app.include_router(teacher_router)
 app.include_router(search_router)
 app.include_router(certification_router)
+app.include_router(chat_router)
 app.include_router(edu_listing_router)
 
 

@@ -70,6 +70,7 @@ class EduListingItem(BaseModel):
     publisher_nickname: str | None = None
     publisher_avatar: str | None = None
     publisher_phone: str | None = None
+    publisher_username: str | None = None
     publisher_education_verified: bool | None = None
     publisher_teacher_verified: bool | None = None
     created_at: datetime

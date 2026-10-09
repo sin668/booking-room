@@ -75,6 +75,11 @@ class Settings(BaseSettings):
     REGISTRATION_ENABLED: bool = True
     WALLET_SIMULATED_CONFIRM_ENABLED: bool = False
 
+    # Tencent Cloud IM (TRTC Chat)
+    IM_SDK_APP_ID: int = 0
+    IM_SERVER_KEY: str = ""
+    IM_CLIENT_KEY: str = ""
+
     model_config = {"env_file": ".env"}
 
     @property

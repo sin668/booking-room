@@ -17,7 +17,9 @@
       "postcss": true,
       "minified": true
     },
-    "lazyCodeLoading": "requiredComponents",
+    "optimization": {
+      "subPackages": true
+    },
     "usingComponents": true,
     "permission": {}
   },
@@ -29,6 +31,11 @@
           "target": "https://bkapi.yichengpai.cn",
           "changeOrigin": true
         }
+      }
+    },
+    "optimization": {
+      "treeShaking": {
+        "enable": false
       }
     },
     "title": "去静界"

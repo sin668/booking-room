@@ -8,6 +8,7 @@ import {
   setRefreshToken,
   setToken,
 } from '@/utils/request'
+import { ensureIM } from '@/utils/im'
 import * as authApi from '@/api/auth'
 import * as userProfileApi from '@/api/userProfile'
 
@@ -57,8 +58,8 @@ export const useUserStore = defineStore('user', {
     async register(data) {
       const res = await authApi.register(data)
       this.applyTokenResponse(res)
-      // 注册成功后获取用户信息（失败不阻塞注册流程）
       this.fetchUserInfo().catch(() => {})
+      ensureIM()
       return res
     },
 
@@ -66,8 +67,8 @@ export const useUserStore = defineStore('user', {
     async login(phone, password) {
       const res = await authApi.login({ phone, password })
       this.applyTokenResponse(res)
-      // 登录成功后获取用户信息（失败不阻塞登录流程）
       this.fetchUserInfo().catch(() => {})
+      ensureIM()
       return res
     },
 
@@ -75,8 +76,8 @@ export const useUserStore = defineStore('user', {
     async wechatLogin(code) {
       const res = await authApi.wechatLogin({ code })
       this.applyTokenResponse(res)
-      // 微信登录成功后获取用户信息（失败不阻塞登录流程）
       this.fetchUserInfo().catch(() => {})
+      ensureIM()
       return res
     },
 

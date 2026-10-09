@@ -98,6 +98,8 @@ function avatarLoadFailed(e: Event) {
 </script>
 
 <style scoped lang="scss">
+@use "sass:color";
+
 :not(not) {
   display: flex;
   flex-direction: column;
@@ -140,8 +142,7 @@ function avatarLoadFailed(e: Event) {
 
 @keyframes breath {
   50% {
-    /* stylelint-disable-next-line scss/no-global-function-names */
-    background-color: darken(#ececec, 10%);
+    background-color: color.adjust(#ececec, $lightness: -10%);
   }
 }
 </style>

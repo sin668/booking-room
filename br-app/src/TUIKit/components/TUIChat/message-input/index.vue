@@ -215,7 +215,7 @@ defineExpose({
   background: transparent;
 
   &-h5 {
-    padding: 6px 12px;
+    padding: 6px;
   }
 
   &-editor {

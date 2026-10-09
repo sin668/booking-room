@@ -31,7 +31,7 @@
         @insertAt="insertAt"
         @onAtListOpen="onAtListOpen"
       />
-      <Icon
+      <CommonIcon
         v-if="isRenderEmojiPicker"
         class="icon icon-face"
         :file="faceIcon"
@@ -39,7 +39,7 @@
         :hotAreaSize="'3px'"
         @onClick="changeToolbarDisplayType('emojiPicker')"
       />
-      <Icon
+      <CommonIcon
         v-if="isRenderMore"
         class="icon icon-more"
         :file="moreIcon"
@@ -68,7 +68,7 @@ import MessageInputEditor from './message-input-editor.vue';
 import MessageInputAt from './message-input-at/index.vue';
 import MessageInputAudio from './message-input-audio.vue';
 import MessageQuote from './message-input-quote/index.vue';
-import Icon from '../../common/Icon.vue';
+import CommonIcon from '../../common/Icon.vue';
 import faceIcon from '../../../assets/icon/face-uni.png';
 import moreIcon from '../../../assets/icon/more-uni.png';
 import { isPC, isH5, isWeChat, isApp } from '../../../utils/env';

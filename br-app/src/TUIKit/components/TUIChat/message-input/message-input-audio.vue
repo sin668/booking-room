@@ -540,7 +540,7 @@ function onRecorderError(err: any) {
   position: relative;
 
   .audio-message-icon {
-    margin-right: 3px;
+    margin-right: 0;
   }
 
   .audio-input-touch-bar {

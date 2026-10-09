@@ -24,8 +24,11 @@
   &-message-input {
     height: auto;
     min-height: 42px;
-    padding: 6px;
-    margin: 0 6px 8px;
+    margin: 0 10px 10px;
+    padding: 2px 8px;
+    background: #fff;
+    border: 1px solid #e5e8ee;
+    border-radius: 10px;
   }
 
   &-message-input-toolbar {

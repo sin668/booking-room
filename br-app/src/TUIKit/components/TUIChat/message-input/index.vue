@@ -31,22 +31,24 @@
         @insertAt="insertAt"
         @onAtListOpen="onAtListOpen"
       />
-      <CommonIcon
-        v-if="isRenderEmojiPicker"
-        class="icon icon-face"
-        :file="faceIcon"
-        :size="'23px'"
-        :hotAreaSize="'3px'"
-        @onClick="changeToolbarDisplayType('emojiPicker')"
-      />
-      <CommonIcon
-        v-if="isRenderMore"
-        class="icon icon-more"
-        :file="moreIcon"
-        :size="'23px'"
-        :hotAreaSize="'3px'"
-        @onClick="changeToolbarDisplayType('tools')"
-      />
+      <view v-if="isRenderEmojiPicker" class="message-input-icon">
+        <CommonIcon
+          class="icon icon-face"
+          :file="faceIcon"
+          :size="'23px'"
+          :hotAreaSize="'3px'"
+          @onClick="changeToolbarDisplayType('emojiPicker')"
+        />
+      </view>
+      <view v-if="isRenderMore" class="message-input-icon">
+        <CommonIcon
+          class="icon icon-more"
+          :file="moreIcon"
+          :size="'23px'"
+          :hotAreaSize="'3px'"
+          @onClick="changeToolbarDisplayType('tools')"
+        />
+      </view>
     </div>
     <div>
       <MessageQuote
@@ -213,10 +215,6 @@ defineExpose({
   border: none;
   background: transparent;
 
-  &-h5 {
-    padding: 6px;
-  }
-
   &-editor {
     flex: 1 1 0;
     min-width: 0;
@@ -224,9 +222,18 @@ defineExpose({
     display: flex;
   }
 
+  &-icon {
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    margin-left: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .icon {
     flex: 0 0 auto;
-    margin-left: 8px;
   }
 
   &-wx-audio-open {

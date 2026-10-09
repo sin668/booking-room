@@ -234,8 +234,9 @@ export default {
 
     onContact() {
       this._returningFromContact = true
+      const phone = this.detail.publisher_phone || ''
       uni.navigateTo({
-        url: `/pages/edu-market/contact?url=${encodeURIComponent('https://trtc.io/knocket-sdk/sdk.js?identifier=0ee9b993c7ff89bb61&v=1791511906929')}`,
+        url: `/pages/edu-market/contact?phone=${encodeURIComponent(phone)}`,
       })
     },
 

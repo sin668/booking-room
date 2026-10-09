@@ -4,19 +4,10 @@ import base64
 import hashlib
 import hmac
 import json
-import struct
 import time
 import zlib
 
 from app.core.config import settings
-
-
-def _encode_tlvs() -> bytes:
-    """Encode TLV fields required by UserSig."""
-    result = b""
-    result += struct.pack(">II", 0x11A00001, 0)
-    result += struct.pack(">B", 0)
-    return result
 
 
 def gen_user_sig(user_id: str, expire: int = 180 * 24 * 60 * 60) -> str:
@@ -54,7 +45,7 @@ def gen_user_sig(user_id: str, expire: int = 180 * 24 * 60 * 60) -> str:
         "TLS.identifier": user_id,
         "TLS.userbuf": "",
         "TLS.userbufaddr": 0,
-        "TLS.accountType": _encode_tlvs().hex(),
+        "TLS.accountType": 0,
     }
 
     json_str = json.dumps(raw, separators=(",", ":"), sort_keys=False)

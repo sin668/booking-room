@@ -287,13 +287,16 @@ defineExpose({
   position: relative;
 
   &-h5 {
-    flex: 1;
+    flex: 0 1 auto;
+    width: auto;
+    max-width: 160px;
     height: auto;
-    background: #f5f7fa;
-    border-radius: 18px;
-    padding: 6px 12px;
-    font-size: 15px !important;
-    max-height: 80px;
+    background: #fff;
+    border: 1px solid #eceef1;
+    border-radius: 16px;
+    padding: 4px 10px;
+    font-size: 14px !important;
+    max-height: 60px;
   }
 
   .message-input-mute {

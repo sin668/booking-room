@@ -11,6 +11,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #fff;
 
   &-message-list {
     flex: 1;
@@ -22,10 +23,10 @@
 
   &-message-input {
     height: auto;
-    min-height: 44px;
-    padding: 6px 10px;
+    min-height: 42px;
+    padding: 4px 8px;
     margin: 0 10px 10px;
-    border-radius: 22px;
+    border-radius: 20px;
     background: #fff;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   }

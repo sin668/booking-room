@@ -7,6 +7,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  background: #f5f7fa;
 
   &-default {
     width: 100%;
@@ -30,9 +31,10 @@
   &-leave-group {
     font-size: 14px;
     height: 160px;
-    border-top: 1px solid #efefef;
+    border-top: 1px solid #e5e7eb;
     justify-content: center;
     align-items: center;
+    color: #6b7280;
 
     &-mobile {
       height: 50px;

@@ -1,20 +1,32 @@
 .chat {
-  display: block;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   overflow: hidden;
+  background: #f5f7fa;
 }
 
 .tui-chat-h5 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
   &-message-list {
     flex: 1;
-    overflow: hidden;
+    overflow-y: auto;
     display: flex;
+    flex-direction: column;
+    background: #f5f7fa;
   }
 
   &-message-input {
     height: auto;
-    padding: 10px 10px 0;
-    border-top: 1px solid #eee;
+    min-height: 60px;
+    padding: 12px;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
   }
 
   &-message-input-toolbar {

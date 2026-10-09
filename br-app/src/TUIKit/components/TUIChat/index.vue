@@ -11,12 +11,6 @@
         v-if="currentConversationID"
         :class="['tui-chat', !isPC && 'tui-chat-h5']"
       >
-        <ChatHeader
-          :isGroup="isGroup"
-          :headerExtensionList="headerExtensionList"
-          @closeChat="closeChat"
-          @openGroupManagement="handleGroup"
-        />
         <Forward @toggleMultipleSelectMode="toggleMultipleSelectMode" />
         <MessageList
           ref="messageListRef"

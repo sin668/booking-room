@@ -147,7 +147,7 @@ watch(
 </script>
 
 <style lang="scss" scoped>
-@import "../../../assets/styles/common";
+@use "../../../assets/styles/common";
 
 .group-name {
   padding: 14px 20px;

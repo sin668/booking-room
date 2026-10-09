@@ -152,7 +152,7 @@ const descriptionForShow = ref<Array<{ text: string; isHighlight: boolean }>>(pr
 const defaultMessageContent = ref<string>(props?.messageContent?.custom as string || '[自定义消息]');
 </script>
 <style scoped lang="scss">
-@import "../../../../../assets/styles/common";
+@use "../../../../../assets/styles/common";
 
 .message-abstract-custom {
   .service {

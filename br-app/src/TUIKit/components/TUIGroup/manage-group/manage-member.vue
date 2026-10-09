@@ -182,7 +182,7 @@ const close = (tabName: string) => {
 </script>
 
 <style lang="scss" scoped>
-@import "../../../assets/styles/common";
+@use "../../../assets/styles/common";
 
 .member {
   flex: 1;

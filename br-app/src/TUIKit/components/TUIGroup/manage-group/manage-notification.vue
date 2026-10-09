@@ -152,7 +152,7 @@ const close = (tabName: string) => {
 </script>
 
 <style lang="scss" scoped>
-@import "../../../assets/styles/common";
+@use "../../../assets/styles/common";
 
 .notification {
   flex: 1;

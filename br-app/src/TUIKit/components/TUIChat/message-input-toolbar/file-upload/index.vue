@@ -33,5 +33,5 @@ const {
 } = useUpload(UploadType.FILE);
 </script>
 <style lang="scss" scoped>
-@import "../../../../assets/styles/common";
+@use "../../../../assets/styles/common";
 </style>

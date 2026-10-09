@@ -1,7 +1,7 @@
-@import '../../../../assets/styles/common';
-@import "./color";
-@import "./web";
-@import "./h5";
+@use '../../../../assets/styles/common';
+@use "./color";
+@use "./web";
+@use "./h5";
 
 .icon-unselected {
     width: 18px;

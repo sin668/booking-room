@@ -15,7 +15,7 @@ const props = defineProps({
 const tipContent = computed(() => props.content?.text || props.content?.custom || '');
 </script>
 <style lang="scss" scoped>
-@import "../../../../assets/styles/common";
+@use "../../../../assets/styles/common";
 
 .message-tip {
   margin: 0 auto;

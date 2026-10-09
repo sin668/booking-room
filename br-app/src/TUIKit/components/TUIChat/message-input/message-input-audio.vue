@@ -531,7 +531,7 @@ function onRecorderError(err: any) {
 </script>
 
 <style lang="scss" scoped>
-@import "../../../assets/styles/common";
+@use "../../../assets/styles/common";
 
 .message-input-audio {
   display: flex;

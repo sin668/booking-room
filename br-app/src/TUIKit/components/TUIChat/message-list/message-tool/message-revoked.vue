@@ -39,7 +39,7 @@ const messageEdit = () => {
 };
 </script>
 <style lang="scss" scoped>
-@import "../../../../assets/styles/common";
+@use "../../../../assets/styles/common";
 
 .revoke {
   display: flex;

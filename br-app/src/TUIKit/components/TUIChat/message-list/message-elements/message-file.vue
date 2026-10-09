@@ -64,7 +64,7 @@ const download = () => {
 };
 </script>
 <style lang="scss" scoped>
-@import "../../../../assets/styles/common";
+@use "../../../../assets/styles/common";
 
 .file-message-montainer {
   display: flex;

@@ -28,7 +28,7 @@ const videoUrl = computed<string>(() => {
 });
 </script>
 <style scoped lang="scss">
-@import "../../../../../assets/styles/common";
+@use "../../../../../assets/styles/common";
 
 .message-abstract-video {
   max-width: 100px;

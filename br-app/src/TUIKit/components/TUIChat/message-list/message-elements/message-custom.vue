@@ -118,7 +118,7 @@ const openLink = (url: any) => {
 };
 </script>
 <style lang="scss" scoped>
-@import "../../../../assets/styles/common";
+@use "../../../../assets/styles/common";
 
 a {
   color: #679ce1;

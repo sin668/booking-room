@@ -394,7 +394,7 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-@import "../../../../assets/styles/common";
+@use "../../../../assets/styles/common";
 
 .dialog-item-web {
   background: #fff;

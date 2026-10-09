@@ -197,7 +197,7 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@import "../../../assets/styles/common";
+@use "../../../assets/styles/common";
 
 :not(not) {
   display: flex;

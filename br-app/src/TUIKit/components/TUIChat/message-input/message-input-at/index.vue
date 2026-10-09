@@ -249,7 +249,7 @@ const handleMemberName = (item: any) => {
 };
 </script>
 <style scoped lang="scss">
-@import "../../../../assets/styles/common";
+@use "../../../../assets/styles/common";
 
 .message-input-at {
   position: fixed;

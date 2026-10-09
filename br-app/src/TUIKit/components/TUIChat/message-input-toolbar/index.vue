@@ -299,6 +299,6 @@ export default {
 };
 </script>
 <style lang="scss">
-@import '../../../assets/styles/common';
-@import './style/uni';
+@use '../../../assets/styles/common';
+@use './style/uni';
 </style>

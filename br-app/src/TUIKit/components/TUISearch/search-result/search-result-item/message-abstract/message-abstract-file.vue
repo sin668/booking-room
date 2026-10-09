@@ -75,7 +75,7 @@ const handleFileIconForShow = (type: string) => {
 </script>
 
 <style scoped lang="scss">
-@import "../../../../../assets/styles/common";
+@use "../../../../../assets/styles/common";
 
 .message-abstract-file {
   display: flex;

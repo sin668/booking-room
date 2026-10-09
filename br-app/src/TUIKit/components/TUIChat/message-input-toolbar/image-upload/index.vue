@@ -37,5 +37,5 @@ const {
 </script>
 
 <style lang="scss" scoped>
-@import "../../../../assets/styles/common";
+@use "../../../../assets/styles/common";
 </style>

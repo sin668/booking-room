@@ -60,7 +60,7 @@ watch(
 );
 </script>
 <style lang="scss" scoped>
-@import "../../../../assets/styles/common";
+@use "../../../../assets/styles/common";
 
 .message-timestamp {
   margin: 10px auto;

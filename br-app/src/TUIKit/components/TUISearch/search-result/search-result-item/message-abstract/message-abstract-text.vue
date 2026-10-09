@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<IProps>(), {
 const contentText = ref<Array<{ text: string; isHighlight: boolean }>>(props.content);
 </script>
 <style scoped lang="scss">
-@import "../../../../../assets/styles/common";
+@use "../../../../../assets/styles/common";
 
 .message-abstract-text {
   justify-content: flex-start;

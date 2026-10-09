@@ -51,7 +51,7 @@ const sendMessage = () => {
 };
 </script>
 <style scoped lang="scss">
-@import "../../../assets/styles/common";
+@use "../../../assets/styles/common";
 
 .message-input-button {
   position: absolute;

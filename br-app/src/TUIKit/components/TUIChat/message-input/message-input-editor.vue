@@ -276,7 +276,7 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-@import "../../../assets/styles/common";
+@use "../../../assets/styles/common";
 
 .message-input-container {
   display: flex;

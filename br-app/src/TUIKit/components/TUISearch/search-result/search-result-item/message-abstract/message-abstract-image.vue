@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<IProps>(), {
 const imageUrl = computed<string>(() => (props.messageContent as IImageMessageContent).url || '');
 </script>
 <style scoped lang="scss">
-@import "../../../../../assets/styles/common";
+@use "../../../../../assets/styles/common";
 
 .message-abstract-image-container {
   max-width: 100px;

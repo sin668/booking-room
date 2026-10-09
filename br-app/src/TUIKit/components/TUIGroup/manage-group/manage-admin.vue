@@ -205,7 +205,7 @@ const removeMute = () => {
 </script>
 
 <style lang="scss" scoped>
-@import "../../../assets/styles/common";
+@use "../../../assets/styles/common";
 
 .admin {
   width: 100%;

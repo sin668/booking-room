@@ -219,7 +219,7 @@ defineExpose({
   }
 
   &-editor {
-    flex: 0 1 auto;
+    flex: 1;
     display: flex;
   }
 

@@ -289,9 +289,9 @@ defineExpose({
   &-h5 {
     flex: 1;
     height: auto;
-    background: #f5f7fa;
+    background: transparent;
     border: none;
-    border-radius: 16px;
+    border-radius: 0;
     padding: 4px 10px;
     font-size: 14px !important;
     max-height: 60px;

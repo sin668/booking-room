@@ -27,15 +27,12 @@ export default {
   data() {
     return {
       phone: '',
-      knocketUrl: '',
+      knocketUrl: KNOCKET_PAGE_URL,
     }
   },
 
   onLoad(options) {
     this.phone = options.phone || ''
-    // #ifndef H5
-    this.knocketUrl = KNOCKET_PAGE_URL
-    // #endif
     // #ifdef H5
     this.$nextTick(() => this.loadKnocketSdk())
     // #endif

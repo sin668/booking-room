@@ -212,10 +212,10 @@ defineExpose({
   flex-direction: column;
   border: none;
   overflow: hidden;
-  background: #fff;
+  background: transparent;
 
   &-h5 {
-    padding: 0;
+    padding: 6px 12px;
   }
 
   &-editor {

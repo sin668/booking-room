@@ -9,6 +9,7 @@ export async function ensureIM() {
 
   initPromise = (async () => {
     try {
+      const { TUIChatKit } = await import('@/TUIKit')
       const { sdk_app_id, user_id, user_sig } = await getChatUserSig()
       const { TUILogin } = await import('@tencentcloud/tui-core-lite')
       await TUILogin.login({

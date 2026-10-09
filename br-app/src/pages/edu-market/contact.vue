@@ -1,5 +1,4 @@
 <template>
-  <!-- #ifdef H5 -->
   <view class="page">
     <view class="phone-section">
       <text class="phone-title">联系发布者</text>
@@ -9,12 +8,10 @@
       </view>
       <text v-else class="phone-empty">发布者暂未设置联系电话</text>
     </view>
+    <!-- #ifdef H5 -->
     <view id="knocket-container" class="knocket-area" />
+    <!-- #endif -->
   </view>
-  <!-- #endif -->
-  <!-- #ifndef H5 -->
-  <web-view :src="knocketUrl" @message="onWebViewMessage" />
-  <!-- #endif -->
 </template>
 
 <script>
@@ -25,25 +22,15 @@ export default {
   data() {
     return {
       phone: '',
-      knocketUrl: '',
     }
   },
 
   onLoad(options) {
     this.phone = options.phone || ''
-    // #ifndef H5
-    this.knocketUrl = options.url || KNOCKET_SDK_URL
-    // #endif
     // #ifdef H5
     this.$nextTick(() => this.loadKnocketSdk())
     // #endif
   },
-
-  // #ifndef H5
-  onShareAppMessage() {
-    return { title: '联系发布者', path: '/pages/edu-market/index' }
-  },
-  // #endif
 
   methods: {
     callPhone() {
@@ -58,15 +45,10 @@ export default {
       document.head.appendChild(script)
     },
     // #endif
-
-    // #ifndef H5
-    onWebViewMessage() {},
-    // #endif
   },
 }
 </script>
 
-<!-- #ifdef H5 -->
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
@@ -120,4 +102,3 @@ export default {
   flex: 1;
 }
 </style>
-<!-- #endif -->

@@ -281,7 +281,9 @@ defineExpose({
 .message-input-container {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
   padding: 0;
   overflow: hidden;
   position: relative;
@@ -308,6 +310,8 @@ defineExpose({
 
   .message-input-area {
     flex: 1;
+    width: 100%;
+    min-width: 0;
     overflow-y: scroll;
     min-height: 22px;
     font-size: 15px;

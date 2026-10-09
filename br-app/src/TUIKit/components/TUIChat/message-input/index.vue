@@ -211,7 +211,6 @@ defineExpose({
   display: flex;
   flex-direction: column;
   border: none;
-  overflow: hidden;
   background: transparent;
 
   &-h5 {
@@ -219,12 +218,14 @@ defineExpose({
   }
 
   &-editor {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
     display: flex;
   }
 
   .icon {
-    flex-shrink: 0;
+    flex: 0 0 auto;
     margin-left: 8px;
   }
 

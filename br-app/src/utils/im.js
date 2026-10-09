@@ -1,4 +1,6 @@
 import { getChatUserSig } from '@/api/chat'
+import { TUILogin } from '@tencentcloud/tui-core-lite'
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite'
 
 let imInitialized = false
 let initPromise = null
@@ -9,14 +11,19 @@ export async function ensureIM() {
 
   initPromise = (async () => {
     try {
-      const { TUIChatKit } = await import('@/TUIKit')
       const { sdk_app_id, user_id, user_sig } = await getChatUserSig()
-      const { TUILogin } = await import('@tencentcloud/tui-core-lite')
       await TUILogin.login({
         SDKAppID: sdk_app_id,
         userID: user_id,
         userSig: user_sig,
         framework: 'vue3',
+      })
+      const { chat } = TUILogin.getContext()
+      TUIChatEngine.login({
+        chat,
+        SDKAppID: sdk_app_id,
+        userID: user_id,
+        userSig: user_sig,
       })
       imInitialized = true
       return true

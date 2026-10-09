@@ -1,4 +1,7 @@
-"""Tencent Cloud IM UserSig generation utility."""
+"""Tencent Cloud IM UserSig generation utility.
+
+Algorithm aligned with official TLSSigAPIv2.py reference implementation.
+"""
 
 import base64
 import hashlib
@@ -8,6 +11,15 @@ import time
 import zlib
 
 from app.core.config import settings
+
+
+def _base64_encode_url(data: bytes) -> str:
+    """URL-safe base64 with Tencent's custom character mapping."""
+    s = base64.b64encode(data).decode("utf-8")
+    s = s.replace("+", "*")
+    s = s.replace("/", "-")
+    s = s.replace("=", "_")
+    return s
 
 
 def gen_user_sig(user_id: str, expire: int = 180 * 24 * 60 * 60) -> str:
@@ -21,33 +33,29 @@ def gen_user_sig(user_id: str, expire: int = 180 * 24 * 60 * 60) -> str:
     secret_key = settings.IM_SERVER_KEY
     now = int(time.time())
 
-    base_str = (
-        f"TLS.sdkappid:{sdk_app_id},"
-        f"TLS.expire:{expire},"
-        f"TLS.identifier:{user_id},"
-        f"TLS.time:{now}"
+    raw_content = (
+        f"TLS.identifier:{user_id}\n"
+        f"TLS.sdkappid:{sdk_app_id}\n"
+        f"TLS.time:{now}\n"
+        f"TLS.expire:{expire}\n"
     )
 
-    hash_value = hmac.new(
-        secret_key.encode("utf-8"),
-        base_str.encode("utf-8"),
-        hashlib.sha256,
-    ).digest()
+    sig = base64.b64encode(
+        hmac.new(
+            secret_key.encode("utf-8"),
+            raw_content.encode("utf-8"),
+            hashlib.sha256,
+        ).digest()
+    ).decode("utf-8")
 
-    sig = base64.b64encode(hash_value).decode("utf-8")
-
-    raw = {
-        "TLS.ver": "20151230",
-        "TLS.sdkappid": sdk_app_id,
-        "TLS.expire": expire,
-        "TLS.time": now,
+    payload = {
+        "TLS.ver": "2.0",
+        "TLS.identifier": str(user_id),
+        "TLS.sdkappid": int(sdk_app_id),
+        "TLS.expire": int(expire),
+        "TLS.time": int(now),
         "TLS.sig": sig,
-        "TLS.identifier": user_id,
-        "TLS.userbuf": "",
-        "TLS.userbufaddr": 0,
-        "TLS.accountType": 0,
     }
 
-    json_str = json.dumps(raw, separators=(",", ":"), sort_keys=False)
-    compressed = zlib.compress(json_str.encode("utf-8"))
-    return base64.b64encode(compressed).decode("utf-8")
+    compressed = zlib.compress(json.dumps(payload).encode("utf-8"))
+    return _base64_encode_url(compressed)

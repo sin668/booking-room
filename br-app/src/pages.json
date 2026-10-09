@@ -225,6 +225,13 @@
         "navigationBarTitleText": "详情",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/edu-market/contact",
+      "style": {
+        "navigationBarTitleText": "联系",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

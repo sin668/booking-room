@@ -198,6 +198,13 @@ export default {
     this.loadDetail()
   },
 
+  onShow() {
+    if (this._returningFromContact) {
+      this._returningFromContact = false
+      this.showPhoneFallback()
+    }
+  },
+
   methods: {
     formatPrice(price) {
       const num = Number(price)
@@ -226,12 +233,28 @@ export default {
     },
 
     onContact() {
+      this._returningFromContact = true
+      uni.navigateTo({
+        url: `/pages/edu-market/contact?url=${encodeURIComponent('https://trtc.io/knocket-sdk/sdk.js?identifier=0ee9b993c7ff89bb61&v=1791511906929')}`,
+      })
+    },
+
+    showPhoneFallback() {
       const phone = this.detail.publisher_phone
       if (!phone) {
         uni.showToast({ title: '发布者暂未设置联系电话', icon: 'none' })
         return
       }
-      uni.makePhoneCall({ phoneNumber: phone })
+      uni.showModal({
+        title: '联系发布者',
+        content: `拨打电话 ${phone}？`,
+        confirmText: '拨打',
+        success(res) {
+          if (res.confirm) {
+            uni.makePhoneCall({ phoneNumber: phone })
+          }
+        },
+      })
     },
 
     goEdit() {

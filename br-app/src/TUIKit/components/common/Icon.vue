@@ -8,7 +8,7 @@
     @click="handleImgClick"
   >
     <image
-      v-if="isApp"
+      v-if="isApp || isWeChat"
       class="common-icon"
       :src="props.file"
       :style="{ width: iconWidth, height: iconHeight }"
@@ -23,7 +23,7 @@
 </template>
 <script setup lang="ts">
 import { withDefaults, computed } from '../../adapter-vue';
-import { isApp, isPC } from '../../utils/env';
+import { isApp, isPC, isWeChat } from '../../utils/env';
 
 interface IProps {
   file: string;

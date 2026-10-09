@@ -212,10 +212,10 @@ defineExpose({
   flex-direction: column;
   border: none;
   overflow: hidden;
-  background: #ebf0f6;
+  background: #fff;
 
   &-h5 {
-    padding: 10px 10px 15px;
+    padding: 0;
   }
 
   &-editor {
@@ -224,7 +224,8 @@ defineExpose({
   }
 
   .icon {
-    margin-left: 3px;
+    flex-shrink: 0;
+    margin-left: 8px;
   }
 
   &-wx-audio-open {
@@ -236,5 +237,6 @@ defineExpose({
   display: flex;
   flex-direction: row;
   align-items: center;
+  width: 100%;
 }
 </style>

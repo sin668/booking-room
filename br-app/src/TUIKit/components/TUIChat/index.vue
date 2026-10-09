@@ -262,6 +262,10 @@ function onCurrentConversationUpdate(conversation: IConversationModel) {
     return;
   }
 
+  // Set native nav bar title to conversation partner's name
+  const showName = conversation.getShowName?.() || '聊天';
+  uni.setNavigationBarTitle({ title: showName });
+
   isGroup.value = false;
   let conversationType = TUIChatEngine.TYPES.CONV_C2C;
   const conversationID = conversation.conversationID;

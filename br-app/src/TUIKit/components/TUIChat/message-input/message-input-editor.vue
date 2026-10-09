@@ -282,18 +282,18 @@ defineExpose({
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 3px 10px 10px;
+  padding: 0;
   overflow: hidden;
   position: relative;
 
   &-h5 {
     flex: 1;
     height: auto;
-    background: #fff;
-    border-radius: 10px;
-    padding: 7px 0 7px 10px;
-    font-size: 16px !important;
-    max-height: 86px;
+    background: #f5f7fa;
+    border-radius: 18px;
+    padding: 6px 12px;
+    font-size: 15px !important;
+    max-height: 80px;
   }
 
   .message-input-mute {
@@ -308,7 +308,8 @@ defineExpose({
   .message-input-area {
     flex: 1;
     overflow-y: scroll;
-    min-height: 25px;
+    min-height: 22px;
+    font-size: 15px;
   }
 }
 

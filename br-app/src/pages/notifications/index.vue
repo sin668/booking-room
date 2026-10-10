@@ -37,6 +37,70 @@
       @refresherrefresh="refreshList"
       @scrolltolower="loadMore"
     >
+      <block v-if="isConversationTab">
+        <view v-if="conversationLoading" class="conversation-list">
+          <view v-for="i in 5" :key="i" class="skeleton-row">
+            <view class="skeleton-avatar" />
+            <view class="skeleton-lines">
+              <view class="skeleton-line title" />
+              <view class="skeleton-line content-line" />
+            </view>
+          </view>
+        </view>
+
+        <view v-else-if="conversationError" class="state-wrap">
+          <view class="state-icon error-icon">
+            <text class="state-icon-text">!</text>
+          </view>
+          <text class="state-title">会话加载失败</text>
+          <text class="state-desc">请检查网络后重试</text>
+          <view class="retry-btn press-effect" @tap="loadConversations">
+            <text class="retry-btn-text">重新加载</text>
+          </view>
+        </view>
+
+        <view v-else-if="conversations.length === 0" class="state-wrap">
+          <view class="state-icon empty-icon">
+            <text class="state-icon-text">聊</text>
+          </view>
+          <text class="state-title">暂无会话</text>
+          <text class="state-desc">在教培供需广场点击「咨询」即可发起聊天</text>
+        </view>
+
+        <view v-else class="conversation-list">
+          <view
+            v-for="item in conversations"
+            :key="item.conversationID"
+            class="conversation-item press-effect"
+            @tap="openConversation(item)"
+          >
+            <image
+              v-if="item.avatar"
+              class="conv-avatar"
+              :src="item.avatar"
+              mode="aspectFill"
+            />
+            <view v-else class="conv-avatar conv-avatar-fallback">
+              <text class="conv-avatar-text">{{ item.initial }}</text>
+            </view>
+
+            <view class="conv-main">
+              <view class="conv-line">
+                <text class="conv-name">{{ item.name }}</text>
+                <text class="conv-time">{{ item.time }}</text>
+              </view>
+              <view class="conv-line">
+                <text class="conv-summary">{{ item.summary }}</text>
+                <view v-if="item.unreadCount > 0" class="conv-badge">
+                  <text class="conv-badge-text">{{ item.unreadCount > 99 ? '99+' : item.unreadCount }}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <block v-else>
       <view v-if="loading && notifications.length === 0" class="loading-state">
         <view v-for="i in 4" :key="i" class="skeleton-card">
           <view class="skeleton-top">
@@ -97,6 +161,7 @@
           <text v-else-if="!hasMore" class="load-more-text">没有更多了</text>
         </view>
       </view>
+      </block>
 
       <view class="bottom-safe" />
     </scroll-view>
@@ -104,8 +169,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
+import { StoreName, TUIConversationService, TUIStore } from '@tencentcloud/chat-uikit-engine-lite'
 import {
   getNotifications,
   getNotificationPreferences,
@@ -114,11 +180,14 @@ import {
 } from '@/api/notifications'
 import { NOTIFICATION_TYPE_CONFIGS, NOTIFICATION_TYPE_MAP, getNotificationPreferenceField } from '@/utils/notificationTypes'
 import { isLoggedIn } from '@/utils/auth'
+import { ensureIM } from '@/utils/im'
 
 const PAGE_SIZE = 20
+const CONVERSATION_TAB = 'conversation'
 
 const tabs = [
   { value: 'all', label: '全部' },
+  { value: CONVERSATION_TAB, label: '会话' },
   ...NOTIFICATION_TYPE_CONFIGS.map((item) => ({
     value: item.key,
     label: item.label,
@@ -140,6 +209,13 @@ const loadError = ref(false)
 const markAllLoading = ref(false)
 const readingId = ref(null)
 const listRequestId = ref(0)
+const conversations = ref([])
+const conversationLoading = ref(false)
+const conversationError = ref(false)
+
+let conversationWatched = false
+
+const isConversationTab = computed(() => currentType.value === CONVERSATION_TAB)
 
 const hasUnreadInScope = computed(() => notifications.value.some((item) => !item.is_read))
 
@@ -163,9 +239,19 @@ onLoad(() => {
 
 onShow(() => {
   if (!requireLogin()) return
+  if (isConversationTab.value) {
+    loadConversations()
+    return
+  }
   if (preferences.value) {
     loadPreferences()
   }
+})
+
+onUnmounted(() => {
+  if (!conversationWatched) return
+  TUIStore.unwatch(StoreName.CONV, { conversationList: onConversationListUpdated })
+  conversationWatched = false
 })
 
 function requireLogin() {
@@ -208,7 +294,7 @@ async function loadList(options = {}) {
       page: page.value,
       page_size: PAGE_SIZE,
     }
-    if (currentType.value !== 'all') {
+    if (currentType.value !== 'all' && currentType.value !== CONVERSATION_TAB) {
       params.type = currentType.value
     }
 
@@ -241,6 +327,12 @@ function retryLoad() {
 
 function refreshList() {
   refreshing.value = true
+  if (isConversationTab.value) {
+    loadConversations().finally(() => {
+      refreshing.value = false
+    })
+    return
+  }
   Promise.all([
     loadPreferences(),
     loadList({ reset: true, silent: true }),
@@ -250,7 +342,7 @@ function refreshList() {
 }
 
 function loadMore() {
-  if (loading.value || !hasMore.value || loadError.value) return
+  if (isConversationTab.value || loading.value || !hasMore.value || loadError.value) return
   page.value += 1
   loadList()
 }
@@ -258,7 +350,61 @@ function loadMore() {
 function switchType(type) {
   if (currentType.value === type) return
   currentType.value = type
+  if (type === CONVERSATION_TAB) {
+    loadConversations()
+    return
+  }
   loadList({ reset: true })
+}
+
+function toConversationRow(conversation) {
+  const name = conversation.getShowName() || '会话'
+  return {
+    conversationID: conversation.conversationID,
+    name,
+    initial: name.slice(0, 1),
+    avatar: conversation.getAvatar() || '',
+    summary: conversation.getLastMessage('text') || '',
+    time: conversation.getLastMessage('time') || '',
+    unreadCount: conversation.unreadCount || 0,
+  }
+}
+
+function onConversationListUpdated(list) {
+  conversations.value = (Array.isArray(list) ? list : []).map(toConversationRow)
+  conversationLoading.value = false
+  conversationError.value = false
+}
+
+async function loadConversations() {
+  conversationLoading.value = true
+  conversationError.value = false
+
+  const ok = await ensureIM()
+  if (!ok) {
+    conversationLoading.value = false
+    conversationError.value = true
+    return
+  }
+
+  if (!conversationWatched) {
+    TUIStore.watch(StoreName.CONV, { conversationList: onConversationListUpdated })
+    conversationWatched = true
+  }
+
+  try {
+    await TUIConversationService.getConversationList()
+  } catch {
+    conversationError.value = conversations.value.length === 0
+  } finally {
+    conversationLoading.value = false
+  }
+}
+
+function openConversation(item) {
+  uni.navigateTo({
+    url: `/TUIKit/components/TUIChat/index?conversationID=${item.conversationID}`,
+  })
 }
 
 async function markAllRead() {
@@ -436,7 +582,8 @@ function goBack() {
 
 .tab-item {
   position: relative;
-  min-width: 118rpx;
+  flex: 1;
+  min-width: 0;
   height: 68rpx;
   display: flex;
   align-items: center;
@@ -735,6 +882,123 @@ function goBack() {
 .load-more-text {
   font-size: 24rpx;
   color: #98a2b3;
+}
+
+.conversation-list {
+  margin: 24rpx;
+  border-radius: 18rpx;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 12rpx 32rpx rgba(31, 41, 55, 0.06);
+}
+
+.conversation-item,
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 26rpx;
+}
+
+.conversation-item + .conversation-item,
+.skeleton-row + .skeleton-row {
+  border-top: 1rpx solid #f1f3f7;
+}
+
+.conv-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  flex-shrink: 0;
+  border-radius: 24rpx;
+  background: #eef2f7;
+}
+
+.conv-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.conv-avatar-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #4f6ef7;
+}
+
+.conv-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.conv-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.conv-line + .conv-line {
+  margin-top: 10rpx;
+}
+
+.conv-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1f2933;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.conv-time {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  color: #98a2b3;
+}
+
+.conv-summary {
+  flex: 1;
+  min-width: 0;
+  font-size: 26rpx;
+  color: #6b7684;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.conv-badge {
+  flex-shrink: 0;
+  min-width: 34rpx;
+  height: 34rpx;
+  padding: 0 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 17rpx;
+  background: #ff4d4f;
+}
+
+.conv-badge-text {
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.skeleton-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  flex-shrink: 0;
+  border-radius: 24rpx;
+  background: linear-gradient(90deg, #eef1f6 25%, #f7f8fb 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.skeleton-lines {
+  flex: 1;
+  min-width: 0;
 }
 
 .bottom-safe {

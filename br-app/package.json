@@ -13,7 +13,8 @@
     "test:activity-coupon": "node scripts/verify-activity-coupon-campaign.js",
     "test:course-schedule": "node scripts/verify-course-schedule-format.js",
     "test:profile-menu": "node scripts/verify-profile-menu-summary.js",
-    "test:scripts": "npm run test:profile-links && npm run test:wechat-appid && npm run test:refactor && npm run test:activity-coupon && npm run test:course-schedule && npm run test:profile-menu"
+    "test:conversation-tab": "node scripts/verify-notification-conversation-tab.js",
+    "test:scripts": "npm run test:profile-links && npm run test:wechat-appid && npm run test:refactor && npm run test:activity-coupon && npm run test:course-schedule && npm run test:profile-menu && npm run test:conversation-tab"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4060620250520001",

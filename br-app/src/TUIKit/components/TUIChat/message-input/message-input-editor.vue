@@ -289,12 +289,12 @@ defineExpose({
   position: relative;
 
   &-h5 {
-    flex: 1;
+    flex: none;
     height: auto;
-    background: #fff;
-    border: 1px solid #e5e8ee;
-    border-radius: 20px;
-    padding: 4px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
     font-size: 14px !important;
     max-height: 60px;
   }
@@ -312,8 +312,13 @@ defineExpose({
     flex: 1;
     width: 100%;
     min-width: 0;
+    box-sizing: border-box;
+    background: #fff;
+    border: 1px solid #e5e8ee;
+    border-radius: 20px;
+    padding: 4px 12px;
     overflow-y: scroll;
-    min-height: 22px;
+    min-height: 30px;
     font-size: 15px;
   }
 }

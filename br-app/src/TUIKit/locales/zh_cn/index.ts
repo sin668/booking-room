@@ -1,8 +1,4 @@
 import TUIChat from './TUIChat';
-import TUIConversation from './TUIConversation';
-import TUIGroup from './TUIGroup';
-import TUIContact from './TUIContact';
-import TUISearch from './TUISearch';
 
 import message from './message';
 import component from './component';
@@ -25,15 +21,11 @@ const messages = {
     通讯录: '通讯录',
     欢迎使用腾讯云即时通信IM: '欢迎使用腾讯云即时通信IM',
     TUIChat,
-    TUIConversation,
-    TUIGroup,
-    TUIContact,
     message,
     component,
     time,
     Evaluate,
     Words,
-    TUISearch,
     Emoji,
   },
 };

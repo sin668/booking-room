@@ -1,11 +1,15 @@
+// #ifndef MP-WEIXIN
 import i18next from 'i18next';
+// #endif
 import TUICore, { TUILogin, TUIConstants } from '@tencentcloud/tui-core-lite';
 import TUIChatEngine, { TUITranslateService } from '@tencentcloud/chat-uikit-engine-lite';
 import { TUIGlobal } from '@tencentcloud/universal-api';
 import { ITUIComponents, ITUIPlugins } from './interface';
 import { isFunction, isObject } from './utils';
 import { isApp } from './utils/env';
+// #ifdef APP-PLUS
 import CallkitPluginServer from './plugins/extension-server/callkit';
+// #endif
 // #ifndef MP-WEIXIN
 import TUILocales from './locales';
 // #endif
@@ -65,9 +69,11 @@ export default class TUIChatKit {
     }
     TUIChatKit.isInitialized = true;
     // Execute call server when native plugin TUICallKit exists
+    // #ifdef APP-PLUS
     if (isApp) {
       new CallkitPluginServer();
     }
+    // #endif
     // TUITranslateService init
     // #ifndef MP-WEIXIN
     TUITranslateService.setI18next(i18next);

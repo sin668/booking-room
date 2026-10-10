@@ -1,2 +1,0 @@
-const configureWebpack = {};
-export { configureWebpack };

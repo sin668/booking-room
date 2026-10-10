@@ -57,4 +57,16 @@ const showBody = page.match(/onShow\(\(\) => \{([\s\S]*?)\n\}\)/)
 assert.ok(showBody, '未找到 onShow 钩子')
 assert.ok(/loadConversations\(\)/.test(showBody[1]), 'onShow 未重新拉取会话列表以覆盖小程序退后台断连')
 
-console.log('IM 会话对方头像/昵称同步验证通过')
+// 离开聊天页必须释放 IM 当前会话：否则引擎会把该会话的新消息自动置已读，unreadCount 恒为 0
+const chatPage = read('src/TUIKit/components/TUIChat/index.vue')
+const unloadBody = chatPage.match(/onUnload\(\(\) => \{([\s\S]*?)\n\}\)/)
+assert.ok(unloadBody, '未找到 TUIChat 的 onUnload')
+assert.ok(/\breset\(\);/.test(unloadBody[1]), 'TUIChat onUnload 未清除当前会话，对方新消息会被自动置已读')
+const unmountedBody = chatPage.match(/onUnmounted\(\(\) => \{([\s\S]*?)\n\}\)/)
+assert.ok(unmountedBody && /\breset\(\);/.test(unmountedBody[1]), 'TUIChat onUnmounted 应继续清除当前会话（H5 场景）')
+assert.ok(
+  /const reset = \(\) => \{\s*\n\s*TUIConversationService\.switchConversation\(''\)/.test(chatPage),
+  'reset 未调用 switchConversation("") 清除当前会话',
+)
+
+console.log('IM 会话对方头像/昵称同步 + 未读会话释放验证通过')

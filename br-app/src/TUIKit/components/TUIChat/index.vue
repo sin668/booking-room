@@ -101,6 +101,10 @@ onLoad((options) => {
 });
 
 onUnload(() => {
+  // mp-weixin does not guarantee onUnmounted on page unload, and the previous page's onShow runs
+  // before it, so the current conversation must be released here — otherwise the engine keeps
+  // auto-marking this conversation's incoming messages as read and unreadCount stays 0.
+  reset();
   // Whether logout is decided by yourself  when the page is unloaded. The default is false.
   logout(false).then(() => {
     // Handle success result from promise.then when you set true.

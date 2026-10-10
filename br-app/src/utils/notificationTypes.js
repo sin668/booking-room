@@ -1,7 +1,7 @@
 export const NOTIFICATION_TYPE_CONFIGS = [
   {
     key: 'booking',
-    label: '预约提醒',
+    label: '预约',
     settingLabel: '预约提醒',
     settingDescription: '预约开始前15分钟推送提醒',
     iconText: '铃',
@@ -11,7 +11,7 @@ export const NOTIFICATION_TYPE_CONFIGS = [
   },
   {
     key: 'activity',
-    label: '活动通知',
+    label: '活动',
     settingLabel: '活动通知',
     settingDescription: '接收优惠活动和限时促销',
     iconText: '告',
@@ -21,7 +21,7 @@ export const NOTIFICATION_TYPE_CONFIGS = [
   },
   {
     key: 'report',
-    label: '学习报告',
+    label: '报告',
     settingLabel: '学习周报',
     settingDescription: '每周一推送上周学习总结',
     iconText: '报',
@@ -31,7 +31,7 @@ export const NOTIFICATION_TYPE_CONFIGS = [
   },
   {
     key: 'arrival',
-    label: '到店提醒',
+    label: '到店',
     settingLabel: '到店打卡提醒',
     settingDescription: '到达门店附近时自动提醒',
     iconText: '到',

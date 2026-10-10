@@ -1,9 +1,29 @@
 import { getChatUserSig } from '@/api/chat'
 import { TUILogin } from '@tencentcloud/tui-core-lite'
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite'
+import TUIChatEngine, { TUIUserService } from '@tencentcloud/chat-uikit-engine-lite'
 
 let imInitialized = false
 let initPromise = null
+let imProfile = null
+
+/** 会话列表里对方的头像/昵称取自 IM 用户画像，因此需把本系统资料写回 IM，否则对方只能看到账号名 */
+async function pushIMProfile() {
+  if (!imProfile) return
+  const payload = {}
+  if (imProfile.nick) payload.nick = imProfile.nick
+  if (imProfile.avatar) payload.avatar = imProfile.avatar
+  if (!payload.nick && !payload.avatar) return
+  try {
+    await TUIUserService.updateMyProfile(payload)
+  } catch (e) {
+    console.warn('IM profile sync failed:', e)
+  }
+}
+
+export function setIMProfile(profile) {
+  imProfile = profile
+  if (imInitialized) pushIMProfile()
+}
 
 export async function ensureIM() {
   if (imInitialized) return true
@@ -26,6 +46,7 @@ export async function ensureIM() {
         userSig: user_sig,
       })
       imInitialized = true
+      pushIMProfile()
       return true
     } catch (e) {
       initPromise = null

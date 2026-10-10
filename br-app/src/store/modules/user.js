@@ -8,7 +8,7 @@ import {
   setRefreshToken,
   setToken,
 } from '@/utils/request'
-import { ensureIM } from '@/utils/im'
+import { ensureIM, setIMProfile } from '@/utils/im'
 import * as authApi from '@/api/auth'
 import * as userProfileApi from '@/api/userProfile'
 
@@ -85,12 +85,14 @@ export const useUserStore = defineStore('user', {
     async fetchUserInfo() {
       const user = await userProfileApi.getMe()
       this.userInfo = user
+      setIMProfile({ nick: user.nickname, avatar: user.avatar })
     },
 
     /** 更新当前用户资料 */
     async updateProfile(payload) {
       const user = await userProfileApi.updateMe(payload)
       this.userInfo = user
+      setIMProfile({ nick: user.nickname, avatar: user.avatar })
       return user
     },
 

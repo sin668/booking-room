@@ -1,10 +1,14 @@
 {
   "version": 1,
-  "argv": ["node", "scripts/verify-tuikit-cleanup.js"],
+  "argv": ["node", "scripts/verify-im-peer-profile.js"],
   "cwd": "br-app",
   "files": [
-    "br-app/src/TUIKit/index.ts",
-    "br-app/scripts/verify-tuikit-cleanup.js"
+    "br-app/src/utils/im.js",
+    "br-app/src/store/modules/user.js",
+    "br-app/src/pages/notifications/index.vue",
+    "br-app/src/TUIKit/components/TUIChat/index.vue",
+    "br-app/scripts/verify-im-peer-profile.js",
+    "br-app/package.json"
   ],
   "env": ["PATH"]
 }

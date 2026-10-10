@@ -9,7 +9,7 @@
       class="audio-message-icon"
       :file="audioIcon"
       :size="'23px'"
-      :hotAreaSize="'3px'"
+      :hotAreaSize="'0px'"
       @onClick="switchAudio"
     />
     <view

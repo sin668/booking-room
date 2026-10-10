@@ -223,8 +223,8 @@ defineExpose({
   }
 
   &-icon {
-    flex: 0 0 30px;
-    width: 30px;
+    flex: 0 0 23px;
+    width: 23px;
     height: 30px;
     margin-left: 8px;
     display: flex;

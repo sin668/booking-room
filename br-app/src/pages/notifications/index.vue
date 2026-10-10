@@ -75,14 +75,10 @@
             @tap="openConversation(item)"
           >
             <image
-              v-if="item.avatar"
               class="conv-avatar"
-              :src="item.avatar"
+              :src="item.avatar || defaultAvatarUrl"
               mode="aspectFill"
             />
-            <view v-else class="conv-avatar conv-avatar-fallback">
-              <text class="conv-avatar-text">{{ item.initial }}</text>
-            </view>
 
             <view class="conv-main">
               <view class="conv-line">
@@ -102,8 +98,8 @@
 
       <block v-else>
       <view v-if="showConversationEntry" class="conversation-entry-section">
-        <view class="notification-card" @tap="goConversationTab">
-          <view class="card-header">
+        <view class="conversation-entry-card">
+          <view class="conversation-entry-header" @tap="goConversationTab">
             <view class="type-wrap">
               <view class="type-icon conversation">
                 <text class="type-icon-text">话</text>
@@ -111,12 +107,34 @@
               <text class="type-label conversation">会话</text>
             </view>
             <view class="right-wrap">
-              <text class="time-text">{{ conversationSummary.time }}</text>
+              <text class="time-text">{{ conversationEntryTime }}</text>
               <view v-if="conversationSummary.hasUnread" class="unread-dot" />
             </view>
           </view>
-          <text class="card-title">{{ conversationSummary.name }}</text>
-          <text class="card-content">{{ conversationSummary.summary || '暂无消息内容' }}</text>
+          <view
+            v-for="item in conversations"
+            :key="item.conversationID"
+            class="conversation-item press-effect"
+            @tap="openConversation(item)"
+          >
+            <image
+              class="conv-entry-avatar"
+              :src="item.avatar || defaultAvatarUrl"
+              mode="aspectFill"
+            />
+            <view class="conv-main">
+              <view class="conv-line">
+                <text class="conv-name">{{ item.name }}</text>
+                <text class="conv-time">{{ item.time }}</text>
+              </view>
+              <view class="conv-line">
+                <text class="conv-summary">{{ item.summary }}</text>
+                <view v-if="item.unreadCount > 0" class="conv-badge">
+                  <text class="conv-badge-text">{{ item.unreadCount > 99 ? '99+' : item.unreadCount }}</text>
+                </view>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
 
@@ -203,6 +221,7 @@ import { ensureIM } from '@/utils/im'
 
 const PAGE_SIZE = 20
 const CONVERSATION_TAB = 'conversation'
+const defaultAvatarUrl = 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png'
 
 const tabs = [
   { value: 'all', label: '全部' },
@@ -246,6 +265,12 @@ const conversationSummary = computed(() => {
     summary: latest.summary,
     hasUnread: list.some((item) => item.unreadCount > 0),
   }
+})
+
+const conversationEntryTime = computed(() => {
+  const list = conversations.value
+  if (!list.length) return ''
+  return formatAbsoluteTime(list[0].rawTime)
 })
 
 const showConversationEntry = computed(
@@ -410,6 +435,7 @@ function goConversationTab() {
 
 function toConversationRow(conversation) {
   const name = conversation.getShowName() || '会话'
+  const lastMsg = conversation.lastMessage || {}
   return {
     conversationID: conversation.conversationID,
     name,
@@ -417,6 +443,7 @@ function toConversationRow(conversation) {
     avatar: conversation.getAvatar() || '',
     summary: conversation.getLastMessage('text') || '',
     time: conversation.getLastMessage('time') || '',
+    rawTime: lastMsg.lastTime || lastMsg.time || 0,
     unreadCount: conversation.unreadCount || 0,
   }
 }
@@ -546,6 +573,19 @@ function formatTime(value) {
   const hour = String(date.getHours()).padStart(2, '0')
   const minute = String(date.getMinutes()).padStart(2, '0')
   return `${month}-${day} ${hour}:${minute}`
+}
+
+function formatAbsoluteTime(timestamp) {
+  if (!timestamp) return ''
+  const ms = timestamp > 1e12 ? timestamp : timestamp * 1000
+  const d = new Date(ms)
+  if (Number.isNaN(d.getTime())) return ''
+  const Y = d.getFullYear()
+  const M = String(d.getMonth() + 1).padStart(2, '0')
+  const D = String(d.getDate()).padStart(2, '0')
+  const h = String(d.getHours()).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
+  return `${Y}-${M}-${D} ${h}:${m}`
 }
 
 function goBack() {
@@ -695,6 +735,36 @@ function goBack() {
 
 .conversation-entry-section {
   padding: 24rpx 24rpx 0;
+}
+
+.conversation-entry-card {
+  margin-bottom: 20rpx;
+  border-radius: 18rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 32rpx rgba(31, 41, 55, 0.06);
+  overflow: hidden;
+}
+
+.conversation-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 26rpx;
+  border-bottom: 1rpx solid #f1f3f7;
+}
+
+.conversation-entry-header:active {
+  opacity: 0.72;
+}
+
+.conversation-entry-card .conversation-item {
+  padding: 20rpx 26rpx;
+}
+
+.conversation-entry-card .conv-entry-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 18rpx;
 }
 
 .notification-card,
@@ -974,16 +1044,12 @@ function goBack() {
   background: #eef2f7;
 }
 
-.conv-avatar-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.conv-avatar-text {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #4f6ef7;
+.conv-entry-avatar {
+  width: 76rpx;
+  height: 76rpx;
+  flex-shrink: 0;
+  border-radius: 20rpx;
+  background: #eef2f7;
 }
 
 .conv-main {

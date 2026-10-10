@@ -11,8 +11,8 @@ async function pushIMProfile() {
   if (!imProfile) return
   const payload = {}
   if (imProfile.nick) payload.nick = imProfile.nick
-  if (imProfile.avatar) payload.avatar = imProfile.avatar
-  if (!payload.nick && !payload.avatar) return
+  payload.avatar = imProfile.avatar || ''
+  if (!payload.nick && !imProfile.avatar) return
   try {
     await TUIUserService.updateMyProfile(payload)
   } catch (e) {

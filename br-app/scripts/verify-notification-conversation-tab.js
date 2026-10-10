@@ -37,6 +37,10 @@ assert.ok(
   /if \(type === CONVERSATION_TAB\) \{\s*\n\s*loadConversations\(\)/.test(page),
   '切换到会话 TAB 应加载会话列表而非通知列表',
 )
+assert.ok(
+  /async function markAllRead\(\) \{\s*\n\s*if \(isConversationTab\.value\) return/.test(page),
+  '会话 TAB 下不得把 conversation 作为通知类型批量标记已读',
+)
 
 // 4. 会话行：单行截断 + 未读徽标口径
 assert.ok(/class="conv-summary"/.test(page), '缺少最新一条消息摘要节点')

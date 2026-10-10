@@ -408,6 +408,7 @@ function openConversation(item) {
 }
 
 async function markAllRead() {
+  if (isConversationTab.value) return
   if (!hasUnreadInScope.value || markAllLoading.value) return
   markAllLoading.value = true
   try {

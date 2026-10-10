@@ -82,4 +82,39 @@ const clearBody = store.match(/clearLocalSession\(\) \{([\s\S]*?)\n {4}\}/)
 assert.ok(clearBody, '未找到 store clearLocalSession')
 assert.ok(/resetIM\(\)/.test(clearBody[1]), 'clearLocalSession 未在退出登录时调用 resetIM')
 
-console.log('IM 会话对方头像/昵称同步 + 未读会话释放 + 退出登出 IM 验证通过')
+// 改动1：对方无头像时气泡回退默认头像，不能显示成自己的头像
+const bubble = read('src/TUIKit/components/TUIChat/message-list/message-elements/message-bubble.vue')
+assert.ok(
+  /import TUIChatEngine, \{[^}]*TUIStore, StoreName[^}]*\} from '@tencentcloud\/chat-uikit-engine-lite'/.test(bubble),
+  'message-bubble.vue 未引入 TUIStore/StoreName',
+)
+assert.ok(/:url="resolvedAvatarUrl"/.test(bubble), '气泡头像未改用 resolvedAvatarUrl')
+const resolvedBody = bubble.match(/const resolvedAvatarUrl = computed[\s\S]*?\n\}\);/)
+assert.ok(resolvedBody, '未找到 resolvedAvatarUrl 计算属性')
+assert.ok(/flow === 'in'/.test(resolvedBody[0]), 'resolvedAvatarUrl 未针对 in 消息处理')
+assert.ok(/StoreName\.USER, 'userProfile'/.test(resolvedBody[0]), 'resolvedAvatarUrl 未读取自己的 IM 头像')
+assert.ok(/avatar === selfAvatar/.test(resolvedBody[0]), 'resolvedAvatarUrl 未在对方头像等于自己头像时回退')
+
+// 改动2：「全部」TAB 顶部增加会话聚合行，点击进入会话 TAB，且全部 TAB 也加载会话
+assert.ok(/const showConversationEntry = computed\(/.test(page), '未定义 showConversationEntry')
+assert.ok(/currentType\.value === 'all' && !!conversationSummary\.value/.test(page), "showConversationEntry 口径应为全部 TAB 且有会话")
+assert.ok(/const conversationSummary = computed\(/.test(page), '未定义 conversationSummary')
+assert.ok(/unreadCount > 0/.test(page), '会话聚合行需按未读判断红点')
+assert.ok(/class="type-label conversation">会话</.test(page), '全部 TAB 缺少「会话」标签')
+assert.ok(/<text class="type-icon-text">话<\/text>/.test(page), '全部 TAB 缺少「话」图标')
+assert.ok(/function goConversationTab/.test(page), '未定义 goConversationTab')
+assert.ok(/@tap="goConversationTab"/.test(page), '会话聚合行未绑定点击进入会话 TAB')
+const showBody2 = page.match(/onShow\(\(\) => \{([\s\S]*?)\n\}\)/)
+assert.ok(showBody2 && /currentType\.value === 'all'/.test(showBody2[1]) && /loadConversations\(\)/.test(showBody2[1]), "onShow 未在全部 TAB 加载会话")
+
+// 改动3：首页铃铛计入 IM 未读会话
+const home = read('src/pages/index/index.vue')
+assert.ok(/import \{ StoreName, TUIStore \} from '@tencentcloud\/chat-uikit-engine-lite'/.test(home), '首页未引入 TUIStore/StoreName')
+assert.ok(/import \{ ensureIM \} from '@\/utils\/im'/.test(home), '首页未引入 ensureIM')
+assert.ok(/v-if="hasNotification \|\| hasIMUnread"/.test(home), '铃铛红点未合并 IM 未读')
+assert.ok(/async loadIMUnread\(\)/.test(home), '首页未定义 loadIMUnread')
+assert.ok(/TUIStore\.watch\(StoreName\.CONV, \{ totalUnreadCount: this\.onTotalUnreadUpdated \}\)/.test(home), '首页未订阅 totalUnreadCount')
+assert.ok(/this\.loadIMUnread\(\)/.test(home), 'loadData 未调用 loadIMUnread')
+assert.ok(/TUIStore\.unwatch\(StoreName\.CONV, \{ totalUnreadCount: this\.onTotalUnreadUpdated \}\)/.test(home), '首页未取消订阅 totalUnreadCount')
+
+console.log('IM 会话对方头像/昵称同步 + 未读会话释放 + 退出登出 IM + 全部 TAB 会话行 + 铃铛计入会话未读 验证通过')

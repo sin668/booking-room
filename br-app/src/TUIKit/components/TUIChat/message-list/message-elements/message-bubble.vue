@@ -20,7 +20,7 @@
         >
           <Avatar
             useSkeletonAnimation
-            :url="message.avatar || ''"
+            :url="resolvedAvatarUrl"
             :style="{flex: '0 0 auto'}"
           />
           <main
@@ -123,7 +123,7 @@
 
 <script lang="ts" setup>
 import { computed, toRefs } from '../../../../adapter-vue';
-import TUIChatEngine, { TUITranslateService, IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
+import TUIChatEngine, { TUITranslateService, IMessageModel, TUIStore, StoreName } from '@tencentcloud/chat-uikit-engine-lite';
 import Icon from '../../../common/Icon.vue';
 import ReadStatus from './read-status/index.vue';
 import MessageQuote from './message-quote/index.vue';
@@ -177,6 +177,16 @@ const needLoadingIconMessageType = [
 ];
 
 const { blinkMessageIDList, messageItem: message } = toRefs(props);
+
+// 对方无头像时，IM SDK 归一化会把当前用户自己的头像写进 in 气泡；对 in 消息若头像为空或等于自己头像则回退默认头像
+const resolvedAvatarUrl = computed<string>(() => {
+  const avatar = message.value.avatar || '';
+  if (message.value.flow === 'in') {
+    const selfAvatar = TUIStore.getData(StoreName.USER, 'userProfile')?.avatar || '';
+    if (!avatar || (selfAvatar && avatar === selfAvatar)) return '';
+  }
+  return avatar;
+});
 
 const isMultipleSelected = computed<boolean>(() => {
   return props.multipleSelectedMessageIDList.includes(message.value.ID);

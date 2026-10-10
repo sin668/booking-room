@@ -16,7 +16,7 @@
       </view> 
       <view class="nav-bell" @tap="onTapBell">
         <view class="icon icon-bell nav-bell-icon" />
-        <view v-if="hasNotification" class="nav-bell-dot" />
+        <view v-if="hasNotification || hasIMUnread" class="nav-bell-dot" />
       </view>
     </view>
 
@@ -251,6 +251,8 @@
 import { getBanners } from '@/api/banners'
 import { getActivities } from '@/api/activities'
 import { getNotificationUnreadSummary } from '@/api/notifications'
+import { StoreName, TUIStore } from '@tencentcloud/chat-uikit-engine-lite'
+import { ensureIM } from '@/utils/im'
 import { useCityStore } from '@/store/modules/city'
 import { getAllFollowedCategories } from '@/services/followedRooms'
 import { formatRoomMinPrice } from '@/utils/formatters'
@@ -268,6 +270,8 @@ export default {
       statusBarHeight: 0,
       refreshing: false,
       hasNotification: false,
+      hasIMUnread: false,
+      imUnreadWatched: false,
       banners: [],
       currentBanner: 0,
       activities: [],
@@ -290,6 +294,12 @@ export default {
   onLoad() {
     const sysInfo = uni.getSystemInfoSync()
     this.statusBarHeight = sysInfo.statusBarHeight || 0
+  },
+  onHide() {
+    this.unwatchIMUnread()
+  },
+  onUnload() {
+    this.unwatchIMUnread()
   },
   computed: {
     cityStore() {
@@ -317,9 +327,35 @@ export default {
       this.loadFollowedRooms()
       await Promise.allSettled([
         this.loadNotificationUnreadSummary(),
+        this.loadIMUnread(),
         this.loadBanners(),
         this.loadActivities(),
       ])
+    },
+
+    onTotalUnreadUpdated(count) {
+      this.hasIMUnread = Number(count || 0) > 0
+    },
+
+    async loadIMUnread() {
+      // 游客无 IM 会话，跳过；未读会话消息也要点亮铃铛
+      if (!isLoggedIn()) {
+        this.hasIMUnread = false
+        return
+      }
+      const ok = await ensureIM()
+      if (!ok) return
+      if (!this.imUnreadWatched) {
+        TUIStore.watch(StoreName.CONV, { totalUnreadCount: this.onTotalUnreadUpdated })
+        this.imUnreadWatched = true
+      }
+      this.hasIMUnread = Number(TUIStore.getData(StoreName.CONV, 'totalUnreadCount') || 0) > 0
+    },
+
+    unwatchIMUnread() {
+      if (!this.imUnreadWatched) return
+      TUIStore.unwatch(StoreName.CONV, { totalUnreadCount: this.onTotalUnreadUpdated })
+      this.imUnreadWatched = false
     },
 
     async loadNotificationUnreadSummary() {

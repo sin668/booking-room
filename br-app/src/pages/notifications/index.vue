@@ -101,6 +101,25 @@
       </block>
 
       <block v-else>
+      <view v-if="showConversationEntry" class="conversation-entry-section">
+        <view class="notification-card" @tap="goConversationTab">
+          <view class="card-header">
+            <view class="type-wrap">
+              <view class="type-icon conversation">
+                <text class="type-icon-text">话</text>
+              </view>
+              <text class="type-label conversation">会话</text>
+            </view>
+            <view class="right-wrap">
+              <text class="time-text">{{ conversationSummary.time }}</text>
+              <view v-if="conversationSummary.hasUnread" class="unread-dot" />
+            </view>
+          </view>
+          <text class="card-title">{{ conversationSummary.name }}</text>
+          <text class="card-content">{{ conversationSummary.summary || '暂无消息内容' }}</text>
+        </view>
+      </view>
+
       <view v-if="loading && notifications.length === 0" class="loading-state">
         <view v-for="i in 4" :key="i" class="skeleton-card">
           <view class="skeleton-top">
@@ -217,6 +236,22 @@ let conversationWatched = false
 
 const isConversationTab = computed(() => currentType.value === CONVERSATION_TAB)
 
+const conversationSummary = computed(() => {
+  const list = conversations.value
+  if (!list.length) return null
+  const latest = list[0]
+  return {
+    name: latest.name,
+    time: latest.time,
+    summary: latest.summary,
+    hasUnread: list.some((item) => item.unreadCount > 0),
+  }
+})
+
+const showConversationEntry = computed(
+  () => currentType.value === 'all' && !!conversationSummary.value,
+)
+
 const hasUnreadInScope = computed(() => notifications.value.some((item) => !item.is_read))
 
 const disabledHint = computed(() => {
@@ -243,6 +278,9 @@ onShow(() => {
     loadConversations()
     return
   }
+  if (currentType.value === 'all') {
+    loadConversations()
+  }
   if (preferences.value) {
     loadPreferences()
   }
@@ -266,6 +304,9 @@ async function loadInitialData() {
     loadPreferences(),
     loadList({ reset: true }),
   ])
+  if (currentType.value === 'all') {
+    loadConversations()
+  }
 }
 
 async function loadPreferences() {
@@ -333,6 +374,9 @@ function refreshList() {
     })
     return
   }
+  if (currentType.value === 'all') {
+    loadConversations()
+  }
   Promise.all([
     loadPreferences(),
     loadList({ reset: true, silent: true }),
@@ -354,7 +398,14 @@ function switchType(type) {
     loadConversations()
     return
   }
+  if (type === 'all') {
+    loadConversations()
+  }
   loadList({ reset: true })
+}
+
+function goConversationTab() {
+  switchType(CONVERSATION_TAB)
 }
 
 function toConversationRow(conversation) {
@@ -642,6 +693,10 @@ function goBack() {
   padding: 24rpx;
 }
 
+.conversation-entry-section {
+  padding: 24rpx 24rpx 0;
+}
+
 .notification-card,
 .skeleton-card {
   margin-bottom: 20rpx;
@@ -714,6 +769,11 @@ function goBack() {
 .arrival {
   color: #f59e0b;
   background: #fff7e6;
+}
+
+.conversation {
+  color: #07c160;
+  background: #e7f8ef;
 }
 
 .default {

@@ -5,13 +5,14 @@
       'message-input-audio-open': isAudioTouchBarShow,
     }"
   >
-    <Icon
-      class="audio-message-icon"
-      :file="audioIcon"
-      :size="'23px'"
-      :hotAreaSize="'0px'"
-      @onClick="switchAudio"
-    />
+    <view class="audio-message-icon">
+      <CommonIcon
+        :file="audioIcon"
+        :size="'23px'"
+        :hotAreaSize="'0px'"
+        @onClick="switchAudio"
+      />
+    </view>
     <view
       v-if="props.isEnableAudio"
       class="audio-input-touch-bar"
@@ -45,7 +46,7 @@ import {
   TUITranslateService,
 } from '@tencentcloud/chat-uikit-engine-lite';
 import { TUIGlobal } from '@tencentcloud/universal-api';
-import Icon from '../../common/Icon.vue';
+import CommonIcon from '../../common/Icon.vue';
 import audioIcon from '../../../assets/icon/audio.svg';
 import { Toast, TOAST_TYPE } from '../../common/Toast/index';
 import { throttle } from '../../../utils/lodash';
@@ -540,7 +541,13 @@ function onRecorderError(err: any) {
   position: relative;
 
   .audio-message-icon {
-    margin-right: 0;
+    flex: 0 0 23px;
+    width: 23px;
+    height: 30px;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .audio-input-touch-bar {

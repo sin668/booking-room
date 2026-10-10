@@ -39,8 +39,8 @@ for (const action of ['fetchUserInfo', 'updateProfile']) {
   )
 }
 assert.ok(
-  /import \{ ensureIM, setIMProfile \} from '@\/utils\/im'/.test(store),
-  'store 未引入 setIMProfile',
+  /import \{ ensureIM, setIMProfile, resetIM \} from '@\/utils\/im'/.test(store),
+  'store 未引入 setIMProfile / resetIM',
 )
 
 // 会话行渲染口径不变：头像来自 IM 画像，缺失时保留首字母占位
@@ -69,4 +69,17 @@ assert.ok(
   'reset 未调用 switchConversation("") 清除当前会话',
 )
 
-console.log('IM 会话对方头像/昵称同步 + 未读会话释放验证通过')
+// 退出系统登录必须同步登出 IM 并重置模块状态：否则 imInitialized 短路会让下一个用户复用上一个账号的会话
+assert.ok(/export async function resetIM/.test(im), 'im.js 未导出 resetIM')
+const resetBody = im.match(/export async function resetIM\(\) \{([\s\S]*?)\n\}/)
+assert.ok(resetBody, '未找到 resetIM 函数体')
+assert.ok(/await TUILogin\.logout\(\)/.test(resetBody[1]), 'resetIM 未调用 TUILogin.logout 登出 IM')
+assert.ok(
+  /imInitialized = false\s*\n\s*initPromise = null\s*\n\s*imProfile = null/.test(resetBody[1]),
+  'resetIM 未重置 imInitialized/initPromise/imProfile，ensureIM 会短路复用旧账号',
+)
+const clearBody = store.match(/clearLocalSession\(\) \{([\s\S]*?)\n {4}\}/)
+assert.ok(clearBody, '未找到 store clearLocalSession')
+assert.ok(/resetIM\(\)/.test(clearBody[1]), 'clearLocalSession 未在退出登录时调用 resetIM')
+
+console.log('IM 会话对方头像/昵称同步 + 未读会话释放 + 退出登出 IM 验证通过')

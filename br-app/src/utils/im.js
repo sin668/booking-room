@@ -61,3 +61,17 @@ export async function ensureIM() {
 export function isIMReady() {
   return imInitialized
 }
+
+/** 退出系统登录必须同步登出 IM，否则 imInitialized 短路会让下一个用户复用上一个账号的 IM 会话 */
+export async function resetIM() {
+  if (!imInitialized) return
+  try {
+    await TUILogin.logout()
+  } catch (e) {
+    console.warn('IM logout failed:', e)
+  } finally {
+    imInitialized = false
+    initPromise = null
+    imProfile = null
+  }
+}

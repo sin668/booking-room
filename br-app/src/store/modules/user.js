@@ -8,7 +8,7 @@ import {
   setRefreshToken,
   setToken,
 } from '@/utils/request'
-import { ensureIM, setIMProfile } from '@/utils/im'
+import { ensureIM, setIMProfile, resetIM } from '@/utils/im'
 import * as authApi from '@/api/auth'
 import * as userProfileApi from '@/api/userProfile'
 
@@ -155,6 +155,7 @@ export const useUserStore = defineStore('user', {
       this.userInfo = null
       removeToken()
       removeRefreshToken()
+      resetIM().catch(() => {})
     },
 
     /** 自动登录（检查本地 Token 有效性） */

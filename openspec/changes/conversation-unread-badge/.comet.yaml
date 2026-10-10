@@ -1,6 +1,6 @@
 workflow: tweak
 language: zh-CN
-phase: build
+phase: archive
 context_compression: off
 build_mode: direct
 build_pause: null
@@ -8,18 +8,18 @@ subagent_dispatch: null
 tdd_mode: direct
 review_mode: off
 isolation: current
-verify_mode: light
+verify_mode: full
 auto_transition: true
 base_ref: eb9e71f60e8d12383510ecbe524bb27403028fef
 design_doc: null
 plan: null
-verify_result: pending
+verify_result: pass
 verify_failures: 0
-verification_report: null
+verification_report: docs/superpowers/reports/2026-10-10-conversation-unread-badge-verify.md
 branch_status: pending
 created_at: 2026-10-10
-verified_at: null
-archive_confirmation: null
+verified_at: 2026-10-10
+archive_confirmation: pending
 archived: false
 bound_branch: main
 direct_override: null
@@ -28,4 +28,4 @@ handoff_hash: null
 classic_profile: tweak
 classic_migration: 1
 run_id: 19167101-a038-41da-92fa-afb18b57de93
-check_epoch: 1
+check_epoch: 3

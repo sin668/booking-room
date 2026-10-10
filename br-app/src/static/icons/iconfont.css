@@ -4,7 +4,32 @@
  * Color is controlled by CSS color property, size by font-size (1em = font-size).
  */
 
-.icon {
+/* 基准样式必须逐个挂到具体图标类上，不能写成裸 `.icon`：本文件由 App.vue 全局引入，
+   而 TUIKit 自带大量 `.icon` / `.icon-close` / `.icon-face` 元素，会被 background-color:
+   currentColor + 1em 尺寸压成实心色块。 */
+.icon-location,
+.icon-search,
+.icon-bell,
+.icon-wallet,
+.icon-ticket,
+.icon-gift,
+.icon-qrcode,
+.icon-book,
+.icon-lock,
+.icon-eye,
+.icon-eye-off,
+.icon-user,
+.icon-shield,
+.icon-check,
+.icon-arrow-down,
+.icon-clock,
+.icon-star,
+.icon-arrow-right,
+.icon-id-card,
+.icon-graduation-cap,
+.icon-chalkboard-user,
+.icon-shield-check,
+.icon-order {
   display: inline-flex;
   align-items: center;
   justify-content: center;

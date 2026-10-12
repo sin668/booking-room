@@ -5,8 +5,12 @@ import TUIChatEngine, { TUIUserService } from '@tencentcloud/chat-uikit-engine-l
 let imInitialized = false
 let initPromise = null
 let imProfile = null
+let lastError = ''
 
-/** 会话列表里对方的头像/昵称取自 IM 用户画像，因此需把本系统资料写回 IM，否则对方只能看到账号名 */
+export function getIMLastError() {
+  return lastError
+}
+
 async function pushIMProfile() {
   if (!imProfile) return
   const payload = {}
@@ -31,17 +35,24 @@ export async function ensureIM() {
 
   initPromise = (async () => {
     try {
+      lastError = ''
       const { sdk_app_id, user_id, user_sig } = await getChatUserSig()
+      if (!sdk_app_id || !user_id || !user_sig) {
+        throw new Error('API返回空值，请检查后端接口')
+      }
       await TUILogin.login({
-        SDKAppID: sdk_app_id,
+        SDKAppID: Number(sdk_app_id),
         userID: user_id,
         userSig: user_sig,
         framework: 'vue3',
       })
       const { chat } = TUILogin.getContext()
+      if (!chat) {
+        throw new Error('SDK登录成功但chat实例为空')
+      }
       TUIChatEngine.login({
         chat,
-        SDKAppID: sdk_app_id,
+        SDKAppID: Number(sdk_app_id),
         userID: user_id,
         userSig: user_sig,
       })
@@ -50,7 +61,8 @@ export async function ensureIM() {
       return true
     } catch (e) {
       initPromise = null
-      console.warn('IM init failed:', e)
+      lastError = e?.message || String(e)
+      console.warn('IM init failed:', lastError)
       return false
     }
   })()
@@ -62,7 +74,6 @@ export function isIMReady() {
   return imInitialized
 }
 
-/** 退出系统登录必须同步登出 IM，否则 imInitialized 短路会让下一个用户复用上一个账号的 IM 会话 */
 export async function resetIM() {
   if (!imInitialized) return
   try {
@@ -73,5 +84,6 @@ export async function resetIM() {
     imInitialized = false
     initPromise = null
     imProfile = null
+    lastError = ''
   }
 }

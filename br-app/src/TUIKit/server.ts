@@ -91,7 +91,9 @@ export default class TUIChatKit {
    * login
    */
   public login() {
+    if (this.chat) return;
     const { chat, SDKAppID, userID, userSig } = TUILogin.getContext();
+    if (!chat) return;
     this.SDKAppID = SDKAppID;
     this.TUIChatEngine.login({
       chat,

@@ -145,7 +145,7 @@
 import { getEduListingDetail } from '@/api/eduMarket'
 import { formatErrorDetail } from '@/utils/formatters'
 import { useUserStore } from '@/store/modules/user'
-import { ensureIM } from '@/utils/im'
+import { ensureIM, getIMLastError } from '@/utils/im'
 
 const TYPE_META = {
   tutor: { label: '家教', icon: 'icon-graduation-cap', role: '个人家教' },
@@ -234,7 +234,7 @@ export default {
       const ok = await ensureIM()
       uni.hideLoading()
       if (!ok) {
-        uni.showToast({ title: '消息服务初始化失败', icon: 'none' })
+        uni.showToast({ title: '消息服务初始化失败：' + getIMLastError(), icon: 'none', duration: 3000 })
         return
       }
       uni.navigateTo({

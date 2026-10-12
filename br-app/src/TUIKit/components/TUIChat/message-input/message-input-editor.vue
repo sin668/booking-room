@@ -30,6 +30,7 @@
 	    :focus="programmaticFocus"
       :show-confirm-bar="false"
       :disable-default-padding="true"
+      :rows="1"
       auto-height
       maxlength="140"
       placeholder-class="input-placeholder"

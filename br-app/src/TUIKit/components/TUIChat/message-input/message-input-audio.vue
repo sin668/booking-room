@@ -526,9 +526,32 @@ function onRecorderStop(res: RecordResult) {
       payload: { file: { duration, tempFilePath, fileSize } },
       needReadReceipt: isEnabledMessageReadReceiptGlobal(),
     } as SendMessageParams;
-    TUIChatService?.sendAudioMessage(options);
+    TUIChatService?.sendAudioMessage(options)
+      ?.then(onSendAudioFailure)
+      ?.catch(onSendAudioFailure);
   }
   initRecorder();
+}
+
+// 富媒体上传域名由服务端下发，不在小程序 uploadFile 白名单内时只会静默失败，
+// 不暴露 code/message 就无法定位到底是哪个域名被拦截。
+function onSendAudioFailure(err: any): void {
+  if (!err) return;
+  console.error('[Audio] sendAudioMessage failed:', err);
+  const code = err?.code;
+  const raw = String(
+    err?.message
+    || err?.msg
+    || err?.errMsg
+    || (typeof err === 'object' ? JSON.stringify(err) : String(err))
+  );
+  // 小程序 Toast 只显示两行，完整对象看 console
+  const text = raw.length > 60 ? `${raw.slice(0, 60)}…` : raw;
+  Toast({
+    message: `语音发送失败 ${code ?? ''} ${text}`,
+    type: TOAST_TYPE.ERROR,
+    duration: 5000,
+  });
 }
 
 function onRecorderError(err: any) {

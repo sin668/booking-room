@@ -215,7 +215,7 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
 } from '@/api/notifications'
-import { NOTIFICATION_TYPE_CONFIGS, NOTIFICATION_TYPE_MAP, getNotificationPreferenceField } from '@/utils/notificationTypes'
+import { NOTIFICATION_TYPE_CONFIGS, NOTIFICATION_TYPE_MAP, getNotificationPreferenceField } from '@/pages-sub/utils/notificationTypes'
 import { isLoggedIn } from '@/utils/auth'
 import { ensureIM } from '@/utils/im'
 

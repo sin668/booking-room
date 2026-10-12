@@ -222,7 +222,7 @@
 <script>
 import { getBooking } from '@/api/bookings'
 import { getReviewList, createReview } from '@/api/review'
-import { uploadImage } from '@/api/upload'
+import { uploadImage } from '@/pages-sub/api/upload'
 import {
   buildStarChars,
   formatBookingStatus,

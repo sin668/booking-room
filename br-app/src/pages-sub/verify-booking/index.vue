@@ -120,7 +120,7 @@ import {
   getStoredAdminToken,
   inspectVerificationToken,
   saveAdminToken,
-} from '@/api/bookingVerifications'
+} from '@/pages-sub/api/bookingVerifications'
 
 const token = ref('')
 const loading = ref(false)

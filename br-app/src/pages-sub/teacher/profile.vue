@@ -207,10 +207,10 @@
 
 <script>
 import { onLoad } from '@dcloudio/uni-app'
-import { getTeacherDetail } from '@/api/teacher'
+import { getTeacherDetail } from '@/pages-sub/api/teacher'
 import { getReviewList } from '@/api/review'
 import { buildStarChars, formatRelativeDay } from '@/utils/formatters'
-import { followTeacher, unfollowTeacher, isTeacherFollowed } from '@/services/followedTeachers'
+import { followTeacher, unfollowTeacher, isTeacherFollowed } from '@/pages-sub/services/followedTeachers'
 import { ensureLogin } from '@/utils/auth'
 
 export default {

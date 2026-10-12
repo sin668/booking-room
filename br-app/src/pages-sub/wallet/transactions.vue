@@ -115,7 +115,7 @@
 </template>
 
 <script>
-import { fetchWalletBalance, fetchWalletTransactionsPage } from '@/services/walletPageService'
+import { fetchWalletBalance, fetchWalletTransactionsPage } from '@/pages-sub/services/walletPageService'
 import { formatDateTime, formatMoney, formatWalletStatus } from '@/utils/formatters'
 import { ensureLogin } from '@/utils/auth'
 

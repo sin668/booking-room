@@ -77,7 +77,7 @@
 
 <script>
 import { getUserCertifications, submitEducationCertification } from '@/api/certification'
-import { uploadImage } from '@/api/upload'
+import { uploadImage } from '@/pages-sub/api/upload'
 
 export default {
   data() {

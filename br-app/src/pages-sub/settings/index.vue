@@ -510,16 +510,16 @@
 </template>
 
 <script>
-import { changePassword, deactivateAccount, getAccountSecuritySummary } from '@/api/accountSecurity'
+import { changePassword, deactivateAccount, getAccountSecuritySummary } from '@/pages-sub/api/accountSecurity'
 import { getNotificationPreferences, updateNotificationPreferences } from '@/api/notifications'
-import { uploadImage } from '@/api/upload'
+import { uploadImage } from '@/pages-sub/api/upload'
 import { useUserStore } from '@/store/modules/user'
 import {
   formatDeactivationRiskReasons,
   formatWechatBindingStatus,
   mapAccountSecurityError,
-} from '@/utils/accountSecurity'
-import { NOTIFICATION_TYPE_CONFIGS, getNotificationPreferenceField } from '@/utils/notificationTypes'
+} from '@/pages-sub/utils/accountSecurity'
+import { NOTIFICATION_TYPE_CONFIGS, getNotificationPreferenceField } from '@/pages-sub/utils/notificationTypes'
 import { ensureLogin } from '@/utils/auth'
 
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/

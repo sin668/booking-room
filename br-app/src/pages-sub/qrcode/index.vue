@@ -114,9 +114,9 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { issueVerificationToken, listVerifiableBookings } from '@/api/bookingVerifications'
+import { issueVerificationToken, listVerifiableBookings } from '@/pages-sub/api/bookingVerifications'
 import { useUserStore } from '@/store/modules/user'
-import { createQrSvgDataUrl } from '@/utils/qrcode'
+import { createQrSvgDataUrl } from '@/pages-sub/utils/qrcode'
 
 const userStore = useUserStore()
 

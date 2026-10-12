@@ -56,7 +56,7 @@
 
 <script>
 import { getUserCertifications, submitTeacherCertification } from '@/api/certification'
-import { uploadImage } from '@/api/upload'
+import { uploadImage } from '@/pages-sub/api/upload'
 
 export default {
   data() {

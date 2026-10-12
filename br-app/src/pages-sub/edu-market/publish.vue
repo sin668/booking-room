@@ -203,7 +203,7 @@
 <script>
 import { createEduListing, getEduListingDetail, updateEduListing } from '@/api/eduMarket'
 import { getUserCertifications } from '@/api/certification'
-import { uploadImage } from '@/api/upload'
+import { uploadImage } from '@/pages-sub/api/upload'
 import { ensureLogin } from '@/utils/auth'
 import { formatErrorDetail } from '@/utils/formatters'
 import { useCityStore } from '@/store/modules/city'

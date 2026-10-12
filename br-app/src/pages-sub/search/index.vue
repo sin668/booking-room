@@ -155,7 +155,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { searchAll } from '@/api/search'
+import { searchAll } from '@/pages-sub/api/search'
 import { useCityStore } from '@/store/modules/city'
 
 const keyword = ref('')

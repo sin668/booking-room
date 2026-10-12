@@ -106,7 +106,7 @@ import {
   fetchRechargePaymentOrder,
   fetchWalletBalance,
   redeemRechargePromoCode,
-} from '@/services/walletPageService'
+} from '@/pages-sub/services/walletPageService'
 import { formatAmount, formatMoney } from '@/utils/formatters'
 import { ensureLogin } from '@/utils/auth'
 

@@ -21,6 +21,7 @@
       "subPackages": true
     },
     "usingComponents": true,
+    "lazyCodeLoading": "requiredComponents",
     "permission": {}
   },
   "h5": {

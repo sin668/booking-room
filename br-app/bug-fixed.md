@@ -74,3 +74,108 @@ https://web.sdk.qcloud.com
 - `br-app/src/utils/im.js` — IM 初始化逻辑，添加了 `withTimeout()` 超时保护和错误信息暴露
 - `br-app/src/pages-sub/edu-market/detail.vue` — 聊天入口页，展示具体错误信息
 - SDK 源码：`node_modules/@tencentcloud/lite-chat/basic.js` — 域名列表和连接逻辑
+
+## TUIKit 小程序端输入栏表情/更多图标不显示
+
+### 报错信息
+
+微信小程序中聊天输入栏右侧的表情按钮和更多按钮区域为空白，不显示任何图标。H5 端正常。
+
+### 根本原因
+
+原版 TUIKit 使用 `<i class="icon">` + CSS `background-image: url(...)` 渲染图标，且图标资源为 SVG 格式。微信小程序不支持：
+
+1. 内联 SVG（无法作为 background-image 引用）
+2. `<i>` 空元素在小程序端无法正确渲染背景图
+3. 小程序的 CSS 引擎对 background-image 外部引用的处理与 H5 不同
+
+### 解决方案
+
+改用 TUIKit 提供的 `CommonIcon` 组件（内部根据平台条件渲染 `<img>` 或 `<image>`），图标资源使用 PNG 格式：
+
+```html
+<CommonIcon
+  class="icon icon-face"
+  :file="faceIcon"
+  :size="'23px'"
+  :hotAreaSize="'3px'"
+  @onClick="changeToolbarDisplayType('emojiPicker')"
+/>
+```
+
+```js
+import faceIcon from '../../../assets/icon/face-uni.png';
+import moreIcon from '../../../assets/icon/more-uni.png';
+```
+
+### 涉及文件
+
+- `br-app/src/TUIKit/components/TUIChat/message-input/index.vue` — 输入栏组件，使用 CommonIcon + PNG 图标
+- `br-app/src/TUIKit/components/common/Icon.vue` — CommonIcon 组件，`isApp || isWeChat` 时用 `<image>`，否则用 `<img>`
+- `br-app/src/TUIKit/assets/icon/face-uni.png`、`more-uni.png` — PNG 图标资源
+
+## TUIKit 小程序端图标被 flex 容器拉伸堆积
+
+### 报错信息
+
+输入栏的表情、更多图标显示为变形的大方块，图标之间间距异常，堆积在一起。
+
+### 根本原因
+
+CommonIcon 组件外层 `.message-input-icon` 容器和内部 `.icon` 元素在 flex 行布局（`audio-main-content-line`）中未限制收缩，被相邻的 textarea（`flex: 1`）挤压，导致图标容器宽度被压缩到最小、内部布局变形。
+
+### 解决方案
+
+为图标容器和内部元素显式设置 `flex: 0 0 <size>` 禁止伸缩：
+
+```scss
+.message-input {
+  &-icon {
+    flex: 0 0 23px;
+    width: 23px;
+    height: 30px;
+    margin-left: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .icon {
+    flex: 0 0 auto;
+  }
+}
+```
+
+### 涉及文件
+
+- `br-app/src/TUIKit/components/TUIChat/message-input/index.vue` — `.message-input-icon` 和 `.icon` 样式
+- `br-app/src/TUIKit/components/TUIChat/message-input/message-input-audio.vue` — `.audio-message-icon` 同理设置 `flex: 0 0 23px`
+
+## TUIKit 小程序端输入框首字符即放大（textarea auto-height）
+
+### 报错信息
+
+微信小程序聊天输入框，输入第一个字符时输入框就从矮状态跳变到 38px 高度，视觉上像是"放大"了。预期行为：输入框应保持单行高度，仅在文字换行到第二行时才自动增高。
+
+### 根本原因
+
+uni-app 的 `<textarea auto-height>` 在空内容时渲染为平台默认最小高度（约 24-30px），而非 CSS `min-height` 设定值。当用户输入第一个字符后，auto-height 机制介入，将高度设为 `min-height: 38px`（padding 8+8 + line-height 22 + border 1+1），产生 8-14px 的跳变。
+
+### 解决方案
+
+添加显式 `height: 38px` 与 `min-height: 38px` 配合。`height` 固定初始状态高度，`auto-height` 在内容超过一行时突破该高度继续增长：
+
+```scss
+.message-input-area {
+  // ...
+  padding: 8px 12px;
+  height: 38px;       // 锁定单行高度，空/有内容视觉一致
+  min-height: 38px;   // auto-height 增长的下限
+  font-size: 15px;
+  line-height: 22px;
+}
+```
+
+### 涉及文件
+
+- `br-app/src/TUIKit/components/TUIChat/message-input/message-input-editor.vue` — textarea 样式

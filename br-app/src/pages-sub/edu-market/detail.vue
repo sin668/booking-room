@@ -269,7 +269,7 @@ export default {
     },
 
     goEdit() {
-      uni.navigateTo({ url: `/pages/edu-market/publish?id=${this.listingId}` })
+      uni.navigateTo({ url: `/pages-sub/edu-market/publish?id=${this.listingId}` })
     },
 
     goBack() {

@@ -560,7 +560,7 @@ export default {
     },
 
     goMyReviews() {
-      uni.navigateTo({ url: '/pages/review/list?mine=1' })
+      uni.navigateTo({ url: '/pages-sub/review/list?mine=1' })
     },
 
     async onSubmit() {

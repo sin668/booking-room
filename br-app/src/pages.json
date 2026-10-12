@@ -150,18 +150,6 @@
       }
     },
     {
-      "path": "pages/review/list",
-      "style": {
-        "navigationBarTitleText": "学员评价"
-      }
-    },
-    {
-      "path": "pages/review/submit",
-      "style": {
-        "navigationBarTitleText": "发表评价"
-      }
-    },
-    {
       "path": "pages/login/login",
       "style": {
         "navigationBarTitleText": "登录",
@@ -211,36 +199,37 @@
         "enablePullDownRefresh": true,
         "backgroundTextStyle": "dark"
       }
-    },
-    {
-      "path": "pages/edu-market/publish",
-      "style": {
-        "navigationBarTitleText": "发布教培信息",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/edu-market/detail",
-      "style": {
-        "navigationBarTitleText": "详情",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/edu-market/contact",
-      "style": {
-        "navigationBarTitleText": "联系"
-      }
     }
   ],
   "subPackages": [
     {
-      "root": "TUIKit",
+      "root": "pages-sub",
       "pages": [
         {
-          "path": "components/TUIConversation/index",
-          "style": { "navigationBarTitleText": "消息" }
+          "path": "review/list",
+          "style": { "navigationBarTitleText": "学员评价" }
         },
+        {
+          "path": "review/submit",
+          "style": { "navigationBarTitleText": "发表评价" }
+        },
+        {
+          "path": "edu-market/publish",
+          "style": { "navigationBarTitleText": "发布教培信息", "navigationStyle": "custom" }
+        },
+        {
+          "path": "edu-market/detail",
+          "style": { "navigationBarTitleText": "详情", "navigationStyle": "custom" }
+        },
+        {
+          "path": "edu-market/contact",
+          "style": { "navigationBarTitleText": "联系" }
+        }
+      ]
+    },
+    {
+      "root": "TUIKit",
+      "pages": [
         {
           "path": "components/TUIChat/index",
           "style": {
@@ -257,18 +246,6 @@
         {
           "path": "components/TUIChat/web-view",
           "style": { "navigationBarTitleText": "聊天" }
-        },
-        {
-          "path": "components/TUIContact/index",
-          "style": { "navigationBarTitleText": "联系人" }
-        },
-        {
-          "path": "components/TUIGroup/index",
-          "style": { "navigationBarTitleText": "群聊" }
-        },
-        {
-          "path": "components/TUISearch/index",
-          "style": { "navigationBarTitleText": "聊天记录" }
         }
       ]
     }
@@ -276,7 +253,7 @@
   "preloadRule": {
     "pages/index/index": {
       "network": "all",
-      "packages": ["TUIKit"]
+      "packages": ["TUIKit", "pages-sub"]
     }
   },
   "globalStyle": {

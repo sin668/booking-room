@@ -69,7 +69,7 @@
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
         <!-- 整块菜单已在 v-if="userStore.isLoggedIn" 内，无需重复登录判定 -->
-        <view class="menu-item" @tap="navigateTo('/pages/review/list?mine=1')">
+        <view class="menu-item" @tap="navigateTo('/pages-sub/review/list?mine=1')">
           <view class="menu-icon orange">
             <text class="review-star-icon">★</text>
           </view>

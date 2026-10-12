@@ -11,6 +11,13 @@ export function getIMLastError() {
   return lastError
 }
 
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label}超时(${ms}ms)`)), ms)),
+  ])
+}
+
 async function pushIMProfile() {
   if (!imProfile) return
   const payload = {}
@@ -36,23 +43,31 @@ export async function ensureIM() {
   initPromise = (async () => {
     try {
       lastError = ''
-      const { sdk_app_id, user_id, user_sig } = await getChatUserSig()
+      const { sdk_app_id, user_id, user_sig } = await withTimeout(
+        getChatUserSig(),
+        10000,
+        '获取IM凭证'
+      )
       if (!sdk_app_id || !user_id || !user_sig) {
         throw new Error('API返回空值，请检查后端接口')
       }
-      await TUILogin.login({
-        SDKAppID: Number(sdk_app_id),
-        userID: user_id,
-        userSig: user_sig,
-        framework: 'vue3',
-      })
+      const sdkAppID = Number(sdk_app_id)
+      await withTimeout(
+        TUILogin.login({
+          SDKAppID: sdkAppID,
+          userID: user_id,
+          userSig: user_sig,
+        }),
+        15000,
+        'IM登录'
+      )
       const { chat } = TUILogin.getContext()
       if (!chat) {
         throw new Error('SDK登录成功但chat实例为空')
       }
       TUIChatEngine.login({
         chat,
-        SDKAppID: Number(sdk_app_id),
+        SDKAppID: sdkAppID,
         userID: user_id,
         userSig: user_sig,
       })

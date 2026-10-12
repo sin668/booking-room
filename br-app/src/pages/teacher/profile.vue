@@ -306,7 +306,7 @@ export default {
 
     onViewAllReviews() {
       const title = encodeURIComponent(this.teacher.name || '学员评价')
-      uni.navigateTo({ url: `/pages/review/list?teacher_id=${this.teacherId}&title=${title}` })
+      uni.navigateTo({ url: `/pages-sub/review/list?teacher_id=${this.teacherId}&title=${title}` })
     },
 
     // 资质认证：接口返回 [{name, sub}]，循环分配图标与配色保持原型风格

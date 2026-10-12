@@ -67,7 +67,7 @@ function main() {
     return;
   }
 
-  const mainPackageSize = getDirectorySize(BUILD_DIR, ['TUIKit']);
+  const mainPackageSize = getDirectorySize(BUILD_DIR, ['TUIKit', 'pages-sub']);
   console.log(`[post-build] Main package size: ${(mainPackageSize / 1024 / 1024).toFixed(2)}MB`);
 }
 

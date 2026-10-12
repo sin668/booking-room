@@ -566,7 +566,7 @@ export default {
     },
 
     goReview(order) {
-      uni.navigateTo({ url: `/pages/review/submit?booking_id=${order.id}` })
+      uni.navigateTo({ url: `/pages-sub/review/submit?booking_id=${order.id}` })
     },
 
     goBooking() {

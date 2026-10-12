@@ -296,11 +296,11 @@ function onTapSort() {
 
 function goPublish() {
   if (!ensureLogin()) return
-  uni.navigateTo({ url: '/pages/edu-market/publish' })
+  uni.navigateTo({ url: '/pages-sub/edu-market/publish' })
 }
 
 function goDetail(id) {
-  uni.navigateTo({ url: `/pages/edu-market/detail?id=${id}` })
+  uni.navigateTo({ url: `/pages-sub/edu-market/detail?id=${id}` })
 }
 
 async function fetchListings(reset = false) {

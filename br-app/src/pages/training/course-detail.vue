@@ -391,7 +391,7 @@ export default {
 
     onViewAllReviews() {
       const title = encodeURIComponent(this.course.name || '学员评价')
-      uni.navigateTo({ url: `/pages/review/list?course_id=${this.courseId}&title=${title}` })
+      uni.navigateTo({ url: `/pages-sub/review/list?course_id=${this.courseId}&title=${title}` })
     },
 
     onBack() {

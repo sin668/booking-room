@@ -659,7 +659,7 @@ export default {
 
     onViewAllReviews() {
       const title = encodeURIComponent(this.room.name || '学员评价')
-      uni.navigateTo({ url: `/pages/review/list?room_id=${this.roomId}&title=${title}` })
+      uni.navigateTo({ url: `/pages-sub/review/list?room_id=${this.roomId}&title=${title}` })
     },
 
     onBack() {

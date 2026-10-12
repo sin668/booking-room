@@ -142,3 +142,90 @@ https://web.sdk.qcloud.com
 - `br-app/src/App.vue` — 全局 `@import` 造成泄漏的路径
 - `br-app/src/TUIKit/components/TUIChat/message-input/index.vue` — 受害元素（原厂 `class="icon icon-face"` / `icon-more`）
 - `br-app/uni.scss` — `$text-primary: #2D3436`，方块颜色来源
+
+---
+
+## TUIKit 聊天文字输入框输入首字符就撑成两行
+
+### 报错信息
+
+无 JS 报错、无编译告警，纯渲染问题：
+
+- 微信小程序端（mp-weixin）聊天窗口文字输入框，**未输入时是一行高度**；输入任意一个字符、文字还没换行，白色圆角输入框立刻变成两行高
+- 现象只在小程序端出现，H5 端正常
+- 该输入框由 commit `0015e6e` 从单行 `<input>` 改为多行 `<textarea auto-height>`，改动前不存在此问题
+
+### 根本原因
+
+`auto-height` 的原生 `<textarea>` **高度完全由组件自己算**，而当时把盒子的外观样式全压在了 textarea 身上：`padding: 8px 12px` + `border: 1px` + `min-height` + `background` + `border-radius`。
+
+微信官方 textarea 文档里有两条决定性的说明：
+
+1. `设置 auto-height 时，style.height 不生效` —— 高度由组件接管，外部只留下 min-height/padding 这类它会叠加计算的量
+2. `disable-default-padding` **只对 iOS 有效** —— Android 侧组件自带默认内边距，无法用该属性去掉
+
+于是 CSS 的上下 padding 与组件内部测量出的行高相互叠加（Android 还额外带自身默认内边距），第一次输入就把高度撑到约两行。换句话说：**问题不在 auto-height，也不在任何"行数"属性，而在于给一个自管高度的原生表单组件加了垂直盒子内边距**。
+
+### 解决方案
+
+把盒子外观交给外层容器，textarea 只保留纯内容区（commit `61e6c53`）：
+
+```html
+<div class="message-input-area-box">
+  <textarea class="message-input-area" auto-height ... />
+</div>
+```
+
+```scss
+.message-input-area-box {
+  box-sizing: border-box;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e5e8ee;
+  border-radius: 20px;
+  padding: 8px 12px;
+  min-height: 38px;
+}
+
+.message-input-area {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  padding: 0;          // 关键：textarea 上不留垂直内边距
+  font-size: 15px;
+  line-height: 22px;
+}
+```
+
+这样 textarea 的高度等于内容行高（一行 22px），盒子高度 = 22 + 16 + 2 = 40px，**空内容与单字符结果相同，不再跳变**；文字换行时 textarea 自然增高，盒子随之撑开。视觉尺寸与原设计一致，未引入任何 JS 高度计算。
+
+验证：`npm run build:mp-weixin` 通过（主包 1.15MB），产物 `message-input-editor.wxml` 中 textarea 的 `padding` 已为 0、外观类落在新增的 `message-input-area-box` 上。**注意：本节按官方文档的生效范围推导出根因并落地修复，构建侧证据齐全，但"输入首字符不再跳成两行"仍需你在微信开发者工具/真机上做一次目视确认。**
+
+### 走过的弯路（务必避免重复）
+
+连错五轮，全部是在 textarea 自身的高度属性上打转，没有一条去查官方文档的生效范围：
+
+| commit | 猜测 | 结果 |
+| --- | --- | --- |
+| `a039c0d` | 空 textarea 塌陷，加 `height: 38px` | 无效（auto-height 下 style.height 根本不生效，文档明写） |
+| `de7376d` | 关掉 auto-height、用 JS 算高度 | 代码量大，用户要求撤回 → `a4bbd1e` revert |
+| `b376d31` | `box-sizing` 内容区 20px < `line-height` 22px 放不下，改 `min-height: 40px` | 无效 |
+| `1baa35d` | 小程序 textarea 有 `rows` 属性、默认 2 行，加 `:rows="1"` | **属性根本不存在**，无效 |
+| `eec0bd7` | 列方向 flex 父容器把 textarea 拉伸，移除 `flex: 1` | 无效 |
+
+- `min-height: 40px` 那一版还被本地一次未记录的编辑悄悄改回 `38px`，等于从未被真正验证过——排查期间要确认工作区文件与预期一致。
+- 两次凭记忆断言原生属性默认值（`rows=2`）都是错的。**小程序组件的属性名与默认值必须以官方文档为准，不要按 Web/HTML textarea 或别的框架类推。**
+
+### 经验教训
+
+1. 原生表单组件（textarea / input / picker）一旦带上"自管高度/自管尺寸"的开关（`auto-height` 等），**外观盒子就要另起一层容器**，不要往组件上压 padding、border、min-height。
+2. 排查这类"只在小程序端、只在某个交互之后出现"的样式问题，第一步是读官方组件文档的**属性生效范围与平台差异**（本例的 `disable-default-padding 仅 iOS`、`auto-height 下 style.height 失效`就是答案本身），而不是逐个属性试。
+3. 同一个假设层连续两次无效即停手换层：五轮里有四轮仍在调 textarea 的高度数值。参见上一条图标问题的同类教训。
+
+### 涉及文件
+
+- `br-app/src/TUIKit/components/TUIChat/message-input/message-input-editor.vue` — 修复点（新增 `message-input-area-box` 外层容器，textarea 清空垂直内边距与盒子样式）
+- `br-app/src/TUIKit/components/TUIChat/message-input/index.vue` — `:not(not)` 全局 flex 与 `.message-input-editor` flex 容器，排查时确认过不是拉伸来源
+

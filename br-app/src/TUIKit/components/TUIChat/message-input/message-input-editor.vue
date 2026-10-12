@@ -318,8 +318,7 @@ defineExpose({
     border: 1px solid #e5e8ee;
     border-radius: 20px;
     padding: 8px 12px;
-    height: 38px;
-    min-height: 38px;
+    min-height: 40px;
     font-size: 15px;
     line-height: 22px;
   }

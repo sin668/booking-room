@@ -96,6 +96,8 @@ let recordTime: number = 0;
 let isManualCancelBySlide = false;
 let recordTimer: number | undefined;
 let firstTouchPageY: number = -1;
+let isFingerDown = false;
+let recorderActive = false;
 const recorderManager = TUIGlobal?.getRecorderManager();
 
 const isRecording = ref(false);
@@ -393,6 +395,7 @@ async function switchAudio() {
  * 长按开始录音（作为兜底检查）
  */
 async function handleLongPress() {
+  isFingerDown = true;
   // 检查权限（作为兜底）
   await handlePermissionCheck(() => {
     // 权限通过，开始录音
@@ -404,6 +407,11 @@ async function handleLongPress() {
  * 开始录音
  */
 function startRecording() {
+  // 权限检查是异步的，回调可能在松手后才到达
+  if (!isFingerDown || recorderActive) {
+    return;
+  }
+  recorderActive = true;
   recorderManager.start(recordConfig);
 }
 
@@ -445,7 +453,10 @@ function initRecorderData(options?: { hasError: boolean }) {
   recordTime = 0;
   firstTouchPageY = -1;
   isManualCancelBySlide = false;
-  if (!options?.hasError) {
+  isFingerDown = false;
+  const wasActive = recorderActive;
+  recorderActive = false;
+  if (!options?.hasError && wasActive) {
     recorderManager.stop();
   }
 }
@@ -474,7 +485,11 @@ const handleTouchMove = throttle(function (e: any) {
 }, 100);
 
 function handleTouchEnd() {
-  recorderManager.stop();
+  isFingerDown = false;
+  if (recorderActive) {
+    recorderActive = false;
+    recorderManager.stop();
+  }
 }
 
 function onRecorderStart() {

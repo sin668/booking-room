@@ -19,28 +19,30 @@
     >
     </div>
     <!-- #endif -->
-    <textarea
-      id="editor"
-      ref="inputRef"
-      v-model="inputText"
-      :adjust-position="true"
-      cursor-spacing="20"
-      confirm-type="send"
-      :confirm-hold="true"
-	    :focus="programmaticFocus"
-      :show-confirm-bar="false"
-      :disable-default-padding="true"
-      auto-height
-      maxlength="140"
-      placeholder-class="input-placeholder"
-      class="message-input-area"
-      :placeholder="props.placeholder"
-      auto-blur
-      @confirm="handleSendMessage"
-      @input="onInput"
-      @blur="onBlur"
-      @focus="onFocus"
-    />
+    <div class="message-input-area-box">
+      <textarea
+        id="editor"
+        ref="inputRef"
+        v-model="inputText"
+        :adjust-position="true"
+        cursor-spacing="20"
+        confirm-type="send"
+        :confirm-hold="true"
+        :focus="programmaticFocus"
+        :show-confirm-bar="false"
+        :disable-default-padding="true"
+        auto-height
+        maxlength="140"
+        placeholder-class="input-placeholder"
+        class="message-input-area"
+        :placeholder="props.placeholder"
+        auto-blur
+        @confirm="handleSendMessage"
+        @input="onInput"
+        @blur="onBlur"
+        @focus="onFocus"
+      />
+    </div>
   </div>
 </template>
 <script lang="ts" setup>
@@ -309,15 +311,23 @@ defineExpose({
     align-items: center;
   }
 
-  .message-input-area {
-    width: 100%;
-    min-width: 0;
+  .message-input-area-box {
     box-sizing: border-box;
+    min-width: 0;
     background: #fff;
     border: 1px solid #e5e8ee;
     border-radius: 20px;
     padding: 8px 12px;
     min-height: 38px;
+  }
+
+  .message-input-area {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    background: transparent;
+    border: none;
+    padding: 0;
     font-size: 15px;
     line-height: 22px;
   }

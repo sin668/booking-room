@@ -30,10 +30,10 @@
 	    :focus="programmaticFocus"
       :show-confirm-bar="false"
       :disable-default-padding="true"
+      auto-height
       maxlength="140"
       placeholder-class="input-placeholder"
       class="message-input-area"
-      :style="{ height: textareaHeight }"
       :placeholder="props.placeholder"
       auto-blur
       @confirm="handleSendMessage"
@@ -44,7 +44,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref, computed, watch, onMounted, onUnmounted } from '../../../adapter-vue';
+import { ref, watch, onMounted, onUnmounted } from '../../../adapter-vue';
 import { TUIStore, StoreName, IConversationModel, IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 import { TUIGlobal } from '@tencentcloud/universal-api';
 import DraftManager from '../utils/conversationDraft';
@@ -103,21 +103,6 @@ const allInsertedAtInfo = new Map();
 const currentConversation = ref<IConversationModel>();
 const currentConversationID = ref<string>('');
 const currentQuoteMessage = ref<{ message: IMessageModel; type: string }>();
-
-const LINE_HEIGHT = 22;
-const MIN_HEIGHT = 38;
-const MAX_HEIGHT = 120;
-const PADDING_V = 18; // padding 8+8 + border 1+1
-
-const textareaHeight = computed(() => {
-  const text = inputText.value;
-  if (!text) return MIN_HEIGHT + 'px';
-  const windowWidth = uni.getSystemInfoSync().windowWidth;
-  const containerWidth = windowWidth - 120;
-  const textWidth = [...text].reduce((w, ch) => w + (ch.charCodeAt(0) > 127 ? 15 : 8), 0);
-  const lines = Math.max(1, Math.ceil(textWidth / containerWidth));
-  return Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, lines * LINE_HEIGHT + PADDING_V)) + 'px';
-});
 
 onMounted(() => {
   TUIStore.watch(StoreName.CONV, {
@@ -333,11 +318,10 @@ defineExpose({
     border: 1px solid #e5e8ee;
     border-radius: 20px;
     padding: 8px 12px;
+    height: 38px;
     min-height: 38px;
-    max-height: 120px;
     font-size: 15px;
     line-height: 22px;
-    overflow-y: auto;
   }
 }
 

@@ -30,7 +30,6 @@
 	    :focus="programmaticFocus"
       :show-confirm-bar="false"
       :disable-default-padding="true"
-      :rows="1"
       auto-height
       maxlength="140"
       placeholder-class="input-placeholder"
@@ -311,7 +310,6 @@ defineExpose({
   }
 
   .message-input-area {
-    flex: 1;
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
@@ -319,7 +317,7 @@ defineExpose({
     border: 1px solid #e5e8ee;
     border-radius: 20px;
     padding: 8px 12px;
-    min-height: 40px;
+    min-height: 38px;
     font-size: 15px;
     line-height: 22px;
   }

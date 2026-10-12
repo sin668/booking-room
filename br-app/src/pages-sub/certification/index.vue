@@ -213,7 +213,7 @@ export default {
         uni.showToast({ title: '已完成实名认证', icon: 'none' })
         return
       }
-      uni.navigateTo({ url: '/pages/certification/real-name' })
+      uni.navigateTo({ url: '/pages-sub/certification/real-name' })
     },
     onTapEducation() {
       // Check if real name is approved
@@ -230,7 +230,7 @@ export default {
         uni.showToast({ title: '已完成学历认证', icon: 'none' })
         return
       }
-      uni.navigateTo({ url: '/pages/certification/education' })
+      uni.navigateTo({ url: '/pages-sub/certification/education' })
     },
     onTapTeacher() {
       // Check if real name is approved
@@ -251,7 +251,7 @@ export default {
           confirmText: '去认证',
           success: (res) => {
             if (res.confirm) {
-              uni.navigateTo({ url: '/pages/certification/education' })
+              uni.navigateTo({ url: '/pages-sub/certification/education' })
             }
           },
         })
@@ -262,7 +262,7 @@ export default {
         uni.showToast({ title: '已完成教师资格认证', icon: 'none' })
         return
       }
-      uni.navigateTo({ url: '/pages/certification/teacher' })
+      uni.navigateTo({ url: '/pages-sub/certification/teacher' })
     },
     goBack() {
       uni.navigateBack()

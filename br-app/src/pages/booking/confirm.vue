@@ -624,7 +624,7 @@ export default {
     },
 
     onDone() {
-      uni.redirectTo({ url: '/pages/orders/index' })
+      uni.redirectTo({ url: '/pages-sub/orders/index' })
     },
 
     showBookingSuccess(booking) {

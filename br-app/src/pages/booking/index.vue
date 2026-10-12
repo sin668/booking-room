@@ -358,7 +358,7 @@ export default {
     },
 
     onTapCity() {
-      uni.navigateTo({ url: '/pages/city-select/index' })
+      uni.navigateTo({ url: '/pages-sub/city-select/index' })
     },
 
     onSearchInput() {

@@ -1114,7 +1114,7 @@ export default {
       try {
         await this.userStore.logout()
         this.showLogoutSheet = false
-        uni.reLaunch({ url: '/pages/login/login' })
+        uni.reLaunch({ url: '/pages-sub/login/login' })
       } finally {
         this.logoutLoading = false
       }
@@ -1191,7 +1191,7 @@ export default {
       try {
         await deactivateAccount()
         this.userStore.clearLocalSession()
-        uni.reLaunch({ url: '/pages/login/login' })
+        uni.reLaunch({ url: '/pages-sub/login/login' })
       } catch (error) {
         this.deactivationError = mapAccountSecurityError(error, 'deactivation')
         if (Array.isArray(error?.detail?.risks)) {

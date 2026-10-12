@@ -274,7 +274,7 @@ export default {
     },
 
     goRecharge() {
-      uni.navigateTo({ url: '/pages/recharge/index' })
+      uni.navigateTo({ url: '/pages-sub/recharge/index' })
     },
 
     isHiddenPendingRecharge(item) {

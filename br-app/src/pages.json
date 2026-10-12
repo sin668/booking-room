@@ -28,13 +28,6 @@
       }
     },
     {
-      "path": "pages/activity/detail",
-      "style": {
-        "navigationBarTitleText": "活动详情",
-        "navigationBarBackgroundColor": "#ffffff"
-      }
-    },
-    {
       "path": "pages/booking/index",
       "style": {
         "navigationBarTitleText": "自习室",
@@ -46,19 +39,6 @@
       "style": {
         "navigationBarTitleText": "门店详情",
         "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/teacher/profile",
-      "style": {
-        "navigationBarTitleText": "老师简介",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/city-select/index",
-      "style": {
-        "navigationBarTitleText": "选择城市"
       }
     },
     {
@@ -74,120 +54,9 @@
       }
     },
     {
-      "path": "pages/orders/index",
-      "style": {
-        "navigationBarTitleText": "订单",
-        "navigationStyle": "custom"
-      }
-    },
-    {
       "path": "pages/profile/index",
       "style": {
         "navigationBarTitleText": "我的",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/settings/index",
-      "style": {
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/notifications/index",
-      "style": {
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/study-record/index",
-      "style": {
-        "navigationBarTitleText": "学习记录"
-      }
-    },
-    {
-      "path": "pages/recharge/index",
-      "style": {
-        "navigationBarTitleText": "钱包充值"
-      }
-    },
-    {
-      "path": "pages/membership/index",
-      "style": {
-        "navigationBarTitleText": "超级会员"
-      }
-    },
-    {
-      "path": "pages/wallet/transactions",
-      "style": {
-        "navigationBarTitleText": "钱包流水"
-      }
-    },
-    {
-      "path": "pages/coupon/index",
-      "style": {
-        "navigationBarTitleText": "卡券包",
-        "navigationBarBackgroundColor": "#ffffff"
-      }
-    },
-    {
-      "path": "pages/qrcode/index",
-      "style": {
-        "navigationBarTitleText": "我的学习码"
-      }
-    },
-    {
-      "path": "pages/verify-booking/index",
-      "style": {
-        "navigationBarTitleText": "预约核销"
-      }
-    },
-    {
-      "path": "pages/favorites/index",
-      "style": {
-        "navigationBarTitleText": "我的关注",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/login/login",
-      "style": {
-        "navigationBarTitleText": "登录",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/search/index",
-      "style": {
-        "navigationBarTitleText": "搜索",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/certification/index",
-      "style": {
-        "navigationBarTitleText": "认证管理",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/certification/real-name",
-      "style": {
-        "navigationBarTitleText": "实名认证",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/certification/education",
-      "style": {
-        "navigationBarTitleText": "学历认证",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/certification/teacher",
-      "style": {
-        "navigationBarTitleText": "教师资格认证",
         "navigationStyle": "custom"
       }
     },
@@ -224,6 +93,86 @@
         {
           "path": "edu-market/contact",
           "style": { "navigationBarTitleText": "联系" }
+        },
+        {
+          "path": "activity/detail",
+          "style": { "navigationBarTitleText": "活动详情", "navigationBarBackgroundColor": "#ffffff" }
+        },
+        {
+          "path": "teacher/profile",
+          "style": { "navigationBarTitleText": "老师简介", "navigationStyle": "custom" }
+        },
+        {
+          "path": "city-select/index",
+          "style": { "navigationBarTitleText": "选择城市" }
+        },
+        {
+          "path": "orders/index",
+          "style": { "navigationBarTitleText": "订单", "navigationStyle": "custom" }
+        },
+        {
+          "path": "settings/index",
+          "style": { "navigationStyle": "custom" }
+        },
+        {
+          "path": "notifications/index",
+          "style": { "navigationStyle": "custom" }
+        },
+        {
+          "path": "study-record/index",
+          "style": { "navigationBarTitleText": "学习记录" }
+        },
+        {
+          "path": "recharge/index",
+          "style": { "navigationBarTitleText": "钱包充值" }
+        },
+        {
+          "path": "membership/index",
+          "style": { "navigationBarTitleText": "超级会员" }
+        },
+        {
+          "path": "wallet/transactions",
+          "style": { "navigationBarTitleText": "钱包流水" }
+        },
+        {
+          "path": "coupon/index",
+          "style": { "navigationBarTitleText": "卡券包", "navigationBarBackgroundColor": "#ffffff" }
+        },
+        {
+          "path": "qrcode/index",
+          "style": { "navigationBarTitleText": "我的学习码" }
+        },
+        {
+          "path": "verify-booking/index",
+          "style": { "navigationBarTitleText": "预约核销" }
+        },
+        {
+          "path": "favorites/index",
+          "style": { "navigationBarTitleText": "我的关注", "navigationStyle": "custom" }
+        },
+        {
+          "path": "login/login",
+          "style": { "navigationBarTitleText": "登录", "navigationStyle": "custom" }
+        },
+        {
+          "path": "search/index",
+          "style": { "navigationBarTitleText": "搜索", "navigationStyle": "custom" }
+        },
+        {
+          "path": "certification/index",
+          "style": { "navigationBarTitleText": "认证管理", "navigationStyle": "custom" }
+        },
+        {
+          "path": "certification/real-name",
+          "style": { "navigationBarTitleText": "实名认证", "navigationStyle": "custom" }
+        },
+        {
+          "path": "certification/education",
+          "style": { "navigationBarTitleText": "学历认证", "navigationStyle": "custom" }
+        },
+        {
+          "path": "certification/teacher",
+          "style": { "navigationBarTitleText": "教师资格认证", "navigationStyle": "custom" }
         }
       ]
     },

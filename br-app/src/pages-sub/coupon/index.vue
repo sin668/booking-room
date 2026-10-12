@@ -171,7 +171,7 @@ export default {
     requireLogin() {
       if (isLoggedIn()) return true
       uni.showToast({ title: '请先登录', icon: 'none' })
-      uni.navigateTo({ url: '/pages/login/login' })
+      uni.navigateTo({ url: '/pages-sub/login/login' })
       return false
     },
 

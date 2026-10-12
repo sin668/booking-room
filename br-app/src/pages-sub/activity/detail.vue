@@ -173,7 +173,7 @@ export default {
 
       if (!getToken()) {
         uni.showToast({ title: '请先登录后领取', icon: 'none' })
-        uni.navigateTo({ url: '/pages/login/login' })
+        uni.navigateTo({ url: '/pages-sub/login/login' })
         return
       }
 

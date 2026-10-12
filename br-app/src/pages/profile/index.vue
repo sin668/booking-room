@@ -2,7 +2,7 @@
   <view class="page">
     <view v-if="userStore.isLoggedIn" class="profile">
       <view class="profile-header">
-        <view class="settings-entry" @tap="navigateTo('/pages/settings/index')">
+        <view class="settings-entry" @tap="navigateTo('/pages-sub/settings/index')">
           <view class="settings-dot" />
           <view class="settings-dot" />
           <view class="settings-dot" />
@@ -24,17 +24,17 @@
       </view>
 
       <view class="stats-card">
-        <view class="stat-item" @tap="navigateTo('/pages/wallet/transactions')">
+        <view class="stat-item" @tap="navigateTo('/pages-sub/wallet/transactions')">
           <text class="stat-value">¥{{ walletBalanceText }}</text>
           <text class="stat-label">钱包余额</text>
         </view>
         <view class="stat-divider" />
-        <view class="stat-item" @tap="navigateTo('/pages/coupon/index')">
+        <view class="stat-item" @tap="navigateTo('/pages-sub/coupon/index')">
           <text class="stat-value orange">{{ availableCouponCount }}</text>
           <text class="stat-label">卡券</text>
         </view>
         <view class="stat-divider" />
-        <view class="stat-item" @tap="navigateTo('/pages/study-record/index')">
+        <view class="stat-item" @tap="navigateTo('/pages-sub/study-record/index')">
           <text class="stat-value green">{{ studyHoursText }}</text>
           <text class="stat-label">学习时长</text>
         </view>
@@ -52,7 +52,7 @@
           <text class="menu-item-meta">{{ inProgressOrderText }}</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
-        <view class="menu-item" @tap="navigateTo('/pages/study-record/index')">
+        <view class="menu-item" @tap="navigateTo('/pages-sub/study-record/index')">
           <view class="menu-icon blue">
             <view class="history-icon" />
           </view>
@@ -60,7 +60,7 @@
           <text class="menu-item-meta">查看全部</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
-        <view class="menu-item" @tap="navigateTo('/pages/favorites/index')">
+        <view class="menu-item" @tap="navigateTo('/pages-sub/favorites/index')">
           <view class="menu-icon teal">
             <view class="store-icon" />
           </view>
@@ -77,7 +77,7 @@
           <text class="menu-item-meta">{{ reviewSummary }}</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
-        <view class="menu-item" @tap="navigateTo('/pages/notifications/index')">
+        <view class="menu-item" @tap="navigateTo('/pages-sub/notifications/index')">
           <view class="menu-icon blue">
             <view class="icon icon-bell message-icon" />
           </view>
@@ -90,7 +90,7 @@
         <view class="menu-section-label">
           <text class="menu-section-text">会员服务</text>
         </view>
-        <view class="menu-item" @tap="navigateTo('/pages/qrcode/index')">
+        <view class="menu-item" @tap="navigateTo('/pages-sub/qrcode/index')">
           <view class="menu-icon purple">
             <view class="qr-icon" />
           </view>
@@ -98,7 +98,7 @@
           <text class="menu-item-meta">到店核销</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
-        <view class="menu-item" @tap="navigateTo('/pages/certification/index')">
+        <view class="menu-item" @tap="navigateTo('/pages-sub/certification/index')">
           <view class="menu-icon orange">
             <view class="cert-shield-icon" />
           </view>
@@ -106,7 +106,7 @@
           <text class="menu-item-meta">{{ verifiedCertificationText }}</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
-        <view class="menu-item" @tap="navigateTo('/pages/recharge/index')">
+        <view class="menu-item" @tap="navigateTo('/pages-sub/recharge/index')">
           <view class="menu-icon green">
             <view class="wallet-icon" />
           </view>
@@ -114,7 +114,7 @@
           <text class="menu-item-meta">充值钱包</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
-        <view class="menu-item" @tap="navigateTo('/pages/wallet/transactions')">
+        <view class="menu-item" @tap="navigateTo('/pages-sub/wallet/transactions')">
           <view class="menu-icon blue">
             <view class="bill-icon" />
           </view>
@@ -122,7 +122,7 @@
           <text class="menu-item-meta">交易明细</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
-        <view class="menu-item" @tap="navigateTo('/pages/coupon/index')">
+        <view class="menu-item" @tap="navigateTo('/pages-sub/coupon/index')">
           <view class="menu-icon orange">
             <view class="ticket-icon" />
           </view>
@@ -135,7 +135,7 @@
         <view class="menu-section-label">
           <text class="menu-section-text">其他</text>
         </view>
-        <view class="menu-item" @tap="navigateTo('/pages/settings/index')">
+        <view class="menu-item" @tap="navigateTo('/pages-sub/settings/index')">
           <view class="menu-icon gray">
             <view class="settings-icon" />
           </view>
@@ -236,7 +236,7 @@ export default {
   },
   methods: {
     goLogin() {
-      uni.navigateTo({ url: '/pages/login/login' })
+      uni.navigateTo({ url: '/pages-sub/login/login' })
     },
     handleLogout() {
       uni.showModal({
@@ -255,11 +255,11 @@ export default {
       uni.navigateTo({ url })
     },
     goToOrders() {
-      uni.navigateTo({ url: '/pages/orders/index?currentTab=in_progress' })
+      uni.navigateTo({ url: '/pages-sub/orders/index?currentTab=in_progress' })
     },
     handleMemberCardTap() {
       if (this.userStore.isVip) return
-      this.navigateTo('/pages/membership/index')
+      this.navigateTo('/pages-sub/membership/index')
     },
     async loadFollowedRooms() {
       try {

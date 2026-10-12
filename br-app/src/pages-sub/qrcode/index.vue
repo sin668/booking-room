@@ -284,7 +284,7 @@ function copyVerifyUrl() {
 }
 
 function goLogin() {
-  uni.navigateTo({ url: '/pages/login/login' })
+  uni.navigateTo({ url: '/pages-sub/login/login' })
 }
 
 function goBooking() {

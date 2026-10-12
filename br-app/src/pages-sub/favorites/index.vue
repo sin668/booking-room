@@ -320,7 +320,7 @@ export default {
 
     onTapTeacher(teacher) {
       if (!teacher?.id) return
-      uni.navigateTo({ url: `/pages/teacher/profile?teacher_id=${teacher.id}` })
+      uni.navigateTo({ url: `/pages-sub/teacher/profile?teacher_id=${teacher.id}` })
     },
 
     goExploreRooms() {

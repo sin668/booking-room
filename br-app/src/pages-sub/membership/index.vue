@@ -52,10 +52,10 @@ export default {
       if (this.userStore.isVip) return
       if (!this.userStore.isLoggedIn) {
         uni.showToast({ title: '请先登录', icon: 'none' })
-        uni.navigateTo({ url: '/pages/login/login' })
+        uni.navigateTo({ url: '/pages-sub/login/login' })
         return
       }
-      uni.navigateTo({ url: '/pages/recharge/index?amount=100&source=vip' })
+      uni.navigateTo({ url: '/pages-sub/recharge/index?amount=100&source=vip' })
     },
   },
 }

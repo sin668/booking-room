@@ -216,9 +216,9 @@ const TIME_SLOTS = ['工作日白天', '工作日晚', '周末上午', '周末�
 
 // 类型 → 所需认证（与后端 REQUIRED_CERTIFICATION 对齐）
 const TYPE_OPTIONS = [
-  { key: 'tutor', label: '家教', req: '需学历认证', icon: 'icon-graduation-cap', cert: 'education', certLabel: '学历认证', certRoute: '/pages/certification/education' },
-  { key: 'training', label: '培训班', req: '需教师资格', icon: 'icon-chalkboard-user', cert: 'teacher', certLabel: '教师资格认证', certRoute: '/pages/certification/teacher' },
-  { key: 'demand', label: '求教', req: '需实名认证', icon: 'icon-user', cert: 'real_name', certLabel: '实名认证', certRoute: '/pages/certification/real-name' },
+  { key: 'tutor', label: '家教', req: '需学历认证', icon: 'icon-graduation-cap', cert: 'education', certLabel: '学历认证', certRoute: '/pages-sub/certification/education' },
+  { key: 'training', label: '培训班', req: '需教师资格', icon: 'icon-chalkboard-user', cert: 'teacher', certLabel: '教师资格认证', certRoute: '/pages-sub/certification/teacher' },
+  { key: 'demand', label: '求教', req: '需实名认证', icon: 'icon-user', cert: 'real_name', certLabel: '实名认证', certRoute: '/pages-sub/certification/real-name' },
 ]
 
 function chooseImagePaths(count) {
@@ -388,7 +388,7 @@ export default {
 
     onSelectCity() {
       this._cityManuallySelected = true
-      uni.navigateTo({ url: '/pages/city-select/index' })
+      uni.navigateTo({ url: '/pages-sub/city-select/index' })
     },
 
     goCertify() {

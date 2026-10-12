@@ -317,7 +317,7 @@ defineExpose({
     background: #fff;
     border: 1px solid #e5e8ee;
     border-radius: 20px;
-    padding: 10px 12px;
+    padding: 8px 12px;
     min-height: 38px;
     font-size: 15px;
     line-height: 22px;

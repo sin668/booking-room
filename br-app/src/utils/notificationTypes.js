@@ -7,7 +7,7 @@ export const NOTIFICATION_TYPE_CONFIGS = [
     iconText: '铃',
     colorClass: 'blue-soft',
     color: '#3b82f6',
-    defaultTarget: '/pages/orders/index',
+    defaultTarget: '/pages-sub/orders/index',
   },
   {
     key: 'activity',
@@ -27,7 +27,7 @@ export const NOTIFICATION_TYPE_CONFIGS = [
     iconText: '报',
     colorClass: 'green-soft',
     color: '#22c55e',
-    defaultTarget: '/pages/study-record/index',
+    defaultTarget: '/pages-sub/study-record/index',
   },
   {
     key: 'arrival',
@@ -37,7 +37,7 @@ export const NOTIFICATION_TYPE_CONFIGS = [
     iconText: '到',
     colorClass: 'yellow-soft',
     color: '#eab308',
-    defaultTarget: '/pages/qrcode/index',
+    defaultTarget: '/pages-sub/qrcode/index',
   },
 ]
 

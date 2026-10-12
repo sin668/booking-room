@@ -184,7 +184,7 @@ export default {
     },
 
     goTransactions() {
-      uni.navigateTo({ url: '/pages/wallet/transactions' })
+      uni.navigateTo({ url: '/pages-sub/wallet/transactions' })
     },
 
     selectAmount(amount) {

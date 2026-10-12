@@ -231,7 +231,7 @@ function goCourseDetail(course) {
 }
 
 function goTeacherDetail(teacher) {
-  uni.navigateTo({ url: `/pages/teacher/profile?teacher_id=${teacher.id}` })
+  uni.navigateTo({ url: `/pages-sub/teacher/profile?teacher_id=${teacher.id}` })
 }
 </script>
 

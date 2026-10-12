@@ -369,7 +369,7 @@ const currentCityId = computed(() => cityStore.currentCity?.id)
 let lastCityId = null
 
 function onTapCity() {
-  uni.navigateTo({ url: '/pages/city-select/index' })
+  uni.navigateTo({ url: '/pages-sub/city-select/index' })
 }
 
 function onSearchInput() {
@@ -458,7 +458,7 @@ function goBannerDetail() {
 
 function goTeacherDetail(teacher) {
   if (!teacher || !teacher.id) return
-  uni.navigateTo({ url: `/pages/teacher/detail?id=${teacher.id}` })
+  uni.navigateTo({ url: `/pages-sub/teacher/detail?id=${teacher.id}` })
 }
 
 function previewCourseImage(course) {

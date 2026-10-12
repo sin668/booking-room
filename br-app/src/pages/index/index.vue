@@ -281,10 +281,10 @@ export default {
       followedTeachers: [],
       lastCityId: null,
       quickEntries: [
-        { label: '钱包充值', iconClass: 'icon-wallet', bgColor: 'rgba(79,110,247,0.1)', color: '#4F6EF7', path: '/pages/recharge/index' },
-        { label: '卡券套餐', iconClass: 'icon-ticket', bgColor: 'rgba(255,165,0,0.1)', color: '#FF8C00', path: '/pages/coupon/index' },
-        { label: '学习记录', iconClass: 'icon-book', bgColor: 'rgba(7,193,96,0.1)', color: '#07C160', path: '/pages/study-record/index' },
-        { label: '预约订单', iconClass: 'icon-order', bgColor: 'rgba(108,92,231,0.1)', color: '#6C5CE7', path: '/pages/orders/index' },
+        { label: '钱包充值', iconClass: 'icon-wallet', bgColor: 'rgba(79,110,247,0.1)', color: '#4F6EF7', path: '/pages-sub/recharge/index' },
+        { label: '卡券套餐', iconClass: 'icon-ticket', bgColor: 'rgba(255,165,0,0.1)', color: '#FF8C00', path: '/pages-sub/coupon/index' },
+        { label: '学习记录', iconClass: 'icon-book', bgColor: 'rgba(7,193,96,0.1)', color: '#07C160', path: '/pages-sub/study-record/index' },
+        { label: '预约订单', iconClass: 'icon-order', bgColor: 'rgba(108,92,231,0.1)', color: '#6C5CE7', path: '/pages-sub/orders/index' },
       ],
     }
   },
@@ -447,7 +447,7 @@ export default {
     },
 
     onTapStudyCode() {
-      uni.navigateTo({ url: '/pages/qrcode/index' })
+      uni.navigateTo({ url: '/pages-sub/qrcode/index' })
     },
 
     onTapMoreActivities() {
@@ -456,15 +456,15 @@ export default {
 
     onTapActivity(activity) {
       if (!activity?.id) return
-      uni.navigateTo({ url: `/pages/activity/detail?id=${activity.id}` })
+      uni.navigateTo({ url: `/pages-sub/activity/detail?id=${activity.id}` })
     },
 
     onTapMoreRooms() {
-      uni.navigateTo({ url: '/pages/favorites/index' })
+      uni.navigateTo({ url: '/pages-sub/favorites/index' })
     },
 
     onTapFavorites() {
-      uni.navigateTo({ url: '/pages/favorites/index' })
+      uni.navigateTo({ url: '/pages-sub/favorites/index' })
     },
 
     onTapCourse(course) {
@@ -474,7 +474,7 @@ export default {
 
     onTapTeacher(teacher) {
       if (!teacher?.id) return
-      uni.navigateTo({ url: `/pages/teacher/profile?teacher_id=${teacher.id}` })
+      uni.navigateTo({ url: `/pages-sub/teacher/profile?teacher_id=${teacher.id}` })
     },
 
     onTapRoom(room) {
@@ -482,15 +482,15 @@ export default {
     },
 
     onTapLocation() {
-      uni.navigateTo({ url: '/pages/city-select/index' })
+      uni.navigateTo({ url: '/pages-sub/city-select/index' })
     },
 
     onTapSearch() {
-      uni.navigateTo({ url: '/pages/search/index' })
+      uni.navigateTo({ url: '/pages-sub/search/index' })
     },
 
     onTapBell() {
-      uni.navigateTo({ url: '/pages/notifications/index' })
+      uni.navigateTo({ url: '/pages-sub/notifications/index' })
     },
   },
 }

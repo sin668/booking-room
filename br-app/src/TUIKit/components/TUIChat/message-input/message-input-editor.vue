@@ -19,7 +19,7 @@
     >
     </div>
     <!-- #endif -->
-    <input
+    <textarea
       id="editor"
       ref="inputRef"
       v-model="inputText"
@@ -28,8 +28,10 @@
       confirm-type="send"
       :confirm-hold="true"
 	    :focus="programmaticFocus"
+      :show-confirm-bar="false"
+      :disable-default-padding="true"
+      auto-height
       maxlength="140"
-      type="text"
       placeholder-class="input-placeholder"
       class="message-input-area"
       :placeholder="props.placeholder"
@@ -38,7 +40,7 @@
       @input="onInput"
       @blur="onBlur"
       @focus="onFocus"
-    >
+    />
   </div>
 </template>
 <script lang="ts" setup>
@@ -296,7 +298,6 @@ defineExpose({
     border-radius: 0;
     padding: 0;
     font-size: 14px !important;
-    max-height: 60px;
   }
 
   .message-input-mute {
@@ -316,10 +317,10 @@ defineExpose({
     background: #fff;
     border: 1px solid #e5e8ee;
     border-radius: 20px;
-    padding: 4px 12px;
-    overflow-y: scroll;
-    min-height: 30px;
+    padding: 10px 12px;
+    min-height: 44px;
     font-size: 15px;
+    line-height: 22px;
   }
 }
 

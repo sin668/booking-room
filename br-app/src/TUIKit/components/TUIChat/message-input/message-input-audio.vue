@@ -294,10 +294,13 @@ async function requestMicrophonePermission(): Promise<boolean> {
   // #endif
 
   // #ifdef MP
-  uni.authorize({
+  return new Promise((resolve) => {
+    uni.authorize({
       scope: 'scope.record',
-      success() {}
-  })
+      success: () => resolve(true),
+      fail: () => resolve(false),
+    });
+  });
   // #endif
   return false;
 }
@@ -551,9 +554,13 @@ function onRecorderError(err: any) {
   }
 
   .audio-input-touch-bar {
-    height: 39px;
+    min-height: 38px;
     flex: 1;
-    border-radius: 10px;
+    padding: 8px 12px;
+    border: 1px solid #e5e8ee;
+    border-radius: 20px;
+    box-sizing: border-box;
+    font-size: 15px;
     display: flex;
     flex-direction: row;
     justify-content: center;

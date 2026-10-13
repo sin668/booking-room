@@ -1,11 +1,37 @@
 import { getChatUserSig } from '@/api/chat'
 import { TUILogin } from '@tencentcloud/tui-core-lite'
+import { TUIGlobal } from '@tencentcloud/universal-api'
 import TUIChatEngine, { TUIUserService } from '@tencentcloud/chat-uikit-engine-lite'
 
 let imInitialized = false
 let initPromise = null
 let imProfile = null
 let lastError = ''
+let lastUploadError = null
+
+// SDK 的上传失败分支只把 statusCode/data 拼进错误对象，wx 的 errMsg 和 URL 被整个丢掉，
+// 线上表现为 `Unknown failed. error: {"message": }`，看不出是哪个域名没过白名单。
+export function getIMLastUploadError() {
+  return lastUploadError
+}
+
+function hookUploadDiagnostic() {
+  if (!TUIGlobal?.uploadFile || TUIGlobal.__imUploadHooked) return
+  TUIGlobal.__imUploadHooked = true
+  const raw = TUIGlobal.uploadFile.bind(TUIGlobal)
+  TUIGlobal.uploadFile = (options = {}) => {
+    // 每次发起上传都清空，保证读到的一定属于这一次尝试
+    lastUploadError = null
+    return raw({
+      ...options,
+      fail: (e) => {
+        lastUploadError = { url: options.url || '', errMsg: e?.errMsg || String(e) }
+        console.error('[IM] uploadFile fail:', lastUploadError)
+        options.fail?.(e)
+      },
+    })
+  }
+}
 
 export function getIMLastError() {
   return lastError
@@ -52,6 +78,7 @@ export async function ensureIM() {
         throw new Error('API返回空值，请检查后端接口')
       }
       const sdkAppID = Number(sdk_app_id)
+      hookUploadDiagnostic()
       await withTimeout(
         TUILogin.login({
           SDKAppID: sdkAppID,

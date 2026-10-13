@@ -51,6 +51,7 @@ import audioIcon from '../../../assets/icon/audio.svg';
 import { Toast, TOAST_TYPE } from '../../common/Toast/index';
 import { throttle } from '../../../utils/lodash';
 import { isEnabledMessageReadReceiptGlobal } from '../utils/utils';
+import { getIMLastUploadError } from '@/utils/im';
 import { InputDisplayType } from '../../../interface';
 // #ifdef APP-PLUS
 import {
@@ -538,17 +539,21 @@ function onRecorderStop(res: RecordResult) {
 function onSendAudioFailure(err: any): void {
   if (!err) return;
   console.error('[Audio] sendAudioMessage failed:', err);
+  // SDK 在上传 fail 分支把 errMsg 丢了，这里取拦截到的原始失败
+  const upload = getIMLastUploadError();
   const code = err?.code;
   const raw = String(
-    err?.message
+    upload?.errMsg
+    || err?.message
     || err?.msg
     || err?.errMsg
     || (typeof err === 'object' ? JSON.stringify(err) : String(err))
   );
   // 小程序 Toast 只显示两行，完整对象看 console
+  const host = upload?.url ? `${upload.url.split('/')[2] || upload.url} ` : '';
   const text = raw.length > 60 ? `${raw.slice(0, 60)}…` : raw;
   Toast({
-    message: `语音发送失败 ${code ?? ''} ${text}`,
+    message: `语音发送失败 ${code ?? ''} ${host}${text}`,
     type: TOAST_TYPE.ERROR,
     duration: 5000,
   });

@@ -527,9 +527,7 @@ function onRecorderStop(res: RecordResult) {
       payload: { file: { duration, tempFilePath, fileSize } },
       needReadReceipt: isEnabledMessageReadReceiptGlobal(),
     } as SendMessageParams;
-    TUIChatService?.sendAudioMessage(options)
-      ?.then(onSendAudioFailure)
-      ?.catch(onSendAudioFailure);
+    TUIChatService?.sendAudioMessage(options)?.catch(onSendAudioFailure);
   }
   initRecorder();
 }

@@ -229,3 +229,65 @@ https://web.sdk.qcloud.com
 - `br-app/src/TUIKit/components/TUIChat/message-input/message-input-editor.vue` — 修复点（新增 `message-input-area-box` 外层容器，textarea 清空垂直内边距与盒子样式）
 - `br-app/src/TUIKit/components/TUIChat/message-input/index.vue` — `:not(not)` 全局 flex 与 `.message-input-editor` flex 容器，排查时确认过不是拉伸来源
 
+
+---
+
+## 微信小程序生产环境语音消息发送失败（调试模式正常）
+
+### 报错信息
+
+- **调试模式（打开"不校验合法域名"）**：按住说话正常录音、正常发送，气泡与 Toast 都正常。
+- **关闭调试模式（生产环境）**：按住说话正常录音，松手后气泡显示"发送失败"，Toast 显示 `Unknown failed. error: {"message": }`（注意 SDK 拼写 `failed`，用户看到的可能是 `fail` 的简写）。
+
+### 根本原因
+
+腾讯云 IM 小程序语音上传走的是**服务端下发的 COS 预签名地址**，不是固定主机。域名按 SDKAppID 分配，本项目 SDKAppID = **20049215**（来自 `br-server/.env` 的 `IM_SDK_APP_ID`），实际上传主机为 `20049215-sg.rich.my-imcloud.com`（新加坡区域节点）。
+
+微信公众平台"服务器域名"配置**不支持通配符**，必须逐条填写完整主机名。`*.rich.my-imcloud.com` 这类写法在后台根本填不进去，也不会生效。
+
+SDK 内部 `wx.uploadFile` 失败分支（`lite-chat/standard.js` 的 `_handleResponse`）把 `wx` 的 `errMsg` 整个丢弃，只留 `{code: +res.statusCode, message: JSON.stringify(res.data)}`。fail 回调里两者都是 `undefined`，于是 `code=NaN`（判假）、`message=undefined`（落回空串），最终 SDK 错误类 `Ws` 拼成 `Unknown failed. error: {"message": }`——**线上完全看不出是哪个域名被拦**，只能看到空 message。
+
+### 解决方案
+
+**1. 域名白名单**
+
+在微信公众平台 → 开发管理 → 开发设置 → 服务器域名中，把以下域名加入对应类别（本项目实际使用的是新加坡节点）：
+
+**uploadFile 合法域名**：
+
+```
+https://20049215-sg.rich.my-imcloud.com
+```
+
+**downloadFile 合法域名**（语音播放同样需要）：
+
+```
+https://20049215-sg.rich.my-imcloud.com
+```
+
+其他区域节点（按需添加，取决于腾讯云 IM 控制台分配）：
+
+```
+https://20049215-cn.rich.my-imcloud.com
+https://20049215w4c.my-imcloud.com
+```
+
+**2. 代码层诊断兜底**
+
+在 `src/utils/im.js` 的 `ensureIM` 登录前给 `TUIGlobal.uploadFile`（即全局 `wx.uploadFile`，SDK 每次调用时才取这个属性）包一层，记录本次上传的 `url` 与 `errMsg`；`message-input-audio.vue` 的失败提示优先显示它们。这样下次遇到同类问题，Toast 直接显示被拦的域名和 wx 原始 errMsg，不再只能看到空 message。
+
+同时修正了 `sendAudioMessage` 的 `.then(onSendAudioFailure)` 误把成功当失败的 bug——改为只 `.catch`，成功时不再弹 Toast。
+
+### 经验教训
+
+1. 腾讯云 IM 小程序四类域名白名单（socket / request / uploadFile / downloadFile）中，**uploadFile / downloadFile 的域名是按 SDKAppID 分配的子域名**，不是固定主机；必须从实际上传失败日志或 Toast 里拿到真实主机名，不能凭官方文档的"示例"猜。
+2. 微信小程序**调试模式不校验合法域名**，不能作为生产环境的验证依据；必须在关闭调试模式的真机上测试。
+3. 微信公众平台**服务器域名配置不支持通配符**，必须逐条完整主机名。
+4. SDK 的错误类会丢字段（本例中 `errMsg` 被整个丢弃），需要自己拦截 `wx` 原生 API 才能拿到真实失败原因。
+5. 后台改完域名后，真机要**下拉删除该小程序再重新进入**，域名列表有客户端缓存，否则看着像"配了还是失败"。
+
+### 涉及文件
+
+- `br-app/src/utils/im.js` — `hookUploadDiagnostic` 拦截 `TUIGlobal.uploadFile`，记录 url + errMsg
+- `br-app/src/TUIKit/components/TUIChat/message-input/message-input-audio.vue` — 失败 Toast 回显 url + errMsg；移除 `.then(onSendAudioFailure)` 避免成功也弹提示
+- SDK 源码：`node_modules/@tencentcloud/lite-chat/standard.js` — 错误类 `Ws` 与 `_handleResponse` 的 fail 分支

@@ -226,6 +226,20 @@ class IMSyncService:
                 if action_status == "OK" and error_code == 0:
                     logger.info(f"IM profile updated for {user_id}")
                     return True
+                elif error_code == 40003:
+                    # Account doesn't exist in IM yet, import it first then retry
+                    logger.info(f"IM account {user_id} not found, importing first")
+                    await IMSyncService.import_account(user_id)
+                    retry = await client.post(url, json=payload)
+                    retry_data = retry.json()
+                    if retry_data.get("ErrorCode") == 0:
+                        logger.info(f"IM profile updated for {user_id} (after auto-import)")
+                        return True
+                    logger.warning(
+                        f"IM profile_set retry failed for {user_id}: "
+                        f"ErrorCode={retry_data.get('ErrorCode')}, ErrorInfo={retry_data.get('ErrorInfo')}"
+                    )
+                    return False
                 else:
                     error_info = data.get("ErrorInfo", "")
                     logger.warning(

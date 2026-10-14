@@ -61,6 +61,7 @@ class AdminUserCreate(BaseModel):
     username: str | None = Field(None, min_length=1, max_length=50)
     password: str = Field(..., min_length=6, max_length=128)
     nickname: str | None = Field(None, max_length=50)
+    avatar: str | None = Field(None, max_length=512)
 
     @classmethod
     def get_contact_field(cls, data: dict) -> str:

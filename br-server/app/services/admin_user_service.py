@@ -115,6 +115,7 @@ class AdminUserService:
             username=username,
             nickname=data.nickname or username or data.phone or "",
             password_hash=password_hash,
+            avatar=data.avatar,
         )
         self._db.add(user)
         await self._db.flush()

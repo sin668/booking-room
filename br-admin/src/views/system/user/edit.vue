@@ -248,6 +248,7 @@
           username: formValues.username,
           password: formValues.password,
           nickname: formValues.nickname || undefined,
+          avatar: formValues.avatar || undefined,
         };
         if (formValues.phone) {
           payload.phone = formValues.phone;

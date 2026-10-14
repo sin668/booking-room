@@ -78,11 +78,20 @@ class IMSyncService:
             logger.debug("IM server-side sync not configured, skipping account_import")
             return False
 
+        # Validate user_id format (Tencent IM restriction)
+        if not user_id or len(user_id.encode("utf-8")) > 32:
+            logger.warning(f"IM account_import skipped for {user_id}: user_id too long or empty")
+            return False
+
         url = IMSyncService._build_url("im_open_login_svc", "account_import")
 
         payload = {"UserID": user_id}
-        if nickname:
+        # Nick: max 500 bytes
+        if nickname and len(nickname.encode("utf-8")) <= 500:
             payload["Nick"] = nickname
+        elif nickname:
+            logger.warning(f"IM account_import for {user_id}: nickname too long, skipping")
+        
         if avatar_url and avatar_url.startswith(("http://", "https://")):
             payload["FaceUrl"] = avatar_url
         elif avatar_url:
@@ -90,6 +99,10 @@ class IMSyncService:
                 f"Skipping avatar for account_import {user_id}: "
                 f"not a full HTTP URL: {avatar_url[:80]}"
             )
+
+        logger.info(f"IM account_import request for {user_id}: UserID={user_id}, Nick={payload.get('Nick')}, FaceUrl={bool(payload.get('FaceUrl'))}")
+
+        logger.debug(f"IM account_import payload for {user_id}: {payload}")
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:

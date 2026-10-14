@@ -139,7 +139,7 @@ class IMSyncService:
 
         url = IMSyncService._build_url("im_open_login_svc", "account_delete")
 
-        payload = {"UserID": user_id}
+        payload = {"DeleteItem": [{"UserID": user_id}]}
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:

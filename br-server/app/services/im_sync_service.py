@@ -280,3 +280,23 @@ async def sync_im_user_update(
 ) -> bool:
     """Sync user profile update to Tencent IM."""
     return await IMSyncService.set_profile(user_id, nickname, avatar_url)
+
+
+async def sync_im_user_rename(
+    old_user_id: str,
+    new_user_id: str,
+    nickname: Optional[str] = None,
+    avatar_url: Optional[str] = None,
+) -> bool:
+    """Sync username change to Tencent IM.
+
+    IM UserID 不可修改（REST API 无改名接口），只能删旧账号再建新账号。
+    """
+    if not IMSyncService._is_configured():
+        logger.debug("IM server-side sync not configured, skipping rename")
+        return False
+
+    if old_user_id and old_user_id != new_user_id:
+        await IMSyncService.delete_account(old_user_id)
+
+    return await IMSyncService.import_account(new_user_id, nickname, avatar_url)

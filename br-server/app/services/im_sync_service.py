@@ -19,7 +19,7 @@ from app.core.im import gen_user_sig
 
 logger = logging.getLogger(__name__)
 
-IM_REST_API_BASE = "https://console.tim.qq.com/v4"
+IM_REST_API_BASE = "https://api.im.qcloud.com/v4"
 
 
 class IMSyncService:

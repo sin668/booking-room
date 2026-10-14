@@ -194,7 +194,7 @@
       <view class="sheet" @tap.stop>
         <view class="sheet-handle" />
         <text class="sheet-title">修改用户名</text>
-        <text class="sheet-desc">用户名修改后 30 天内不可再次修改</text>
+        <text class="sheet-desc">用户名修改后 30 天内不可再次修改，并且会删除所有会话聊天记录，请谨慎操作。</text>
         <input
           v-model="usernameDraft"
           class="username-input"

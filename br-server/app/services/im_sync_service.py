@@ -19,7 +19,7 @@ from app.core.im import gen_user_sig
 
 logger = logging.getLogger(__name__)
 
-IM_REST_API_BASE = "https://api.im.qcloud.com/v4"
+IM_REST_API_BASE = settings.IM_REST_API_BASE_URL
 
 
 class IMSyncService:
@@ -85,26 +85,14 @@ class IMSyncService:
 
         url = IMSyncService._build_url("im_open_login_svc", "account_import")
 
+        # 只传必填字段 UserID，其他字段后续通过 profile_set 更新
         payload = {"UserID": user_id}
-        # Nick: must be non-empty string, max 500 bytes
-        if nickname and nickname.strip():
-            if len(nickname.encode("utf-8")) <= 500:
-                payload["Nick"] = nickname
-            else:
-                logger.warning(f"IM account_import for {user_id}: nickname too long, skipping")
-        # FaceUrl: must be non-empty full HTTP URL
-        if avatar_url and avatar_url.strip():
-            if avatar_url.startswith(("http://", "https://")):
-                payload["FaceUrl"] = avatar_url
-            else:
-                logger.warning(
-                    f"Skipping avatar for account_import {user_id}: "
-                    f"not a full HTTP URL: {avatar_url[:80]}"
-                )
 
-        logger.info(f"IM account_import request for {user_id}: UserID={user_id}, Nick={payload.get('Nick')}, FaceUrl={bool(payload.get('FaceUrl'))}")
-
-        logger.debug(f"IM account_import payload for {user_id}: {payload}")
+        logger.info(
+            f"IM account_import request for {user_id}: "
+            f"base_url={IM_REST_API_BASE}, sdkappid={settings.IM_SDK_APP_ID}, "
+            f"identifier={settings.IM_ADMIN_USER}"
+        )
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:

@@ -85,13 +85,15 @@ class IMSyncService:
 
         url = IMSyncService._build_url("im_open_login_svc", "account_import")
 
-        # 只传必填字段 UserID，其他字段后续通过 profile_set 更新
         payload = {"UserID": user_id}
+        if nickname and nickname.strip() and len(nickname.encode("utf-8")) <= 500:
+            payload["Nick"] = nickname
+        if avatar_url and avatar_url.startswith(("http://", "https://")):
+            payload["FaceUrl"] = avatar_url
 
         logger.info(
             f"IM account_import request for {user_id}: "
-            f"base_url={IM_REST_API_BASE}, sdkappid={settings.IM_SDK_APP_ID}, "
-            f"identifier={settings.IM_ADMIN_USER}"
+            f"Nick={payload.get('Nick')}, FaceUrl={bool(payload.get('FaceUrl'))}"
         )
 
         try:

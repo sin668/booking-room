@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     IM_SERVER_KEY: str = ""
     IM_CLIENT_KEY: str = ""
     IM_ADMIN_USER: str = ""  # Admin account for server-side IM API calls (account_import/delete)
-    IM_REST_API_BASE_URL: str = "https://console.tim.qq.com/v4"  # 国内: console.tim.qq.com, 备用: adminapi.my-imcloud.com, 新加坡: adminapisgp.im.qcloud.com
+    IM_REST_API_BASE_URL: str = "https://adminapisgp.im.qcloud.com/v4"  # 新加坡区域; 国内用 console.tim.qq.com, 备用 adminapi.my-imcloud.com
 
     model_config = {"env_file": ".env"}
 

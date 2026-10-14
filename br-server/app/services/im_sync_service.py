@@ -83,8 +83,13 @@ class IMSyncService:
         payload = {"UserID": user_id}
         if nickname:
             payload["Nick"] = nickname
-        if avatar_url:
+        if avatar_url and avatar_url.startswith(("http://", "https://")):
             payload["FaceUrl"] = avatar_url
+        elif avatar_url:
+            logger.warning(
+                f"Skipping avatar for account_import {user_id}: "
+                f"not a full HTTP URL: {avatar_url[:80]}"
+            )
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -184,7 +189,13 @@ class IMSyncService:
         if nickname is not None:
             profile_items.append({"Tag": "Tag_Profile_IM_Nick", "Value": nickname})
         if avatar_url is not None:
-            profile_items.append({"Tag": "Tag_Profile_IM_Image", "Value": avatar_url})
+            if avatar_url.startswith(("http://", "https://")):
+                profile_items.append({"Tag": "Tag_Profile_IM_Image", "Value": avatar_url})
+            else:
+                logger.warning(
+                    f"Skipping avatar update for {user_id}: "
+                    f"not a full HTTP URL: {avatar_url[:80]}"
+                )
 
         if not profile_items:
             logger.debug(f"No profile fields to update for {user_id}")

@@ -158,6 +158,15 @@ class UserSecurityService:
         user.status = "deleted"
         await self._jwt.revoke_all_refresh_tokens(user.id)
         await self._db.flush()
+
+        # Sync account deactivation to Tencent IM (non-blocking)
+        try:
+            from app.services.im_sync_service import sync_im_user_delete
+            await sync_im_user_delete(user_id=user.username)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning("Failed to sync account deactivation to Tencent IM", exc_info=True)
+
         return AccountDeactivationResponse(
             status="deleted",
             message="账号已注销",

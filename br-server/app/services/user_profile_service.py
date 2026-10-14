@@ -62,6 +62,21 @@ class UserProfileService:
 
         await self._db.flush()
         await self._db.refresh(user)
+
+        # Sync profile update to Tencent IM (non-blocking)
+        # Only sync if nickname or avatar changed
+        if "nickname" in update_data or "avatar" in update_data:
+            try:
+                from app.services.im_sync_service import sync_im_user_update
+                await sync_im_user_update(
+                    user_id=user.username,
+                    nickname=update_data.get("nickname"),
+                    avatar_url=update_data.get("avatar"),
+                )
+            except Exception:
+                import logging
+                logging.getLogger(__name__).warning("Failed to sync user profile to Tencent IM", exc_info=True)
+
         return user
 
     async def update_username(self, user: User, username: str) -> None:

@@ -142,6 +142,18 @@ class AuthService:
             import logging
             logging.getLogger(__name__).warning("Failed to assign app_register_user role", exc_info=True)
 
+        # --- Step 7.6: Sync user to Tencent IM (non-blocking) ---
+        try:
+            from app.services.im_sync_service import sync_im_user_create
+            await sync_im_user_create(
+                user_id=user.username,
+                nickname=user.nickname,
+                avatar_url=user.avatar,
+            )
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning("Failed to sync user to Tencent IM", exc_info=True)
+
         # --- Step 8: Create tokens ---
         return await self.issue_tokens(user.id)
 

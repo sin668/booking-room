@@ -79,6 +79,7 @@ class Settings(BaseSettings):
     IM_SDK_APP_ID: int = 0
     IM_SERVER_KEY: str = ""
     IM_CLIENT_KEY: str = ""
+    IM_ADMIN_USER: str = ""  # Admin account for server-side IM API calls (account_import/delete)
 
     model_config = {"env_file": ".env"}
 

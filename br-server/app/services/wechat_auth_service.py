@@ -228,6 +228,19 @@ class WechatAuthService:
         )
         self._db.add(user)
         await self._db.flush()
+
+        # Sync user to Tencent IM (non-blocking)
+        try:
+            from app.services.im_sync_service import sync_im_user_create
+            await sync_im_user_create(
+                user_id=user.username,
+                nickname=user.nickname,
+                avatar_url=user.avatar,
+            )
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning("Failed to sync WeChat user to Tencent IM", exc_info=True)
+
         return user
 
     async def _get_user_by_openid(self, openid: str) -> User | None:

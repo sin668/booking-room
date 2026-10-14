@@ -130,6 +130,19 @@ class AdminUserService:
                 )
 
         await self._db.refresh(user, attribute_names=["roles"])
+
+        # Sync user to Tencent IM (non-blocking)
+        try:
+            from app.services.im_sync_service import sync_im_user_create
+            await sync_im_user_create(
+                user_id=user.username,
+                nickname=user.nickname,
+                avatar_url=user.avatar,
+            )
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning("Failed to sync admin-created user to Tencent IM", exc_info=True)
+
         return self._to_detail(user)
 
     async def update_user(self, user_id: uuid.UUID, data: AdminUserUpdate) -> AdminUserDetail:
@@ -145,16 +158,39 @@ class AdminUserService:
 
         await self._db.flush()
         await self._db.refresh(user)
+
+        # Sync profile update to Tencent IM (non-blocking)
+        if data.nickname is not None or data.avatar is not None:
+            try:
+                from app.services.im_sync_service import sync_im_user_update
+                await sync_im_user_update(
+                    user_id=user.username,
+                    nickname=data.nickname,
+                    avatar_url=data.avatar,
+                )
+            except Exception:
+                import logging
+                logging.getLogger(__name__).warning("Failed to sync user profile to Tencent IM", exc_info=True)
+
         return self._to_detail(user)
 
     async def delete_user(self, user_id: uuid.UUID) -> None:
         user = await self._get_user_by_id(user_id)
+        username = user.username  # Save before deletion
         # Delete role associations first
         await self._db.execute(
             delete(admin_user_roles).where(admin_user_roles.c.user_id == user_id)
         )
         await self._db.delete(user)
         await self._db.flush()
+
+        # Sync user deletion to Tencent IM (non-blocking)
+        try:
+            from app.services.im_sync_service import sync_im_user_delete
+            await sync_im_user_delete(user_id=username)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning("Failed to sync user deletion to Tencent IM", exc_info=True)
 
     async def reset_password(self, user_id: uuid.UUID, new_password: str) -> AdminUserDetail:
         user = await self._get_user_by_id(user_id)

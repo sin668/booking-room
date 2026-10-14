@@ -86,19 +86,21 @@ class IMSyncService:
         url = IMSyncService._build_url("im_open_login_svc", "account_import")
 
         payload = {"UserID": user_id}
-        # Nick: max 500 bytes
-        if nickname and len(nickname.encode("utf-8")) <= 500:
-            payload["Nick"] = nickname
-        elif nickname:
-            logger.warning(f"IM account_import for {user_id}: nickname too long, skipping")
-        
-        if avatar_url and avatar_url.startswith(("http://", "https://")):
-            payload["FaceUrl"] = avatar_url
-        elif avatar_url:
-            logger.warning(
-                f"Skipping avatar for account_import {user_id}: "
-                f"not a full HTTP URL: {avatar_url[:80]}"
-            )
+        # Nick: must be non-empty string, max 500 bytes
+        if nickname and nickname.strip():
+            if len(nickname.encode("utf-8")) <= 500:
+                payload["Nick"] = nickname
+            else:
+                logger.warning(f"IM account_import for {user_id}: nickname too long, skipping")
+        # FaceUrl: must be non-empty full HTTP URL
+        if avatar_url and avatar_url.strip():
+            if avatar_url.startswith(("http://", "https://")):
+                payload["FaceUrl"] = avatar_url
+            else:
+                logger.warning(
+                    f"Skipping avatar for account_import {user_id}: "
+                    f"not a full HTTP URL: {avatar_url[:80]}"
+                )
 
         logger.info(f"IM account_import request for {user_id}: UserID={user_id}, Nick={payload.get('Nick')}, FaceUrl={bool(payload.get('FaceUrl'))}")
 
@@ -199,9 +201,14 @@ class IMSyncService:
         url = IMSyncService._build_url("profile", "portrait_set")
 
         profile_items = []
-        if nickname is not None:
-            profile_items.append({"Tag": "Tag_Profile_IM_Nick", "Value": nickname})
-        if avatar_url is not None:
+        # Nick: must be non-empty string, max 500 bytes
+        if nickname and nickname.strip():
+            if len(nickname.encode("utf-8")) <= 500:
+                profile_items.append({"Tag": "Tag_Profile_IM_Nick", "Value": nickname})
+            else:
+                logger.warning(f"IM profile_set for {user_id}: nickname too long, skipping")
+        # FaceUrl: must be non-empty full HTTP URL
+        if avatar_url and avatar_url.strip():
             if avatar_url.startswith(("http://", "https://")):
                 profile_items.append({"Tag": "Tag_Profile_IM_Image", "Value": avatar_url})
             else:

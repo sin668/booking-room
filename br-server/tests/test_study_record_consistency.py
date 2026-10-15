@@ -203,7 +203,7 @@ class TestUpcomingCourseLessons:
         )
         assert records.total == 1
         item = records.items[0]
-        assert item.status == "in_progress"
+        assert item.status == "upcoming"
         assert item.record_type == "course"
         assert item.lesson_date == future
 
@@ -214,3 +214,51 @@ class TestUpcomingCourseLessons:
         # 统计口径不变：未开始课时不计入
         assert summary.monthly_hours == 0.0
         assert summary.monthly_bookings == 0
+
+    @pytest.mark.asyncio
+    async def test_in_progress_booking_today_lesson_is_in_progress(
+        self, db_session: AsyncSession, seed_study_data
+    ):
+        """进行中课程订单的今日课时标记为进行中（绿色），未来课时标记为未开始（橙色）。"""
+        course = seed_study_data["course"]
+        today = date.today()
+        future = today + timedelta(days=3)
+        month_first = date(today.year, today.month, 1)
+
+        # Create two lessons for the test
+        lesson1 = CourseLesson(course_id=course.id, title="今日课", duration_minutes=85, sort_order=1)
+        lesson2 = CourseLesson(course_id=course.id, title="未来课", duration_minutes=85, sort_order=2)
+        db_session.add_all([lesson1, lesson2])
+        await db_session.flush()
+
+        schedule = CourseSchedule(
+            course_id=course.id, start_date=today, end_date=future,
+            price=100.0, schedule_type="fixed", schedule_status="in_progress",
+        )
+        db_session.add(schedule)
+        await db_session.flush()
+        db_session.add_all([
+            LessonSchedule(
+                schedule_id=schedule.id, lesson_id=lesson1.id,
+                lesson_date=today, lesson_time_slot="10:00-11:30", sort_order=1,
+            ),
+            LessonSchedule(
+                schedule_id=schedule.id, lesson_id=lesson2.id,
+                lesson_date=future, lesson_time_slot="10:00-11:30", sort_order=2,
+            ),
+        ])
+        db_session.add(Booking(
+            user_id=str(USER_ID), room_id=course.room_id, course_id=course.id,
+            date=today, start_time=time(10, 0), end_time=time(11, 30),
+            status="in_progress", total_price=100.0, booking_type="course",
+            lesson_ids=[lesson1.id, lesson2.id], schedule_id=schedule.id, schedule_type="fixed",
+        ))
+        await db_session.flush()
+
+        records = await list_study_records(
+            db_session, USER_ID, page=1, page_size=50, month=month_first
+        )
+        assert records.total == 2
+        by_date = {item.lesson_date: item for item in records.items}
+        assert by_date[today].status == "in_progress"
+        assert by_date[future].status == "upcoming"

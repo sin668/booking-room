@@ -793,8 +793,8 @@ onReachBottom(() => {
 }
 
 .status-completed {
-  color: $success;
-  background: rgba(82, 196, 26, 0.1);
+  color: $text-muted;
+  background: rgba(178, 190, 195, 0.1);
 }
 
 .status-upcoming {

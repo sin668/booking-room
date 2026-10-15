@@ -92,10 +92,12 @@ def _build_course_lesson_records(
     lesson_map: dict[int, CourseLesson],
     status: str,
     pending_only: bool = False,
+    booking_status: str | None = None,
 ) -> list[StudyRecordItem]:
     """Expand a course booking into individual lesson record items.
 
     pending_only=True 时只保留未到日期的课时（未开始记录），否则只保留已过日期的课时。
+    booking_status 用于学习计划中按课时日期区分进行中/未开始。
     """
     items: list[StudyRecordItem] = []
     lesson_count = len(lesson_schedules)
@@ -111,6 +113,7 @@ def _build_course_lesson_records(
         except Exception:
             lesson_price = None
 
+    today = date.today()
     for ls in lesson_schedules:
         completed = _is_lesson_completed(ls.lesson_date)
         # Skip future lessons (not yet completed)
@@ -139,10 +142,15 @@ def _build_course_lesson_records(
         else:
             hours = round(_calculate_hours(st, et), 2)
 
+        # 学习计划中：进行中订单的今日课时标记为"进行中"，未来课时标记为"未开始"
+        lesson_status = status
+        if pending_only and booking_status == BookingStatus.IN_PROGRESS.value:
+            lesson_status = "in_progress" if ls.lesson_date == today else "upcoming"
+
         items.append(StudyRecordItem(
             id=ls.id,
             record_type="course",
-            status=status,
+            status=lesson_status,
             course_name=course_name,
             lesson_title=lesson_title,
             lesson_date=ls.lesson_date,
@@ -296,7 +304,7 @@ async def _collect_items(
                 )
                 upcoming_items.extend(_build_course_lesson_records(
                     b, course_name, ls_list, lesson_map, upcoming_status,
-                    pending_only=True
+                    pending_only=True, booking_status=b.status
                 ))
         else:
             seat = seat_map.get(b.seat_id)

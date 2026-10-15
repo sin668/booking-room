@@ -197,27 +197,27 @@ const activeTab = ref('studied')
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 
 const studiedDates = computed(() => {
-  const set = new Set()
+  const map = {}
   for (const item of summary.value.calendar_mark || []) {
-    if (item.studied) set.add(item.date)
+    if (item.studied) map[item.date] = true
   }
-  return set
+  return map
 })
 
 const upcomingDates = computed(() => {
-  const set = new Set()
+  const map = {}
   for (const item of summary.value.calendar_mark || []) {
-    if (item.upcoming) set.add(item.date)
+    if (item.upcoming) map[item.date] = true
   }
-  return set
+  return map
 })
 
 const inProgressDates = computed(() => {
-  const set = new Set()
+  const map = {}
   for (const item of summary.value.calendar_mark || []) {
-    if (item.in_progress) set.add(item.date)
+    if (item.in_progress) map[item.date] = true
   }
-  return set
+  return map
 })
 
 const calendarDays = computed(() => {
@@ -242,9 +242,9 @@ const calendarDays = computed(() => {
       dateStr,
       isToday,
       isFuture,
-      studied: studiedDates.value.has(dateStr),
-      upcoming: upcomingDates.value.has(dateStr),
-      inProgress: inProgressDates.value.has(dateStr),
+      studied: !!studiedDates.value[dateStr],
+      upcoming: !!upcomingDates.value[dateStr],
+      inProgress: !!inProgressDates.value[dateStr],
     })
   }
   return cells

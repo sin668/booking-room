@@ -107,15 +107,19 @@ class TestGetMonthlySummary:
         assert all(not m.studied for m in result.calendar_mark)
 
     @pytest.mark.asyncio
-    async def test_confirmed_bookings_counted_as_studied(self, db_session: AsyncSession, seed_data):
-        """confirmed (in_progress) bookings are counted as 已学习, same as completed."""
+    async def test_in_progress_seat_excluded_from_stats(self, db_session: AsyncSession, seed_data):
+        """进行中的自习室订单移入学习计划，不计入已学习统计，日历标记 upcoming。"""
         seat, room = seed_data["seat"], seed_data["room"]
-        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(9, 0), time(12, 0), status="in_progress")
+        today = date.today()
+        await _add_booking(db_session, seat, room, USER_ID, today, time(0, 0), time(23, 59), status="in_progress")
 
-        result = await get_monthly_summary(db_session, USER_ID, date(2026, 5, 1))
+        result = await get_monthly_summary(db_session, USER_ID, date(today.year, today.month, 1))
 
-        assert result.monthly_bookings == 1
-        assert result.monthly_hours == 3.0
+        assert result.monthly_bookings == 0
+        assert result.monthly_hours == 0.0
+        mark = next(m for m in result.calendar_mark if m.date == today)
+        assert mark.studied is False
+        assert mark.upcoming is True
 
     @pytest.mark.asyncio
     async def test_total_hours_across_months(self, db_session: AsyncSession, seed_data):
@@ -224,26 +228,30 @@ class TestListStudyRecords:
     @pytest.mark.asyncio
     async def test_list_excludes_non_studied(self, db_session: AsyncSession, seed_data):
         seat, room = seed_data["seat"], seed_data["room"]
+        today = date.today()
         await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(9, 0), time(12, 0), status="completed")
-        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 2), time(9, 0), time(12, 0), status="in_progress")
+        await _add_booking(db_session, seat, room, USER_ID, today, time(0, 0), time(23, 59), status="in_progress")
         await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 3), time(9, 0), time(12, 0), status="pending_start")
         await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 4), time(9, 0), time(12, 0), status="cancelled")
 
         result = await list_study_records(db_session, USER_ID)
 
-        # completed/in_progress -> studied; pending_start -> upcoming; cancelled excluded
+        # completed -> studied; in_progress(未结束) -> 计划记录; pending_start -> upcoming; cancelled excluded
         assert result.total == 3
         by_date = {item.date: item for item in result.items}
         assert by_date[date(2026, 5, 1)].status == "completed"
-        assert by_date[date(2026, 5, 2)].status == "completed"
+        assert by_date[today].status == "in_progress"
         assert by_date[date(2026, 5, 3)].status == "upcoming"
 
         completed_only = await list_study_records(db_session, USER_ID, status="completed")
-        assert completed_only.total == 2
+        assert completed_only.total == 1
 
+        # status=upcoming 返回整个学习计划（未开始 + 进行中）
         upcoming_only = await list_study_records(db_session, USER_ID, status="upcoming")
-        assert upcoming_only.total == 1
-        assert upcoming_only.items[0].date == date(2026, 5, 3)
+        assert upcoming_only.total == 2
+        by_status_date = {item.date: item.status for item in upcoming_only.items}
+        assert by_status_date[today] == "in_progress"
+        assert by_status_date[date(2026, 5, 3)] == "upcoming"
 
     @pytest.mark.asyncio
     async def test_list_upcoming_seat_status_and_date_filter(self, db_session: AsyncSession, seed_data):

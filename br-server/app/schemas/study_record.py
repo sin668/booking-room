@@ -27,7 +27,7 @@ class StudyRecordSummaryResponse(BaseModel):
 class StudyRecordItem(BaseModel):
     id: int
     record_type: str = "seat"  # "seat" | "course"
-    status: str = "completed"  # "completed" | "upcoming"
+    status: str = "completed"  # "completed" | "upcoming" | "in_progress"
     # Seat booking fields
     room_name: str | None = None
     seat_number: str | None = None

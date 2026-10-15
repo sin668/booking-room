@@ -289,17 +289,25 @@ async def _collect_items(
                 BookingStatus.PENDING_START.value,
                 BookingStatus.IN_PROGRESS.value,
             ):
+                upcoming_status = (
+                    "in_progress"
+                    if b.status == BookingStatus.IN_PROGRESS.value
+                    else "upcoming"
+                )
                 upcoming_items.extend(_build_course_lesson_records(
-                    b, course_name, ls_list, lesson_map, "upcoming", pending_only=True
+                    b, course_name, ls_list, lesson_map, upcoming_status,
+                    pending_only=True
                 ))
         else:
             seat = seat_map.get(b.seat_id)
             room = room_map.get(b.room_id)
             if seat is None or room is None:
                 continue
-            if studied:
+            if b.status == BookingStatus.COMPLETED.value:
                 studied_items.append(_build_seat_record(b, seat, room, "completed"))
-            elif b.status == BookingStatus.PENDING_START.value:
+            elif b.status == BookingStatus.IN_PROGRESS.value:
+                upcoming_items.append(_build_seat_record(b, seat, room, "in_progress"))
+            else:
                 upcoming_items.append(_build_seat_record(b, seat, room, "upcoming"))
 
     # Sort records by date desc, then start_time desc

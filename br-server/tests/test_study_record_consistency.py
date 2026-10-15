@@ -174,7 +174,7 @@ class TestUpcomingCourseLessons:
     async def test_in_progress_booking_future_lesson_is_upcoming(
         self, db_session: AsyncSession, seed_study_data
     ):
-        """进行中课程订单的未到日期课时作为未开始记录，且不进入已学习统计。"""
+        """进行中课程订单的未到日期课时作为进行中计划记录，且不进入已学习统计。"""
         course = seed_study_data["course"]
         lesson = seed_study_data["lesson"]
         future = date.today() + timedelta(days=7)
@@ -203,7 +203,7 @@ class TestUpcomingCourseLessons:
         )
         assert records.total == 1
         item = records.items[0]
-        assert item.status == "upcoming"
+        assert item.status == "in_progress"
         assert item.record_type == "course"
         assert item.lesson_date == future
 

@@ -3,10 +3,10 @@ import uuid
 from datetime import date, time
 from decimal import Decimal
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.booking_status import BookingStatus
+from app.domain.booking_status import BookingStatus, PaymentStatus
 from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
@@ -91,8 +91,12 @@ def _build_course_lesson_records(
     lesson_schedules: list[LessonSchedule],
     lesson_map: dict[int, CourseLesson],
     status: str,
+    pending_only: bool = False,
 ) -> list[StudyRecordItem]:
-    """Expand a course booking into individual lesson record items."""
+    """Expand a course booking into individual lesson record items.
+
+    pending_only=True 时只保留未到日期的课时（未开始记录），否则只保留已过日期的课时。
+    """
     items: list[StudyRecordItem] = []
     lesson_count = len(lesson_schedules)
     if lesson_count == 0:
@@ -108,8 +112,9 @@ def _build_course_lesson_records(
             lesson_price = None
 
     for ls in lesson_schedules:
+        completed = _is_lesson_completed(ls.lesson_date)
         # Skip future lessons (not yet completed)
-        if not _is_lesson_completed(ls.lesson_date):
+        if completed == pending_only:
             continue
 
         lesson = lesson_map.get(ls.lesson_id)
@@ -154,19 +159,31 @@ def _build_course_lesson_records(
     return items
 
 
-async def _collect_studied_items(
+async def _collect_items(
     db: AsyncSession, user_id: uuid.UUID
-) -> list[StudyRecordItem]:
-    """构建用户全部已学习记录条目（按日期倒序）。
+) -> tuple[list[StudyRecordItem], list[StudyRecordItem]]:
+    """构建用户全部已学习与未开始记录条目（各自按日期倒序）。
 
-    列表与统计共用同一口径：get_monthly_summary 直接基于这些条目聚合，
-    保证上方统计 = 下方已学习记录时长之和。
+    列表与统计共用同一口径：get_monthly_summary 直接基于已学习条目聚合，
+    保证上方统计 = 下方已学习记录时长之和；未开始条目仅用于日历标记与列表展示。
     """
-    # Fetch ALL studied bookings (no month filter at SQL level)
+    # Fetch ALL studied/pending bookings (no month filter at SQL level)
     # because course booking's Booking.date != lesson dates
     base_conditions = [
         Booking.user_id == str(user_id),
-        Booking.status.in_([BookingStatus.COMPLETED.value, BookingStatus.IN_PROGRESS.value]),
+        and_(
+            Booking.status.in_(
+                [
+                    BookingStatus.COMPLETED.value,
+                    BookingStatus.IN_PROGRESS.value,
+                    BookingStatus.PENDING_START.value,
+                ]
+            ),
+            or_(
+                Booking.status != BookingStatus.PENDING_START.value,
+                Booking.payment_status == PaymentStatus.PAID.value,
+            ),
+        ),
     ]
     base_where = and_(*base_conditions)
 
@@ -255,29 +272,41 @@ async def _collect_studied_items(
             lesson_map = {l.id: l for l in lessons_result.scalars().all()}
 
     # Build record items (all, before month filter)
-    all_items: list[StudyRecordItem] = []
+    studied_items: list[StudyRecordItem] = []
+    upcoming_items: list[StudyRecordItem] = []
     for b in all_bookings:
-        record_status = "completed" if _is_studied(b.status) else "upcoming"
+        studied = _is_studied(b.status)
         booking_type = getattr(b, "booking_type", None) or "seat"
 
         if booking_type == "course":
             course_name = course_map.get(b.course_id) if b.course_id else None
             ls_list = lesson_schedule_map.get(b.id, [])
-            course_items = _build_course_lesson_records(
-                b, course_name, ls_list, lesson_map, record_status
-            )
-            all_items.extend(course_items)
+            if studied:
+                studied_items.extend(_build_course_lesson_records(
+                    b, course_name, ls_list, lesson_map, "completed"
+                ))
+            if b.status in (
+                BookingStatus.PENDING_START.value,
+                BookingStatus.IN_PROGRESS.value,
+            ):
+                upcoming_items.extend(_build_course_lesson_records(
+                    b, course_name, ls_list, lesson_map, "upcoming", pending_only=True
+                ))
         else:
             seat = seat_map.get(b.seat_id)
             room = room_map.get(b.room_id)
             if seat is None or room is None:
                 continue
-            all_items.append(_build_seat_record(b, seat, room, record_status))
+            if studied:
+                studied_items.append(_build_seat_record(b, seat, room, "completed"))
+            elif b.status == BookingStatus.PENDING_START.value:
+                upcoming_items.append(_build_seat_record(b, seat, room, "upcoming"))
 
-    # Sort all records by date desc, then start_time desc
-    all_items.sort(key=lambda x: (x.date, x.start_time), reverse=True)
+    # Sort records by date desc, then start_time desc
+    studied_items.sort(key=lambda x: (x.date, x.start_time), reverse=True)
+    upcoming_items.sort(key=lambda x: (x.date, x.start_time), reverse=True)
 
-    return all_items
+    return studied_items, upcoming_items
 
 
 async def get_monthly_summary(
@@ -294,7 +323,7 @@ async def get_monthly_summary(
     year = month.year
     month_num = month.month
 
-    all_items = await _collect_studied_items(db, user_id)
+    all_items, upcoming_items = await _collect_items(db, user_id)
 
     monthly_items = [
         item for item in all_items
@@ -306,13 +335,18 @@ async def get_monthly_summary(
     studied_dates = [item.date for item in monthly_items]
     total_hours = round(sum(item.hours for item in all_items), 2)
 
+    upcoming_set = {
+        item.date for item in upcoming_items
+        if item.date.year == year and item.date.month == month_num
+    }
+
     _, days_in_month = calendar.monthrange(year, month_num)
     studied_set = set(studied_dates)
     calendar_mark = [
         CalendarMark(
             date=date(year, month_num, day),
             studied=(date(year, month_num, day) in studied_set),
-            upcoming=False,  # No upcoming records shown
+            upcoming=(date(year, month_num, day) in upcoming_set),
         )
         for day in range(1, days_in_month + 1)
     ]
@@ -344,7 +378,19 @@ async def list_study_records(
 
     page_size = min(page_size, MAX_PAGE_SIZE)
 
-    all_items = await _collect_studied_items(db, user_id)
+    studied_items, upcoming_items = await _collect_items(db, user_id)
+
+    # Status dispatch: default merges studied + upcoming (sorted date desc)
+    if status == "completed":
+        all_items = studied_items
+    elif status == "upcoming":
+        all_items = upcoming_items
+    else:
+        all_items = sorted(
+            studied_items + upcoming_items,
+            key=lambda x: (x.date, x.start_time),
+            reverse=True,
+        )
 
     # Apply month filter in Python (based on record's actual date)
     if month is not None:

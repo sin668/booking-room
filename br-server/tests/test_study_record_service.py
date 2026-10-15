@@ -1,7 +1,7 @@
 """Unit tests for study_record_service."""
 
 import uuid
-from datetime import date, time
+from datetime import date, timedelta, time
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -140,6 +140,22 @@ class TestGetMonthlySummary:
 
         assert result.max_streak_days == 3
 
+    @pytest.mark.asyncio
+    async def test_calendar_mark_upcoming_excluded_from_stats(self, db_session: AsyncSession, seed_data):
+        """未开始订单在 calendar_mark 标记 upcoming=True，但不计入统计口径。"""
+        seat, room = seed_data["seat"], seed_data["room"]
+        future = date.today() + timedelta(days=3)
+        month_first = date(future.year, future.month, 1)
+        await _add_booking(db_session, seat, room, USER_ID, future, time(9, 0), time(12, 0), status="pending_start")
+
+        result = await get_monthly_summary(db_session, USER_ID, month_first)
+
+        mark = next(m for m in result.calendar_mark if m.date == future)
+        assert mark.studied is False
+        assert mark.upcoming is True
+        assert result.monthly_bookings == 0
+        assert result.monthly_hours == 0.0
+
 
 class TestListStudyRecords:
     @pytest.mark.asyncio
@@ -215,6 +231,40 @@ class TestListStudyRecords:
 
         result = await list_study_records(db_session, USER_ID)
 
-        # Only completed and confirmed are shown; pending and cancelled excluded
-        assert result.total == 2
-        assert all(item.status == "completed" for item in result.items)
+        # completed/in_progress -> studied; pending_start -> upcoming; cancelled excluded
+        assert result.total == 3
+        by_date = {item.date: item for item in result.items}
+        assert by_date[date(2026, 5, 1)].status == "completed"
+        assert by_date[date(2026, 5, 2)].status == "completed"
+        assert by_date[date(2026, 5, 3)].status == "upcoming"
+
+        completed_only = await list_study_records(db_session, USER_ID, status="completed")
+        assert completed_only.total == 2
+
+        upcoming_only = await list_study_records(db_session, USER_ID, status="upcoming")
+        assert upcoming_only.total == 1
+        assert upcoming_only.items[0].date == date(2026, 5, 3)
+
+    @pytest.mark.asyncio
+    async def test_list_upcoming_seat_status_and_date_filter(self, db_session: AsyncSession, seed_data):
+        """待开始自习室订单进入未开始记录，并可按单日过滤。"""
+        seat, room = seed_data["seat"], seed_data["room"]
+        future = date.today() + timedelta(days=3)
+        month_first = date(future.year, future.month, 1)
+        await _add_booking(db_session, seat, room, USER_ID, future, time(9, 0), time(12, 0), status="pending_start")
+
+        merged = await list_study_records(db_session, USER_ID, month=month_first)
+        assert merged.total == 1
+        assert merged.items[0].status == "upcoming"
+        assert merged.items[0].date == future
+
+        upcoming_only = await list_study_records(db_session, USER_ID, status="upcoming")
+        assert upcoming_only.total == 1
+        completed_only = await list_study_records(db_session, USER_ID, status="completed")
+        assert completed_only.total == 0
+
+        filtered = await list_study_records(
+            db_session, USER_ID, month=month_first, record_date=future
+        )
+        assert filtered.total == 1
+        assert filtered.items[0].status == "upcoming"

@@ -8,7 +8,7 @@
 """
 
 import uuid
-from datetime import date, time
+from datetime import date, timedelta, time
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -167,3 +167,50 @@ class TestSummaryMatchesRecords:
         assert records.total == 2
         record_sum = round(sum(item.hours for item in records.items), 2)
         assert summary.monthly_hours == record_sum
+
+
+class TestUpcomingCourseLessons:
+    @pytest.mark.asyncio
+    async def test_in_progress_booking_future_lesson_is_upcoming(
+        self, db_session: AsyncSession, seed_study_data
+    ):
+        """进行中课程订单的未到日期课时作为未开始记录，且不进入已学习统计。"""
+        course = seed_study_data["course"]
+        lesson = seed_study_data["lesson"]
+        future = date.today() + timedelta(days=7)
+        month_first = date(future.year, future.month, 1)
+
+        schedule_future = CourseSchedule(
+            course_id=course.id, start_date=future, end_date=future,
+            price=100.0, schedule_type="fixed", schedule_status="in_progress",
+        )
+        db_session.add(schedule_future)
+        await db_session.flush()
+        db_session.add(LessonSchedule(
+            schedule_id=schedule_future.id, lesson_id=lesson.id,
+            lesson_date=future, lesson_time_slot="18:00-19:25", sort_order=1,
+        ))
+        db_session.add(Booking(
+            user_id=str(USER_ID), room_id=course.room_id, course_id=course.id,
+            date=future, start_time=time(18, 0), end_time=time(19, 25),
+            status="in_progress", total_price=100.0, booking_type="course",
+            lesson_ids=[lesson.id], schedule_id=schedule_future.id, schedule_type="fixed",
+        ))
+        await db_session.flush()
+
+        records = await list_study_records(
+            db_session, USER_ID, page=1, page_size=50, month=month_first
+        )
+        assert records.total == 1
+        item = records.items[0]
+        assert item.status == "upcoming"
+        assert item.record_type == "course"
+        assert item.lesson_date == future
+
+        summary = await get_monthly_summary(db_session, USER_ID, month_first)
+        mark = next(m for m in summary.calendar_mark if m.date == future)
+        assert mark.studied is False
+        assert mark.upcoming is True
+        # 统计口径不变：未开始课时不计入
+        assert summary.monthly_hours == 0.0
+        assert summary.monthly_bookings == 0

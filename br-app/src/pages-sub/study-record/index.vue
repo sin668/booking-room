@@ -132,8 +132,8 @@
                 </view>
               </view>
               <view class="record-right">
-                <text :class="['status-badge', record.status === 'upcoming' ? 'status-upcoming' : 'status-completed']">
-                  {{ record.status === 'upcoming' ? '未开始' : '已学习' }}
+                <text :class="['status-badge', record.status === 'in_progress' ? 'status-in-progress' : record.status === 'upcoming' ? 'status-upcoming' : 'status-completed']">
+                  {{ record.status === 'in_progress' ? '进行中' : record.status === 'upcoming' ? '未开始' : '已学习' }}
                 </text>
                 <text v-if="record.record_type === 'seat'" class="record-price">
                   <text class="price-symbol">¥</text>{{ record.total_price }}
@@ -800,6 +800,11 @@ onReachBottom(() => {
 .status-upcoming {
   color: $orange;
   background: rgba(255, 140, 0, 0.1);
+}
+
+.status-in-progress {
+  color: $success;
+  background: rgba(82, 196, 26, 0.1);
 }
 
 .record-price {

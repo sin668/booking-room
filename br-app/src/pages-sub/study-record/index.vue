@@ -52,9 +52,10 @@
           >
             <view
               v-if="cell.day"
-              :class="['day-inner', { 'day-today': cell.isToday, 'day-future': cell.isFuture }]"
+              :class="['day-inner', { 'day-today': cell.isToday, 'day-future': cell.isFuture, 'day-selected': cell.dateStr === selectedDate }]"
+              @tap="toggleDateFilter(cell)"
             >
-              <text :class="['day-number', { 'day-number-today': cell.isToday, 'day-number-future': cell.isFuture }]">{{ cell.day }}</text>
+              <text :class="['day-number', { 'day-number-today': cell.isToday && cell.dateStr !== selectedDate, 'day-number-future': cell.isFuture, 'day-number-selected': cell.dateStr === selectedDate }]">{{ cell.day }}</text>
             </view>
             <view
               v-if="cell.day && cell.studied"
@@ -165,6 +166,7 @@ const records = ref([])
 const page = ref(1)
 const total = ref(0)
 const hasMore = ref(true)
+const selectedDate = ref(null)
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -195,6 +197,7 @@ const calendarDays = computed(() => {
     const isFuture = new Date(y, m - 1, d) > today
     cells.push({
       day: d,
+      dateStr,
       isToday,
       isFuture,
       studied: studiedDates.value.has(dateStr),
@@ -249,6 +252,9 @@ async function fetchRecords(reset) {
       page: page.value,
       page_size: 10,
     }
+    if (selectedDate.value) {
+      params.date = selectedDate.value
+    }
     const data = await getStudyRecordList(params)
     const items = data.items || []
     if (page.value === 1) {
@@ -272,6 +278,12 @@ async function loadAll() {
   loading.value = false
 }
 
+function toggleDateFilter(cell) {
+  if (!cell.day || cell.isFuture) return
+  selectedDate.value = selectedDate.value === cell.dateStr ? null : cell.dateStr
+  fetchRecords(true)
+}
+
 function prevMonth() {
   if (currentMonth.value === 1) {
     currentYear.value--
@@ -279,6 +291,7 @@ function prevMonth() {
   } else {
     currentMonth.value--
   }
+  selectedDate.value = null
   loadAll()
 }
 
@@ -289,6 +302,7 @@ function nextMonth() {
   } else {
     currentMonth.value++
   }
+  selectedDate.value = null
   loadAll()
 }
 
@@ -461,6 +475,11 @@ onReachBottom(() => {
   background: transparent;
 }
 
+.day-inner.day-selected {
+  background: $primary-soft;
+  border: 2rpx solid $primary;
+}
+
 .day-number {
   font-size: 26rpx;
   color: $text-primary;
@@ -473,6 +492,11 @@ onReachBottom(() => {
 
 .day-number-future {
   color: $text-muted;
+}
+
+.day-number-selected {
+  color: $primary;
+  font-weight: 600;
 }
 
 .studied-dot {

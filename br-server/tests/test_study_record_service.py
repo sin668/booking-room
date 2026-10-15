@@ -176,6 +176,20 @@ class TestListStudyRecords:
         assert result.items[0].date == date(2026, 5, 1)
 
     @pytest.mark.asyncio
+    async def test_list_filter_by_date(self, db_session: AsyncSession, seed_data):
+        seat, room = seed_data["seat"], seed_data["room"]
+        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(9, 0), time(12, 0))
+        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 1), time(14, 0), time(17, 0))
+        await _add_booking(db_session, seat, room, USER_ID, date(2026, 5, 2), time(9, 0), time(12, 0))
+
+        result = await list_study_records(
+            db_session, USER_ID, month=date(2026, 5, 1), record_date=date(2026, 5, 1)
+        )
+
+        assert result.total == 2
+        assert all(item.date == date(2026, 5, 1) for item in result.items)
+
+    @pytest.mark.asyncio
     async def test_list_pagination(self, db_session: AsyncSession, seed_data):
         seat, room = seed_data["seat"], seed_data["room"]
         for i in range(5):

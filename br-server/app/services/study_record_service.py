@@ -336,6 +336,7 @@ async def list_study_records(
     page: int = 1,
     page_size: int = DEFAULT_PAGE_SIZE,
     month: date | None = None,
+    record_date: date | None = None,
     status: str | None = None,
 ) -> StudyRecordListResponse:
     # Sync in-progress completions first
@@ -351,6 +352,10 @@ async def list_study_records(
             item for item in all_items
             if item.date.year == month.year and item.date.month == month.month
         ]
+
+    # Apply single-day filter in Python (same basis as month filter)
+    if record_date is not None:
+        all_items = [item for item in all_items if item.date == record_date]
 
     total = len(all_items)
     offset = (page - 1) * page_size

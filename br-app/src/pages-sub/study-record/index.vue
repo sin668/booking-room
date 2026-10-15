@@ -62,7 +62,7 @@
               class="dot-row"
             >
               <view v-if="cell.inProgress" class="studied-dot studied-dot-green" />
-              <view v-else-if="cell.studied" class="studied-dot studied-dot-gray" />
+              <view v-if="cell.studied && !cell.inProgress" class="studied-dot studied-dot-gray" />
               <view v-if="cell.upcoming && !cell.inProgress" class="studied-dot studied-dot-orange" />
             </view>
           </view>

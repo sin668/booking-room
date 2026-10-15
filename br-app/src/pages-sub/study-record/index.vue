@@ -61,16 +61,21 @@
               v-if="cell.day"
               class="dot-row"
             >
-              <view v-if="cell.studied" class="studied-dot studied-dot-green" />
-              <view v-if="cell.upcoming" class="studied-dot studied-dot-orange" />
+              <view v-if="cell.inProgress" class="studied-dot studied-dot-green" />
+              <view v-else-if="cell.studied" class="studied-dot studied-dot-gray" />
+              <view v-if="cell.upcoming && !cell.inProgress" class="studied-dot studied-dot-orange" />
             </view>
           </view>
         </view>
 
         <view class="legend-row">
           <view class="legend-item">
-            <view class="legend-dot legend-dot-green" />
+            <view class="legend-dot legend-dot-gray" />
             <text class="legend-text">已学习</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-dot legend-dot-green" />
+            <text class="legend-text">进行中</text>
           </view>
           <view class="legend-item">
             <view class="legend-dot legend-dot-orange" />
@@ -116,7 +121,7 @@
             <view class="record-top">
               <view class="record-left">
                 <view v-if="record.record_type === 'course'" class="course-icon">
-                  <view :class="['course-icon-body', { 'course-icon-upcoming': record.status === 'upcoming' }]" />
+                  <view :class="['course-icon-body', { 'course-icon-upcoming': record.status === 'upcoming', 'course-icon-completed': record.status === 'completed', 'course-icon-in-progress': record.status === 'in_progress' }]" />
                 </view>
                 <view v-else class="book-icon">
                   <view class="book-icon-body" />
@@ -207,6 +212,14 @@ const upcomingDates = computed(() => {
   return set
 })
 
+const inProgressDates = computed(() => {
+  const set = new Set()
+  for (const item of summary.value.calendar_mark || []) {
+    if (item.in_progress) set.add(item.date)
+  }
+  return set
+})
+
 const calendarDays = computed(() => {
   const y = currentYear.value
   const m = currentMonth.value
@@ -231,6 +244,7 @@ const calendarDays = computed(() => {
       isFuture,
       studied: studiedDates.value.has(dateStr),
       upcoming: upcomingDates.value.has(dateStr),
+      inProgress: inProgressDates.value.has(dateStr),
     })
   }
   return cells
@@ -554,6 +568,10 @@ onReachBottom(() => {
   border-radius: 50%;
 }
 
+.studied-dot-gray {
+  background: $text-muted;
+}
+
 .studied-dot-green {
   background: $success;
 }
@@ -585,6 +603,10 @@ onReachBottom(() => {
   width: 12rpx;
   height: 12rpx;
   border-radius: 50%;
+}
+
+.legend-dot-gray {
+  background: $text-muted;
 }
 
 .legend-dot-green {
@@ -737,7 +759,7 @@ onReachBottom(() => {
   width: 36rpx;
   height: 28rpx;
   border-radius: 6rpx;
-  background: $success;
+  background: $text-muted;
   position: absolute;
   left: 2rpx;
   top: 4rpx;
@@ -745,6 +767,10 @@ onReachBottom(() => {
 
 .course-icon-upcoming {
   background: $orange;
+}
+
+.course-icon-in-progress {
+  background: $success;
 }
 
 .room-name {

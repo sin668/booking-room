@@ -356,6 +356,12 @@ async def get_monthly_summary(
         if item.date.year == year and item.date.month == month_num
     }
 
+    in_progress_set = {
+        item.date for item in upcoming_items
+        if item.date.year == year and item.date.month == month_num
+        and item.status == "in_progress"
+    }
+
     _, days_in_month = calendar.monthrange(year, month_num)
     studied_set = set(studied_dates)
     calendar_mark = [
@@ -363,6 +369,7 @@ async def get_monthly_summary(
             date=date(year, month_num, day),
             studied=(date(year, month_num, day) in studied_set),
             upcoming=(date(year, month_num, day) in upcoming_set),
+            in_progress=(date(year, month_num, day) in in_progress_set),
         )
         for day in range(1, days_in_month + 1)
     ]

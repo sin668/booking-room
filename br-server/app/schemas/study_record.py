@@ -8,6 +8,7 @@ class CalendarMark(BaseModel):
     date: date
     studied: bool = False
     upcoming: bool = False
+    in_progress: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

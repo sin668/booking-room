@@ -14,6 +14,7 @@ from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
+from app.core.im import to_im_user_id
 from app.models.booking import Booking
 from app.models.coupon import UserCoupon
 from app.models.user import User
@@ -233,7 +234,7 @@ class WechatAuthService:
         try:
             from app.services.im_sync_service import sync_im_user_create
             await sync_im_user_create(
-                user_id=user.username,
+                user_id=to_im_user_id(user.id),
                 nickname=user.nickname,
                 avatar_url=user.avatar,
             )

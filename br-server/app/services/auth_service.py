@@ -12,6 +12,7 @@ from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
+from app.core.im import to_im_user_id
 from app.models.user import User
 from app.schemas.user import TokenResponse, UserCreate, UserLogin
 from app.services.jwt_service import JWTService
@@ -146,7 +147,7 @@ class AuthService:
         try:
             from app.services.im_sync_service import sync_im_user_create
             await sync_im_user_create(
-                user_id=user.username,
+                user_id=to_im_user_id(user.id),
                 nickname=user.nickname,
                 avatar_url=user.avatar,
             )

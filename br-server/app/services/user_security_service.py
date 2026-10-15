@@ -16,6 +16,7 @@ from sqlalchemy import and_, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
+from app.core.im import to_im_user_id
 from app.domain.booking_status import BookingStatus
 from app.models.booking import Booking
 from app.models.coupon import Coupon, UserCoupon
@@ -162,7 +163,7 @@ class UserSecurityService:
         # Sync account deactivation to Tencent IM (non-blocking)
         try:
             from app.services.im_sync_service import sync_im_user_delete
-            await sync_im_user_delete(user_id=user.username)
+            await sync_im_user_delete(user_id=to_im_user_id(user.id))
         except Exception:
             import logging
             logging.getLogger(__name__).warning("Failed to sync account deactivation to Tencent IM", exc_info=True)

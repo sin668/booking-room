@@ -11,6 +11,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.im import to_im_user_id
 from app.models.user import User
 from app.schemas.user import UserProfileUpdate
 from app.services.username_service import UsernameService
@@ -69,7 +70,7 @@ class UserProfileService:
             try:
                 from app.services.im_sync_service import sync_im_user_update
                 await sync_im_user_update(
-                    user_id=user.username,
+                    user_id=to_im_user_id(user.id),
                     nickname=update_data.get("nickname"),
                     avatar_url=update_data.get("avatar"),
                 )

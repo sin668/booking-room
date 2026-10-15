@@ -17,6 +17,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.im import to_im_user_id
 from app.domain.edu_listing_status import EduListingStatus
 from app.models.edu_listing import EduListing
 from app.models.user import User
@@ -123,7 +124,8 @@ async def assemble_items(
                 publisher_nickname=user.nickname if user else None,
                 publisher_avatar=user.avatar if user else None,
                 publisher_phone=user.phone if user else None,
-                publisher_username=user.username if user else None,
+                # 客户端用它拼 IM 会话 ID（C2C<userID>），所以取 users.id 派生的 IM UserID
+                publisher_username=to_im_user_id(user.id) if user else None,
                 publisher_education_verified=cert.get("education") if with_certification else None,
                 publisher_teacher_verified=cert.get("teacher") if with_certification else None,
                 created_at=listing.created_at,

@@ -8,9 +8,15 @@ import hashlib
 import hmac
 import json
 import time
+import uuid
 import zlib
 
 from app.core.config import settings
+
+
+def to_im_user_id(user_id: uuid.UUID) -> str:
+    """腾讯云 IM UserID 最长 32 字节，UUID 带连字符是 36 位，所以取其 hex 形式。"""
+    return user_id.hex
 
 
 def _base64_encode_url(data: bytes) -> str:
@@ -26,7 +32,7 @@ def gen_user_sig(user_id: str, expire: int = 180 * 24 * 60 * 60) -> str:
     """Generate a UserSig for the given user ID.
 
     Args:
-        user_id: The IM user ID (maps to platform username).
+        user_id: The IM user ID (see to_im_user_id).
         expire: Validity period in seconds (default 180 days).
     """
     sdk_app_id = settings.IM_SDK_APP_ID

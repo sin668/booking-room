@@ -67,7 +67,7 @@ class IMSyncService:
         """Import (create) a user account in Tencent IM.
 
         Args:
-            user_id: The IM user ID (maps to platform username)
+            user_id: The IM user ID (derived from users.id, see app.core.im.to_im_user_id)
             nickname: Optional nickname to set
             avatar_url: Optional avatar URL to set
 

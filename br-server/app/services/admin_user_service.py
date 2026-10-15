@@ -7,6 +7,7 @@ from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.im import to_im_user_id
 from app.models.admin_role import AdminRole, admin_user_roles
 from app.models.booking import Booking
 from app.models.coupon import UserCoupon
@@ -136,7 +137,7 @@ class AdminUserService:
         try:
             from app.services.im_sync_service import sync_im_user_create
             await sync_im_user_create(
-                user_id=user.username,
+                user_id=to_im_user_id(user.id),
                 nickname=user.nickname,
                 avatar_url=user.avatar,
             )
@@ -165,7 +166,7 @@ class AdminUserService:
             try:
                 from app.services.im_sync_service import sync_im_user_update
                 await sync_im_user_update(
-                    user_id=user.username,
+                    user_id=to_im_user_id(user.id),
                     nickname=data.nickname,
                     avatar_url=data.avatar,
                 )
@@ -177,7 +178,7 @@ class AdminUserService:
 
     async def delete_user(self, user_id: uuid.UUID) -> None:
         user = await self._get_user_by_id(user_id)
-        username = user.username  # Save before deletion
+        im_user_id = to_im_user_id(user.id)  # Save before deletion
         # Delete role associations first
         await self._db.execute(
             delete(admin_user_roles).where(admin_user_roles.c.user_id == user_id)
@@ -188,7 +189,7 @@ class AdminUserService:
         # Sync user deletion to Tencent IM (non-blocking)
         try:
             from app.services.im_sync_service import sync_im_user_delete
-            await sync_im_user_delete(user_id=username)
+            await sync_im_user_delete(user_id=im_user_id)
         except Exception:
             import logging
             logging.getLogger(__name__).warning("Failed to sync user deletion to Tencent IM", exc_info=True)

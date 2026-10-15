@@ -320,7 +320,8 @@ async def _collect_items(
 
     # Sort records by date desc, then start_time desc
     studied_items.sort(key=lambda x: (x.date, x.start_time), reverse=True)
-    upcoming_items.sort(key=lambda x: (x.date, x.start_time), reverse=True)
+    # 学习计划按时间正序，方便查看接下来的安排
+    upcoming_items.sort(key=lambda x: (x.date, x.start_time))
 
     return studied_items, upcoming_items
 

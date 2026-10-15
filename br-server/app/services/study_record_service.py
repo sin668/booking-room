@@ -348,7 +348,8 @@ async def get_monthly_summary(
 
     monthly_hours = round(sum(item.hours for item in monthly_items), 2)
     monthly_bookings = len(monthly_items)
-    studied_dates = [item.date for item in monthly_items]
+    # 日历"已学习"只统计已完成，不包含进行中
+    studied_dates = [item.date for item in monthly_items if item.status == "completed"]
     total_hours = round(sum(item.hours for item in all_items), 2)
 
     upcoming_set = {

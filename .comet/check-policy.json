@@ -1,16 +1,13 @@
 {
   "version": 1,
-  "argv": ["node", "scripts/verify-im-peer-profile.js"],
-  "cwd": "br-app",
+  "argv": ["python", "-m", "pytest", "tests/test_study_record_service.py", "tests/test_api_study_record.py", "tests/test_study_record_consistency.py", "-q", "-p", "no:cacheprovider"],
+  "cwd": "br-server",
   "files": [
-    "br-app/src/utils/im.js",
-    "br-app/src/store/modules/user.js",
-    "br-app/src/pages/notifications/index.vue",
-    "br-app/src/pages/index/index.vue",
-    "br-app/src/TUIKit/components/TUIChat/index.vue",
-    "br-app/src/TUIKit/components/TUIChat/message-list/message-elements/message-bubble.vue",
-    "br-app/scripts/verify-im-peer-profile.js",
-    "br-app/package.json"
+    "br-server/app/api/routes/study_record.py",
+    "br-server/app/services/study_record_service.py",
+    "br-server/tests/test_study_record_service.py",
+    "br-server/tests/test_api_study_record.py",
+    "br-server/tests/test_study_record_consistency.py"
   ],
-  "env": ["PATH"]
+  "env": ["PATH", "PYTHONDONTWRITEBYTECODE"]
 }

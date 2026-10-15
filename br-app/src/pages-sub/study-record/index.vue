@@ -580,10 +580,6 @@ onReachBottom(() => {
   background: $orange;
 }
 
-.day-inner.day-today + .dot-row .studied-dot {
-  background: $white;
-}
-
 .legend-row {
   display: flex;
   align-items: center;

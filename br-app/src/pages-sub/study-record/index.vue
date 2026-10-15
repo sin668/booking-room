@@ -58,9 +58,12 @@
               <text :class="['day-number', { 'day-number-today': cell.isToday && cell.dateStr !== selectedDate, 'day-number-future': cell.isFuture, 'day-number-selected': cell.dateStr === selectedDate }]">{{ cell.day }}</text>
             </view>
             <view
-              v-if="cell.day && cell.studied"
-              class="studied-dot studied-dot-green"
-            />
+              v-if="cell.day"
+              class="dot-row"
+            >
+              <view v-if="cell.studied" class="studied-dot studied-dot-green" />
+              <view v-if="cell.upcoming" class="studied-dot studied-dot-orange" />
+            </view>
           </view>
         </view>
 
@@ -70,6 +73,10 @@
             <text class="legend-text">已学习</text>
           </view>
           <view class="legend-item">
+            <view class="legend-dot legend-dot-orange" />
+            <text class="legend-text">未开始</text>
+          </view>
+          <view class="legend-item">
             <view class="legend-dot legend-dot-today" />
             <text class="legend-text">今天</text>
           </view>
@@ -77,14 +84,27 @@
       </view>
 
       <view class="record-section">
-        <text class="section-title">学习记录</text>
+        <view class="tab-bar">
+          <view
+            :class="['tab-item', { 'tab-active': activeTab === 'studied' }]"
+            @tap="switchTab('studied')"
+          >
+            <text :class="['tab-text', { 'tab-text-active': activeTab === 'studied' }]">学习记录</text>
+          </view>
+          <view
+            :class="['tab-item', { 'tab-active': activeTab === 'upcoming' }]"
+            @tap="switchTab('upcoming')"
+          >
+            <text :class="['tab-text', { 'tab-text-active': activeTab === 'upcoming' }]">学习计划</text>
+          </view>
+        </view>
 
         <view v-if="recordLoading && records.length === 0" class="record-loading">
           <view class="loading-spinner small" />
         </view>
 
         <view v-else-if="records.length === 0" class="empty-records">
-          <text class="empty-text">暂无学习记录</text>
+          <text class="empty-text">{{ activeTab === 'studied' ? '暂无学习记录' : '暂无学习计划' }}</text>
         </view>
 
         <view v-else class="record-list">
@@ -96,7 +116,7 @@
             <view class="record-top">
               <view class="record-left">
                 <view v-if="record.record_type === 'course'" class="course-icon">
-                  <view class="course-icon-body" />
+                  <view :class="['course-icon-body', { 'course-icon-upcoming': record.status === 'upcoming' }]" />
                 </view>
                 <view v-else class="book-icon">
                   <view class="book-icon-body" />
@@ -112,8 +132,8 @@
                 </view>
               </view>
               <view class="record-right">
-                <text class="status-badge status-completed">
-                  已学习
+                <text :class="['status-badge', record.status === 'upcoming' ? 'status-upcoming' : 'status-completed']">
+                  {{ record.status === 'upcoming' ? '未开始' : '已学习' }}
                 </text>
                 <text v-if="record.record_type === 'seat'" class="record-price">
                   <text class="price-symbol">¥</text>{{ record.total_price }}
@@ -167,6 +187,7 @@ const page = ref(1)
 const total = ref(0)
 const hasMore = ref(true)
 const selectedDate = ref(null)
+const activeTab = ref('studied')
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -174,6 +195,14 @@ const studiedDates = computed(() => {
   const set = new Set()
   for (const item of summary.value.calendar_mark || []) {
     if (item.studied) set.add(item.date)
+  }
+  return set
+})
+
+const upcomingDates = computed(() => {
+  const set = new Set()
+  for (const item of summary.value.calendar_mark || []) {
+    if (item.upcoming) set.add(item.date)
   }
   return set
 })
@@ -201,6 +230,7 @@ const calendarDays = computed(() => {
       isToday,
       isFuture,
       studied: studiedDates.value.has(dateStr),
+      upcoming: upcomingDates.value.has(dateStr),
     })
   }
   return cells
@@ -251,6 +281,7 @@ async function fetchRecords(reset) {
       month: monthStr,
       page: page.value,
       page_size: 10,
+      status: activeTab.value === 'studied' ? 'completed' : 'upcoming',
     }
     if (selectedDate.value) {
       params.date = selectedDate.value
@@ -278,9 +309,18 @@ async function loadAll() {
   loading.value = false
 }
 
+function switchTab(tab) {
+  if (activeTab.value === tab) return
+  activeTab.value = tab
+  fetchRecords(true)
+}
+
 function toggleDateFilter(cell) {
-  if (!cell.day || cell.isFuture) return
+  if (!cell.day) return
   selectedDate.value = selectedDate.value === cell.dateStr ? null : cell.dateStr
+  if (selectedDate.value !== null) {
+    activeTab.value = cell.isToday || cell.isFuture ? 'upcoming' : 'studied'
+  }
   fetchRecords(true)
 }
 
@@ -499,22 +539,30 @@ onReachBottom(() => {
   font-weight: 600;
 }
 
+.dot-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  height: 14rpx;
+  margin-top: 4rpx;
+}
+
 .studied-dot {
   width: 10rpx;
   height: 10rpx;
   border-radius: 50%;
-  margin-top: 4rpx;
 }
 
 .studied-dot-green {
   background: $success;
 }
 
-.studied-dot-blue {
-  background: $primary;
+.studied-dot-orange {
+  background: $orange;
 }
 
-.day-inner.day-today + .studied-dot {
+.day-inner.day-today + .dot-row .studied-dot {
   background: $white;
 }
 
@@ -543,8 +591,8 @@ onReachBottom(() => {
   background: $success;
 }
 
-.legend-dot-blue {
-  background: $primary;
+.legend-dot-orange {
+  background: $orange;
 }
 
 .legend-dot-today {
@@ -559,14 +607,6 @@ onReachBottom(() => {
 
 .record-section {
   margin: 0 32rpx;
-}
-
-.section-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: 20rpx;
-  display: block;
 }
 
 .tab-bar {
@@ -697,10 +737,14 @@ onReachBottom(() => {
   width: 36rpx;
   height: 28rpx;
   border-radius: 6rpx;
-  background: $orange;
+  background: $success;
   position: absolute;
   left: 2rpx;
   top: 4rpx;
+}
+
+.course-icon-upcoming {
+  background: $orange;
 }
 
 .room-name {
@@ -754,8 +798,8 @@ onReachBottom(() => {
 }
 
 .status-upcoming {
-  color: $primary;
-  background: rgba(79, 110, 247, 0.1);
+  color: $orange;
+  background: rgba(255, 140, 0, 0.1);
 }
 
 .record-price {

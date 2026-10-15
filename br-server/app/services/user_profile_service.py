@@ -89,27 +89,8 @@ class UserProfileService:
                 detail="该用户名已存在",
             )
 
-        old_username = user.username
         user.username = username
         user.username_updated_at = datetime.now()
-
-        # IM UserID 不可修改，删旧账号并新建新账号（non-blocking）
-        if old_username and old_username != username:
-            try:
-                from app.services.im_sync_service import sync_im_user_rename
-
-                await sync_im_user_rename(
-                    old_user_id=old_username,
-                    new_user_id=username,
-                    nickname=user.nickname,
-                    avatar_url=user.avatar,
-                )
-            except Exception:
-                import logging
-
-                logging.getLogger(__name__).warning(
-                    "Failed to sync username change to Tencent IM", exc_info=True
-                )
 
     async def update_phone(self, user: User, new_phone: str) -> None:
         self.enforce_cooldown(user.phone_updated_at, "手机号修改后 30 天内不可再次修改")

@@ -14,6 +14,7 @@ from app.models.course import Course
 from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
 from app.models.edu_listing import EduListing
+from app.models.im_message import ImMessage
 from app.models.lesson_schedule import LessonSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
@@ -34,6 +35,7 @@ __all__ = [
     "CourseLesson",
     "CourseSchedule",
     "EduListing",
+    "ImMessage",
     "LessonSchedule",
     "Coupon",
     "Notification",

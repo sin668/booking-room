@@ -20,6 +20,7 @@ from app.models import (  # noqa: F401
     CourseLesson,
     Coupon,
     EduListing,
+    ImMessage,
     Review,
     RoomFollow,
     Seat,

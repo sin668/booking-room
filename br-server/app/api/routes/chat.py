@@ -1,13 +1,14 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.im import gen_user_sig, to_im_user_id
+from app.core.im import from_im_user_id, gen_user_sig, to_im_user_id
+from app.models.im_message import ImMessage
 from app.models.user import User
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
@@ -47,3 +48,57 @@ async def get_publisher_username(
     if not publisher_id:
         raise HTTPException(status_code=404, detail="Publisher not found")
     return {"publisher_im_user_id": to_im_user_id(publisher_id)}
+
+
+@router.get("/messages")
+async def get_chat_messages(
+    peer: str,
+    limit: int = Query(default=50, ge=1, le=200),
+    before: int | None = Query(default=None, description="msg_time 游标（秒），取更早的一页"),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """返回当前用户与 peer 之间的单聊历史（由 IM 服务端回调落库），按时间正序。"""
+    if from_im_user_id(peer) is None:
+        raise HTTPException(status_code=400, detail="peer 不是合法的会话对象")
+
+    self_account = to_im_user_id(user_id)
+    conditions = [
+        or_(
+            and_(
+                ImMessage.im_from_account == self_account,
+                ImMessage.im_to_account == peer,
+            ),
+            and_(
+                ImMessage.im_from_account == peer,
+                ImMessage.im_to_account == self_account,
+            ),
+        )
+    ]
+    if before is not None:
+        conditions.append(ImMessage.msg_time < before)
+
+    result = await db.execute(
+        select(ImMessage)
+        .where(*conditions)
+        .order_by(ImMessage.msg_time.desc(), ImMessage.id.desc())
+        .limit(limit)
+    )
+    rows = list(result.scalars().all())
+    return {
+        "messages": [
+            {
+                "id": row.id,
+                "msg_key": row.msg_key,
+                "element_type": row.element_type,
+                "content": row.content,
+                "media_url": row.media_url,
+                "oss_url": row.oss_url,
+                "is_read": row.is_read,
+                "msg_time": row.msg_time,
+                "direction": "send" if row.im_from_account == self_account else "receive",
+            }
+            for row in reversed(rows)
+        ],
+        "has_more": len(rows) == limit,
+    }

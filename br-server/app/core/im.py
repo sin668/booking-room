@@ -19,6 +19,43 @@ def to_im_user_id(user_id: uuid.UUID) -> str:
     return user_id.hex
 
 
+def from_im_user_id(im_user_id: str | None) -> uuid.UUID | None:
+    """to_im_user_id 的逆运算；账号不是本系统派生的 IM UserID 时返回 None。"""
+    if not im_user_id:
+        return None
+    try:
+        return uuid.UUID(hex=im_user_id)
+    except (ValueError, AttributeError):
+        return None
+
+
+def verify_callback_sign(sdk_appid: str | None, request_time: str | None, sign: str | None) -> bool:
+    """校验腾讯云第三方回调的 SdkAppid 与 Sign。
+
+    官方公式 Sign = sha256(Token + RequestTime)，两者都在 URL 参数上。
+    未配置 IM_CALLBACK_TOKEN 时只校验 SdkAppid。
+    """
+    if str(settings.IM_SDK_APP_ID) != str(sdk_appid or ""):
+        return False
+
+    token = settings.IM_CALLBACK_TOKEN
+    if not token:
+        return True
+
+    try:
+        ts_ms = int(request_time or "")
+    except ValueError:
+        return False
+    if ts_ms < 10**12:
+        ts_ms *= 1000  # 兼容秒级时间戳
+    # 官方建议时间戳误差超过 1 分钟直接丢弃，防重放
+    if abs(int(time.time() * 1000) - ts_ms) > 60_000:
+        return False
+
+    expected = hashlib.sha256(f"{token}{request_time}".encode("utf-8")).hexdigest()
+    return hmac.compare_digest(expected, sign or "")
+
+
 def _base64_encode_url(data: bytes) -> str:
     """URL-safe base64 with Tencent's custom character mapping."""
     s = base64.b64encode(data).decode("utf-8")

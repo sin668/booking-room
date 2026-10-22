@@ -426,10 +426,7 @@ async function onMessageListUpdated(list: IMessageModel[]) {
     nextTick(() => bindIntersectionObserver());
   }
   // 图片/语音优先使用本系统数据库转存的 OSS 地址（IM 的 COS 域名可能不在小程序白名单）
-  const patched = await applyChatMediaUrls(
-    messageList.value,
-    currentConversationID.value || list[0]?.conversationID || '',
-  );
+  const patched = await applyChatMediaUrls(messageList.value);
   if (patched) {
     messageList.value = messageList.value.slice();
   }

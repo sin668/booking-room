@@ -291,3 +291,65 @@ https://20049215w4c.my-imcloud.com
 - `br-app/src/utils/im.js` — `hookUploadDiagnostic` 拦截 `TUIGlobal.uploadFile`，记录 url + errMsg
 - `br-app/src/TUIKit/components/TUIChat/message-input/message-input-audio.vue` — 失败 Toast 回显 url + errMsg；移除 `.then(onSendAudioFailure)` 避免成功也弹提示
 - SDK 源码：`node_modules/@tencentcloud/lite-chat/standard.js` — 错误类 `Ws` 与 `_handleResponse` 的 fail 分支
+
+## 发一条消息出现两条回调 + 消息刚发出就显示"已读"
+
+### 报错信息
+
+后端 uvicorn 访问日志里，发一条消息同一秒内出现四条请求：
+
+```
+GET  /api/v1/chat/messages?peer=05a0adcc33d44f58ae03caa0b537e033&limit=200   200 OK
+GET  /api/v1/chat/messages?peer=c904bd6f84a147aeb3272f92616dc156&limit=200   200 OK
+POST /api/v1/im/callback?CallbackCommand=C2C.CallbackAfterSendMsg&...&Sign=bde7c8fa...&RequestTime=1792662316   200 OK
+POST /api/v1/im/callback?CallbackCommand=C2C.CallbackAfterMsgReport&...&Sign=bde7c8fa...&RequestTime=1792662316  200 OK
+```
+
+同时小程序端：消息刚发出去就马上从"未读"变成"已读"。
+
+### 根本原因
+
+**1. 两条 POST 回调不是重复，是两个不同的 CallbackCommand**
+
+`C2C.CallbackAfterSendMsg`（发送落地）和 `C2C.CallbackAfterMsgReport`（对端已读上报）是两件事。回调鉴权 `Sign = sha256(Token + RequestTime)` 只精确到秒，两条回调落在同一秒里，所以 `Sign` 和 `RequestTime` 完全一样，看起来像同一条请求发了两次。
+
+**2. 两条 GET 也不是同一客户端重复请求**
+
+两条的 `peer` 参数分别是 `05a0adcc…`（brian77）和 `c904bd6f…`（Noah63007），是**两个不同登录用户的客户端各自拉自己视角的会话历史**。日志里的 `172.18.188.98` 是容器网关地址，不能用来判断调用方。
+
+**3. 客户端确实存在过度轮询（真 bug）**
+
+`src/utils/im.js` 的 `loadChatMediaMap` 用"列表里最新媒体时间 > 数据库快照最新时间"作为"要不要重拉"的判据，本意是给回调落库的秒级延迟留重试。但**回调开启之前发出的历史图片/语音永远不会进数据库**，该条件恒为真，只剩 2 秒节流挡着 → 聊天页停留期间每 2 秒打一次 `limit=200` 的会话历史接口。
+
+**4. "秒已读"是真实已读上报，不是回调写坏了状态**
+
+- TUIKit 引擎 `chat-uikit-engine-lite` 的 `updateMessageList` 在 `case "push" / "contact"` 分支里**无条件**调用 `chat.setMessageRead({conversationID})`（只有 `case "received"` 才判断 `enableAutoMessageRead`）。只要对端小程序停在聊天页，新消息一push 就整会话标记已读。
+- SDK 侧 `openim.get_peer_read_time` 拿到对端已读时间后，把 `time <= peerReadTime && flow === 'out'` 的消息全部置 `isPeerRead = true` 并抛 `MESSAGE_READ_BY_PEER`，角标随即变"已读"。
+- 生产库 `im_messages` 的 `read_at` 与发送时间相差 2~4 秒，和日志里同一秒的 `C2C.CallbackAfterMsgReport` 完全对得上。
+- 角标渲染 100% 走 SDK 状态：`message-elements/read-status/index.vue` 与 npm 原版 `@tencentcloud/chat-uikit-uniapp` **逐字节相同**，本系统加的 OSS 覆盖只改 `payload` 里的图片/语音地址，不碰任何已读字段。
+
+### 解决方案
+
+`src/utils/im.js`：
+
+1. 给重试加上限 `MEDIA_MAP_MAX_TRIES = 5`，并且每出现一条更新的媒体才重置计数（`mediaMapTarget`），保证"新发的图片有 5 次机会等回调落库，补不齐的历史媒体不再无限轮询"。
+2. 判据顺序改为：数据库已覆盖 → 直接返回；重试次数用尽 → 直接返回；最后才是 2 秒节流。
+3. 会话 ID 从消息自身取（`targets[0].message.conversationID`），不再由调用方传 `currentConversationID.value`——切会话时 `messageList` 可能先于 `currentConversationID` 更新，用旧 ID 会拉错对端历史并多打一次接口。
+
+回归检查：`npm run test:chat-media-map`（`scripts/verify-chat-media-map.js`）。
+
+### 经验教训
+
+1. 判断"重复请求"要先按**参数**区分调用方，不要只看同一网关 IP；两条 GET 的 `peer` 不同就是两个客户端。
+2. 重试判据必须同时有次数上限：只有时间节流的"等一个永远等不到的数据"，等于无限轮询。
+3. `Sign`/`RequestTime` 只精确到秒，同一秒内的多条回调鉴权值相同，不能用来判断是否重复投递；要按 `CallbackCommand` 区分。
+4. 已读状态由**对端客户端**上报决定，服务端回调只是把它抄进数据库；排查"秒已读"要先确认对端是否停在聊天页（引擎在 push 时无条件 `setMessageRead`），而不是查回调代码。
+5. 怀疑 TUIKit 组件被我们改坏时，先和 `node_modules/@tencentcloud/chat-uikit-uniapp` 里的原版 `diff` 一次，比读代码猜快得多。
+
+### 涉及文件
+
+- `br-app/src/utils/im.js` — `loadChatMediaMap` 有界重试；`applyChatMediaUrls` 从消息自身取会话 ID
+- `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — 调用点去掉 `currentConversationID`
+- `br-app/scripts/verify-chat-media-map.js` — 上述约束的回归检查
+- SDK 源码：`node_modules/@tencentcloud/chat-uikit-engine-lite/index.js` — `updateMessageList` 的 `push`/`contact` 分支无条件 `setMessageRead`
+- SDK 源码：`node_modules/@tencentcloud/lite-chat/basic.es.js` — `get_peer_read_time` 回写 `isPeerRead`、`_initC2CReadReceiptInfo`

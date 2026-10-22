@@ -133,21 +133,35 @@ export async function resetIM() {
 // 会话媒体优先使用本系统数据库里转存好的 OSS 地址：IM 的 COS 域名不在小程序白名单时，
 // 历史图片/语音只有走 OSS 才能加载。命中不了就保持 IM 原地址，不阻塞聊天。
 const MEDIA_MAP_MIN_INTERVAL = 2000
+// 回调落库只有秒级延迟，需要重试；但回调开启前发出的历史媒体永远补不齐，
+// 所以每出现一条更新的媒体只给它有限次机会，避免聊天页停留期间每两秒打一次会话历史接口。
+const MEDIA_MAP_MAX_TRIES = 5
 let mediaMapKey = ''
 let mediaMap = {}
 let mediaMapAt = 0
 let mediaMapNewest = 0
+let mediaMapTries = 0
+let mediaMapTarget = 0
 
 async function loadChatMediaMap(conversationID, newestMediaTime) {
   // 只处理单聊会话，群聊会话 ID 形如 GROUPxxx 或 group_，本系统暂未落库群消息
   if (!conversationID || conversationID.indexOf('C2C') !== 0) return {}
-  // 列表里出现比数据库快照更新的消息时才重新拉取（回调落库有秒级延迟，所以失败重试也走这个条件），
-  // 再加最短间隔，避免每次消息事件都打一次接口
-  const sameConversation = mediaMapKey === conversationID && newestMediaTime <= mediaMapNewest
-  if (sameConversation && Date.now() - mediaMapAt < MEDIA_MAP_MIN_INTERVAL) return mediaMap
-  mediaMapKey = conversationID
-  mediaMap = {}
+  if (mediaMapKey !== conversationID) {
+    mediaMapKey = conversationID
+    mediaMap = {}
+    mediaMapNewest = 0
+    mediaMapTarget = 0
+    mediaMapTries = 0
+  }
+  if (newestMediaTime <= mediaMapNewest) return mediaMap
+  if (mediaMapTarget !== newestMediaTime) {
+    mediaMapTarget = newestMediaTime
+    mediaMapTries = 0
+  }
+  if (mediaMapTries >= MEDIA_MAP_MAX_TRIES) return mediaMap
+  if (Date.now() - mediaMapAt < MEDIA_MAP_MIN_INTERVAL) return mediaMap
   mediaMapAt = Date.now()
+  mediaMapTries++
   try {
     const res = await withTimeout(
       getChatMessages(conversationID.slice(3), { limit: 200 }),
@@ -179,7 +193,7 @@ async function loadChatMediaMap(conversationID, newestMediaTime) {
 }
 
 /** 用数据库的 OSS 地址覆盖图片/语音渲染地址，返回是否有改动（调用方据此触发重渲染）。 */
-export async function applyChatMediaUrls(messageList, conversationID) {
+export async function applyChatMediaUrls(messageList) {
   if (!messageList || !messageList.length) return false
 
   const targets = []
@@ -195,7 +209,8 @@ export async function applyChatMediaUrls(messageList, conversationID) {
   }
   if (!targets.length) return false
 
-  const map = await loadChatMediaMap(conversationID, newestMediaTime)
+  // 会话 ID 取消息自己的：切会话时列表可能先于 currentConversationID 更新，用旧 ID 会拉错对端历史
+  const map = await loadChatMediaMap(targets[0].message.conversationID, newestMediaTime)
   if (!Object.keys(map).length) return false
 
   const used = {}

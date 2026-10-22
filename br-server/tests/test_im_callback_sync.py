@@ -46,6 +46,16 @@ def send_payload(msg_key: str, msg_time: int = 1_700_000_000, **body: Any) -> di
     return payload
 
 
+OSS_IMAGE_URL = "https://oss.example.com/chat/image/a.jpg"
+
+
+def signed_query(token: str = "secret", sdk_appid: str = "123456") -> str:
+    """按官方公式 Sign = sha256(Token + RequestTime) 生成回调 URL 参数。"""
+    request_time = str(int(time.time() * 1000))
+    sign = hashlib.sha256(f"{token}{request_time}".encode()).hexdigest()
+    return f"SdkAppid={sdk_appid}&RequestTime={request_time}&Sign={sign}"
+
+
 @pytest.fixture
 async def im_users(db_session: AsyncSession) -> None:
     db_session.add_all(
@@ -167,15 +177,47 @@ class TestMediaKey:
         assert _extension("audio", "https://im/x.m4a") == ".m4a"
 
 
+class TestMediaDownloadLimit:
+    async def test_aborts_when_body_exceeds_cap(self):
+        import httpx
+
+        from app.services.im_media_service import MAX_MEDIA_BYTES, MediaTooLarge, _download
+
+        handler = httpx.MockTransport(
+            lambda request: httpx.Response(200, content=b"x" * (MAX_MEDIA_BYTES + 1))
+        )
+        with pytest.raises(MediaTooLarge):
+            await _download("https://im/big.jpg", transport=handler)
+
+    async def test_oversized_media_degrades_to_none(self, monkeypatch):
+        """超限按转存失败降级：返回 None，不影响消息落库。"""
+        import httpx
+
+        from app.services import im_media_service
+
+        handler = httpx.MockTransport(
+            lambda request: httpx.Response(200, content=b"x" * (im_media_service.MAX_MEDIA_BYTES + 1))
+        )
+
+        class _Client(httpx.AsyncClient):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, transport=handler)
+
+        monkeypatch.setattr(im_media_service.httpx, "AsyncClient", _Client)
+        assert await im_media_service.fetch_and_upload("image", "https://im/big.jpg") is None
+
+
+
 class TestVerifyCallbackSign:
     def test_rejects_other_sdk_appid(self, monkeypatch):
         monkeypatch.setattr(settings, "IM_SDK_APP_ID", 123456)
         assert verify_callback_sign("654321", "1700000000000", "x") is False
 
-    def test_accepts_without_token_configured(self, monkeypatch):
+    def test_rejects_without_token_configured(self, monkeypatch):
+        """SdkAppid 是 /chat/user-sig 下发的公开值，没配 Token 时不能只凭它放行。"""
         monkeypatch.setattr(settings, "IM_SDK_APP_ID", 123456)
         monkeypatch.setattr(settings, "IM_CALLBACK_TOKEN", "")
-        assert verify_callback_sign("123456", None, None) is True
+        assert verify_callback_sign("123456", None, None) is False
 
     def test_valid_sign(self, monkeypatch):
         monkeypatch.setattr(settings, "IM_SDK_APP_ID", 123456)
@@ -200,41 +242,124 @@ class TestCallbackRoute:
         from app.api.routes import im_callback as route
 
         monkeypatch.setattr(settings, "IM_SDK_APP_ID", 123456)
-        monkeypatch.setattr(settings, "IM_CALLBACK_TOKEN", "")
+        monkeypatch.setattr(settings, "IM_CALLBACK_TOKEN", "secret")
         # 后台任务默认连接真实库，这里改用测试会话
         monkeypatch.setattr(route, "async_session", lambda: _SessionScope(db_session))
 
         async def fake_transfer(kind: str, media_url: str) -> str | None:
             assert (kind, media_url) == ("image", "https://im/original.jpg")
-            return "https://oss.example.com/chat/image/2026/10/22/a.jpg"
+            return OSS_IMAGE_URL
 
         monkeypatch.setattr(route, "fetch_and_upload", fake_transfer)
 
         payload = send_payload(
             "key-media",
             MsgBody=[
-                {"MsgType": "TIMImageElem", "MsgContent": {"ImageInfoArray": [{"Type": 1, "URL": "https://im/original.jpg"}]}}
+                {
+                    "MsgType": "TIMImageElem",
+                    "MsgContent": {"ImageInfoArray": [{"Type": 1, "URL": "https://im/original.jpg"}]},
+                }
             ],
         )
-        response = await client.post("/api/v1/im/callback?SdkAppid=123456&CallbackCommand=C2C.CallbackAfterSendMsg", json=payload)
+        response = await client.post(
+            f"/api/v1/im/callback?{signed_query()}&CallbackCommand=C2C.CallbackAfterSendMsg", json=payload
+        )
 
         assert response.status_code == 200
         assert response.json() == {"ActionStatus": "OK", "ErrorInfo": "", "ErrorCode": 0}
 
         row = (await db_session.execute(select(ImMessage).where(ImMessage.msg_key == "key-media"))).scalar_one()
         assert row.media_url == "https://im/original.jpg"
-        assert row.oss_url == "https://oss.example.com/chat/image/2026/10/22/a.jpg"
+        assert row.oss_url == OSS_IMAGE_URL
 
-    async def test_rejects_wrong_sdk_appid(self, client: AsyncClient, db_session: AsyncSession, monkeypatch):
+    async def test_media_transfer_crash_keeps_message(
+        self, client: AsyncClient, db_session: AsyncSession, im_users, monkeypatch
+    ):
+        """消息先提交：转存环节抛异常不能把已落库的消息一起回滚掉。"""
+        from app.api.routes import im_callback as route
+
+        monkeypatch.setattr(settings, "IM_SDK_APP_ID", 123456)
+        monkeypatch.setattr(settings, "IM_CALLBACK_TOKEN", "secret")
+        monkeypatch.setattr(route, "async_session", lambda: _SessionScope(db_session))
+
+        async def boom(kind: str, media_url: str) -> str | None:
+            raise RuntimeError("unexpected media failure")
+
+        monkeypatch.setattr(route, "fetch_and_upload", boom)
+
+        payload = send_payload(
+            "key-media-crash",
+            MsgBody=[{"MsgType": "TIMSoundElem", "MsgContent": {"Url": "not a url", "Second": 3}}],
+        )
+        response = await client.post(
+            f"/api/v1/im/callback?{signed_query()}&CallbackCommand=C2C.CallbackAfterSendMsg", json=payload
+        )
+
+        assert response.status_code == 200
+        row = (
+            await db_session.execute(select(ImMessage).where(ImMessage.msg_key == "key-media-crash"))
+        ).scalar_one()
+        assert row.element_type == "sound"
+        assert row.media_url == "not a url"
+        assert row.oss_url is None
+
+    async def test_rejects_missing_callback_token(
+        self, client: AsyncClient, db_session: AsyncSession, monkeypatch
+    ):
         monkeypatch.setattr(settings, "IM_SDK_APP_ID", 123456)
         monkeypatch.setattr(settings, "IM_CALLBACK_TOKEN", "")
 
-        response = await client.post("/api/v1/im/callback?SdkAppid=999", json=send_payload("key-bad"))
+        response = await client.post(
+            "/api/v1/im/callback?SdkAppid=123456&CallbackCommand=C2C.CallbackAfterSendMsg",
+            json=send_payload("key-no-token"),
+        )
+
+        assert response.status_code == 200  # 仍返回 OK 不影响 IM，但不落库
+        assert (
+            await db_session.execute(select(ImMessage).where(ImMessage.msg_key == "key-no-token"))
+        ).scalar_one_or_none() is None
+
+    async def test_rejects_forged_sign(self, client: AsyncClient, db_session: AsyncSession, monkeypatch):
+        monkeypatch.setattr(settings, "IM_SDK_APP_ID", 123456)
+        monkeypatch.setattr(settings, "IM_CALLBACK_TOKEN", "secret")
+
+        stale = str(int(time.time() * 1000) - 300_000)
+        response = await client.post(
+            "/api/v1/im/callback?SdkAppid=123456&RequestTime="
+            f"{stale}&Sign=whatever&CallbackCommand=C2C.CallbackAfterSendMsg",
+            json=send_payload("key-forged"),
+        )
+
+        assert response.status_code == 200
+        assert (
+            await db_session.execute(select(ImMessage).where(ImMessage.msg_key == "key-forged"))
+        ).scalar_one_or_none() is None
+
+    async def test_non_object_body_is_ignored(self, client: AsyncClient, monkeypatch):
+        monkeypatch.setattr(settings, "IM_SDK_APP_ID", 123456)
+        monkeypatch.setattr(settings, "IM_CALLBACK_TOKEN", "secret")
+
+        response = await client.post(
+            f"/api/v1/im/callback?{signed_query()}&CallbackCommand=C2C.CallbackAfterSendMsg", json=[1, 2]
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"ActionStatus": "OK", "ErrorInfo": "", "ErrorCode": 0}
+
+    async def test_rejects_wrong_sdk_appid(self, client: AsyncClient, db_session: AsyncSession, monkeypatch):
+        monkeypatch.setattr(settings, "IM_SDK_APP_ID", 123456)
+        monkeypatch.setattr(settings, "IM_CALLBACK_TOKEN", "secret")
+
+        response = await client.post(
+            f"/api/v1/im/callback?{signed_query(sdk_appid='999')}&CallbackCommand=C2C.CallbackAfterSendMsg",
+            json=send_payload("key-bad"),
+        )
 
         assert response.status_code == 200  # 不向 IM 暴露错误，但不落库
         assert (
             await db_session.execute(select(ImMessage).where(ImMessage.msg_key == "key-bad"))
         ).scalar_one_or_none() is None
+
 
 
 class _SessionScope:
@@ -259,6 +384,12 @@ class TestChatHistoryAPI:
         assert [m["msg_key"] for m in messages] == ["h-1", "h-2"]
         assert [m["direction"] for m in messages] == ["send", "receive"]
         assert messages[1]["oss_url"] == "https://oss.example.com/a.mp3"
+
+    async def test_normalizes_peer_case_and_hyphens(self, auth_history_client: AsyncClient):
+        """库里存的是 uuid.hex，入参带大写或连字符也应命中同一会话。"""
+        response = await auth_history_client.get(f"/api/v1/chat/messages?peer={str(PEER_ID).upper()}")
+        assert response.status_code == 200
+        assert [m["msg_key"] for m in response.json()["messages"]] == ["h-1", "h-2"]
 
     async def test_rejects_invalid_peer(self, auth_history_client: AsyncClient):
         response = await auth_history_client.get("/api/v1/chat/messages?peer=not-a-hex-id")

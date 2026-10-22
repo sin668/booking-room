@@ -132,15 +132,22 @@ export async function resetIM() {
 
 // 会话媒体优先使用本系统数据库里转存好的 OSS 地址：IM 的 COS 域名不在小程序白名单时，
 // 历史图片/语音只有走 OSS 才能加载。命中不了就保持 IM 原地址，不阻塞聊天。
+const MEDIA_MAP_MIN_INTERVAL = 2000
 let mediaMapKey = ''
 let mediaMap = {}
+let mediaMapAt = 0
+let mediaMapNewest = 0
 
-async function loadChatMediaMap(conversationID) {
-  if (mediaMapKey === conversationID) return mediaMap
+async function loadChatMediaMap(conversationID, newestMediaTime) {
+  // 只处理单聊会话，群聊会话 ID 形如 GROUPxxx 或 group_，本系统暂未落库群消息
+  if (!conversationID || conversationID.indexOf('C2C') !== 0) return {}
+  // 列表里出现比数据库快照更新的消息时才重新拉取（回调落库有秒级延迟，所以失败重试也走这个条件），
+  // 再加最短间隔，避免每次消息事件都打一次接口
+  const sameConversation = mediaMapKey === conversationID && newestMediaTime <= mediaMapNewest
+  if (sameConversation && Date.now() - mediaMapAt < MEDIA_MAP_MIN_INTERVAL) return mediaMap
   mediaMapKey = conversationID
   mediaMap = {}
-  // 只处理单聊会话，群聊会话 ID 形如 GROUPxxx 或 group_，本系统暂未落库群消息
-  if (!conversationID || conversationID.indexOf('C2C') !== 0) return mediaMap
+  mediaMapAt = Date.now()
   try {
     const res = await withTimeout(
       getChatMessages(conversationID.slice(3), { limit: 200 }),
@@ -149,38 +156,53 @@ async function loadChatMediaMap(conversationID) {
     )
     const map = {}
     const messages = (res && res.messages) || []
+    let newest = 0
     for (let i = 0; i < messages.length; i++) {
       const item = messages[i]
+      if (item.msg_time > newest) newest = item.msg_time
       if (!item.oss_url) continue
-      // 数据库没有暴露 IM MsgKey，用「发送秒数 + 收发方向」对齐 SDK 消息
-      const key = `${item.msg_time}_${item.direction === 'send' ? 'out' : 'in'}`
+      // 数据库没有可直接对上的 IM MsgKey，用「秒数 + 收发方向 + 元素类型」对齐 SDK 消息
+      const key = `${item.msg_time}_${item.direction === 'send' ? 'out' : 'in'}_${item.element_type}`
       if (!map[key]) map[key] = []
       map[key].push(item.oss_url)
     }
-    mediaMap = map
+    // 并发切会话时只回写仍然匹配的那一个，其余直接用本地结果
+    if (mediaMapKey === conversationID) {
+      mediaMap = map
+      mediaMapNewest = newest
+    }
+    return map
   } catch (e) {
     console.warn('chat history media map failed:', e && e.message ? e.message : e)
+    return {}
   }
-  return mediaMap
 }
 
 /** 用数据库的 OSS 地址覆盖图片/语音渲染地址，返回是否有改动（调用方据此触发重渲染）。 */
 export async function applyChatMediaUrls(messageList, conversationID) {
   if (!messageList || !messageList.length) return false
-  const map = await loadChatMediaMap(conversationID)
+
+  const targets = []
+  let newestMediaTime = 0
+  for (let i = 0; i < messageList.length; i++) {
+    const message = messageList[i]
+    if (!message.payload) continue
+    const isImage = message.type === 'TIMImageElem'
+    const isAudio = message.type === 'TIMSoundElem'
+    if (!isImage && !isAudio) continue
+    if (message.time > newestMediaTime) newestMediaTime = message.time
+    targets.push({ message, kind: isImage ? 'image' : 'sound' })
+  }
+  if (!targets.length) return false
+
+  const map = await loadChatMediaMap(conversationID, newestMediaTime)
   if (!Object.keys(map).length) return false
 
   const used = {}
   let changed = false
-  for (let i = 0; i < messageList.length; i++) {
-    const message = messageList[i]
-    const payload = message.payload
-    if (!payload) continue
-    const isImage = message.type === 'TIMImageElem'
-    const isAudio = message.type === 'TIMSoundElem'
-    if (!isImage && !isAudio) continue
-
-    const key = `${message.time}_${message.flow}`
+  for (let i = 0; i < targets.length; i++) {
+    const message = targets[i].message
+    const key = `${message.time}_${message.flow}_${targets[i].kind}`
     const urls = map[key]
     if (!urls || !urls.length) continue
     const index = used[key] || 0
@@ -188,14 +210,14 @@ export async function applyChatMediaUrls(messageList, conversationID) {
     const ossUrl = urls[index]
     if (!ossUrl) continue
 
-    if (isImage) {
-      const info = payload.imageInfoArray && payload.imageInfoArray[0]
+    if (targets[i].kind === 'image') {
+      const info = message.payload.imageInfoArray && message.payload.imageInfoArray[0]
       if (info && info.url !== ossUrl) {
         info.url = ossUrl
         changed = true
       }
-    } else if (payload.url !== ossUrl) {
-      payload.url = ossUrl
+    } else if (message.payload.url !== ossUrl) {
+      message.payload.url = ossUrl
       changed = true
     }
   }

@@ -59,18 +59,21 @@ async def get_chat_messages(
     db: AsyncSession = Depends(get_db),
 ):
     """返回当前用户与 peer 之间的单聊历史（由 IM 服务端回调落库），按时间正序。"""
-    if from_im_user_id(peer) is None:
+    peer_uuid = from_im_user_id(peer)
+    if peer_uuid is None:
         raise HTTPException(status_code=400, detail="peer 不是合法的会话对象")
+    # 库里存的是 uuid.hex（小写无连字符），先把入参归一成同一形态再比较
+    peer_account = to_im_user_id(peer_uuid)
 
     self_account = to_im_user_id(user_id)
     conditions = [
         or_(
             and_(
                 ImMessage.im_from_account == self_account,
-                ImMessage.im_to_account == peer,
+                ImMessage.im_to_account == peer_account,
             ),
             and_(
-                ImMessage.im_from_account == peer,
+                ImMessage.im_from_account == peer_account,
                 ImMessage.im_to_account == self_account,
             ),
         )

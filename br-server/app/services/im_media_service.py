@@ -20,6 +20,11 @@ from app.services.upload_service import UploadObject, get_storage_adapter
 logger = logging.getLogger(__name__)
 
 MAX_MEDIA_BYTES = 10 * 1024 * 1024
+
+
+class MediaTooLarge(Exception):
+    """流式读取时超过大小上限，按转存失败降级处理。"""
+
 _DEFAULT_EXT = {"image": ".jpg", "audio": ".mp3"}
 _ALLOWED_EXTS = {
     "image": {".jpg", ".jpeg", ".png", ".gif", ".webp"},
@@ -52,18 +57,16 @@ def _extension(kind: str, media_url: str) -> str:
 async def fetch_and_upload(kind: str, media_url: str) -> str | None:
     """转存一条媒体，返回 OSS 公开地址；任何失败返回 None，由调用方保留 IM 原地址。"""
     try:
-        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-            response = await client.get(media_url)
-            response.raise_for_status()
-            data = response.content
-    except httpx.HTTPError as exc:
+        data = await _download(media_url)
+    except Exception as exc:
+        # InvalidURL 等不属于 httpx.HTTPError，转存任何异常都不能影响已落库的消息
         logger.warning(
             "IM media download failed kind=%s error=%s url=%s", kind, type(exc).__name__, media_url[:120]
         )
         return None
 
-    if not data or len(data) > MAX_MEDIA_BYTES:
-        logger.warning("IM media skipped, oversized or empty: size=%s url=%s", len(data), media_url[:120])
+    if not data:
+        logger.warning("IM media skipped, empty: url=%s", media_url[:120])
         return None
 
     ext = _extension(kind, media_url)
@@ -81,3 +84,18 @@ async def fetch_and_upload(kind: str, media_url: str) -> str | None:
         return None
 
     return result.url
+
+
+async def _download(media_url: str, transport: httpx.AsyncBaseTransport | None = None) -> bytes:
+    """流式下载并边读边限长，避免超大响应先占满内存。transport 仅用于测试注入。"""
+    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, transport=transport) as client:
+        async with client.stream("GET", media_url) as response:
+            response.raise_for_status()
+            chunks: list[bytes] = []
+            size = 0
+            async for chunk in response.aiter_bytes():
+                size += len(chunk)
+                if size > MAX_MEDIA_BYTES:
+                    raise MediaTooLarge(f"{size} bytes exceeds {MAX_MEDIA_BYTES}")
+                chunks.append(chunk)
+            return b"".join(chunks)

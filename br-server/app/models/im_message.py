@@ -14,6 +14,7 @@ from sqlalchemy import (
     String,
     Text,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -61,7 +62,9 @@ class ImMessage(Base):
     oss_url: Mapped[str | None] = mapped_column(
         String(1024), nullable=True, comment="服务端转存后的 OSS 地址"
     )
-    is_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_read: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
     read_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

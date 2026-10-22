@@ -24,7 +24,24 @@
 
 ## 运维（不在本次代码内）
 
-腾讯云 IM 控制台需配置回调 URL 与 Token，并启用「发单聊消息之后回调」「单聊消息已读上报后回调」；`.env` 补 `IM_CALLBACK_TOKEN`。
+腾讯云 IM 控制台需配置回调 URL 与 Token，并启用「发单聊消息之后回调」「单聊消息已读上报后回调」；`.env` 必须配置 `IM_CALLBACK_TOKEN`（与控制台一致），否则回调接口一律拒绝处理、不落库。
+
+## 验证阶段修复
+
+集成审查发现 1 个 CRITICAL + 3 个 IMPORTANT，均已修复：
+
+1. **回调鉴权改为默认拒绝**：`SdkAppid` 由 `/api/v1/chat/user-sig` 下发给客户端，是公开值，只校验它等于回调接口无鉴权——任何人都能伪造回调写库，并借 `fetch_and_upload` 让服务端去抓任意 URL（SSRF，且下载结果会经历史接口回显）。因此未配置 `IM_CALLBACK_TOKEN` 时直接拒绝处理（仍返回 OK 不影响 IM）。签名可信来源确立后，媒体地址由腾讯云服务端生成、不是用户可控输入，SSRF 入口随之关闭。
+2. **消息先提交再转存**：原实现把转存夹在同一次 commit 前，而 `httpx.InvalidURL` 不是 `httpx.HTTPError` 子类（实测 MRO 只到 `Exception`），畸形地址会让整条消息回滚丢失。改为消息 commit 后另起一次更新写 `oss_url`，并把下载异常捕获放宽到 `Exception`。注意 commit 会过期 ORM 实例，转存所需的 `id/kind/media_url` 必须在 commit 前取成标量（项目已知的 async MissingGreenlet 坑）。
+3. **流式限长**：原实现先 `response.content` 全量进内存再比 10MB，上限无效。改为 `client.stream` + `aiter_bytes` 边读边累加，超限抛 `MediaTooLarge` 走降级路径。
+4. **媒体映射按需刷新**：原实现把 `msg_key -> oss_url` 映射按会话缓存在模块变量里且永不失效，重新进入同一会话不再请求，新增消息也拿不到 OSS 地址。改为「列表中出现比上次快照更新的消息 / 上次请求失败」时重新拉取，并加 2 秒最短间隔避免每次消息事件都打接口；并发切会话时只回写仍匹配的会话，返回本次构建的局部映射。
+
+同时修掉的正确性问题：回调体顶层是数组时 `.get` 抛 500（加 `isinstance` 判断，保持返回 OK）、历史接口 `peer` 未归一（大写/带连字符会漏查）、匹配键缺元素类型（同秒同向的图片与语音会互相错配）、模型 `is_read` 与迁移的 `server_default` 不一致。
+
+**已接受的非关键偏差**（保留原因）：
+
+- 前端仍只覆盖 `imageInfoArray[0]`（引擎渲染取该下标），不覆盖缩略图等其他档位：其余档位保留 IM 地址，避免把缩略图换成原图体积；覆盖只改 `payload` 上的地址、不重建消息对象，是「数据覆盖而非重建」既定取舍的必然结果。
+- 并发同 `MsgKey` 的重复回调靠 `msg_key` 唯一索引兜底，`save_send_msg_callback` 不做 `IntegrityError` 吞异常：重复投递只会多一条 exception 日志，且测试会话被复用（fixture 只 flush 不 commit），在共享会话里 `rollback` 会连带丢弃夹具数据。
+- 后台任务测试仍复用 `db_session` 替身（`_SessionScope`），未覆盖真实独立会话的连接行为。
 
 ## 实现约束（来自 br-app/bug-fixed.md）
 

@@ -81,7 +81,7 @@ class Settings(BaseSettings):
     IM_CLIENT_KEY: str = ""
     IM_ADMIN_USER: str = ""  # Admin account for server-side IM API calls (account_import/delete)
     IM_REST_API_BASE_URL: str = "https://adminapisgp.im.qcloud.com/v4"  # 新加坡区域; 国内用 console.tim.qq.com, 备用 adminapi.my-imcloud.com
-    IM_CALLBACK_TOKEN: str = ""  # 控制台第三方回调 Token，为空时回调接口不校验 Sign
+    IM_CALLBACK_TOKEN: str = ""  # 控制台第三方回调 Token；为空时回调接口一律拒绝处理（不落库）
 
     model_config = {"env_file": ".env"}
 

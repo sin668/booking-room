@@ -1,13 +1,19 @@
 {
   "version": 1,
-  "argv": ["python", "-m", "pytest", "tests/test_study_record_service.py", "tests/test_api_study_record.py", "tests/test_study_record_consistency.py", "-q", "-p", "no:cacheprovider"],
+  "argv": [
+    "/opt/miniconda3/envs/booking-room/bin/python",
+    "-m",
+    "pytest",
+    "tests/test_im_callback_sync.py",
+    "-q",
+    "-p",
+    "no:cacheprovider"
+  ],
   "cwd": "br-server",
   "files": [
-    "br-server/app/api/routes/study_record.py",
-    "br-server/app/services/study_record_service.py",
-    "br-server/tests/test_study_record_service.py",
-    "br-server/tests/test_api_study_record.py",
-    "br-server/tests/test_study_record_consistency.py"
+    "br-server/app",
+    "br-server/tests",
+    "br-server/pyproject.toml"
   ],
-  "env": ["PATH", "PYTHONDONTWRITEBYTECODE"]
+  "env": ["PATH", "IM_SDK_APP_ID", "IM_SERVER_KEY", "IM_ADMIN_USER"]
 }

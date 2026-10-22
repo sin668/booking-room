@@ -33,14 +33,15 @@ def verify_callback_sign(sdk_appid: str | None, request_time: str | None, sign: 
     """校验腾讯云第三方回调的 SdkAppid 与 Sign。
 
     官方公式 Sign = sha256(Token + RequestTime)，两者都在 URL 参数上。
-    未配置 IM_CALLBACK_TOKEN 时只校验 SdkAppid。
+    SdkAppid 是通过 /api/v1/chat/user-sig 下发给客户端的公开值，单独校验它等于没有鉴权，
+    因此未配置 IM_CALLBACK_TOKEN 时一律拒绝，回调接口不落任何数据。
     """
     if str(settings.IM_SDK_APP_ID) != str(sdk_appid or ""):
         return False
 
     token = settings.IM_CALLBACK_TOKEN
     if not token:
-        return True
+        return False
 
     try:
         ts_ms = int(request_time or "")

@@ -23,5 +23,13 @@
 ## 4. 测试与验证
 
 - [x] 4.1 br-server 单测：回调解析（text/image/sound）、`msg_key` 幂等、已读回写与重复上报、Sign 校验、历史接口越权与未登录
-- [ ] 4.2 运行 `/opt/miniconda3/envs/booking-room/bin/python -m pytest` 相关用例确认通过
-- [ ] 4.3 `cd br-app && npm run build:mp-weixin` 构建通过
+- [x] 4.2 运行 `/opt/miniconda3/envs/booking-room/bin/python -m pytest` 相关用例确认通过
+- [x] 4.3 `cd br-app && npm run build:mp-weixin` 构建通过
+
+## 5. 验证阶段修复（集成审查发现）
+
+- [x] 5.1 CRITICAL：回调鉴权改默认拒绝——`IM_CALLBACK_TOKEN` 未配置时不落库（`SdkAppid` 是公开值），补伪造签名/缺 Token 回归用例
+- [x] 5.2 IMPORTANT：消息先 commit 再做媒体转存，下载异常捕获放宽到 `Exception`，转存抛异常不再回滚消息（加回归用例）
+- [x] 5.3 IMPORTANT：媒体下载改流式读取 + 边读边限长（超限 `MediaTooLarge` 走降级），加限长回归用例
+- [x] 5.4 IMPORTANT：前端媒体映射改按需刷新（新消息/失败重拉 + 2s 最短间隔 + 会话切换不回写），匹配键补元素类型
+- [x] 5.5 回调体非对象不再 500、历史接口 `peer` 归一（大写/连字符）、`is_read` 与迁移 `server_default` 对齐

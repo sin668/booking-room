@@ -265,6 +265,7 @@ import { isEnabledMessageReadReceiptGlobal, deepCopy } from '../utils/utils';
 import { throttle } from '../../../utils/lodash';
 import { isPC, isH5, isMobile } from '../../../utils/env';
 import chatStorage from '../utils/chatStorage';
+import { applyChatMediaUrls } from '@/utils/im';
 import { IAudioContext } from '../../../interface';
 
 interface IEmits {
@@ -423,6 +424,14 @@ async function onMessageListUpdated(list: IMessageModel[]) {
   }
   if (isEnabledMessageReadReceiptGlobal()) {
     nextTick(() => bindIntersectionObserver());
+  }
+  // 图片/语音优先使用本系统数据库转存的 OSS 地址（IM 的 COS 域名可能不在小程序白名单）
+  const patched = await applyChatMediaUrls(
+    messageList.value,
+    currentConversationID.value || list[0]?.conversationID || '',
+  );
+  if (patched) {
+    messageList.value = messageList.value.slice();
   }
 }
 

@@ -1,4 +1,4 @@
-import { getChatUserSig } from '@/api/chat'
+import { getChatMessages, getChatUserSig } from '@/api/chat'
 import { TUILogin } from '@tencentcloud/tui-core-lite'
 import { TUIGlobal } from '@tencentcloud/universal-api'
 import TUIChatEngine, { TUIUserService } from '@tencentcloud/chat-uikit-engine-lite'
@@ -128,4 +128,76 @@ export async function resetIM() {
     imProfile = null
     lastError = ''
   }
+}
+
+// 会话媒体优先使用本系统数据库里转存好的 OSS 地址：IM 的 COS 域名不在小程序白名单时，
+// 历史图片/语音只有走 OSS 才能加载。命中不了就保持 IM 原地址，不阻塞聊天。
+let mediaMapKey = ''
+let mediaMap = {}
+
+async function loadChatMediaMap(conversationID) {
+  if (mediaMapKey === conversationID) return mediaMap
+  mediaMapKey = conversationID
+  mediaMap = {}
+  // 只处理单聊会话，群聊会话 ID 形如 GROUPxxx 或 group_，本系统暂未落库群消息
+  if (!conversationID || conversationID.indexOf('C2C') !== 0) return mediaMap
+  try {
+    const res = await withTimeout(
+      getChatMessages(conversationID.slice(3), { limit: 200 }),
+      8000,
+      '会话历史'
+    )
+    const map = {}
+    const messages = (res && res.messages) || []
+    for (let i = 0; i < messages.length; i++) {
+      const item = messages[i]
+      if (!item.oss_url) continue
+      // 数据库没有暴露 IM MsgKey，用「发送秒数 + 收发方向」对齐 SDK 消息
+      const key = `${item.msg_time}_${item.direction === 'send' ? 'out' : 'in'}`
+      if (!map[key]) map[key] = []
+      map[key].push(item.oss_url)
+    }
+    mediaMap = map
+  } catch (e) {
+    console.warn('chat history media map failed:', e && e.message ? e.message : e)
+  }
+  return mediaMap
+}
+
+/** 用数据库的 OSS 地址覆盖图片/语音渲染地址，返回是否有改动（调用方据此触发重渲染）。 */
+export async function applyChatMediaUrls(messageList, conversationID) {
+  if (!messageList || !messageList.length) return false
+  const map = await loadChatMediaMap(conversationID)
+  if (!Object.keys(map).length) return false
+
+  const used = {}
+  let changed = false
+  for (let i = 0; i < messageList.length; i++) {
+    const message = messageList[i]
+    const payload = message.payload
+    if (!payload) continue
+    const isImage = message.type === 'TIMImageElem'
+    const isAudio = message.type === 'TIMSoundElem'
+    if (!isImage && !isAudio) continue
+
+    const key = `${message.time}_${message.flow}`
+    const urls = map[key]
+    if (!urls || !urls.length) continue
+    const index = used[key] || 0
+    used[key] = index + 1
+    const ossUrl = urls[index]
+    if (!ossUrl) continue
+
+    if (isImage) {
+      const info = payload.imageInfoArray && payload.imageInfoArray[0]
+      if (info && info.url !== ossUrl) {
+        info.url = ossUrl
+        changed = true
+      }
+    } else if (payload.url !== ossUrl) {
+      payload.url = ossUrl
+      changed = true
+    }
+  }
+  return changed
 }

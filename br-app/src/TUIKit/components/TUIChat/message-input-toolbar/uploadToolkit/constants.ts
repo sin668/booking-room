@@ -125,7 +125,7 @@ export const MEDIA_CHOOSE_CONFIG = {
     COUNT: 1,
     MEDIA_TYPE: [MediaType.VIDEO],
     MAX_DURATION: 60,
-    COMPRESSED: false,
+    COMPRESSED: true,
   },
   MIXED: {
     COUNT: 1,

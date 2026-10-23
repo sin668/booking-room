@@ -343,7 +343,7 @@ POST /api/v1/im/callback?CallbackCommand=C2C.CallbackAfterMsgReport&...&Sign=bde
 1. 判断"重复请求"要先按**参数**区分调用方，不要只看同一网关 IP；两条 GET 的 `peer` 不同就是两个客户端。
 2. 重试判据必须同时有次数上限：只有时间节流的"等一个永远等不到的数据"，等于无限轮询。
 3. `Sign`/`RequestTime` 只精确到秒，同一秒内的多条回调鉴权值相同，不能用来判断是否重复投递；要按 `CallbackCommand` 区分。
-4. 已读状态由**对端客户端**上报决定，服务端回调只是把它抄进数据库；排查"秒已读"要先确认对端是否停在聊天页（引擎在 push 时无条件 `setMessageRead`），而不是查回调代码。
+4. 已读状态由**对端客户端**上报决定，服务端回调只是把它抄进数据库；排查"秒已读"要先确认对端是否停在聊天页（引擎在 push 时无条件 `setMessageRead`），而不是查回调代码。后来定位到真正的主因是会话绑定没随页面隐藏释放，见下一节。
 5. 怀疑 TUIKit 组件被我们改坏时，先和 `node_modules/@tencentcloud/chat-uikit-uniapp` 里的原版 `diff` 一次，比读代码猜快得多。
 
 ### 涉及文件
@@ -353,3 +353,64 @@ POST /api/v1/im/callback?CallbackCommand=C2C.CallbackAfterMsgReport&...&Sign=bde
 - `br-app/scripts/verify-chat-media-map.js` — 上述约束的回归检查
 - SDK 源码：`node_modules/@tencentcloud/chat-uikit-engine-lite/index.js` — `updateMessageList` 的 `push`/`contact` 分支无条件 `setMessageRead`
 - SDK 源码：`node_modules/@tencentcloud/lite-chat/basic.es.js` — `get_peer_read_time` 回写 `isPeerRead`、`_initC2CReadReceiptInfo`
+
+## 对方没打开聊天窗口，消息却 1~4 秒就变"已读"
+
+### 现象
+
+- 发送方气泡刚发出就从"未读"翻成"已读"，接收方表示没打开过聊天窗口。
+- 生产库 `im_messages` 里 `read_at - msg_time` 大量是 1~4 秒：
+
+```
+id  sent(+08)            read_at               delta  from->to
+11  2026-10-23 08:28:12  2026-10-23 00:28:14      2s  05a0adcc->c904bd6f
+ 9  2026-10-23 08:20:01  2026-10-23 00:20:03      2s  c904bd6f->05a0adcc
+ 1  2026-10-22 17:40:08  2026-10-22 09:42:27    139s  05a0adcc->c904bd6f
+```
+
+  同一对账号，1~4 秒和 139 秒都出现过，说明不是网络抖动，而是接收端有没有"绑定这个会话"的差别。
+
+### 根本原因
+
+腾讯云 IM 的已读只由**接收端客户端**调用 `chat.setMessageRead()` 产生，服务端回调只是抄写。TUIKit 引擎会自动调用它，而它的判据只有 `currentConversationID`，**完全不关心聊天页是否可见**：
+
+- `chat-uikit-engine-lite/index.js` 的 APP store 默认 `enableAutoMessageRead: true`；
+- `updateTargetMessageList()` 的 `case "received"`（`onMessageReceived` 走的分支）里 `o && chat.setMessageRead({conversationID: currentConversationID})`，只要消息属于当前绑定会话就上报；`case "push" / "contact"` 更是无条件上报；
+- `switchConversation(id)` 一绑定就对会话上报已读，且 `currentConversationID` 只由 `switchConversation` / `deleteConversation` 写入；
+- 引擎收到消息后先按 `message.conversationID === currentConversationID` 过滤，过滤结果为空就直接返回，不上报。
+
+聊天页原来只在 `onUnload` 里 `reset()` 释放会话。但 uni-app 小程序端还有 `onHide`：用户从聊天页 `navigateTo` 跳到别的页面，或把小程序切到后台时，页面仍在栈里、不会 `onUnload`，会话因此一直绑着。于是接收人明明不在聊天窗口，新消息一到达就被引擎自动上报已读，发送方 1~4 秒内看到"已读"。
+
+### 解决方案
+
+把「会话绑定」和「聊天页可见」绑在一起（`br-app/src/TUIKit/components/TUIChat/index.vue`）：
+
+- `onLoad` 记录本次打开的 `conversationID`（不能依赖 store，切会话时可能还是旧值）；
+- `onHide` → `reset()` 释放会话，页面不可见期间引擎不会自动上报，未读红点也才正确；
+- `onShow` → 仅在确实被 `onHide` 释放过时，用记录的 ID 重新 `initChat({ conversationID })` 绑回，此时上报已读才等于"用户真的看了"；首次进入 `onLoad` 已绑定，靠 `releasedOnHide` 守卫避免重复绑定；
+- `onUnload` 原有 `reset()` 保留。
+
+`TUIChatKit.init()` 有 `isInitialized` 短路，重复调用安全。
+
+### 验证
+
+- `scripts/verify-chat-read-gate.mjs`：用**真实引擎包**注入假 `chat`，喂同一条 `C2Cpeer1` 的消息，断言「绑定 C2Cpeer1 → 恰好一次 `setMessageRead`」「`currentConversationID` 释放 → 零次」「绑到别的会话 → 零次」。这条直接证明释放会话能止血，而不是只读压缩代码猜。
+- `scripts/verify-chat-read-on-visible.js`：锁住源码约束（引入 `onShow/onHide`、`onHide` 里 `reset()`、`onShow` 用 `pageConversationID` 绑回、`onUnload` 仍释放）。
+- `npm run build:mp-weixin` 后检查产物：`dist/build/mp-weixin/TUIKit/components/TUIChat/index.js` 里 `onHide(()=>{r||(r=!0,_())})`、`_ = () => switchConversation("")` 均在。
+
+### 经验教训
+
+1. 第三方 SDK 的"自动"行为要查它的**判据变量**，不要按常识推断。引擎自动已读的判据是 `currentConversationID`（会话有没有绑），不是"页面可见"，所以只写 `onUnload` 不够，小程序还有 `onHide`（跳页 / 切后台）这条路径。
+2. `onLoad → onShow` 首次进入都会触发，用 `releasedOnHide` 这类状态守卫区分「首次」和「返回」，别在 `onShow` 无条件重绑。
+3. 会话释放会连带 `TUIStore.reset(CHAT, ['messageList', ...])`，返回聊天页要重新拉一次历史；先确认重新绑定用的是页面入参里的会话 ID，否则会拉错对端。
+4. 判断是不是"自动已读"造成的，看数据库 `read_at - msg_time` 的分布最省事：1~4 秒是引擎自动上报，几十上百秒才是真人打开窗口，同一对账号两种值并存就说明绑约未释放。
+5. IM 已读按**账号**统计：同一账号在开发者工具或另一台手机上停在聊天页，秒已读同样会发生，这类不属于本 Bug，别把它当修复失败。
+6. 光读压缩产物不足以证明修复有效，能注入假对象跑真实包就做，`process.exit(0)` 收尾（引擎有常驻定时器）。
+
+### 涉及文件
+
+- `br-app/src/TUIKit/components/TUIChat/index.vue` — `onLoad` 记录会话 ID、`onHide` 释放、`onShow` 绑回
+- `br-app/scripts/verify-chat-read-gate.mjs` — 引擎自动已读判据的行为验证
+- `br-app/scripts/verify-chat-read-on-visible.js` — 聊天页生命周期约束的源码断言
+- `br-app/package.json` — `test:chat-read-gate`、`test:chat-read-on-visible`
+- SDK 源码：`node_modules/@tencentcloud/chat-uikit-engine-lite/index.js` — `enableAutoMessageRead` 默认 true、`updateTargetMessageList` 的 `received` 分支、`switchConversation` 上报已读

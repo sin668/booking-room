@@ -93,11 +93,31 @@ import { ToolbarDisplayType } from '../../interface';
 import TUIChatConfig from './config';
 
 // @Start uniapp use Chat only
-import { onLoad, onUnload } from '@dcloudio/uni-app';
+import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import { initChat, logout } from './entry-chat-only.ts';
 
+// 引擎的自动已读只看 currentConversationID，不看页面是否可见：隐藏时释放会话、可见时绑回，
+// 否则用户跳到别的页面或小程序切后台后，新到的消息仍会被立刻上报成已读。
+const pageConversationID = ref('');
+let releasedOnHide = false;
+
 onLoad((options) => {
+  pageConversationID.value = (options && options.conversationID) || '';
   initChat(options);
+});
+
+onHide(() => {
+  if (releasedOnHide) return;
+  releasedOnHide = true;
+  reset();
+});
+
+onShow(() => {
+  if (!releasedOnHide) return;
+  releasedOnHide = false;
+  if (pageConversationID.value) {
+    initChat({ conversationID: pageConversationID.value });
+  }
 });
 
 onUnload(() => {

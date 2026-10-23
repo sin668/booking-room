@@ -84,7 +84,12 @@ async def get_chat_messages(
     result = await db.execute(
         select(ImMessage)
         .where(*conditions)
-        .order_by(ImMessage.msg_time.desc(), ImMessage.id.desc())
+        # 与 IM 单聊排序口径一致：先按秒级 MsgTime，同秒再按 MsgSeq
+        .order_by(
+            ImMessage.msg_time.desc(),
+            ImMessage.msg_seq.desc(),
+            ImMessage.id.desc(),
+        )
         .limit(limit)
     )
     rows = list(result.scalars().all())
@@ -97,6 +102,12 @@ async def get_chat_messages(
                 "content": row.content,
                 "media_url": row.media_url,
                 "oss_url": row.oss_url,
+                "elements": (row.raw_payload or {}).get("MsgBody") or [],
+                "cloud_custom_data": row.cloud_custom_data,
+                "is_revoked": row.is_revoked,
+                "msg_seq": row.msg_seq,
+                "im_from_account": row.im_from_account,
+                "im_to_account": row.im_to_account,
                 "is_read": row.is_read,
                 "msg_time": row.msg_time,
                 "direction": "send" if row.im_from_account == self_account else "receive",

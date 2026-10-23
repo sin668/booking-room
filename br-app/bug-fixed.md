@@ -414,3 +414,63 @@ id  sent(+08)            read_at               delta  from->to
 - `br-app/scripts/verify-chat-read-on-visible.js` — 聊天页生命周期约束的源码断言
 - `br-app/package.json` — `test:chat-read-gate`、`test:chat-read-on-visible`
 - SDK 源码：`node_modules/@tencentcloud/chat-uikit-engine-lite/index.js` — `enableAutoMessageRead` 默认 true、`updateTargetMessageList` 的 `received` 分支、`switchConversation` 上报已读
+
+## 聊天窗口只能往前翻 7 天，更早的消息一片空白
+
+### 现象
+
+- 打开与他人的单聊，点「查看更多」把 SDK 漫游历史翻到底之后按钮就消失，再往前的消息一条都看不到。
+- 数据库 `im_messages` 里其实有更早的记录（服务端回调一直在落库），但聊天页从没读过它们。
+
+### 根本原因
+
+1. **腾讯云 IM 单聊消息云端只免费漫游 7 天**（官方文档《消息漫游》：体验版与专业版均为 7 天，延长时长要单独开通增值服务；富媒体文件的存储时长与漫游一致）。`getMessageList()` 翻到漫游头部后 `isCompleted` 置真，组件的「查看更多」是 `v-if="!isCompleted"`，于是彻底封口。
+2. 数据库镜像是 2026-10-22 才开启回调开始写的，**比 IM 漫游窗口更晚**，所以不能整体换成读数据库：否则回调开启之前那 7 天内的消息反而消失了。两边必须是「SDK 负责自己的窗口，数据库负责窗口之前」。
+3. 原来读数据库只为一件事——把图片/语音地址换成转存后的 OSS 地址（`applyChatMediaUrls`）。它按「秒数 + 收发方向 + 元素类型」这种模糊键去猜哪条 SDK 消息对应哪条库记录，同秒同类多条会错配，还要为重试控制加一堆模块级状态。数据库既然已经有 `MsgKey`，就不该再靠猜。
+
+### 解决方案
+
+**服务端补齐重建所需的事实**（`br-server`）：
+
+- `im_messages` 增加 `cloud_custom_data` / `is_revoked` / `revoke_time`，随消息落库 `CloudCustomData`（引用回复的内容就塞在这里），迁移见 `alembic/versions/2026_10_23_1100-j5k1l7m3n9p4_...py`。
+- 新增 `C2C.CallbackAfterMsgWithDraw` 分发与 `apply_msg_withdraw()`：按 `MsgKey` 只标状态、不删记录，重复投递靠 `is_revoked is false` 天然幂等。
+- `GET /api/v1/chat/messages` 排序改成 `msg_time desc, msg_seq desc, id desc`（对齐 IM 单聊「先 MsgTime、同秒按 MsgSeq」的口径），并把 `elements`(原始 MsgBody)、`cloud_custom_data`、`is_revoked`、`msg_seq`、`im_from_account`、`im_to_account`、`media_url`/`oss_url`、`is_read` 全部回给客户端。
+
+**客户端按 SDK 消息结构重建**（`br-app/src/utils/im-history.js`）：只重建 `text/image/sound/face/custom`，其余类型一律跳过——消息列表把认不出的类型落到 `v-else` 的 `MessageRevoked` 分支，会显示成「撤回了一条消息」。payload 结构按渲染组件的契约来：图片 `payload.imageInfoArray[0].{url,width,height}`、语音 `payload.{url,second}`、自定义 `payload.extension`，媒体地址优先用转存好的 `oss_url`。`ID` 用 `msg_key`，`status` 固定 `success`（回调只落 `SendMsgResult == 0` 的消息），`isPeerRead` 由 `is_read` 推导。
+
+**翻页分工**（`message-list/index.vue`）：`getHistoryMessageList()` 先看 SDK 是否到头，没到头继续走 `getMessageList()`；`isCompleted` 为真且是单聊时才用当前最早一条消息的 `time` 作 `before` 游标向数据库取更早一页，`TUIChatService.updateMessageList(messages, 'unshift')` 注入。「查看更多」显示条件改成 `!isCompleted || (!isGroup && dbHasMore)`，切会话时重置 `dbHasMore`（引擎 `switchConversation` 会清空 CHAT store 的消息列表）。
+
+### 为什么是 unshift
+
+`chat-uikit-engine-lite` 的 `updateTargetMessageList()` 里只有 `case "received"` 会 `chat.setMessageRead()`，`case "push" / "contact"` 更是**无条件**上报已读；`case "unshift"` 只做三件事：按 `ID` 过滤掉已存在的、把新消息并进列表、`sortMessageList()` 重排，**完全不碰已读**。把几十条几年前的历史用 `push` 注进去，等于替对端把整段历史标成已读——这正是上一节「秒已读」的同一个坑，别在补齐历史时再踩一次。
+
+### 验证
+
+- `scripts/verify-im-history-merge.mjs`：用**真实引擎包**喂假 `chat`，把数据库行重建出的消息与一条 SDK 消息一起 `unshift`，断言「按 ID 去重、深历史前插且时间升序、`setMessageRead` 零次」，同时锁住重建字段的渲染契约（`getMessageContent().url` 拿到的是 OSS 地址）。
+- `scripts/verify-im-history.js`：源码断言旧的媒体地址替换逻辑确实清干净、`fetchImHistoryPage` 只对 `C2C` 会话发请求、注入只走 `unshift`。
+- `br-server` `pytest tests/test_im_callback_sync.py`（撤回标记与幂等、`CloudCustomData` 落库、历史接口返回重建字段、`before` 游标严格更早）。
+
+### 已知边界（都是有意接受，不是待修）
+
+- 深历史消息不是 SDK 消息实例，长按菜单里的撤回/删除/转发点了不会生效，最多报个错；读它、看它、找它都正常。
+- 回调开启（2026-10-22）之前、又超出当前漫游窗口的消息，两个来源都没有，看不见也补不回来。
+- 媒体转存失败的记录没有 `oss_url`，深历史里仍会用 IM 的 COS 地址，小程序没配那个域名就显示占位图。
+
+### 经验教训
+
+1. 第三方 IM 的"历史"受服务商配额限制，**免费档位的能力边界要先查官方文档再设计数据源**。7 天漫游决定了数据库镜像是必需项，不是优化项。
+2. 新增数据源时别做模糊匹配。`「秒+方向+元素类型」`猜对应关系这种设计，只有在两边没有共同主键时才被迫接受；本例早就有 `MsgKey`，直接把它当 `ID` 就干净了。
+3. 往 TUIKit 的消息 store 注入数据前，先去压缩产物里确认 `updateTargetMessageList` 的分支副作用（尤其会不会上报已读），选对合并类型比写多少防御代码都管用。
+4. 未知类型宁可不显示。消息列表的 `v-else` 分支是"撤回消息"，把认不出的元素类型塞进去等于给用户造假记录。
+5. 游标要写成严格比较（`before = 最早一条的 msg_time`，SQL 用 `<`），等号会让边界那条在上一页下一页各出现一次。
+
+### 涉及文件
+
+- `br-server/app/models/im_message.py`、`br-server/alembic/versions/2026_10_23_1100-j5k1l7m3n9p4_add_im_message_history_rebuild_fields.py` — 三个新列
+- `br-server/app/services/im_callback_service.py` — `CloudCustomData` 落库、`apply_msg_withdraw()`
+- `br-server/app/api/routes/im_callback.py` — 分发 `C2C.CallbackAfterMsgWithDraw`
+- `br-server/app/api/routes/chat.py` — 排序口径与重建字段
+- `br-app/src/utils/im-history.js` — 数据库行 → SDK 消息结构
+- `br-app/src/utils/im.js` — `fetchImHistoryPage()`，删掉媒体地址映射
+- `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — SDK 到头后转数据库翻页，`unshift` 注入
+- `br-app/scripts/verify-im-history.js`、`br-app/scripts/verify-im-history-merge.mjs` — 替代 `verify-chat-media-map.js`

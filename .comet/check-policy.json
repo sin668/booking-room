@@ -1,19 +1,14 @@
 {
   "version": 1,
-  "argv": [
-    "/opt/miniconda3/envs/booking-room/bin/python",
-    "-m",
-    "pytest",
-    "tests/test_im_callback_sync.py",
-    "-q",
-    "-p",
-    "no:cacheprovider"
-  ],
-  "cwd": "br-server",
+  "argv": ["npm", "--prefix", "br-app", "run", "build:mp-weixin"],
+  "cwd": ".",
   "files": [
-    "br-server/app",
-    "br-server/tests",
-    "br-server/pyproject.toml"
-  ],
-  "env": ["PATH", "IM_SDK_APP_ID", "IM_SERVER_KEY", "IM_ADMIN_USER"]
+    "br-app/src",
+    "br-app/scripts",
+    "br-app/package.json",
+    "br-app/pages.json",
+    "br-app/app.js",
+    "br-app/manifest.json",
+    "br-app/vite.config.js"
+  ]
 }

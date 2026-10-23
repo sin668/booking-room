@@ -18,6 +18,7 @@ from app.core.im import verify_callback_sign
 from app.models.im_message import ImMessage
 from app.services.im_callback_service import (
     apply_msg_report,
+    apply_msg_withdraw,
     media_kind_for,
     save_send_msg_callback,
 )
@@ -62,6 +63,15 @@ async def _persist_msg_report(payload: dict[str, Any]) -> None:
         logger.exception("IM callback AfterMsgReport persist failed: %s", payload.get("Report_Account"))
 
 
+async def _persist_msg_withdraw(payload: dict[str, Any]) -> None:
+    try:
+        async with async_session() as session:
+            await apply_msg_withdraw(session, payload)
+            await session.commit()
+    except Exception:
+        logger.exception("IM callback AfterMsgWithDraw persist failed: %s", payload.get("MsgKey"))
+
+
 @router.post("/callback")
 async def im_callback(
     request: Request,
@@ -96,6 +106,8 @@ async def im_callback(
         background_tasks.add_task(_persist_send_msg, body)
     elif command == "C2C.CallbackAfterMsgReport":
         background_tasks.add_task(_persist_msg_report, body)
+    elif command == "C2C.CallbackAfterMsgWithDraw":
+        background_tasks.add_task(_persist_msg_withdraw, body)
     elif command:
         logger.info("IM callback ignored (unsupported command): %s", command)
 

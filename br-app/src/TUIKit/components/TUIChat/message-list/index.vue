@@ -37,7 +37,7 @@
         @scroll="handelScrollListScroll"
       >
         <p
-          v-if="!isCompleted"
+          v-if="!isCompleted || (!isGroup && dbHasMore)"
           class="message-more"
           @click="getHistoryMessageList"
         >
@@ -265,7 +265,8 @@ import { isEnabledMessageReadReceiptGlobal, deepCopy } from '../utils/utils';
 import { throttle } from '../../../utils/lodash';
 import { isPC, isH5, isMobile } from '../../../utils/env';
 import chatStorage from '../utils/chatStorage';
-import { applyChatMediaUrls } from '@/utils/im';
+import { fetchImHistoryPage } from '@/utils/im';
+import { buildImHistoryMessages } from '@/utils/im-history';
 import { IAudioContext } from '../../../interface';
 
 interface IEmits {
@@ -299,6 +300,8 @@ const thisInstance = getCurrentInstance()?.proxy || getCurrentInstance();
 const messageList = ref<IMessageModel[]>();
 const multipleSelectedMessageIDList = ref<string[]>([]);
 const isCompleted = ref(false);
+// SDK 漫游到头后是否还有更早的数据库历史可翻；点过一次取到空页就收起「查看更多」
+const dbHasMore = ref(true);
 const currentConversationID = ref('');
 const toggleID = ref('');
 const scrollTop = ref(5000); // The initial number of messages is 15, and the maximum message height is 300.
@@ -335,6 +338,8 @@ const scrollToBottom = () => {
 
 const onCurrentConversationIDUpdated = (conversationID: string) => {
   currentConversationID.value = conversationID;
+  // 切会话时引擎会清空 CHAT store 的消息列表，数据库翻页状态一并重置
+  dbHasMore.value = true;
   if (isEnabledMessageReadReceiptGlobal()) {
     const { groupProfile }
       = TUIStore.getConversationModel(conversationID) || {};
@@ -425,11 +430,6 @@ async function onMessageListUpdated(list: IMessageModel[]) {
   if (isEnabledMessageReadReceiptGlobal()) {
     nextTick(() => bindIntersectionObserver());
   }
-  // 图片/语音优先使用本系统数据库转存的 OSS 地址（IM 的 COS 域名可能不在小程序白名单）
-  const patched = await applyChatMediaUrls(messageList.value);
-  if (patched) {
-    messageList.value = messageList.value.slice();
-  }
 }
 
 async function scrollToLatestMessage() {
@@ -474,6 +474,12 @@ function onChatCompletedUpdated(flag: boolean) {
 }
 
 const getHistoryMessageList = () => {
+  if (isLoadingMessage.value) return;
+  if (isCompleted.value && !props.isGroup) {
+    // SDK 漫游窗口到头（免费版只有 7 天），更早的历史改读本系统数据库落库的消息镜像
+    loadDatabaseHistoryPage();
+    return;
+  }
   isLoadingMessage.value = true;
   const currentFirstMessageID = messageList.value?.[0]?.ID || '';
   TUIChatService.getMessageList().then(() => {
@@ -487,6 +493,63 @@ const getHistoryMessageList = () => {
     });
   });
 };
+
+/** 向数据库取比当前最早一条更早的一页消息，按 SDK 消息结构前插到消息列表。 */
+async function loadDatabaseHistoryPage() {
+  const earliestTime = messageList.value?.[0]?.time;
+  if (!earliestTime) return;
+  isLoadingMessage.value = true;
+  const currentFirstMessageID = messageList.value?.[0]?.ID || '';
+  try {
+    const page = await fetchImHistoryPage(currentConversationID.value, earliestTime);
+    dbHasMore.value = page.hasMore;
+    if (!page.messages.length) return;
+    const conversationModel: any =
+      TUIStore.getConversationModel(currentConversationID.value) || {};
+    const selfProfile: any = TUIStore.getData(StoreName.USER, 'userProfile') || {};
+    const peerProfile: any = conversationModel.userProfile || {};
+    const userInfo: Record<string, any> = {};
+    if (conversationModel.conversationID) {
+      userInfo[String(conversationModel.conversationID).replace(/^C2C/, '')] = {
+        nick: peerProfile.nick || '',
+        avatar: peerProfile.avatar || '',
+      };
+    }
+    if (selfProfile.userID) {
+      userInfo[selfProfile.userID] = {
+        nick: selfProfile.nick || '',
+        avatar: selfProfile.avatar || '',
+      };
+    }
+    const messages = buildImHistoryMessages(page.messages, {
+      conversationID: currentConversationID.value,
+      myIMID: selfProfile.userID || '',
+      needReadReceipt: isEnabledMessageReadReceiptGlobal(),
+      userInfo,
+    });
+    if (!messages.length) {
+      // 整页都是不支持重建的类型：继续往前取，否则按钮点下去没反应
+      if (page.hasMore) loadDatabaseHistoryPage();
+      return;
+    }
+    // unshift 合并：按 ID 去重、前插、重排，且不会触发已读上报
+    TUIChatService.updateMessageList(messages as any, 'unshift');
+    nextTick(() => {
+      historyFirstMessageID.value = currentFirstMessageID;
+      const timer = setTimeout(() => {
+        historyFirstMessageID.value = '';
+        clearTimeout(timer);
+      }, 500);
+    });
+  } catch (e: any) {
+    Toast({
+      message: e?.message || '加载更早消息失败',
+      type: TOAST_TYPE.ERROR,
+    });
+  } finally {
+    isLoadingMessage.value = false;
+  }
+}
 
 const openComplaintLink = () => { };
 

@@ -1,7 +1,8 @@
 """腾讯云 IM 第三方回调解析与落库。
 
-只处理服务端回调（C2C.CallbackAfterSendMsg / C2C.CallbackAfterMsgReport），
-客户端不做上报，避免两套写入来源。回调体字段参考官方文档 269/2716 与 269/61696。
+只处理服务端回调（C2C.CallbackAfterSendMsg / C2C.CallbackAfterMsgReport /
+C2C.CallbackAfterMsgWithDraw），客户端不做上报，避免两套写入来源。
+回调体字段参考官方文档 269/2716、269/61696 与 269/61697。
 """
 
 from __future__ import annotations
@@ -106,6 +107,7 @@ async def save_send_msg_callback(session: AsyncSession, payload: dict[str, Any])
         element_type=parsed.element_type,
         content=parsed.content,
         media_url=parsed.media_url,
+        cloud_custom_data=payload.get("CloudCustomData") or None,
         raw_payload={"MsgBody": payload.get("MsgBody") or []},
     )
     session.add(record)
@@ -137,5 +139,22 @@ async def apply_msg_report(session: AsyncSession, payload: dict[str, Any]) -> in
             ImMessage.is_read.is_(False),
         )
         .values(is_read=True, read_at=func.now())
+    )
+    return int(result.rowcount or 0)
+
+
+async def apply_msg_withdraw(session: AsyncSession, payload: dict[str, Any]) -> int:
+    """C2C.CallbackAfterMsgWithDraw 标记撤回：只改状态不删记录，历史里显示「撤回了一条消息」。"""
+    msg_key = payload.get("MsgKey")
+    if not msg_key:
+        return 0
+
+    result = await session.execute(
+        update(ImMessage)
+        .where(
+            ImMessage.msg_key == msg_key,
+            ImMessage.is_revoked.is_(False),
+        )
+        .values(is_revoked=True, revoke_time=int(payload.get("EventTime") or 0) or None)
     )
     return int(result.rowcount or 0)

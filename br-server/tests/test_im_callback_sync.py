@@ -19,6 +19,7 @@ from app.models.im_message import ImMessage
 from app.models.user import User
 from app.services.im_callback_service import (
     apply_msg_report,
+    apply_msg_withdraw,
     media_kind_for,
     parse_message,
     save_send_msg_callback,
@@ -131,6 +132,48 @@ class TestSaveSendMsg:
 
         assert record is not None
         assert record.from_user_id is None
+
+    async def test_cloud_custom_data_persisted(self, db_session: AsyncSession):
+        """引用/回复消息的 CloudCustomData 要落库，历史重建时才能还原引用卡片。"""
+        record = await save_send_msg_callback(
+            db_session, send_payload("key-ccd", CloudCustomData='{"messageReply":{"messageId":"x"}}')
+        )
+        await db_session.commit()
+
+        assert record.cloud_custom_data == '{"messageReply":{"messageId":"x"}}'
+
+    async def test_missing_cloud_custom_data_stays_none(self, db_session: AsyncSession):
+        record = await save_send_msg_callback(db_session, send_payload("key-ccd-empty"))
+        await db_session.commit()
+
+        assert record.cloud_custom_data is None
+
+
+@pytest.mark.usefixtures("im_users")
+class TestApplyMsgWithdraw:
+    async def test_marks_by_msg_key(self, db_session: AsyncSession):
+        await save_send_msg_callback(db_session, send_payload("key-w1"))
+        await db_session.commit()
+
+        updated = await apply_msg_withdraw(db_session, {"MsgKey": "key-w1", "EventTime": 1700000123456})
+        await db_session.commit()
+        assert updated == 1
+
+        row = (await db_session.execute(select(ImMessage).where(ImMessage.msg_key == "key-w1"))).scalar_one()
+        assert row.is_revoked is True
+        assert row.revoke_time == 1700000123456
+        assert row.content == "你好"  # 只标记状态，不删内容
+
+    async def test_repeat_delivery_is_idempotent(self, db_session: AsyncSession):
+        await save_send_msg_callback(db_session, send_payload("key-w2"))
+        await db_session.commit()
+
+        assert await apply_msg_withdraw(db_session, {"MsgKey": "key-w2"}) == 1
+        assert await apply_msg_withdraw(db_session, {"MsgKey": "key-w2"}) == 0
+
+    async def test_missing_msg_key_and_unknown_key(self, db_session: AsyncSession):
+        assert await apply_msg_withdraw(db_session, {"EventTime": 1}) == 0
+        assert await apply_msg_withdraw(db_session, {"MsgKey": "never-saved"}) == 0
 
 
 class TestApplyMsgReport:
@@ -362,6 +405,39 @@ class TestCallbackRoute:
 
 
 
+@pytest.mark.usefixtures("im_users")
+class TestCallbackWithdrawRoute:
+    async def test_withdraw_callback_marks_revoked(
+        self, client: AsyncClient, db_session: AsyncSession, monkeypatch
+    ):
+        from app.api.routes import im_callback as route
+
+        monkeypatch.setattr(settings, "IM_SDK_APP_ID", 123456)
+        monkeypatch.setattr(settings, "IM_CALLBACK_TOKEN", "secret")
+        monkeypatch.setattr(route, "async_session", lambda: _SessionScope(db_session))
+
+        await save_send_msg_callback(db_session, send_payload("key-w-route"))
+        await db_session.commit()
+
+        response = await client.post(
+            f"/api/v1/im/callback?{signed_query()}",
+            json={
+                "CallbackCommand": "C2C.CallbackAfterMsgWithDraw",
+                "From_Account": SELF_IM,
+                "To_Account": PEER_IM,
+                "MsgKey": "key-w-route",
+                "EventTime": 1700000999000,
+            },
+        )
+
+        assert response.json() == {"ActionStatus": "OK", "ErrorInfo": "", "ErrorCode": 0}
+        row = (
+            await db_session.execute(select(ImMessage).where(ImMessage.msg_key == "key-w-route"))
+        ).scalar_one()
+        assert row.is_revoked is True
+        assert row.revoke_time == 1700000999000
+
+
 class _SessionScope:
     """复用测试会话的 async_session() 替身（不进不出真实连接）。"""
 
@@ -405,6 +481,53 @@ class TestChatHistoryAPI:
         # 无关用户只能看到自己参与的 h-3，看不到 h-1/h-2
         assert [m["msg_key"] for m in response.json()["messages"]] == ["h-3"]
 
+    async def test_returns_rebuild_fields(self, auth_history_client: AsyncClient):
+        """历史重建需要的字段：MsgBody、CloudCustomData、撤回状态、IM 账号、已读。"""
+        response = await auth_history_client.get(f"/api/v1/chat/messages?peer={PEER_IM}")
+        h2 = next(m for m in response.json()["messages"] if m["msg_key"] == "h-2")
+        assert h2["msg_seq"] == 7
+        assert h2["im_from_account"] == PEER_IM
+        assert h2["im_to_account"] == SELF_IM
+        assert h2["elements"] == [
+            {"MsgType": "TIMSoundElem", "MsgContent": {"Url": "https://im/a.mp3", "Second": 3}}
+        ]
+        assert h2["cloud_custom_data"] is None
+        assert h2["is_revoked"] is False
+
+    async def test_same_second_orders_by_msg_seq(self, db_session: AsyncSession, auth_history_client: AsyncClient):
+        """同一秒内的多条消息按 MsgSeq 排，与 IM 单聊排序口径一致。"""
+        db_session.add_all(
+            [
+                ImMessage(
+                    msg_key="seq-5",
+                    im_from_account=SELF_IM,
+                    im_to_account=PEER_IM,
+                    msg_time=200,
+                    msg_seq=5,
+                    element_type="text",
+                    content="同秒更早",
+                ),
+                ImMessage(
+                    msg_key="seq-9",
+                    im_from_account=SELF_IM,
+                    im_to_account=PEER_IM,
+                    msg_time=200,
+                    msg_seq=9,
+                    element_type="text",
+                    content="同秒更晚",
+                ),
+            ]
+        )
+        await db_session.commit()
+
+        response = await auth_history_client.get(f"/api/v1/chat/messages?peer={PEER_IM}")
+        assert [m["msg_key"] for m in response.json()["messages"]] == ["h-1", "seq-5", "h-2", "seq-9"]
+
+    async def test_before_cursor_is_strict(self, db_session: AsyncSession, auth_history_client: AsyncClient):
+        """游标取严格更早：边界秒的消息不重复出现在上一页/下一页。"""
+        response = await auth_history_client.get(f"/api/v1/chat/messages?peer={PEER_IM}&before=200")
+        assert [m["msg_key"] for m in response.json()["messages"]] == ["h-1"]
+
 
 @pytest.fixture
 async def history_rows(db_session: AsyncSession, im_users):
@@ -417,6 +540,7 @@ async def history_rows(db_session: AsyncSession, im_users):
                 from_user_id=USER_ID,
                 to_user_id=PEER_ID,
                 msg_time=100,
+                msg_seq=3,
                 element_type="text",
                 content="早",
             ),
@@ -427,9 +551,13 @@ async def history_rows(db_session: AsyncSession, im_users):
                 from_user_id=PEER_ID,
                 to_user_id=USER_ID,
                 msg_time=200,
+                msg_seq=7,
                 element_type="sound",
                 media_url="https://im/a.mp3",
                 oss_url="https://oss.example.com/a.mp3",
+                raw_payload={
+                    "MsgBody": [{"MsgType": "TIMSoundElem", "MsgContent": {"Url": "https://im/a.mp3", "Second": 3}}]
+                },
             ),
             ImMessage(
                 msg_key="h-3",
@@ -438,6 +566,7 @@ async def history_rows(db_session: AsyncSession, im_users):
                 from_user_id=THIRD_ID,
                 to_user_id=PEER_ID,
                 msg_time=150,
+                msg_seq=4,
                 element_type="text",
                 content="无关会话",
             ),

@@ -69,6 +69,15 @@ class ImMessage(Base):
         DateTime(timezone=True), nullable=True
     )
     raw_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True, comment="回调原始 MsgBody")
+    cloud_custom_data: Mapped[str | None] = mapped_column(
+        Text, nullable=True, comment="消息自定义数据 CloudCustomData，引用/回复内容载体"
+    )
+    is_revoked: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false"), comment="是否已被撤回"
+    )
+    revoke_time: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True, comment="撤回事件时间戳（毫秒，取回调 EventTime）"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

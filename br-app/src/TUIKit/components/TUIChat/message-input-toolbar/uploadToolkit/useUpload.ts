@@ -49,7 +49,11 @@ export function useUpload(uploadType: UploadType) {
 
   // 直接从 SDK 获取当前会话，不依赖 watch（watch 在多个组件实例间可能有时序问题）
   const getCurrentConversation = (): IConversationModel | undefined => {
-    return TUIStore.getData(StoreName.CONV, 'currentConversation');
+    const conversationID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
+    if (!conversationID) {
+      return undefined;
+    }
+    return TUIStore.getConversationModel(conversationID);
   };
 
   const sourceType = genSourceType(uploadType);

@@ -103,7 +103,7 @@ class TestParseMessage:
         parsed = parse_message(
             [
                 {
-                    "MsgType": "TIMVideoElem",
+                    "MsgType": "TIMVideoFileElem",
                     "MsgContent": {
                         "VideoUrl": "https://im/video.mp4",
                         "ThumbUrl": "https://im/thumb.jpg",
@@ -119,6 +119,14 @@ class TestParseMessage:
         assert parsed.media_url == "https://im/video.mp4"
         assert parsed.content == "10s"
         assert media_kind_for(ImMessage(element_type="video", media_url=parsed.media_url)) == "video"
+
+    def test_legacy_video_elem_also_works(self):
+        """兼容旧版 TIMVideoElem 类型"""
+        parsed = parse_message(
+            [{"MsgType": "TIMVideoElem", "MsgContent": {"VideoUrl": "https://im/old.mp4", "Second": 5}}]
+        )
+        assert parsed.element_type == "video"
+        assert parsed.media_url == "https://im/old.mp4"
 
     def test_unknown_type_is_other(self):
         assert parse_message([{"MsgType": "TIMGroupTipElem", "MsgContent": {}}]).element_type == "other"

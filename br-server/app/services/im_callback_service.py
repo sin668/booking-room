@@ -27,6 +27,7 @@ _ELEMENT_TYPES = {
     "TIMSoundElem": "sound",
     "TIMFileElem": "file",
     "TIMVideoElem": "video",
+    "TIMVideoFileElem": "video",
     "TIMFaceElem": "face",
     "TIMCustomElem": "custom",
 }

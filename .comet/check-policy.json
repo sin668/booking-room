@@ -1,14 +1,20 @@
 {
   "version": 1,
-  "argv": ["npm", "--prefix", "br-app", "run", "build:mp-weixin"],
+  "argv": [
+    "/bin/sh",
+    "-c",
+    "cd br-server && /opt/miniconda3/envs/booking-room/bin/python -m pytest tests/test_im_callback_sync.py -q -p no:cacheprovider && cd ../br-app && npm run test:im-history && npm run test:im-history-merge && npm run test:chat-read-on-visible && npm run test:chat-read-gate"
+  ],
   "cwd": ".",
   "files": [
-    "br-app/src",
+    "br-server/app",
+    "br-server/tests",
+    "br-server/pyproject.toml",
+    "br-server/alembic",
+    "br-app/src/utils",
+    "br-app/src/TUIKit/components/TUIChat",
     "br-app/scripts",
-    "br-app/package.json",
-    "br-app/pages.json",
-    "br-app/app.js",
-    "br-app/manifest.json",
-    "br-app/vite.config.js"
-  ]
+    "br-app/package.json"
+  ],
+  "env": ["PATH"]
 }

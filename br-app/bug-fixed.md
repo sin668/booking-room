@@ -474,3 +474,43 @@ id  sent(+08)            read_at               delta  from->to
 - `br-app/src/utils/im.js` — `fetchImHistoryPage()`，删掉媒体地址映射
 - `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — SDK 到头后转数据库翻页，`unshift` 注入
 - `br-app/scripts/verify-im-history.js`、`br-app/scripts/verify-im-history-merge.mjs` — 替代 `verify-chat-media-map.js`
+
+## 主包内不应存在主包未使用的 JS 文件：utils/im-history.js
+
+### 现象
+
+- 深历史功能上线后，微信开发者工具构建产物提示：`主包内不应该存在主包未使用的JS文件：utils/im-history.js`。
+- 文件确实在 `dist/build/mp-weixin/utils/` 下，但主包没有任何页面引用它——只有 `TUIKit/components/TUIChat/message-list` 这个子包页面在用。
+
+### 根本原因
+
+uni-app 编译 mp-weixin 时把 `src/utils/*.js` 整体提升到主包的 `utils/`，不按「谁引用」下沉到分包。项目里 `src/utils` 大部分模块（`auth.js`、`request.js`、`im.js`）主包真的在用，所以这个提升平时是对的；`im-history.js` 是第一个只被 `TUIKit` 子包引用的 utils，于是撞上了微信的「主包未使用 JS」检查。
+
+同类问题项目里早有解法：`scripts/post-build-move-assets.js` 在 build 之后把只被 TUIKit 用到的 `assets/` 图标和 `common/assets.js` 搬进 `TUIKit/`，并改写两侧相对 `require`。缺的只是把这套机制延伸到 utils JS。
+
+### 解决方案
+
+1. `post-build-move-assets.js` 增加 `MOVES` 表和 `moveMainPackageJs()`：按表把主包 JS 搬进子包，搬迁时改写该文件自身对外的 `require`（基准从旧目录换成新目录），再全量扫描子包目录，把指向旧路径的 `require` 改成指向新路径。
+2. 新增产物守卫 `scripts/verify-mp-subpackage-layout.js`，接进 `build:mp-weixin` 末尾，也在 `test:mp-subpackage-layout` 单跑。两条断言：每条相对 `require` 都能解析到真实文件；主包 JS 若引用者全部落在同一个子包，就报错并提示「加进 MOVES」。以后再把只被子包用的模块写进 `src/utils`，构建阶段就会自己报出来，不用等开发者工具提醒。
+3. 用显式 `MOVES` 表而不是自动搬迁：被两个子包共享的文件搬进任意一个都会让另一个找不到，自动化只能挑一个错的。表里一行一条，人工判断归属。
+
+### 走过的弯路
+
+- 第一版改写「消费者 require」时，基准目录错用了目标文件的新目录，`message-list/index.js` 里的 `../../../utils/im-history.js` 被写成了 `./im-history.js`，构建时被自己的新守卫拦下（`require("./im-history.js") 解析不到文件`）。基准必须是**引用方所在目录**，不是被引用文件所在目录。
+
+### 验证
+
+- `npm run build:mp-weixin` 输出 `Moved utils/im-history.js → TUIKit/utils/im-history.js (rewrote 1 require)`、`Main package size: 1.15MB`、`mp subpackage layout checks passed (182 js, subpackages: pages-sub, TUIKit)`。
+- 产物核对：主包 `utils/` 已无该文件；`TUIKit/utils/im-history.js` 自身对 vendor 的引用改写为 `../../common/vendor.js`；`TUIKit/components/TUIChat/message-list/index.js` 引用为 `../../../utils/im-history.js`。
+
+### 经验教训
+
+1. uni-app 的 `src/utils` 一律进主包，**新增只给分包页面用的 utils 时，同步在 `MOVES` 加一行**，否则主包体积和「未使用 JS」告警都会找上门。
+2. 搬文件必须两侧一起改写：被搬文件自己的 `require` 是「旧目录 → 新目录」，引用它的人是「以引用方目录为基准」，两个基准不一样，很容易只改一半。
+3. 这类「构建产物布局」问题适合用产物级断言守，源码级断言守不住——编译器改的是路径，不是代码。
+
+### 涉及文件
+
+- `br-app/scripts/post-build-move-assets.js` — `MOVES` 表、`moveMainPackageJs()`、`resolveRelative()` / `relativize()` / `rewriteRequires()`
+- `br-app/scripts/verify-mp-subpackage-layout.js` — 新增产物守卫
+- `br-app/package.json` — `build:mp-weixin` 链尾接入守卫，新增 `test:mp-subpackage-layout`

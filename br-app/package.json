@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev:mp-weixin": "uni -p mp-weixin && node scripts/apply-wechat-appid.js --mode dev",
-    "build:mp-weixin": "uni build -p mp-weixin && node scripts/apply-wechat-appid.js && node scripts/post-build-move-assets.js",
+    "build:mp-weixin": "uni build -p mp-weixin && node scripts/apply-wechat-appid.js && node scripts/post-build-move-assets.js && node scripts/verify-mp-subpackage-layout.js",
     "dev:h5": "uni",
     "build:h5": "uni build",
     "test:profile-links": "node scripts/verify-profile-stat-links.js",
+    "test:mp-subpackage-layout": "node scripts/verify-mp-subpackage-layout.js",
     "test:wechat-appid": "node scripts/test-apply-wechat-appid.js",
     "test:refactor": "node scripts/test-refactored-page-logic.js",
     "test:activity-coupon": "node scripts/verify-activity-coupon-campaign.js",

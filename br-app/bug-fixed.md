@@ -514,3 +514,59 @@ uni-app 编译 mp-weixin 时把 `src/utils/*.js` 整体提升到主包的 `utils
 - `br-app/scripts/post-build-move-assets.js` — `MOVES` 表、`moveMainPackageJs()`、`resolveRelative()` / `relativize()` / `rewriteRequires()`
 - `br-app/scripts/verify-mp-subpackage-layout.js` — 新增产物守卫
 - `br-app/package.json` — `build:mp-weixin` 链尾接入守卫，新增 `test:mp-subpackage-layout`
+
+## 正式版真机发视频点了没反应，开发者工具却正常
+
+### 现象
+
+- 图片在开发者工具和正式版小程序上都能发。
+- 视频在微信开发者工具能发出去；正式版小程序里点「拍摄」入口选完视频，**界面上什么都不发生**：没有选择器报错、没有失败气泡、没有 Toast。
+
+### 根本原因（三层错误全被丢弃，所以「没反应」是代码上的必然）
+
+1. 聊天工具栏里根本没有独立的「视频」按钮，能发视频的是「拍摄」入口（`UploadType.CAMERA`），它调的是 `TUIGlobal?.chooseVideo({ sourceType: ['album','camera'], compressed: false, success })`，**只写了 success**。`sourceType` 含 `camera` 会在真机触发相机授权，一旦被拒，微信返回 `chooseVideo:fail user denied`，没有 fail 回调就等于把这个错误吞掉；开发者工具不校验授权、直接弹文件选择框，所以看起来正常。图片走「相册」入口的 `chooseImage`，不需要相机权限——两条链路的权限要求正好不同。
+2. `TUIChatService.sendVideoMessage(...)` 没有 `.catch`。lite-chat 的 `_processMiniVideoFile` 拿 `tempFilePath` 的**扩展名**当类型，只接受 `["mp4","quicktime","mov","video"]`，个别机型返回无扩展名或不认识的格式时，SDK 在消息进列表前就抛 ChatError(2352)，同样完全无反应。
+3. 上传阶段的失败至少会有失败气泡（SDK 的 `_upload` catch 里 `storeConversationMessage`），但错误信息被 SDK 拼成 `Unknown failed. error: {"message": }`，看不出是哪个域名没过白名单——这一点和语音那次同源。
+
+### 关于「视频是不是有独立白名单」
+
+不是。四类富媒体（image/audio/video/file）在 lite-chat 里共用一条通道：`im_cos_msg.simple_sig`/`pre_sig` 信令向服务端换取预签名 `upload_url`，再交给同一个 `wx.uploadFile` 包装器，SDK 里唯一的富媒体域名常量是 `["rich.my-imcloud.com","imrich.qcloud.com"]`（`rich` = 富媒体统称），没有任何按视频切换域名的分支。所以本项目就是已加白的 `20049215-sg.rich.my-imcloud.com`，**不需要为视频单独加域名**。
+
+但同一段代码里有一个只在真机才会换 host 的分支，很可能才是真正缺的那条白名单：
+
+```js
+resolveUploadOrigin()  -> _resolveTargetOrigin(getFileUploadProxy())
+_resolveTargetOrigin(e) -> e || (shouldUseIpv6Host() ? _resolveIpv6Host() : '')
+shouldUseIpv6Host()    -> login.isIPv6 && isSimpleCos()
+_getRawOrUploadProxyUrl(url) -> host 整体替换成上面解析出的 origin
+```
+
+新加坡区域的 IPv6 常量写死为 `https://sgpv6.rich.my-imcloud.com`。手机在 5G（基本都是 IPv6）或 IPv6-only Wi-Fi 下，SDK 会把预签名地址的 host 整个换成它；开发者工具跑在 Mac 的 IPv4 上永远不命中。微信公众平台域名配置不支持通配符，这条没加就一定被拦。判别法：**关 Wi-Fi 用 5G 发一条语音或图片**，同样失败就是这条 IPv6 域名；5G 下都正常则回到第 1 条（相机权限）。
+
+### 解决方案
+
+不改行为，只把错误暴露出来，和语音那次同一套路（复用现成的 `getIMLastUploadError()`）：
+
+- `useUpload.ts` 给四个 `chooseImage/chooseVideo` 调用统一挂 `fail: genChooseFailHandler(...)`，Toast 显示 wx 原始 `errMsg`；`errMsg` 含 `cancel` 时不提示（用户主动取消是正常操作）。
+- `uploadToolkit/utils.ts` 给 `sendVideoMessage` 补 `?.catch(reportSendFailure('视频'))`，Toast 依次给出 **SDK 错误码 + 真实上传 host + errMsg**，host 直接取自拦截到的上传 URL，一眼分清域名还是权限。
+- `src/utils/im.js` 的 `hookUploadDiagnostic` 保持原样，它是 host 的唯一来源。
+
+### 验证
+
+- `scripts/verify-media-send-diagnostics.js`（`npm run test:media-send-diagnostics`）：断言四个 `choose*` 调用都带 fail、`sendVideoMessage` 有 catch、Toast 取的是真实上传 url 的 host 和 `err.code`、`getIMLastUploadError` 出口仍在，并额外校验两条 import 能解析到真实文件（`@/` 按 uni-app 别名映射到 `src`）。
+- `npm run build:mp-weixin` 通过，产物里 `useUpload.js` 有 4 处 `fail:`、`utils.js` 有 `发送失败 ${e?.code}`，`TUIKit → ../../../../../utils/im.js` 的跨包引用被 `verify-mp-subpackage-layout.js` 判定可解析。
+- 待用户在真机确认：5G 下点拍摄，Toast 会直接写明是 `user denied`（权限）还是 `sgpv6.rich.my-imcloud.com`（域名）。
+
+### 经验教训
+
+1. 「开发者工具正常、正式版不行」在这类项目里只有三种成因：**域名白名单、系统权限、真机才走的分支**。前两种是环境差异，第三种最容易漏——本例 SDK 的 IPv6 换 host 分支就是第三种。
+2. 富媒体上传域名要连 IPv6 变体一起配。`*.v6.rich.my-imcloud.com` 由 SDK 在检测到 IPv6 网络时整体替换 host，白名单里没有它，就会出现「同一操作有人失败有人正常」的诡异现象，按人按网络分裂，极难复现。
+3. 只写 success 不写 fail 的第三方 API 调用是静默失败制造机。SDK/框架代码可以照抄，但**错误出口必须在自己的层补回来**，否则线上只能看到「没反应」。
+4. 错误文案要带**可判别的最小信息**：域名问题给 host、权限问题给 wx 原始 errMsg、超限/格式问题给 SDK code，三者一次就能分开；只给「发送失败」等于没给。
+
+### 涉及文件
+
+- `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/useUpload.ts` — `genChooseFailHandler()`，四个 choose 调用挂 `fail`
+- `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/utils.ts` — `reportSendFailure()` + `sendVideoMessage().catch(...)`
+- `br-app/scripts/verify-media-send-diagnostics.js`、`br-app/package.json` — 新增断言脚本与 `test:media-send-diagnostics`
+- SDK 源码：`node_modules/@tencentcloud/lite-chat/standard.js` — `_processMiniVideoFile`/`_validateBeforeUploadVideo`/`Br` 格式白名单、`resolveUploadOrigin`/`_resolveIpv6Host` 的 IPv6 host 替换、`Xi=["rich.my-imcloud.com","imrich.qcloud.com"]`

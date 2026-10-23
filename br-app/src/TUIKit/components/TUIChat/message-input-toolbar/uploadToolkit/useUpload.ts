@@ -1,6 +1,7 @@
 import { ref, computed } from '../../../../adapter-vue';
 import { TUIStore, StoreName, IConversationModel } from '@tencentcloud/chat-uikit-engine-lite';
 import { TUIGlobal } from '@tencentcloud/universal-api';
+import { Toast, TOAST_TYPE } from '../../../common/Toast/index';
 import { isPC, isUniFrameWork } from '../../../../utils/env';
 import TUIChatConfig from '../../config';
 import {
@@ -23,6 +24,23 @@ export function genSourceType(uploadType: UploadType): SourceType {
     return SourceType.CAMERA;
   }
   return SourceType.ALBUM;
+}
+
+// chooseImage/chooseVideo 原本只写 success，真机上相机权限被拒（`fail user denied`）或选择器
+// 报错时点了完全没反应，也分不清是没弹框还是发送失败。取消属于正常操作，不提示。
+function genChooseFailHandler(label: string) {
+  return (err: any): void => {
+    const errMsg = String(err?.errMsg || err || '');
+    console.error(`[TUIChat] ${label}选择失败:`, err);
+    if (errMsg.includes('cancel')) {
+      return;
+    }
+    Toast({
+      message: `${label}选择失败 ${errMsg.slice(0, 60)}`,
+      type: TOAST_TYPE.ERROR,
+      duration: 5000,
+    });
+  };
 }
 
 export function useUpload(uploadType: UploadType) {
@@ -99,6 +117,7 @@ export function useUpload(uploadType: UploadType) {
     TUIGlobal?.chooseImage({
       count: MEDIA_CHOOSE_CONFIG.IMAGE.COUNT,
       sourceType: [sourceType],
+      fail: genChooseFailHandler('图片'),
       success: function (res: Record<string, any>) {
         if (currentConversation.value) {
           sendImageMessage(currentConversation.value, res);
@@ -112,6 +131,7 @@ export function useUpload(uploadType: UploadType) {
       count: MEDIA_CHOOSE_CONFIG.VIDEO.COUNT,
       sourceType: [sourceType],
       compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
+      fail: genChooseFailHandler('视频'),
       success: function (res: Record<string, any>) {
         if (currentConversation.value) {
           sendVideoMessage(currentConversation.value, res);
@@ -124,6 +144,7 @@ export function useUpload(uploadType: UploadType) {
     TUIGlobal?.chooseImage({
       count: MEDIA_CHOOSE_CONFIG.IMAGE.COUNT,
       sourceType: [SourceType.ALBUM, SourceType.CAMERA],
+      fail: genChooseFailHandler('图片'),
       success: function (res: Record<string, any>) {
         if (currentConversation.value) {
           sendImageMessage(currentConversation.value, res);
@@ -137,6 +158,7 @@ export function useUpload(uploadType: UploadType) {
       count: MEDIA_CHOOSE_CONFIG.VIDEO.COUNT,
       sourceType: [SourceType.ALBUM, SourceType.CAMERA],
       compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
+      fail: genChooseFailHandler('视频'),
       success: function (res: Record<string, any>) {
         if (currentConversation.value) {
           sendVideoMessage(currentConversation.value, res);

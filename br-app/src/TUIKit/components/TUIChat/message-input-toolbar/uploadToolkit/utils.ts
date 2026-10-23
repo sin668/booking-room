@@ -6,6 +6,8 @@ import TUIChatEngine, {
 } from '@tencentcloud/chat-uikit-engine-lite';
 import { isEnabledMessageReadReceiptGlobal } from '../../utils/utils';
 import OfflinePushInfoManager, { IOfflinePushInfoCreateParams } from '../../offlinePushInfoManager/index';
+import { Toast, TOAST_TYPE } from '../../../common/Toast/index';
+import { getIMLastUploadError } from '@/utils/im';
 
 export function createSendMessageOptions(
   currentConversation: IConversationModel | undefined,
@@ -36,6 +38,32 @@ export function genOfflinePushInfo(
 
   return {
     offlinePushInfo: OfflinePushInfoManager.create(offlinePushInfoCreateParams),
+  };
+}
+
+// 富媒体上传地址由服务端下发，不在小程序 uploadFile 白名单内时只会静默失败；
+// 真机看不出是域名被拦、超大小还是格式不支持，必须把 host + errMsg + SDK 错误码打到屏幕上。
+function reportSendFailure(label: string) {
+  return (err: any): void => {
+    if (!err) {
+      return;
+    }
+    console.error(`[TUIChat] ${label}发送失败:`, err);
+    const upload = getIMLastUploadError();
+    const raw = String(
+      upload?.errMsg
+      || err?.message
+      || err?.msg
+      || err?.errMsg
+      || (typeof err === 'object' ? JSON.stringify(err) : String(err)),
+    );
+    const host = upload?.url ? `${upload.url.split('/')[2] || upload.url} ` : '';
+    const text = raw.length > 60 ? `${raw.slice(0, 60)}…` : raw;
+    Toast({
+      message: `${label}发送失败 ${err?.code ?? ''} ${host}${text}`,
+      type: TOAST_TYPE.ERROR,
+      duration: 5000,
+    });
   };
 }
 
@@ -72,7 +100,7 @@ export function sendVideoMessage(
     TUIChatEngine.TYPES.MSG_VIDEO,
   );
 
-  TUIChatService.sendVideoMessage(options, sendMessageOptions);
+  TUIChatService.sendVideoMessage(options, sendMessageOptions)?.catch(reportSendFailure('视频'));
 }
 
 export function sendFileMessage(

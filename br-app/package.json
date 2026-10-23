@@ -20,7 +20,8 @@
     "test:im-history-merge": "node scripts/verify-im-history-merge.mjs",
     "test:chat-read-on-visible": "node scripts/verify-chat-read-on-visible.js",
     "test:chat-read-gate": "node scripts/verify-chat-read-gate.mjs",
-    "test:scripts": "npm run test:profile-links && npm run test:wechat-appid && npm run test:refactor && npm run test:activity-coupon && npm run test:course-schedule && npm run test:profile-menu && npm run test:conversation-tab && npm run test:im-peer-profile && npm run test:im-history && npm run test:im-history-merge && npm run test:chat-read-on-visible && npm run test:chat-read-gate"
+    "test:media-send-diagnostics": "node scripts/verify-media-send-diagnostics.js",
+    "test:scripts": "npm run test:profile-links && npm run test:wechat-appid && npm run test:refactor && npm run test:activity-coupon && npm run test:course-schedule && npm run test:profile-menu && npm run test:conversation-tab && npm run test:im-peer-profile && npm run test:im-history && npm run test:im-history-merge && npm run test:chat-read-on-visible && npm run test:chat-read-gate && npm run test:media-send-diagnostics"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4060620250520001",

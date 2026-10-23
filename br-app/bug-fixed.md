@@ -627,3 +627,77 @@ TUIChatService.sendVideoMessage(options, sendMessageOptions)
 - `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/useUpload.ts` — `chooseVideoInUniApp` / `chooseCameraInUniApp` 加 `try-catch` + `currentConversation` 空值提示
 - `br-app/scripts/verify-media-send-diagnostics.js` — 更新断言覆盖同步抛错防护
 - SDK 源码：`node_modules/@tencentcloud/lite-chat/node.es.js` — `createVideoMessage` 的 `try-catch-rethrow`、`_processMiniVideoFile` 的 `Mr(e)` 检查、`_validateBeforeUploadVideo` 的三项校验
+
+## 发送视频/图片后发送方窗口看不到新消息（会话被 onHide 清空）
+
+### 报错信息
+
+- 发送视频/图片后，接收方窗口正常显示新消息，但**发送方窗口看不到新发送的视频/图片**
+- 发送方窗口先变一片空白，再加载出之前的历史消息，然后出现"回到最新位置"按钮
+- vconsole 日志显示：
+  ```
+  TUIConversationService.switchConversation conversationID is empty, conversationID:
+  [TUIChat] 视频发送入参：{tempFilePath: "wxfile://...", duration: 12, size: 3525499, ...}
+  [_upload] uploadFile message: {ID: "144115268479202146-...", ...}
+  ```
+- SDK 确实在上传文件（`_upload` 日志存在），但发送方窗口不显示
+
+### 根本原因
+
+**`onHide` → `reset()` 清空了会话和消息列表，但 `success` 回调执行时会话尚未恢复**
+
+时序问题：
+1. 用户点击「拍摄/相册」→ 打开系统选择器 → 触发 `onHide`
+2. `onHide` 调用 `reset()` → `TUIConversationService.switchConversation('')` → 清空 `currentConversationID` 和消息列表
+3. 用户选择视频/图片 → `success` 回调执行
+4. 此时 `currentConversationID` 已被清空，虽然代码缓存了 `conversationID`，但 SDK 的消息列表已经被清空
+5. 调用 `sendVideoMessage(conversation, res)` 时，SDK 创建消息并尝试添加到消息列表，但消息列表关联的是空会话
+6. 然后 `onShow` 触发，调用 `initChat` 恢复会话，消息列表重新加载，但新发送的消息不在列表中（因为消息被添加到了错误的上下文）
+
+**关键发现**：`TUIConversationService.switchConversation()` 返回 Promise，是异步操作。之前代码同步调用后立即发送消息，此时会话可能尚未恢复。
+
+### 解决方案
+
+在 `chooseImage/chooseVideo/chooseMedia/chooseCamera` 的 `success` 回调中：
+
+1. 检查 `currentConversationID` 是否为空
+2. 如果为空且有缓存的 `conversationID`，调用 `TUIConversationService.switchConversation(cachedConversationID)` 并等待 Promise 完成
+3. 在 `.then()` 回调中获取 `conversation` 并发送消息
+4. 添加 `.catch()` 处理会话恢复失败的情况
+
+```typescript
+const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
+if (!currentID && cachedConversationID) {
+  // switchConversation 返回 Promise，等待会话恢复后再发送
+  TUIConversationService.switchConversation(cachedConversationID)
+    .then(() => {
+      const conversation = TUIStore.getConversationModel(cachedConversationID);
+      if (conversation) {
+        sendVideoMessage(conversation, res);
+      }
+    })
+    .catch((err) => {
+      console.error('[TUIChat] switchConversation 失败:', err);
+      Toast({ message: '会话恢复失败，请稍后重试', type: TOAST_TYPE.ERROR });
+    });
+  return;
+}
+```
+
+### 验证
+
+- `npm run build:mp-weixin` 通过（主包 1.15MB）
+- 真机测试：发送视频/图片后，发送方窗口立即显示新消息和进度条
+- vconsole 日志确认：`switchConversation` 成功后才发送消息
+
+### 经验教训
+
+1. **第三方 SDK 的异步 API 必须等待完成**。`switchConversation` 返回 Promise，同步调用后立即执行依赖会话的操作，会话可能尚未恢复。
+2. **`onHide` 会清空会话状态**。打开系统选择器（相册/相机）会触发 `onHide`，导致 `currentConversationID` 被清空。在 `success` 回调中必须检查会话是否有效。
+3. **缓存 ID 不够，还要恢复会话**。只缓存 `conversationID` 并调用 `getConversationModel` 不够，因为 SDK 的消息列表与 `currentConversation` 关联，必须先恢复会话再发送消息。
+4. **Promise 链式调用确保时序**。用 `.then()` 等待异步操作完成，再执行依赖结果的操作，避免竞态条件。
+
+### 涉及文件
+
+- `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/useUpload.ts` — `chooseImage/chooseVideo/chooseMedia/chooseCamera` 的 `success` 回调中等待 `switchConversation` 完成
+- SDK 源码：`node_modules/@tencentcloud/chat-uikit-engine-lite/index.js` — `TUIConversationService.switchConversation` 返回 Promise

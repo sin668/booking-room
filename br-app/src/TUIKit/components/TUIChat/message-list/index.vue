@@ -327,13 +327,7 @@ const reSendDialogShow = ref(false);
 const resendMessageData = ref();
 
 const scrollToBottom = () => {
-  scrollTop.value += 300;
-  // Solve the issue where swiping to the bottom for the first time after packaging Uniapp into an app has a delay,
-  // which can be set to 300 ms.
-  const timer = setTimeout(() => {
-    scrollTop.value += 1;
-    clearTimeout(timer);
-  }, 300);
+  scrollTop.value += 1;
 };
 
 const onCurrentConversationIDUpdated = (conversationID: string) => {
@@ -424,7 +418,7 @@ async function onMessageListUpdated(list: IMessageModel[]) {
   } else if (!isLoadingMessage.value && !(scrollButtonInstanceRef.value?.isScrollButtonVisible && newLastMessage?.flow === 'in')) {
     // scroll to bottom
     nextTick(() => {
-      scrollToBottom();
+      scrollToLatestMessage();
     });
   }
   if (isEnabledMessageReadReceiptGlobal()) {
@@ -439,9 +433,7 @@ async function scrollToLatestMessage() {
       'messageList',
     );
     if (scrollHeight) {
-      scrollTop.value === scrollHeight
-        ? (scrollTop.value = scrollHeight + 1)
-        : (scrollTop.value = scrollHeight);
+      scrollTop.value = scrollHeight + 1;
     } else {
       scrollToBottom();
     }

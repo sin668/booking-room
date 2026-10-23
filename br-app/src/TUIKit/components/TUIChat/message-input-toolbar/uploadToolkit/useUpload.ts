@@ -125,7 +125,18 @@ export function useUpload(uploadType: UploadType) {
         // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
         const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
         if (!currentID && cachedConversationID) {
-          TUIConversationService.switchConversation(cachedConversationID);
+          // switchConversation 返回 Promise，等待会话恢复后再发送
+          TUIConversationService.switchConversation(cachedConversationID)
+            .then(() => {
+              const conversation = TUIStore.getConversationModel(cachedConversationID);
+              if (conversation) {
+                sendImageMessage(conversation, res);
+              }
+            })
+            .catch((err) => {
+              console.error('[TUIChat] switchConversation 失败:', err);
+            });
+          return;
         }
         const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
         if (!conversationID) return;
@@ -154,7 +165,21 @@ export function useUpload(uploadType: UploadType) {
           // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
           const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
           if (!currentID && cachedConversationID) {
-            TUIConversationService.switchConversation(cachedConversationID);
+            // switchConversation 返回 Promise，等待会话恢复后再发送
+            TUIConversationService.switchConversation(cachedConversationID)
+              .then(() => {
+                const conversation = TUIStore.getConversationModel(cachedConversationID);
+                if (conversation) {
+                  sendVideoMessage(conversation, res);
+                } else {
+                  Toast({ message: '会话加载失败，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
+                }
+              })
+              .catch((err) => {
+                console.error('[TUIChat] switchConversation 失败:', err);
+                Toast({ message: '会话恢复失败，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
+              });
+            return;
           }
           const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
           if (!conversationID) {
@@ -189,7 +214,18 @@ export function useUpload(uploadType: UploadType) {
         // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
         const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
         if (!currentID && cachedConversationID) {
-          TUIConversationService.switchConversation(cachedConversationID);
+          // switchConversation 返回 Promise，等待会话恢复后再发送
+          TUIConversationService.switchConversation(cachedConversationID)
+            .then(() => {
+              const conversation = TUIStore.getConversationModel(cachedConversationID);
+              if (conversation) {
+                sendImageMessage(conversation, res);
+              }
+            })
+            .catch((err) => {
+              console.error('[TUIChat] switchConversation 失败:', err);
+            });
+          return;
         }
         const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
         if (!conversationID) return;
@@ -218,7 +254,21 @@ export function useUpload(uploadType: UploadType) {
           // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
           const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
           if (!currentID && cachedConversationID) {
-            TUIConversationService.switchConversation(cachedConversationID);
+            // switchConversation 返回 Promise，等待会话恢复后再发送
+            TUIConversationService.switchConversation(cachedConversationID)
+              .then(() => {
+                const conversation = TUIStore.getConversationModel(cachedConversationID);
+                if (conversation) {
+                  sendVideoMessage(conversation, res);
+                } else {
+                  Toast({ message: '会话加载失败，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
+                }
+              })
+              .catch((err) => {
+                console.error('[TUIChat] switchConversation 失败:', err);
+                Toast({ message: '会话恢复失败，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
+              });
+            return;
           }
           const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
           if (!conversationID) {

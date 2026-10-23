@@ -116,12 +116,15 @@ export function useUpload(uploadType: UploadType) {
   };
 
   const chooseImageInUniApp = () => {
+    const cachedConversationID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
     TUIGlobal?.chooseImage({
       count: MEDIA_CHOOSE_CONFIG.IMAGE.COUNT,
       sourceType: [sourceType],
       fail: genChooseFailHandler('图片'),
       success: function (res: Record<string, any>) {
-        const conversation = getCurrentConversation();
+        const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
+        if (!conversationID) return;
+        const conversation = TUIStore.getConversationModel(conversationID);
         if (conversation) {
           sendImageMessage(conversation, res);
         }
@@ -134,6 +137,8 @@ export function useUpload(uploadType: UploadType) {
       Toast({ message: '当前环境不支持视频选择', type: TOAST_TYPE.ERROR, duration: 3000 });
       return;
     }
+    // 打开选择器前缓存 conversationID，避免 onHide→reset() 清空会话后 success 回调拿不到
+    const cachedConversationID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
     try {
       TUIGlobal.chooseVideo({
         count: MEDIA_CHOOSE_CONFIG.VIDEO.COUNT,
@@ -141,7 +146,12 @@ export function useUpload(uploadType: UploadType) {
         compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
         fail: genChooseFailHandler('视频'),
         success: function (res: Record<string, any>) {
-          const conversation = getCurrentConversation();
+          const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
+          if (!conversationID) {
+            Toast({ message: '会话未加载，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
+            return;
+          }
+          const conversation = TUIStore.getConversationModel(conversationID);
           if (!conversation) {
             Toast({ message: '会话未加载，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
             return;
@@ -160,12 +170,15 @@ export function useUpload(uploadType: UploadType) {
   };
 
   const chooseMediaInUniApp = () => {
+    const cachedConversationID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
     TUIGlobal?.chooseImage({
       count: MEDIA_CHOOSE_CONFIG.IMAGE.COUNT,
       sourceType: [SourceType.ALBUM, SourceType.CAMERA],
       fail: genChooseFailHandler('图片'),
       success: function (res: Record<string, any>) {
-        const conversation = getCurrentConversation();
+        const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
+        if (!conversationID) return;
+        const conversation = TUIStore.getConversationModel(conversationID);
         if (conversation) {
           sendImageMessage(conversation, res);
         }
@@ -178,6 +191,8 @@ export function useUpload(uploadType: UploadType) {
       Toast({ message: '当前环境不支持视频拍摄', type: TOAST_TYPE.ERROR, duration: 3000 });
       return;
     }
+    // 打开选择器前缓存 conversationID，避免 onHide→reset() 清空会话后 success 回调拿不到
+    const cachedConversationID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
     try {
       TUIGlobal.chooseVideo({
         count: MEDIA_CHOOSE_CONFIG.VIDEO.COUNT,
@@ -185,7 +200,12 @@ export function useUpload(uploadType: UploadType) {
         compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
         fail: genChooseFailHandler('视频'),
         success: function (res: Record<string, any>) {
-          const conversation = getCurrentConversation();
+          const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
+          if (!conversationID) {
+            Toast({ message: '会话未加载，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
+            return;
+          }
+          const conversation = TUIStore.getConversationModel(conversationID);
           if (!conversation) {
             Toast({ message: '会话未加载，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
             return;

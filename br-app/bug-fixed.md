@@ -570,3 +570,60 @@ _getRawOrUploadProxyUrl(url) -> host 整体替换成上面解析出的 origin
 - `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/utils.ts` — `reportSendFailure()` + `sendVideoMessage().catch(...)`
 - `br-app/scripts/verify-media-send-diagnostics.js`、`br-app/package.json` — 新增断言脚本与 `test:media-send-diagnostics`
 - SDK 源码：`node_modules/@tencentcloud/lite-chat/standard.js` — `_processMiniVideoFile`/`_validateBeforeUploadVideo`/`Br` 格式白名单、`resolveUploadOrigin`/`_resolveIpv6Host` 的 IPv6 host 替换、`Xi=["rich.my-imcloud.com","imrich.qcloud.com"]`
+
+## 正式版真机发视频连 Toast 都不弹（同步抛错被 wx 回调吞掉）
+
+### 报错信息
+
+上一轮给 `sendVideoMessage` 补了 `?.catch(reportSendFailure('视频'))`，但真机测试发现：**点拍摄 → 选视频 → 完全没反应，连 Toast 都不弹**。开发者工具正常。
+
+### 根本原因
+
+`?.catch` 只能捕获 Promise reject，但 SDK 的视频错误出口是**同步 throw**：
+
+```
+TUIChatService.sendVideoMessage(options, sendMessageOptions)
+  → this.getEngine().chat.createVideoMessage(...)   // ← 同步抛错点
+    → this._processVideo(e)
+      → this._processMiniVideoFile(r)
+        → if (Mr(e)) throw new ChatError({message:"FileUnsupportedInMiniApp"})
+        → 或后续 _validateBeforeUploadVideo 校验失败也 throw
+  → this.sendMessage(s, t)   // ← 永远走不到
+```
+
+`createVideoMessage` 内部有 `try { ... } catch(e) { throw e }`——捕获后原样再抛，等于没有 catch。同步错误冒泡到 `wx.chooseVideo` 的 `success` 回调里，被微信框架吞掉（只写 console），UI 完全看不到。
+
+开发者工具正常是因为 `_processMiniVideoFile` 的 `Mr(e)` 检查（判断输入是否为 web File 对象）在工具里返回 false，真机上可能因为 `tempFiles` 结构差异或权限问题返回 true。
+
+### 解决方案
+
+三层防护，确保任何一层失败都能弹 Toast：
+
+1. **`utils.ts` 的 `sendVideoMessage`**：用 `try-catch` 包裹 `TUIChatService.sendVideoMessage(...)` 调用，同步抛错走 catch，异步 reject 走 `.catch`，两者都调 `reportSendFailure`。
+2. **`useUpload.ts` 的 `chooseVideoInUniApp` / `chooseCameraInUniApp`**：用 `try-catch` 包裹整个 `TUIGlobal.chooseVideo(...)` 调用，防止 API 本身同步抛错；`success` 回调里 `currentConversation` 为空时弹提示而不是静默跳过。
+3. **诊断日志**：`sendVideoMessage` 入口 `console.log` 打印 `chooseVideo` 返回的完整数据结构（`tempFilePath`/`fileType`/`size`/`tempFiles[0]` 的 keys），真机排查时直接从 vconsole 看。
+
+### 验证
+
+- `scripts/verify-media-send-diagnostics.js` 更新断言：两个 `chooseVideo` 入口必须有 `try{`、`TUIGlobal.chooseVideo(`（不能只用 `?.`）、`fail:` 回调、`genChooseFailHandler`；`sendVideoMessage` 必须用 `try-catch` 包裹 `TUIChatService.sendVideoMessage`；success 回调必须处理 `currentConversation` 为空；诊断日志必须记录 `tempFilePath`。
+- `npm run build:mp-weixin` 通过（主包 1.15MB，子包布局守卫 182 js）。
+- 产物内确认：`utils.js` 有 `try{...sendVideoMessage`、`发送失败`、`getIMLastUploadError`；`useUpload.js` 有 2 处 `try{...chooseVideo`、`当前环境不支持`、`会话未加载`。
+- 待用户在真机确认：选视频后要么成功发送，要么 Toast 显示具体错误（同步抛错现在也能被捕获了），vconsole 里能看到 `[TUIChat] 视频发送入参:` 的完整数据结构。
+
+### 走过的弯路
+
+上一轮只加了 `?.catch`，以为 `createVideoMessage` 的错误会走 Promise reject。实际上 SDK 的 `createVideoMessage` 内部是 `try { ... } catch(e) { throw e }`——同步抛错，根本不会创建 Promise。`?.catch` 对同步错误完全无效，必须在调用方用 `try-catch` 包裹。
+
+### 经验教训
+
+1. **第三方 SDK 的错误出口有两种：同步 throw 和 Promise reject**。`.catch` 只能抓后者。如果 SDK 文档没明确说，必须看源码确认——本例 `createVideoMessage` 的 `try-catch-rethrow` 模式就是典型的同步抛错。
+2. **wx 回调里的同步错误会被框架吞掉**。`success`/`fail` 回调里如果抛错，微信只写 console 不弹 UI，用户看到的就是「没反应」。所以回调内部必须有 try-catch。
+3. **诊断日志比错误处理更重要**。真机排查时，能看到「发生了什么」比「弹个 Toast 说失败了」有用得多。`console.log` 打印入参的完整结构，vconsole 里一眼就能看出是数据问题还是 API 问题。
+4. **「开发者工具正常、真机不行」的第三种成因**：除了域名白名单和系统权限，还有**SDK 内部的同步校验分支**。真机可能走了不同的代码路径（比如 `IN_MINI_APP` 判断、`tempFiles` 结构差异），这些分支在工具里不触发。
+
+### 涉及文件
+
+- `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/utils.ts` — `sendVideoMessage` 改为 `try-catch` 包裹 + 诊断日志
+- `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/useUpload.ts` — `chooseVideoInUniApp` / `chooseCameraInUniApp` 加 `try-catch` + `currentConversation` 空值提示
+- `br-app/scripts/verify-media-send-diagnostics.js` — 更新断言覆盖同步抛错防护
+- SDK 源码：`node_modules/@tencentcloud/lite-chat/node.es.js` — `createVideoMessage` 的 `try-catch-rethrow`、`_processMiniVideoFile` 的 `Mr(e)` 检查、`_validateBeforeUploadVideo` 的三项校验

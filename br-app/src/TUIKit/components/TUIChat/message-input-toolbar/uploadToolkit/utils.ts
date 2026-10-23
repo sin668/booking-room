@@ -93,6 +93,19 @@ export function sendVideoMessage(
     return;
   }
 
+  // 诊断日志：真机上视频发送失败时看这里，确认 chooseVideo 返回的数据结构
+  console.log('[TUIChat] 视频发送入参:', {
+    tempFilePath: file.tempFilePath,
+    fileType: file.fileType,
+    size: file.size,
+    duration: file.duration,
+    width: file.width,
+    height: file.height,
+    hasTempFiles: Array.isArray(file.tempFiles),
+    tempFilesLength: file.tempFiles?.length,
+    tempFiles0: file.tempFiles?.[0] ? Object.keys(file.tempFiles[0]) : null,
+  });
+
   const options = createSendMessageOptions(currentConversation, file);
   const sendMessageOptions = genOfflinePushInfo(
     currentConversation,
@@ -100,7 +113,16 @@ export function sendVideoMessage(
     TUIChatEngine.TYPES.MSG_VIDEO,
   );
 
-  TUIChatService.sendVideoMessage(options, sendMessageOptions)?.catch(reportSendFailure('视频'));
+  // createVideoMessage 内部会同步校验视频格式/大小，失败时直接 throw 而不是返回 rejected Promise，
+  // 错误会冒泡到 wx.chooseVideo 的 success 回调里被框架吞掉，所以必须在这里 try-catch。
+  try {
+    const result = TUIChatService.sendVideoMessage(options, sendMessageOptions);
+    if (result && typeof result.catch === 'function') {
+      result.catch(reportSendFailure('视频'));
+    }
+  } catch (err) {
+    reportSendFailure('视频')(err);
+  }
 }
 
 export function sendFileMessage(

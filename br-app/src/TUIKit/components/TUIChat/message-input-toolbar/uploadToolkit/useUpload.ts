@@ -127,17 +127,32 @@ export function useUpload(uploadType: UploadType) {
   };
 
   const chooseVideoInUniApp = () => {
-    TUIGlobal?.chooseVideo({
-      count: MEDIA_CHOOSE_CONFIG.VIDEO.COUNT,
-      sourceType: [sourceType],
-      compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
-      fail: genChooseFailHandler('视频'),
-      success: function (res: Record<string, any>) {
-        if (currentConversation.value) {
+    if (!TUIGlobal?.chooseVideo) {
+      Toast({ message: '当前环境不支持视频选择', type: TOAST_TYPE.ERROR, duration: 3000 });
+      return;
+    }
+    try {
+      TUIGlobal.chooseVideo({
+        count: MEDIA_CHOOSE_CONFIG.VIDEO.COUNT,
+        sourceType: [sourceType],
+        compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
+        fail: genChooseFailHandler('视频'),
+        success: function (res: Record<string, any>) {
+          if (!currentConversation.value) {
+            Toast({ message: '会话未加载，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
+            return;
+          }
           sendVideoMessage(currentConversation.value, res);
-        }
-      },
-    });
+        },
+      });
+    } catch (err) {
+      console.error('[TUIChat] chooseVideo 调用异常:', err);
+      Toast({
+        message: `视频选择异常 ${String(err?.errMsg || err?.message || err).slice(0, 60)}`,
+        type: TOAST_TYPE.ERROR,
+        duration: 5000,
+      });
+    }
   };
 
   const chooseMediaInUniApp = () => {
@@ -154,17 +169,32 @@ export function useUpload(uploadType: UploadType) {
   };
 
   const chooseCameraInUniApp = () => {
-    TUIGlobal?.chooseVideo({
-      count: MEDIA_CHOOSE_CONFIG.VIDEO.COUNT,
-      sourceType: [SourceType.ALBUM, SourceType.CAMERA],
-      compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
-      fail: genChooseFailHandler('视频'),
-      success: function (res: Record<string, any>) {
-        if (currentConversation.value) {
+    if (!TUIGlobal?.chooseVideo) {
+      Toast({ message: '当前环境不支持视频拍摄', type: TOAST_TYPE.ERROR, duration: 3000 });
+      return;
+    }
+    try {
+      TUIGlobal.chooseVideo({
+        count: MEDIA_CHOOSE_CONFIG.VIDEO.COUNT,
+        sourceType: [SourceType.ALBUM, SourceType.CAMERA],
+        compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
+        fail: genChooseFailHandler('视频'),
+        success: function (res: Record<string, any>) {
+          if (!currentConversation.value) {
+            Toast({ message: '会话未加载，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
+            return;
+          }
           sendVideoMessage(currentConversation.value, res);
-        }
-      },
-    });
+        },
+      });
+    } catch (err) {
+      console.error('[TUIChat] chooseVideo 调用异常:', err);
+      Toast({
+        message: `视频选择异常 ${String(err?.errMsg || err?.message || err).slice(0, 60)}`,
+        type: TOAST_TYPE.ERROR,
+        duration: 5000,
+      });
+    }
   };
 
   const handleWebFileChange = (event: Event) => {

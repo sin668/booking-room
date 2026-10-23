@@ -1,5 +1,5 @@
 import { ref, computed } from '../../../../adapter-vue';
-import { TUIStore, StoreName, IConversationModel } from '@tencentcloud/chat-uikit-engine-lite';
+import { TUIStore, StoreName, IConversationModel, TUIConversationService } from '@tencentcloud/chat-uikit-engine-lite';
 import { TUIGlobal } from '@tencentcloud/universal-api';
 import { Toast, TOAST_TYPE } from '../../../common/Toast/index';
 import { isPC, isUniFrameWork } from '../../../../utils/env';
@@ -122,6 +122,11 @@ export function useUpload(uploadType: UploadType) {
       sourceType: [sourceType],
       fail: genChooseFailHandler('图片'),
       success: function (res: Record<string, any>) {
+        // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
+        const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
+        if (!currentID && cachedConversationID) {
+          TUIConversationService.switchConversation(cachedConversationID);
+        }
         const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
         if (!conversationID) return;
         const conversation = TUIStore.getConversationModel(conversationID);
@@ -146,6 +151,11 @@ export function useUpload(uploadType: UploadType) {
         compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
         fail: genChooseFailHandler('视频'),
         success: function (res: Record<string, any>) {
+          // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
+          const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
+          if (!currentID && cachedConversationID) {
+            TUIConversationService.switchConversation(cachedConversationID);
+          }
           const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
           if (!conversationID) {
             Toast({ message: '会话未加载，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
@@ -176,6 +186,11 @@ export function useUpload(uploadType: UploadType) {
       sourceType: [SourceType.ALBUM, SourceType.CAMERA],
       fail: genChooseFailHandler('图片'),
       success: function (res: Record<string, any>) {
+        // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
+        const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
+        if (!currentID && cachedConversationID) {
+          TUIConversationService.switchConversation(cachedConversationID);
+        }
         const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
         if (!conversationID) return;
         const conversation = TUIStore.getConversationModel(conversationID);
@@ -200,6 +215,11 @@ export function useUpload(uploadType: UploadType) {
         compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
         fail: genChooseFailHandler('视频'),
         success: function (res: Record<string, any>) {
+          // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
+          const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
+          if (!currentID && cachedConversationID) {
+            TUIConversationService.switchConversation(cachedConversationID);
+          }
           const conversationID = cachedConversationID || TUIStore.getData(StoreName.CONV, 'currentConversationID');
           if (!conversationID) {
             Toast({ message: '会话未加载，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });

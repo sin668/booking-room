@@ -45,14 +45,12 @@ function genChooseFailHandler(label: string) {
 
 export function useUpload(uploadType: UploadType) {
   const inputRef = ref();
-  const currentConversation = ref<IConversationModel>();
   const theme = TUIChatConfig.getTheme();
 
-  TUIStore.watch(StoreName.CONV, {
-    currentConversation: (conversation: IConversationModel) => {
-      currentConversation.value = conversation;
-    },
-  });
+  // 直接从 SDK 获取当前会话，不依赖 watch（watch 在多个组件实例间可能有时序问题）
+  const getCurrentConversation = (): IConversationModel | undefined => {
+    return TUIStore.getData(StoreName.CONV, 'currentConversation');
+  };
 
   const sourceType = genSourceType(uploadType);
 
@@ -119,8 +117,9 @@ export function useUpload(uploadType: UploadType) {
       sourceType: [sourceType],
       fail: genChooseFailHandler('图片'),
       success: function (res: Record<string, any>) {
-        if (currentConversation.value) {
-          sendImageMessage(currentConversation.value, res);
+        const conversation = getCurrentConversation();
+        if (conversation) {
+          sendImageMessage(conversation, res);
         }
       },
     });
@@ -138,11 +137,12 @@ export function useUpload(uploadType: UploadType) {
         compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
         fail: genChooseFailHandler('视频'),
         success: function (res: Record<string, any>) {
-          if (!currentConversation.value) {
+          const conversation = getCurrentConversation();
+          if (!conversation) {
             Toast({ message: '会话未加载，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
             return;
           }
-          sendVideoMessage(currentConversation.value, res);
+          sendVideoMessage(conversation, res);
         },
       });
     } catch (err) {
@@ -161,8 +161,9 @@ export function useUpload(uploadType: UploadType) {
       sourceType: [SourceType.ALBUM, SourceType.CAMERA],
       fail: genChooseFailHandler('图片'),
       success: function (res: Record<string, any>) {
-        if (currentConversation.value) {
-          sendImageMessage(currentConversation.value, res);
+        const conversation = getCurrentConversation();
+        if (conversation) {
+          sendImageMessage(conversation, res);
         }
       },
     });
@@ -180,11 +181,12 @@ export function useUpload(uploadType: UploadType) {
         compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
         fail: genChooseFailHandler('视频'),
         success: function (res: Record<string, any>) {
-          if (!currentConversation.value) {
+          const conversation = getCurrentConversation();
+          if (!conversation) {
             Toast({ message: '会话未加载，请稍后重试', type: TOAST_TYPE.ERROR, duration: 3000 });
             return;
           }
-          sendVideoMessage(currentConversation.value, res);
+          sendVideoMessage(conversation, res);
         },
       });
     } catch (err) {
@@ -198,26 +200,24 @@ export function useUpload(uploadType: UploadType) {
   };
 
   const handleWebFileChange = (event: Event) => {
+    const conversation = getCurrentConversation();
+    if (!conversation) {
+      return;
+    }
     switch (uploadType) {
       case UploadType.IMAGE:
         handleWebFileSelect(event, (file) => {
-          if (currentConversation.value) {
-            sendImageMessage(currentConversation.value, file);
-          }
+          sendImageMessage(conversation, file);
         });
         break;
       case UploadType.VIDEO:
         handleWebFileSelect(event, (file) => {
-          if (currentConversation.value) {
-            sendVideoMessage(currentConversation.value, file);
-          }
+          sendVideoMessage(conversation, file);
         });
         break;
       case UploadType.FILE:
         handleWebFileSelect(event, (file) => {
-          if (currentConversation.value) {
-            sendFileMessage(currentConversation.value, file);
-          }
+          sendFileMessage(conversation, file);
         });
         break;
     }
@@ -225,7 +225,6 @@ export function useUpload(uploadType: UploadType) {
 
   return {
     inputRef,
-    currentConversation,
     toolbarConfig,
     isPC,
     isUniFrameWork,

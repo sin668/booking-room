@@ -117,11 +117,19 @@ export function useUpload(uploadType: UploadType) {
 
   const chooseImageInUniApp = () => {
     const cachedConversationID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
+    // 通知 TUIChat 页面：正在打开系统选择器，onHide 时不要 reset()
+    uni.$emit('choosing-media-start');
     TUIGlobal?.chooseImage({
       count: MEDIA_CHOOSE_CONFIG.IMAGE.COUNT,
       sourceType: [sourceType],
-      fail: genChooseFailHandler('图片'),
+      fail: function (err: any) {
+        // 选择器关闭，通知 TUIChat 页面恢复正常的 onHide 行为
+        uni.$emit('choosing-media-end');
+        genChooseFailHandler('图片')(err);
+      },
       success: function (res: Record<string, any>) {
+        // 选择器关闭，通知 TUIChat 页面恢复正常的 onHide 行为
+        uni.$emit('choosing-media-end');
         // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
         const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
         if (!currentID && cachedConversationID) {
@@ -155,13 +163,21 @@ export function useUpload(uploadType: UploadType) {
     }
     // 打开选择器前缓存 conversationID，避免 onHide→reset() 清空会话后 success 回调拿不到
     const cachedConversationID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
+    // 通知 TUIChat 页面：正在打开系统选择器，onHide 时不要 reset()
+    uni.$emit('choosing-media-start');
     try {
       TUIGlobal.chooseVideo({
         count: MEDIA_CHOOSE_CONFIG.VIDEO.COUNT,
         sourceType: [sourceType],
         compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
-        fail: genChooseFailHandler('视频'),
+        fail: function (err: any) {
+          // 选择器关闭，通知 TUIChat 页面恢复正常的 onHide 行为
+          uni.$emit('choosing-media-end');
+          genChooseFailHandler('视频')(err);
+        },
         success: function (res: Record<string, any>) {
+          // 选择器关闭，通知 TUIChat 页面恢复正常的 onHide 行为
+          uni.$emit('choosing-media-end');
           // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
           const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
           if (!currentID && cachedConversationID) {
@@ -195,6 +211,7 @@ export function useUpload(uploadType: UploadType) {
         },
       });
     } catch (err) {
+      uni.$emit('choosing-media-end');
       console.error('[TUIChat] chooseVideo 调用异常:', err);
       Toast({
         message: `视频选择异常 ${String(err?.errMsg || err?.message || err).slice(0, 60)}`,
@@ -206,11 +223,19 @@ export function useUpload(uploadType: UploadType) {
 
   const chooseMediaInUniApp = () => {
     const cachedConversationID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
+    // 通知 TUIChat 页面：正在打开系统选择器，onHide 时不要 reset()
+    uni.$emit('choosing-media-start');
     TUIGlobal?.chooseImage({
       count: MEDIA_CHOOSE_CONFIG.IMAGE.COUNT,
       sourceType: [SourceType.ALBUM, SourceType.CAMERA],
-      fail: genChooseFailHandler('图片'),
+      fail: function (err: any) {
+        // 选择器关闭，通知 TUIChat 页面恢复正常的 onHide 行为
+        uni.$emit('choosing-media-end');
+        genChooseFailHandler('图片')(err);
+      },
       success: function (res: Record<string, any>) {
+        // 选择器关闭，通知 TUIChat 页面恢复正常的 onHide 行为
+        uni.$emit('choosing-media-end');
         // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
         const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
         if (!currentID && cachedConversationID) {
@@ -244,13 +269,21 @@ export function useUpload(uploadType: UploadType) {
     }
     // 打开选择器前缓存 conversationID，避免 onHide→reset() 清空会话后 success 回调拿不到
     const cachedConversationID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
+    // 通知 TUIChat 页面：正在打开系统选择器，onHide 时不要 reset()
+    uni.$emit('choosing-media-start');
     try {
       TUIGlobal.chooseVideo({
         count: MEDIA_CHOOSE_CONFIG.VIDEO.COUNT,
         sourceType: [SourceType.ALBUM, SourceType.CAMERA],
         compressed: MEDIA_CHOOSE_CONFIG.VIDEO.COMPRESSED,
-        fail: genChooseFailHandler('视频'),
+        fail: function (err: any) {
+          // 选择器关闭，通知 TUIChat 页面恢复正常的 onHide 行为
+          uni.$emit('choosing-media-end');
+          genChooseFailHandler('视频')(err);
+        },
         success: function (res: Record<string, any>) {
+          // 选择器关闭，通知 TUIChat 页面恢复正常的 onHide 行为
+          uni.$emit('choosing-media-end');
           // onHide→reset() 可能已清空 currentConversationID，需要恢复会话再发送
           const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
           if (!currentID && cachedConversationID) {
@@ -284,6 +317,7 @@ export function useUpload(uploadType: UploadType) {
         },
       });
     } catch (err) {
+      uni.$emit('choosing-media-end');
       console.error('[TUIChat] chooseVideo 调用异常:', err);
       Toast({
         message: `视频选择异常 ${String(err?.errMsg || err?.message || err).slice(0, 60)}`,

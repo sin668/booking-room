@@ -100,22 +100,35 @@ import { initChat, logout } from './entry-chat-only.ts';
 // 否则用户跳到别的页面或小程序切后台后，新到的消息仍会被立刻上报成已读。
 const pageConversationID = ref('');
 let releasedOnHide = false;
+// 区分 onHide 场景：打开系统选择器（相册/相机）时不调 reset()，避免清空会话和消息列表
+let isChoosingMedia = false;
 
 onLoad((options) => {
   pageConversationID.value = (options && options.conversationID) || '';
   initChat(options);
+  // 监听媒体选择器打开/关闭事件
+  uni.$on('choosing-media-start', () => {
+    isChoosingMedia = true;
+  });
+  uni.$on('choosing-media-end', () => {
+    isChoosingMedia = false;
+  });
 });
 
 onHide(() => {
   if (releasedOnHide) return;
   releasedOnHide = true;
-  reset();
+  // 打开系统选择器时不调 reset()，避免清空会话导致发送方看不到新消息
+  if (!isChoosingMedia) {
+    reset();
+  }
 });
 
 onShow(() => {
   if (!releasedOnHide) return;
   releasedOnHide = false;
-  if (pageConversationID.value) {
+  // 如果是从媒体选择器返回，会话未被清空，不需要重新 initChat
+  if (!isChoosingMedia && pageConversationID.value) {
     initChat({ conversationID: pageConversationID.value });
   }
 });
@@ -125,6 +138,9 @@ onUnload(() => {
   // before it, so the current conversation must be released here — otherwise the engine keeps
   // auto-marking this conversation's incoming messages as read and unreadCount stays 0.
   reset();
+  // 清理事件监听
+  uni.$off('choosing-media-start');
+  uni.$off('choosing-media-end');
   // Whether logout is decided by yourself  when the page is unloaded. The default is false.
   logout(false).then(() => {
     // Handle success result from promise.then when you set true.

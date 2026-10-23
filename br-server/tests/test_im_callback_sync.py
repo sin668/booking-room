@@ -99,6 +99,27 @@ class TestParseMessage:
         )
         assert (parsed.element_type, parsed.media_url, parsed.content) == ("sound", "https://im/a.mp3", "3")
 
+    def test_video_extracts_video_url(self):
+        parsed = parse_message(
+            [
+                {
+                    "MsgType": "TIMVideoElem",
+                    "MsgContent": {
+                        "VideoUrl": "https://im/video.mp4",
+                        "ThumbUrl": "https://im/thumb.jpg",
+                        "ThumbWidth": 128,
+                        "ThumbHeight": 72,
+                        "Second": 10,
+                        "Size": 1024000,
+                    },
+                }
+            ]
+        )
+        assert parsed.element_type == "video"
+        assert parsed.media_url == "https://im/video.mp4"
+        assert parsed.content == "10s"
+        assert media_kind_for(ImMessage(element_type="video", media_url=parsed.media_url)) == "video"
+
     def test_unknown_type_is_other(self):
         assert parse_message([{"MsgType": "TIMGroupTipElem", "MsgContent": {}}]).element_type == "other"
 
@@ -218,6 +239,9 @@ class TestMediaKey:
         assert _extension("image", "https://im/no-extension") == ".jpg"
         assert _extension("audio", "https://im/x.silk") == ".mp3"
         assert _extension("audio", "https://im/x.m4a") == ".m4a"
+        assert _extension("video", "https://im/v.mp4") == ".mp4"
+        assert _extension("video", "https://im/v.mov") == ".mov"
+        assert _extension("video", "https://im/no-ext") == ".mp4"
 
 
 class TestMediaDownloadLimit:

@@ -6,6 +6,7 @@ const ELEMENT_TO_TYPE = {
   text: TUIChatEngine.TYPES.MSG_TEXT,
   image: TUIChatEngine.TYPES.MSG_IMAGE,
   sound: TUIChatEngine.TYPES.MSG_AUDIO,
+  video: TUIChatEngine.TYPES.MSG_VIDEO,
   face: TUIChatEngine.TYPES.MSG_FACE,
   custom: TUIChatEngine.TYPES.MSG_CUSTOM,
 }
@@ -50,6 +51,8 @@ function buildPayload(elementType, row) {
         second: content.Second || Number(row.content) || 0,
         size: content.Size || 0,
       }
+    case 'video':
+      return videoPayload(row, content)
     case 'face':
       return { data: content.Data || '', index: content.Index || 0, url: content.URL || '' }
     case 'custom':
@@ -60,6 +63,17 @@ function buildPayload(elementType, row) {
       }
     default:
       return {}
+  }
+}
+
+function videoPayload(row, content) {
+  // 视频优先用数据库转存的 OSS 地址；缩略图保留腾讯云原地址（已在小程序域名白名单）
+  const url = row.oss_url || content.VideoUrl || row.media_url || ''
+  return {
+    url,
+    snapshotUrl: content.ThumbUrl || '',
+    snapshotWidth: content.ThumbWidth || 0,
+    snapshotHeight: content.ThumbHeight || 0,
   }
 }
 

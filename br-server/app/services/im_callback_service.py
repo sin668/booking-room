@@ -30,8 +30,8 @@ _ELEMENT_TYPES = {
     "TIMFaceElem": "face",
     "TIMCustomElem": "custom",
 }
-# 仅这两类媒体需要转存 OSS（用户确认的范围）
-_MEDIA_KINDS = {"image": "image", "sound": "audio"}
+# 这三类媒体需要转存 OSS（用户确认的范围）
+_MEDIA_KINDS = {"image": "image", "sound": "audio", "video": "video"}
 
 
 @dataclass(frozen=True)
@@ -58,6 +58,13 @@ def parse_message(msg_body: list[dict[str, Any]] | None) -> ParsedMessage:
                 "sound",
                 str(content["Second"]) if content.get("Second") else None,
                 content.get("Url") or None,
+            )
+        if element_type == "video":
+            # 视频地址字段是 VideoUrl，缩略图是 ThumbUrl
+            return ParsedMessage(
+                "video",
+                f"{content.get('Second', 0)}s" if content.get("Second") else None,
+                content.get("VideoUrl") or None,
             )
         if element_type == "other":
             continue

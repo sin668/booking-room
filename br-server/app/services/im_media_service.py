@@ -25,10 +25,11 @@ MAX_MEDIA_BYTES = 10 * 1024 * 1024
 class MediaTooLarge(Exception):
     """流式读取时超过大小上限，按转存失败降级处理。"""
 
-_DEFAULT_EXT = {"image": ".jpg", "audio": ".mp3"}
+_DEFAULT_EXT = {"image": ".jpg", "audio": ".mp3", "video": ".mp4"}
 _ALLOWED_EXTS = {
     "image": {".jpg", ".jpeg", ".png", ".gif", ".webp"},
     "audio": {".mp3", ".wav", ".aac", ".m4a", ".amr"},
+    "video": {".mp4", ".mov", ".avi", ".mkv", ".webm"},
 }
 _CONTENT_TYPES = {
     ".jpg": "image/jpeg",
@@ -41,6 +42,11 @@ _CONTENT_TYPES = {
     ".aac": "audio/aac",
     ".m4a": "audio/mp4",
     ".amr": "audio/amr",
+    ".mp4": "video/mp4",
+    ".mov": "video/quicktime",
+    ".avi": "video/x-msvideo",
+    ".mkv": "video/x-matroska",
+    ".webm": "video/webm",
 }
 
 

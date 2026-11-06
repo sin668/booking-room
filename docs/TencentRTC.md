@@ -610,6 +610,201 @@ if element_type == "video":
 
 **涉及文件：** `br-app/scripts/post-build-move-assets.js`
 
+### 7. 历史消息图片无法显示和预览
+
+**现象：** 点击大于 7 天的历史消息进入聊天窗口，图片显示为空白占位图，点击也无法放大预览。
+
+**报错信息：** 无明确报错，图片区域显示灰色占位。
+
+**根因：** TUIKit 组件访问图片 URL 有两种方式：
+1. `message-image.vue` 显示用 `content.url`（IImageMessageContent 接口）
+2. `handleImagePreview` 预览用 `content.imageInfoArray[2].url`
+
+原来的 `imagePayload` 只构建了 `imageInfoArray` 结构，缺少顶层 `url` 字段，导致图片无法显示。
+
+**解决：** 修改 `buildImHistoryMessages` 的 `imagePayload` 函数，同时提供两种结构：
+
+```javascript
+function imagePayload(row, content) {
+  const info = (content.ImageInfoArray || []).find(i => i && i.URL)
+  const url = row.oss_url || (info && info.URL) || row.media_url || ''
+  const size = info || {}
+  const width = size.width || size.Width || 0
+  const height = size.height || size.Height || 0
+  // 同时支持 content.url（显示）和 content.imageInfoArray[2].url（预览）
+  const imageItem = { url, width, height, size: 0, type: 2 }
+  return {
+    url,
+    width,
+    height,
+    imageInfoArray: [imageItem, imageItem, imageItem],
+  }
+}
+```
+
+**涉及文件：** `br-app/src/utils/im-history.js`
+
+### 8. 历史消息视频缩略图无法显示
+
+**现象：** 点击大于 7 天的历史消息进入聊天窗口，视频缩略图显示为灰色方块，无法点击播放。
+
+**报错信息：** 无明确报错，视频区域显示灰色背景。
+
+**根因：** 
+1. 后端回调只转存了视频主文件（`VideoUrl`）到 OSS，没有转存缩略图（`ThumbUrl`）
+2. 前端 `videoPayload` 使用 `thumbnail_oss_url` 字段，但数据库中该字段为空
+
+**解决：** 
+1. 后端 `im_callback_service.py` 的 `ParsedMessage` 新增 `thumbnail_url` 字段
+2. `parse_message` 提取视频的 `ThumbUrl`
+3. `im_callback.py` 的 `_persist_send_msg` 单独转存缩略图到 OSS
+
+```python
+# 视频缩略图单独转存 OSS
+if kind == "video" and thumbnail_url:
+    thumb_oss_url = await fetch_and_upload("image", thumbnail_url)
+    if thumb_oss_url:
+        await session.execute(
+            update(ImMessage).where(ImMessage.id == msg_id).values(thumbnail_oss_url=thumb_oss_url)
+        )
+        await session.commit()
+```
+
+**涉及文件：** 
+- `br-server/app/services/im_callback_service.py`
+- `br-server/app/api/routes/im_callback.py`
+- `br-server/app/models/im_message.py`（新增 `thumbnail_oss_url` 字段）
+
+### 9. 深历史会话点击报错"会话不存在"
+
+**现象：** 点击通知页中大于 7 天的历史会话，进入聊天窗口时报错：
+```
+[TUIChat] createConversation failed, trying switch anyway: 
+TypeError: t.et.createConversation is not a function
+```
+然后显示"会话不存在"。
+
+**报错信息：** 
+```
+Error: MiniProgramError
+会话不存在
+```
+
+**根因：** 
+1. 腾讯云 IM 免费版只漫游 7 天会话，超过 7 天的会话在 SDK 中不存在
+2. `TUIConversationService.switchConversation()` 要求会话必须存在于 SDK 中
+3. lite-chat SDK 没有 `createConversation` 方法，无法手动创建会话
+
+**解决：** 在 `switchConversation` 失败时，创建模拟会话对象并通过 `TUIStore.update` 直接设置到 Store：
+
+```typescript
+function createMockConversation(conversationID: string): any {
+  const peerID = conversationID.replace(/^C2C/, '').replace(/^GROUP/, '')
+  return {
+    conversationID,
+    type: conversationID.startsWith('C2C') ? 'C2C' : 'GROUP',
+    // ... 最小属性集
+    userProfile: { userID: peerID },
+    getShowName() { return peerID.slice(0, 8) },
+    // ... 其他方法返回空值或 Promise.resolve()
+  }
+}
+
+async function switchConversation(conversationID: string) {
+  // 先尝试正常切换
+  try {
+    await TUIConversationService.switchConversation(conversationID)
+    const currentConv = TUIStore.getData(StoreName.CONV, 'currentConversation')
+    if (currentConv && currentConv.conversationID === conversationID) {
+      return true
+    }
+  } catch (e) {
+    console.warn('[TUIChat] switchConversation failed:', e)
+  }
+  
+  // 切换失败，创建模拟会话对象
+  const mockConv = createMockConversation(conversationID)
+  TUIStore.update(StoreName.CONV, 'currentConversation', mockConv)
+  return true
+}
+```
+
+**涉及文件：** `br-app/src/TUIKit/components/TUIChat/entry-chat-only.ts`
+
+### 10. 会话列表显示不属于当前用户的会话
+
+**现象：** 用户 A 登录后，消息通知页的"会话"TAB 显示了用户 B 的会话（如 BrianRTC7）。
+
+**报错信息：** 无报错，但显示了错误的会话数据。
+
+**根因：** 
+1. `dbConversations` 和 `sdkConversations` 是模块级变量，页面切换时不会自动重置
+2. 用户切换账号后，这些变量仍保留上一个用户的会话缓存
+3. 原来的 `mergeConversations` 以 SDK 会话优先，SDK 可能缓存了不属于当前用户的会话
+
+**解决：** 
+1. 在 `onLoad` 时重置会话列表缓存
+2. 修改 `mergeConversations` 逻辑，以 DB 会话为准，SDK 会话只补充实时状态
+
+```javascript
+onLoad(() => {
+  if (!requireLogin()) return
+  // 重置会话列表缓存，避免显示上一个用户的会话
+  dbConversations = []
+  sdkConversations = []
+  conversations.value = []
+  loadInitialData()
+})
+
+function mergeConversations(sdkRows, dbRows) {
+  const merged = new Map()
+  // 先建立 DB 会话的索引
+  const dbIndex = new Map()
+  for (const row of dbRows) {
+    dbIndex.set(row.peer_im_account, row)
+  }
+  // 只保留 DB 中也存在的 SDK 会话
+  for (const row of sdkRows) {
+    const peerIM = row.conversationID && row.conversationID.replace(/^C2C/, '')
+    if (peerIM && dbIndex.has(peerIM)) {
+      merged.set(peerIM, row)
+    }
+  }
+  // 添加 DB 中有但 SDK 中没有的会话
+  for (const row of dbRows) {
+    const key = row.peer_im_account
+    if (!merged.has(key)) {
+      merged.set(key, { /* ... */ })
+    }
+  }
+  return Array.from(merged.values()).sort(...)
+}
+```
+
+**涉及文件：** `br-app/src/pages-sub/notifications/index.vue`
+
+### 11. closeSocket:fail task not found
+
+**现象：** 进入会话窗口时偶尔出现控制台错误：
+```
+Error: SystemError (appServiceSDKScriptError)
+{"errMsg":"closeSocket:fail task not found"}
+```
+
+**报错信息：** 
+```
+closeSocket:fail task not found
+```
+
+**根因：** 微信小程序底层 WebSocket 管理问题，来自 IM SDK 内部：
+1. SDK 尝试关闭一个已经不存在的 WebSocket 连接
+2. 页面快速切换时，前一个页面的清理与后一个页面的初始化发生竞态
+3. 网络状态变化时 SDK 内部的重连逻辑
+
+**解决：** 这个错误通常是无害的，不影响功能。是 SDK 内部操作，项目代码无法直接控制。只要消息能正常收发、页面能正常进入，就不需要处理。
+
+**涉及文件：** 无（SDK 内部行为）
+
 ---
 
 ## 小程序域名白名单

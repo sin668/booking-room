@@ -488,8 +488,10 @@ async function loadDbConversations() {
   try {
     const res = await getChatConversations()
     dbConversations = (res && res.conversations) || []
+    console.log('[Notification] DB conversations loaded:', dbConversations.length)
     conversations.value = mergeConversations(sdkConversations, dbConversations)
-  } catch {
+  } catch (e) {
+    console.warn('[Notification] DB conversations load failed:', e)
     // DB 会话加载失败不阻塞 SDK 会话显示
   }
 }
@@ -499,7 +501,7 @@ async function loadConversations() {
   conversationError.value = false
 
   // 先从 DB 加载历史会话（不依赖 IM SDK，可显示超过 7 天的会话）
-  loadDbConversations()
+  await loadDbConversations()
 
   const ok = await ensureIM()
   if (!ok) {

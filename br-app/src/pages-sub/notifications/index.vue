@@ -297,6 +297,10 @@ const emptyText = computed(() => {
 
 onLoad(() => {
   if (!requireLogin()) return
+  // 重置会话列表缓存，避免显示上一个用户的会话
+  dbConversations = []
+  sdkConversations = []
+  conversations.value = []
   loadInitialData()
 })
 

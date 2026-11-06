@@ -458,14 +458,23 @@ function onConversationListUpdated(list) {
   conversationError.value = false
 }
 
-// SDK 会话只有最近 7 天活跃的，DB 里有更久的历史会话；合并时 SDK 优先（有未读数等实时状态）
+// SDK 会话只有最近 7 天活跃的，DB 里有更久的历史会话；合并时以 DB 为准，SDK 只补充实时状态（如未读数）
 function mergeConversations(sdkRows, dbRows) {
   const merged = new Map()
-  for (const row of sdkRows) {
-    // SDK conversationID 形如 C2C<peer_im_account>
-    const peerIM = row.conversationID && row.conversationID.replace(/^C2C/, '')
-    merged.set(peerIM || row.conversationID, row)
+  // 先建立 DB 会话的索引
+  const dbIndex = new Map()
+  for (const row of dbRows) {
+    dbIndex.set(row.peer_im_account, row)
   }
+  // 只保留 DB 中也存在的 SDK 会话（避免 SDK 缓存了不属于当前用户的会话）
+  for (const row of sdkRows) {
+    const peerIM = row.conversationID && row.conversationID.replace(/^C2C/, '')
+    if (peerIM && dbIndex.has(peerIM)) {
+      // SDK 会话有实时状态（未读数等），优先使用
+      merged.set(peerIM, row)
+    }
+  }
+  // 添加 DB 中有但 SDK 中没有的会话（超过 7 天的深历史）
   for (const row of dbRows) {
     const key = row.peer_im_account
     if (!merged.has(key)) {

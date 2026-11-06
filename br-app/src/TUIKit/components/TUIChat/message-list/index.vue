@@ -395,6 +395,13 @@ onUnmounted(() => {
 const handelScrollListScroll = throttle(
   function (e: Event) {
     scrollButtonInstanceRef.value?.judgeScrollOverOneScreen(e);
+    // 滚动到顶部时自动加载更多历史消息
+    const detail = (e as any).detail || {};
+    const scrollTop = detail.scrollTop || 0;
+    const canLoadMore = !isCompleted.value || (!props.isGroup && dbHasMore.value);
+    if (scrollTop < 50 && canLoadMore && !isLoadingMessage.value) {
+      getHistoryMessageList();
+    }
   },
   500,
   { leading: true },

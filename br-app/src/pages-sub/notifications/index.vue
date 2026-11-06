@@ -462,7 +462,7 @@ function onConversationListUpdated(list) {
   conversationError.value = false
 }
 
-// SDK 会话只有最近 7 天活跃的，DB 里有更久的历史会话；合并时以 DB 为准，SDK 只补充实时状态（如未读数）
+// SDK 会话只有最近 7 天活跃的，DB 里有更久的历史会话；合并时以 DB 为基础，SDK 补充实时状态
 function mergeConversations(sdkRows, dbRows) {
   const merged = new Map()
   // 先建立 DB 会话的索引
@@ -470,13 +470,24 @@ function mergeConversations(sdkRows, dbRows) {
   for (const row of dbRows) {
     dbIndex.set(row.peer_im_account, row)
   }
-  // 只保留 DB 中也存在的 SDK 会话（避免 SDK 缓存了不属于当前用户的会话）
-  for (const row of sdkRows) {
-    const peerIM = row.conversationID && row.conversationID.replace(/^C2C/, '')
-    if (peerIM && dbIndex.has(peerIM)) {
-      // SDK 会话有实时状态（未读数等），优先使用
-      merged.set(peerIM, row)
-    }
+  // 处理 SDK 会话：只保留 DB 中也存在的（避免 SDK 缓存了不属于当前用户的会话）
+  for (const sdkRow of sdkRows) {
+    const peerIM = sdkRow.conversationID && sdkRow.conversationID.replace(/^C2C/, '')
+    if (!peerIM || !dbIndex.has(peerIM)) continue
+    const dbRow = dbIndex.get(peerIM)
+    // 合并：SDK 提供实时状态（未读数），DB 提供基础信息（名字、头像），summary/time 取有值的一方
+    const summary = sdkRow.summary || dbRow.summary || ''
+    const rawTime = sdkRow.rawTime || dbRow.last_msg_time || 0
+    merged.set(peerIM, {
+      conversationID: sdkRow.conversationID,
+      name: sdkRow.name || dbRow.name || '',
+      initial: (sdkRow.name || dbRow.name || '').slice(0, 1),
+      avatar: sdkRow.avatar || dbRow.avatar || '',
+      summary,
+      time: sdkRow.time || formatAbsoluteTime(dbRow.last_msg_time),
+      rawTime,
+      unreadCount: sdkRow.unreadCount || 0,
+    })
   }
   // 添加 DB 中有但 SDK 中没有的会话（超过 7 天的深历史）
   for (const row of dbRows) {

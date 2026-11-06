@@ -25,17 +25,18 @@ function imagePayload(row, content) {
   // 媒体优先用数据库转存的 OSS 地址：IM 的 COS 域名可能不在小程序白名单
   const url = row.oss_url || (info && info.URL) || row.media_url || ''
   const size = info || {}
-  const width = size.width || 0
-  const height = size.height || 0
-  const fileSize = size.size || 0
-  // SDK 的 ImageInfoArray 结构：[0]缩略图(type=0) [1]大图(type=1) [2]原图(type=2)
-  // handleImagePreview 取 [2] 原图
+  const width = size.width || size.Width || 0
+  const height = size.height || size.Height || 0
+  // TUIKit 两处访问方式不同：
+  // 1. message-image.vue 显示用 content.url
+  // 2. handleImagePreview 预览用 content.imageInfoArray[2].url
+  // 需要同时支持两种结构
+  const imageItem = { url, width, height, size: 0, type: 2 }
   return {
-    imageInfoArray: [
-      { url, width, height, size: fileSize, type: 0 },
-      { url, width, height, size: fileSize, type: 1 },
-      { url, width, height, size: fileSize, type: 2 },
-    ],
+    url,
+    width,
+    height,
+    imageInfoArray: [imageItem, imageItem, imageItem],
   }
 }
 

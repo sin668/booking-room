@@ -1,6 +1,7 @@
 // 把本系统数据库里的 IM 消息镜像按 SDK 消息结构重建，用于补齐 IM 云端只漫游 7 天的深历史。
 // 重建结果只用于渲染：没有 SDK 消息实例，撤回/删除/转发等需要内部标识的操作不会生效。
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite'
+import { parseTextToRenderArray } from '@/TUIKit/components/TUIChat/emoji-config'
 
 const ELEMENT_TO_TYPE = {
   text: TUIChatEngine.TYPES.MSG_TEXT,
@@ -41,9 +42,18 @@ function buildPayload(elementType, row) {
   const element = firstElement(row.elements)
   const content = (element && element.MsgContent) || {}
   switch (elementType) {
-    case 'text':
-      // SDK 文本消息的 text 字段是数组：[{ name: 'text', text: '...' }]
-      return { text: [{ name: 'text', text: content.Text || row.content || '' }] }
+    case 'text': {
+      // SDK 文本消息的 text 字段是数组：[{ name: 'text', text: '...' }, { name: 'img', src: '...', emojiKey: '...' }]
+      const rawText = content.Text || row.content || ''
+      const parsed = parseTextToRenderArray(rawText)
+      const textArray = parsed.map(item => {
+        if (item.type === 'image') {
+          return { name: 'img', text: '', src: item.content, emojiKey: item.emojiKey, type: 'custom' }
+        }
+        return { name: 'text', text: item.content }
+      })
+      return { text: textArray }
+    }
     case 'image':
       return imagePayload(row, content)
     case 'sound':
@@ -55,7 +65,13 @@ function buildPayload(elementType, row) {
     case 'video':
       return videoPayload(row, content)
     case 'face':
-      return { data: content.Data || '', index: content.Index || 0, url: content.URL || '' }
+      // 系统表情：{ url: '...' }；自定义表情：{ name: '...', type: 'custom' }
+      if (content.Data && content.Data.startsWith('[')) {
+        // 自定义表情，Data 包含表情码
+        return { name: content.Data, type: 'custom' }
+      }
+      // 系统表情，根据 Index 查找（这里简化处理，实际应该查表情映射表）
+      return { url: '' }
     case 'custom':
       return {
         data: content.Data || '',

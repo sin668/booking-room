@@ -701,3 +701,266 @@ if (!currentID && cachedConversationID) {
 
 - `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/useUpload.ts` — `chooseImage/chooseVideo/chooseMedia/chooseCamera` 的 `success` 回调中等待 `switchConversation` 完成
 - SDK 源码：`node_modules/@tencentcloud/chat-uikit-engine-lite/index.js` — `TUIConversationService.switchConversation` 返回 Promise
+
+## 历史消息图片和视频无法显示（超过 7 天的深历史）
+
+### 报错信息
+
+- 点击通知页中大于 7 天的历史会话进入聊天窗口
+- 图片消息显示为**灰色占位方块**，点击无法放大预览
+- 视频消息显示为**灰色方块**，点击无法播放
+- 无 JS 报错，控制台无异常
+
+### 根本原因
+
+**问题 1：图片 payload 结构不完整**
+
+TUIKit 组件访问图片 URL 有两种方式：
+1. `message-image.vue` 显示用 `content.url`（IImageMessageContent 接口）
+2. `handleImagePreview` 预览用 `content.imageInfoArray[2].url`
+
+原来的 `imagePayload` 只构建了 `imageInfoArray` 结构：
+```javascript
+return {
+  imageInfoArray: [{ url, width, height, size, type }]
+}
+```
+缺少顶层 `url`、`width`、`height` 字段，导致 `message-image.vue` 的 `:src="props.content.url"` 拿到 `undefined`，图片无法显示。
+
+**问题 2：视频缩略图未转存 OSS**
+
+后端回调只转存了视频主文件（`VideoUrl`）到 OSS，没有转存缩略图（`ThumbUrl`）。前端 `videoPayload` 使用 `row.thumbnail_oss_url`，但数据库中该字段为空，导致缩略图显示失败。
+
+**问题 3：深历史会话在 SDK 中不存在**
+
+腾讯云 IM 免费版只漫游 7 天会话，超过 7 天的会话在 SDK 中不存在。`TUIConversationService.switchConversation()` 要求会话必须存在于 SDK 中，lite-chat SDK 没有 `createConversation` 方法，导致报错：
+```
+[TUIChat] createConversation failed, trying switch anyway: 
+TypeError: t.et.createConversation is not a function
+```
+然后显示"会话不存在"。
+
+### 解决方案
+
+**修复 1：imagePayload 同时提供两种结构**
+
+修改 `br-app/src/utils/im-history.js`：
+```javascript
+function imagePayload(row, content) {
+  const info = (content.ImageInfoArray || []).find(i => i && i.URL)
+  const url = row.oss_url || (info && info.URL) || row.media_url || ''
+  const size = info || {}
+  const width = size.width || size.Width || 0
+  const height = size.height || size.Height || 0
+  // 同时支持 content.url（显示）和 content.imageInfoArray[2].url（预览）
+  const imageItem = { url, width, height, size: 0, type: 2 }
+  return {
+    url,
+    width,
+    height,
+    imageInfoArray: [imageItem, imageItem, imageItem],
+  }
+}
+```
+
+**修复 2：后端转存视频缩略图**
+
+修改 `br-server/app/services/im_callback_service.py`：
+- `ParsedMessage` 新增 `thumbnail_url` 字段
+- `parse_message` 提取视频的 `ThumbUrl`
+
+修改 `br-server/app/api/routes/im_callback.py`：
+```python
+# 视频缩略图单独转存 OSS
+if kind == "video" and thumbnail_url:
+    thumb_oss_url = await fetch_and_upload("image", thumbnail_url)
+    if thumb_oss_url:
+        await session.execute(
+            update(ImMessage).where(ImMessage.id == msg_id).values(thumbnail_oss_url=thumb_oss_url)
+        )
+        await session.commit()
+```
+
+新增数据库字段 `thumbnail_oss_url`（迁移文件 `2026_11_06_1000-k6l2m8n4p0q5_add_video_thumbnail_oss_url.py`）。
+
+**修复 3：创建模拟会话对象**
+
+修改 `br-app/src/TUIKit/components/TUIChat/entry-chat-only.ts`：
+```typescript
+function createMockConversation(conversationID: string): any {
+  const peerID = conversationID.replace(/^C2C/, '').replace(/^GROUP/, '')
+  return {
+    conversationID,
+    type: conversationID.startsWith('C2C') ? 'C2C' : 'GROUP',
+    userProfile: { userID: peerID },
+    getShowName() { return peerID.slice(0, 8) },
+    // ... 最小属性集
+  }
+}
+
+async function switchConversation(conversationID: string) {
+  // 先尝试正常切换
+  try {
+    await TUIConversationService.switchConversation(conversationID)
+    const currentConv = TUIStore.getData(StoreName.CONV, 'currentConversation')
+    if (currentConv && currentConv.conversationID === conversationID) {
+      return true
+    }
+  } catch (e) {
+    console.warn('[TUIChat] switchConversation failed:', e)
+  }
+  
+  // 切换失败，创建模拟会话对象
+  const mockConv = createMockConversation(conversationID)
+  TUIStore.update(StoreName.CONV, 'currentConversation', mockConv)
+  return true
+}
+```
+
+### 验证
+
+- `npm run build:mp-weixin` 通过（主包 1.15MB）
+- 真机测试：点击大于 7 天的历史会话，能正常进入聊天窗口
+- 图片消息正常显示，点击能放大预览
+- 视频消息缩略图正常显示，点击能播放
+- 不再报"会话不存在"错误
+
+### 经验教训
+
+1. **TUIKit 组件的 payload 结构必须同时满足显示和预览两种访问方式**。只构建 `imageInfoArray` 不够，顶层必须有 `url` 字段。
+2. **视频消息有两个媒体地址：主文件和缩略图**。回调转存时要分别处理，不能只转存主文件。
+3. **lite-chat SDK 没有 `createConversation` 方法**。深历史会话需要通过 `TUIStore.update` 手动注入模拟对象。
+4. **媒体地址优先级**：`oss_url`（转存后）> `content.VideoUrl/Url`（IM 原地址）> `media_url`（兜底）。
+
+### 涉及文件
+
+- `br-app/src/utils/im-history.js` — `imagePayload` 和 `videoPayload` 函数
+- `br-server/app/services/im_callback_service.py` — `ParsedMessage` 新增 `thumbnail_url`
+- `br-server/app/api/routes/im_callback.py` — 视频缩略图转存逻辑
+- `br-server/app/models/im_message.py` — 新增 `thumbnail_oss_url` 字段
+- `br-app/src/TUIKit/components/TUIChat/entry-chat-only.ts` — 模拟会话对象创建
+
+## 会话列表显示不属于当前用户的会话
+
+### 报错信息
+
+- 用户 A 登录后，消息通知页的"会话"TAB 显示了用户 B 的会话（如 BrianRTC7）
+- 数据库中当前用户与 BrianRTC7 没有任何消息往来
+- 无 JS 报错，但显示了错误的会话数据
+
+### 根本原因
+
+**问题 1：模块级变量未重置**
+
+`dbConversations` 和 `sdkConversations` 是模块级变量：
+```javascript
+let dbConversations = []
+let sdkConversations = []
+```
+页面切换时不会自动重置。用户切换账号后，这些变量仍保留上一个用户的会话缓存。
+
+**问题 2：合并逻辑以 SDK 会话优先**
+
+原来的 `mergeConversations` 函数：
+```javascript
+for (const row of sdkRows) {
+  merged.set(peerIM, row)  // SDK 会话优先
+}
+for (const row of dbRows) {
+  if (!merged.has(key)) {  // DB 会话只补充
+    merged.set(key, row)
+  }
+}
+```
+SDK 会话列表可能缓存了不属于当前用户的会话（如之前登录用户的会话），导致显示错误。
+
+### 解决方案
+
+**修复 1：onLoad 时重置缓存**
+
+修改 `br-app/src/pages-sub/notifications/index.vue`：
+```javascript
+onLoad(() => {
+  if (!requireLogin()) return
+  // 重置会话列表缓存，避免显示上一个用户的会话
+  dbConversations = []
+  sdkConversations = []
+  conversations.value = []
+  loadInitialData()
+})
+```
+
+**修复 2：合并逻辑以 DB 为准**
+
+```javascript
+function mergeConversations(sdkRows, dbRows) {
+  const merged = new Map()
+  // 先建立 DB 会话的索引
+  const dbIndex = new Map()
+  for (const row of dbRows) {
+    dbIndex.set(row.peer_im_account, row)
+  }
+  // 只保留 DB 中也存在的 SDK 会话
+  for (const row of sdkRows) {
+    const peerIM = row.conversationID && row.conversationID.replace(/^C2C/, '')
+    if (peerIM && dbIndex.has(peerIM)) {
+      merged.set(peerIM, row)
+    }
+  }
+  // 添加 DB 中有但 SDK 中没有的会话
+  for (const row of dbRows) {
+    const key = row.peer_im_account
+    if (!merged.has(key)) {
+      merged.set(key, { /* ... */ })
+    }
+  }
+  return Array.from(merged.values()).sort(...)
+}
+```
+
+### 验证
+
+- `npm run build:mp-weixin` 通过
+- 用"学习者 478666"登录，进入消息通知页
+- 只显示当前用户的会话，不再显示 BrianRTC7
+- 切换账号后重新进入，会话列表正确更新
+
+### 经验教训
+
+1. **模块级变量在页面切换时不会自动重置**。涉及用户数据的缓存必须在 `onLoad` 或用户切换时清空。
+2. **多数据源合并时，要以权威数据源为准**。本例中 DB 是权威数据源（按当前用户查询），SDK 只补充实时状态（如未读数）。
+3. **用户切换场景要特别小心缓存问题**。登录/登出时要清除所有用户相关的缓存数据。
+
+### 涉及文件
+
+- `br-app/src/pages-sub/notifications/index.vue` — `onLoad` 重置缓存、`mergeConversations` 逻辑修改
+
+## closeSocket:fail task not found（无害错误）
+
+### 报错信息
+
+进入会话窗口时偶尔出现控制台错误：
+```
+Error: SystemError (appServiceSDKScriptError)
+{"errMsg":"closeSocket:fail task not found"}
+```
+
+### 根本原因
+
+微信小程序底层 WebSocket 管理问题，来自 IM SDK 内部：
+1. SDK 尝试关闭一个已经不存在的 WebSocket 连接
+2. 页面快速切换时，前一个页面的清理与后一个页面的初始化发生竞态
+3. 网络状态变化时 SDK 内部的重连逻辑
+
+### 解决方案
+
+**无需处理**。这个错误通常是无害的，不影响功能。是 SDK 内部操作，项目代码无法直接控制。只要消息能正常收发、页面能正常进入，就不需要处理。
+
+### 经验教训
+
+1. **第三方 SDK 的内部错误不一定需要修复**。有些错误是 SDK 实现细节，不影响功能，过度修复可能引入新问题。
+2. **区分"控制台错误"和"功能异常"**。控制台有错误不代表功能有问题，要以用户实际体验为准。
+
+### 涉及文件
+
+无（SDK 内部行为）

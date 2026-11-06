@@ -102,6 +102,7 @@ async def get_chat_messages(
                 "content": row.content,
                 "media_url": row.media_url,
                 "oss_url": row.oss_url,
+                "thumbnail_oss_url": row.thumbnail_oss_url,
                 "elements": (row.raw_payload or {}).get("MsgBody") or [],
                 "cloud_custom_data": row.cloud_custom_data,
                 "is_revoked": row.is_revoked,
@@ -129,16 +130,15 @@ async def get_conversation_list(
     """
     self_account = to_im_user_id(user_id)
 
-    # 用子查询取每个对端的最新消息时间和最后一条消息内容
-    peer_expr = case(
-        (ImMessage.im_from_account == self_account, ImMessage.im_to_account),
-        else_=ImMessage.im_from_account,
-    )
-
-    conversation_subq = (
+    # 取所有与当前用户有消息往来的对端账号
+    result = await db.execute(
         select(
-            peer_expr.label("peer_account"),
-            func.max(ImMessage.msg_time).label("last_msg_time"),
+            func.distinct(
+                case(
+                    (ImMessage.im_from_account == self_account, ImMessage.im_to_account),
+                    else_=ImMessage.im_from_account,
+                )
+            ).label("peer_account")
         )
         .where(
             or_(
@@ -146,37 +146,35 @@ async def get_conversation_list(
                 ImMessage.im_to_account == self_account,
             )
         )
-        .group_by("peer_account")
-        .subquery()
     )
+    peer_accounts = [row.peer_account for row in result]
 
-    # User.id 转 IM 账号：uuid.hex（32 位小写无连字符）
-    from sqlalchemy import cast, String as SAString
-    user_id_hex = func.replace(cast(User.id, SAString), "-", "")
+    if not peer_accounts:
+        return {"conversations": []}
 
-    result = await db.execute(
-        select(
-            conversation_subq.c.peer_account,
-            conversation_subq.c.last_msg_time,
-            User.id.label("user_id"),
-            User.nickname,
-            User.avatar,
-        )
-        .outerjoin(
-            User,
-            user_id_hex == conversation_subq.c.peer_account,
-        )
-        .order_by(conversation_subq.c.last_msg_time.desc())
-    )
-
-    # 单独取每个会话的最后一条消息用于摘要（避免复杂的多表连接）
+    # 为每个对端取最新消息时间和用户信息
     conversations = []
-    for row in result:
-        peer_account = row.peer_account
-        peer_uuid = from_im_user_id(peer_account)
+    for peer_account in peer_accounts:
+        # 取最新消息时间
+        time_result = await db.execute(
+            select(func.max(ImMessage.msg_time))
+            .where(
+                or_(
+                    and_(
+                        ImMessage.im_from_account == self_account,
+                        ImMessage.im_to_account == peer_account,
+                    ),
+                    and_(
+                        ImMessage.im_from_account == peer_account,
+                        ImMessage.im_to_account == self_account,
+                    ),
+                )
+            )
+        )
+        last_msg_time = time_result.scalar()
 
-        # 取该会话的最后一条消息
-        last_msg_result = await db.execute(
+        # 取最后一条消息用于摘要
+        msg_result = await db.execute(
             select(ImMessage.element_type, ImMessage.content)
             .where(
                 or_(
@@ -193,18 +191,29 @@ async def get_conversation_list(
             .order_by(ImMessage.msg_time.desc(), ImMessage.msg_seq.desc())
             .limit(1)
         )
-        last_msg = last_msg_result.first()
-        summary = _format_summary(last_msg.element_type if last_msg else None, last_msg.content if last_msg else None)
+        last_msg = msg_result.first()
 
+        # 取对端用户信息
+        peer_uuid = from_im_user_id(peer_account)
+        user_result = await db.execute(
+            select(User.nickname, User.avatar)
+            .where(User.id == peer_uuid)
+            if peer_uuid else select(User.nickname, User.avatar).where(False)
+        )
+        user_row = user_result.first()
+
+        summary = _format_summary(last_msg.element_type if last_msg else None, last_msg.content if last_msg else None)
         conversations.append({
             "peer_im_account": peer_account,
             "peer_user_id": str(peer_uuid) if peer_uuid else None,
-            "last_msg_time": row.last_msg_time,
+            "last_msg_time": last_msg_time,
             "summary": summary,
-            "name": row.nickname or (peer_uuid and str(peer_uuid)[:8]) or peer_account,
-            "avatar": row.avatar or "",
+            "name": user_row.nickname if user_row else (str(peer_uuid)[:8] if peer_uuid else peer_account),
+            "avatar": user_row.avatar if user_row else "",
         })
 
+    # 按最后消息时间降序排序
+    conversations.sort(key=lambda x: x["last_msg_time"] or 0, reverse=True)
     return {"conversations": conversations}
 
 

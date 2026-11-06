@@ -34,7 +34,7 @@ CALLBACK_OK = {"ActionStatus": "OK", "ErrorInfo": "", "ErrorCode": 0}
 async def _persist_send_msg(payload: dict[str, Any]) -> None:
     try:
         async with async_session() as session:
-            record = await save_send_msg_callback(session, payload)
+            record, thumbnail_url = await save_send_msg_callback(session, payload)
             if record is None:
                 return
             # commit 会让实例属性过期（async 下再读触发 MissingGreenlet），先把需要的标量取出来
@@ -50,6 +50,14 @@ async def _persist_send_msg(payload: dict[str, Any]) -> None:
                     update(ImMessage).where(ImMessage.id == msg_id).values(oss_url=oss_url)
                 )
                 await session.commit()
+            # 视频缩略图单独转存 OSS
+            if kind == "video" and thumbnail_url:
+                thumb_oss_url = await fetch_and_upload("image", thumbnail_url)
+                if thumb_oss_url:
+                    await session.execute(
+                        update(ImMessage).where(ImMessage.id == msg_id).values(thumbnail_oss_url=thumb_oss_url)
+                    )
+                    await session.commit()
     except Exception:
         logger.exception("IM callback AfterSendMsg persist failed: %s", payload.get("MsgKey"))
 

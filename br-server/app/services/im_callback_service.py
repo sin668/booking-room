@@ -40,6 +40,7 @@ class ParsedMessage:
     element_type: str
     content: str | None
     media_url: str | None
+    thumbnail_url: str | None = None
 
 
 def parse_message(msg_body: list[dict[str, Any]] | None) -> ParsedMessage:
@@ -66,6 +67,7 @@ def parse_message(msg_body: list[dict[str, Any]] | None) -> ParsedMessage:
                 "video",
                 f"{content.get('Second', 0)}s" if content.get("Second") else None,
                 content.get("VideoUrl") or None,
+                content.get("ThumbUrl") or None,
             )
         if element_type == "other":
             continue
@@ -86,22 +88,22 @@ def _image_url(content: dict[str, Any]) -> str | None:
     return None
 
 
-async def save_send_msg_callback(session: AsyncSession, payload: dict[str, Any]) -> ImMessage | None:
-    """C2C.CallbackAfterSendMsg 落库，按 msg_key 幂等。返回新写入的记录。"""
+async def save_send_msg_callback(session: AsyncSession, payload: dict[str, Any]) -> tuple[ImMessage | None, str | None]:
+    """C2C.CallbackAfterSendMsg 落库，按 msg_key 幂等。返回 (新写入的记录, 视频缩略图URL)。"""
     msg_key = payload.get("MsgKey")
     from_account = payload.get("From_Account")
     to_account = payload.get("To_Account")
     if not (msg_key and from_account and to_account):
         logger.warning("IM callback AfterSendMsg missing keys: %s", msg_key)
-        return None
+        return None, None
 
     # SendMsgResult 非 0 表示消息发送失败，不入库
     if payload.get("SendMsgResult", 0) != 0:
-        return None
+        return None, None
 
     existing = await session.execute(select(ImMessage.id).where(ImMessage.msg_key == msg_key))
     if existing.scalar_one_or_none() is not None:
-        return None
+        return None, None
 
     parsed = parse_message(payload.get("MsgBody"))
     record = ImMessage(
@@ -120,7 +122,7 @@ async def save_send_msg_callback(session: AsyncSession, payload: dict[str, Any])
     )
     session.add(record)
     await session.flush()
-    return record
+    return record, parsed.thumbnail_url
 
 
 def media_kind_for(record: ImMessage) -> str | None:

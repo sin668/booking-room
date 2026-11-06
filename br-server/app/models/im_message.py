@@ -62,6 +62,9 @@ class ImMessage(Base):
     oss_url: Mapped[str | None] = mapped_column(
         String(1024), nullable=True, comment="服务端转存后的 OSS 地址"
     )
+    thumbnail_oss_url: Mapped[str | None] = mapped_column(
+        String(1024), nullable=True, comment="视频缩略图转存后的 OSS 地址"
+    )
     is_read: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")
     )

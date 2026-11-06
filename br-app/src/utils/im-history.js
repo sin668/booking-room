@@ -84,11 +84,12 @@ function buildPayload(elementType, row) {
 }
 
 function videoPayload(row, content) {
-  // 视频优先用数据库转存的 OSS 地址；缩略图保留腾讯云原地址（已在小程序域名白名单）
+  // 视频优先用数据库转存的 OSS 地址；缩略图也优先用 OSS 地址
   const url = row.oss_url || content.VideoUrl || row.media_url || ''
+  const snapshotUrl = row.thumbnail_oss_url || content.ThumbUrl || ''
   return {
     url,
-    snapshotUrl: content.ThumbUrl || '',
+    snapshotUrl,
     snapshotWidth: content.ThumbWidth || 0,
     snapshotHeight: content.ThumbHeight || 0,
   }

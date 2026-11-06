@@ -7,6 +7,7 @@
       <image
         :src="props.content.snapshotUrl"
         class="message-video-box"
+        mode="aspectFill"
       />
       <Icon
         v-if="props.messageItem.status === 'success' || props.messageItem.progress === 1"

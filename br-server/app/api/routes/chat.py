@@ -129,13 +129,15 @@ async def get_conversation_list(
     """
     self_account = to_im_user_id(user_id)
 
-    # 用子查询取每个对端的最新消息时间
-    peer_latest = (
+    # 用子查询取每个对端的最新消息时间和最后一条消息内容
+    peer_expr = case(
+        (ImMessage.im_from_account == self_account, ImMessage.im_to_account),
+        else_=ImMessage.im_from_account,
+    )
+
+    conversation_subq = (
         select(
-            case(
-                (ImMessage.im_from_account == self_account, ImMessage.im_to_account),
-                else_=ImMessage.im_from_account,
-            ).label("peer_account"),
+            peer_expr.label("peer_account"),
             func.max(ImMessage.msg_time).label("last_msg_time"),
         )
         .where(
@@ -148,62 +150,52 @@ async def get_conversation_list(
         .subquery()
     )
 
-    # 取每个会话的最后一条消息内容用于摘要
-    last_msg_subq = (
-        select(
-            ImMessage.im_from_account,
-            ImMessage.im_to_account,
-            ImMessage.msg_time,
-            ImMessage.element_type,
-            ImMessage.content,
-            func.row_number()
-                .over(
-                    partition_by=case(
-                        (ImMessage.im_from_account == self_account, ImMessage.im_to_account),
-                        else_=ImMessage.im_from_account,
-                    ),
-                    order_by=ImMessage.msg_time.desc(),
-                )
-                .label("rn"),
-        )
-        .where(
-            or_(
-                ImMessage.im_from_account == self_account,
-                ImMessage.im_to_account == self_account,
-            )
-        )
-        .subquery()
-    )
-    last_msg = select(last_msg_subq).where(last_msg_subq.c.rn == 1).subquery()
-
-    # User.id 转 IM 账号：func.replace(User.id::text, '-', '') 即 uuid.hex
-    user_id_hex = func.replace(func.cast(User.id, func.coalesce(type=func.text())), "-", "")
-    # 简化：直接用 cast + replace
+    # User.id 转 IM 账号：uuid.hex（32 位小写无连字符）
     from sqlalchemy import cast, String as SAString
     user_id_hex = func.replace(cast(User.id, SAString), "-", "")
 
     result = await db.execute(
         select(
-            peer_latest.c.peer_account,
-            peer_latest.c.last_msg_time,
-            last_msg.c.element_type,
-            last_msg.c.content,
+            conversation_subq.c.peer_account,
+            conversation_subq.c.last_msg_time,
             User.id.label("user_id"),
             User.nickname,
             User.avatar,
         )
         .outerjoin(
             User,
-            user_id_hex == peer_latest.c.peer_account,
+            user_id_hex == conversation_subq.c.peer_account,
         )
-        .order_by(peer_latest.c.last_msg_time.desc())
+        .order_by(conversation_subq.c.last_msg_time.desc())
     )
 
+    # 单独取每个会话的最后一条消息用于摘要（避免复杂的多表连接）
     conversations = []
     for row in result:
         peer_account = row.peer_account
         peer_uuid = from_im_user_id(peer_account)
-        summary = _format_summary(row.element_type, row.content)
+
+        # 取该会话的最后一条消息
+        last_msg_result = await db.execute(
+            select(ImMessage.element_type, ImMessage.content)
+            .where(
+                or_(
+                    and_(
+                        ImMessage.im_from_account == self_account,
+                        ImMessage.im_to_account == peer_account,
+                    ),
+                    and_(
+                        ImMessage.im_from_account == peer_account,
+                        ImMessage.im_to_account == self_account,
+                    ),
+                )
+            )
+            .order_by(ImMessage.msg_time.desc(), ImMessage.msg_seq.desc())
+            .limit(1)
+        )
+        last_msg = last_msg_result.first()
+        summary = _format_summary(last_msg.element_type if last_msg else None, last_msg.content if last_msg else None)
+
         conversations.append({
             "peer_im_account": peer_account,
             "peer_user_id": str(peer_uuid) if peer_uuid else None,

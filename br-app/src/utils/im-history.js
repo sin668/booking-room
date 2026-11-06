@@ -42,7 +42,8 @@ function buildPayload(elementType, row) {
   const content = (element && element.MsgContent) || {}
   switch (elementType) {
     case 'text':
-      return { text: content.Text || row.content || '' }
+      // SDK 文本消息的 text 字段是数组：[{ name: 'text', text: '...' }]
+      return { text: [{ name: 'text', text: content.Text || row.content || '' }] }
     case 'image':
       return imagePayload(row, content)
     case 'sound':

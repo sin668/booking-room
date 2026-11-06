@@ -11,8 +11,10 @@ async function switchConversation(conversationID: string) {
   }
 
   // 检查会话是否存在于 SDK 中（超过 7 天的历史会话可能不在 SDK 中）
-  const existingConversation = TUIStore.getConversation(conversationID);
-  if (!existingConversation) {
+  const conversationList = TUIStore.getData(StoreName.CONV, 'conversationList') || [];
+  const exists = conversationList.some((conv: any) => conv.conversationID === conversationID);
+  
+  if (!exists) {
     // 会话不存在，需要先创建（用于超过 7 天的深历史会话）
     console.log('[TUIChat] Conversation not in SDK, creating:', conversationID);
     try {

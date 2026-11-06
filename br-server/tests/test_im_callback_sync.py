@@ -621,3 +621,55 @@ async def other_history_client(client: AsyncClient, history_rows):
     app.dependency_overrides[get_current_user_id] = lambda: THIRD_ID
     yield client
     app.dependency_overrides.pop(get_current_user_id, None)
+
+
+@pytest.mark.usefixtures("im_users")
+class TestConversationListAPI:
+    async def test_returns_conversations_for_user(self, auth_history_client: AsyncClient):
+        """用户应能看到自己参与的所有会话。"""
+        response = await auth_history_client.get("/api/v1/chat/conversations")
+        assert response.status_code == 200
+        conversations = response.json()["conversations"]
+        # USER_ID 与 PEER_ID 有会话（h-1, h-2），与 THIRD_ID 无直接会话
+        assert len(conversations) == 1
+        assert conversations[0]["peer_im_account"] == PEER_IM
+        assert conversations[0]["peer_user_id"] == str(PEER_ID)
+
+    async def test_returns_latest_message_summary(self, auth_history_client: AsyncClient):
+        """会话摘要应取最后一条消息。"""
+        response = await auth_history_client.get("/api/v1/chat/conversations")
+        conv = response.json()["conversations"][0]
+        # h-2 是语音消息，时间更晚（200 > 100）
+        assert conv["summary"] == "[语音]"
+        assert conv["last_msg_time"] == 200
+
+    async def test_other_user_sees_own_conversations(self, other_history_client: AsyncClient):
+        """THIRD_ID 只与 PEER_ID 有会话（h-3），不应看到 USER_ID 的会话。"""
+        response = await other_history_client.get("/api/v1/chat/conversations")
+        assert response.status_code == 200
+        conversations = response.json()["conversations"]
+        assert len(conversations) == 1
+        assert conversations[0]["peer_im_account"] == PEER_IM
+
+    async def test_requires_login(self, client: AsyncClient):
+        response = await client.get("/api/v1/chat/conversations")
+        assert response.status_code == 401
+
+    async def test_empty_conversations_for_new_user(
+        self, client: AsyncClient, db_session: AsyncSession, im_users
+    ):
+        """没有任何消息的新用户应返回空列表。"""
+        app = client._transport.app
+        app.dependency_overrides[get_current_user_id] = lambda: THIRD_ID
+        try:
+            # THIRD_ID 只与 PEER_IM 有会话，先清除
+            from sqlalchemy import delete
+            await db_session.execute(delete(ImMessage))
+            await db_session.commit()
+
+            response = await client.get("/api/v1/chat/conversations")
+            assert response.status_code == 200
+            assert response.json()["conversations"] == []
+        finally:
+            app.dependency_overrides.pop(get_current_user_id, None)
+

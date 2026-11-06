@@ -24,16 +24,16 @@ function imagePayload(row, content) {
   // 媒体优先用数据库转存的 OSS 地址：IM 的 COS 域名可能不在小程序白名单
   const url = row.oss_url || (info && info.URL) || row.media_url || ''
   const size = info || {}
+  const imageItem = {
+    url,
+    width: size.width || 0,
+    height: size.height || 0,
+    size: size.size || 0,
+    type: size.Type || 1,
+  }
+  // SDK 的 ImageInfoArray 结构：[0]缩略图 [1]大图 [2]原图，handleImagePreview 取 [2]
   return {
-    imageInfoArray: [
-      {
-        url,
-        width: size.width || 0,
-        height: size.height || 0,
-        size: size.size || 0,
-        type: size.Type || 1,
-      },
-    ],
+    imageInfoArray: [imageItem, imageItem, imageItem],
   }
 }
 
@@ -126,6 +126,10 @@ export function buildImHistoryMessages(rows, ctx = {}) {
       cloudCustomData: row.cloud_custom_data || '',
       nick: profile.nick || profile.nameCard || '',
       avatar: profile.avatar || '',
+      // TUIKit 消息组件统一用 getMessageContent() 取 payload，重建消息也得挂这个方法
+      getMessageContent() {
+        return message.payload
+      },
     }
     list.push(message)
   }

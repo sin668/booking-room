@@ -215,6 +215,7 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
 } from '@/api/notifications'
+import { getChatConversations } from '@/api/chat'
 import { NOTIFICATION_TYPE_CONFIGS, NOTIFICATION_TYPE_MAP, getNotificationPreferenceField } from '@/pages-sub/utils/notificationTypes'
 import { isLoggedIn } from '@/utils/auth'
 import { ensureIM } from '@/utils/im'
@@ -252,6 +253,8 @@ const conversationLoading = ref(false)
 const conversationError = ref(false)
 
 let conversationWatched = false
+let dbConversations = []
+let sdkConversations = []
 
 const isConversationTab = computed(() => currentType.value === CONVERSATION_TAB)
 
@@ -449,19 +452,60 @@ function toConversationRow(conversation) {
 }
 
 function onConversationListUpdated(list) {
-  conversations.value = (Array.isArray(list) ? list : []).map(toConversationRow)
+  sdkConversations = (Array.isArray(list) ? list : []).map(toConversationRow)
+  conversations.value = mergeConversations(sdkConversations, dbConversations)
   conversationLoading.value = false
   conversationError.value = false
+}
+
+// SDK 会话只有最近 7 天活跃的，DB 里有更久的历史会话；合并时 SDK 优先（有未读数等实时状态）
+function mergeConversations(sdkRows, dbRows) {
+  const merged = new Map()
+  for (const row of sdkRows) {
+    // SDK conversationID 形如 C2C<peer_im_account>
+    const peerIM = row.conversationID && row.conversationID.replace(/^C2C/, '')
+    merged.set(peerIM || row.conversationID, row)
+  }
+  for (const row of dbRows) {
+    const key = row.peer_im_account
+    if (!merged.has(key)) {
+      merged.set(key, {
+        conversationID: `C2C${key}`,
+        name: row.name,
+        initial: (row.name || '').slice(0, 1),
+        avatar: row.avatar || '',
+        summary: row.summary || '',
+        time: formatAbsoluteTime(row.last_msg_time),
+        rawTime: row.last_msg_time || 0,
+        unreadCount: 0,
+      })
+    }
+  }
+  return Array.from(merged.values()).sort((a, b) => (b.rawTime || 0) - (a.rawTime || 0))
+}
+
+async function loadDbConversations() {
+  try {
+    const res = await getChatConversations()
+    dbConversations = (res && res.conversations) || []
+    conversations.value = mergeConversations(sdkConversations, dbConversations)
+  } catch {
+    // DB 会话加载失败不阻塞 SDK 会话显示
+  }
 }
 
 async function loadConversations() {
   conversationLoading.value = true
   conversationError.value = false
 
+  // 先从 DB 加载历史会话（不依赖 IM SDK，可显示超过 7 天的会话）
+  loadDbConversations()
+
   const ok = await ensureIM()
   if (!ok) {
+    // IM 初始化失败但 DB 会话可能已有数据
     conversationLoading.value = false
-    conversationError.value = true
+    conversationError.value = conversations.value.length === 0
     return
   }
 

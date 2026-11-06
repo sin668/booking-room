@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id
@@ -116,3 +116,123 @@ async def get_chat_messages(
         ],
         "has_more": len(rows) == limit,
     }
+
+
+@router.get("/conversations")
+async def get_conversation_list(
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """返回当前用户的所有会话（从 DB 聚合），用于补齐 SDK 7 天漫游之外的历史会话。
+
+    返回每个会话对象的最后一条消息时间、摘要和对端用户信息。
+    """
+    self_account = to_im_user_id(user_id)
+
+    # 用子查询取每个对端的最新消息时间
+    peer_latest = (
+        select(
+            case(
+                (ImMessage.im_from_account == self_account, ImMessage.im_to_account),
+                else_=ImMessage.im_from_account,
+            ).label("peer_account"),
+            func.max(ImMessage.msg_time).label("last_msg_time"),
+        )
+        .where(
+            or_(
+                ImMessage.im_from_account == self_account,
+                ImMessage.im_to_account == self_account,
+            )
+        )
+        .group_by("peer_account")
+        .subquery()
+    )
+
+    # 取每个会话的最后一条消息内容用于摘要
+    last_msg_subq = (
+        select(
+            ImMessage.im_from_account,
+            ImMessage.im_to_account,
+            ImMessage.msg_time,
+            ImMessage.element_type,
+            ImMessage.content,
+            func.row_number()
+                .over(
+                    partition_by=case(
+                        (ImMessage.im_from_account == self_account, ImMessage.im_to_account),
+                        else_=ImMessage.im_from_account,
+                    ),
+                    order_by=ImMessage.msg_time.desc(),
+                )
+                .label("rn"),
+        )
+        .where(
+            or_(
+                ImMessage.im_from_account == self_account,
+                ImMessage.im_to_account == self_account,
+            )
+        )
+        .subquery()
+    )
+    last_msg = select(last_msg_subq).where(last_msg_subq.c.rn == 1).subquery()
+
+    # User.id 转 IM 账号：func.replace(User.id::text, '-', '') 即 uuid.hex
+    user_id_hex = func.replace(func.cast(User.id, func.coalesce(type=func.text())), "-", "")
+    # 简化：直接用 cast + replace
+    from sqlalchemy import cast, String as SAString
+    user_id_hex = func.replace(cast(User.id, SAString), "-", "")
+
+    result = await db.execute(
+        select(
+            peer_latest.c.peer_account,
+            peer_latest.c.last_msg_time,
+            last_msg.c.element_type,
+            last_msg.c.content,
+            User.id.label("user_id"),
+            User.nickname,
+            User.avatar,
+        )
+        .outerjoin(
+            User,
+            user_id_hex == peer_latest.c.peer_account,
+        )
+        .order_by(peer_latest.c.last_msg_time.desc())
+    )
+
+    conversations = []
+    for row in result:
+        peer_account = row.peer_account
+        peer_uuid = from_im_user_id(peer_account)
+        summary = _format_summary(row.element_type, row.content)
+        conversations.append({
+            "peer_im_account": peer_account,
+            "peer_user_id": str(peer_uuid) if peer_uuid else None,
+            "last_msg_time": row.last_msg_time,
+            "summary": summary,
+            "name": row.nickname or (peer_uuid and str(peer_uuid)[:8]) or peer_account,
+            "avatar": row.avatar or "",
+        })
+
+    return {"conversations": conversations}
+
+
+def _format_summary(element_type: str | None, content: str | None) -> str:
+    """把最后一条消息格式化成会话列表摘要。"""
+    if not element_type:
+        return ""
+    if element_type == "text":
+        return content or ""
+    if element_type == "image":
+        return "[图片]"
+    if element_type == "sound":
+        return "[语音]"
+    if element_type == "video":
+        return "[视频]"
+    if element_type == "file":
+        return "[文件]"
+    if element_type == "face":
+        return "[表情]"
+    if element_type == "custom":
+        return "[自定义消息]"
+    return ""
+

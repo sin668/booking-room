@@ -11,3 +11,7 @@ export function getPublisherUsername(listingId) {
 export function getChatMessages(peer, params = {}) {
   return get('/api/v1/chat/messages', { peer, ...params })
 }
+
+export function getChatConversations() {
+  return get('/api/v1/chat/conversations')
+}

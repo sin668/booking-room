@@ -219,6 +219,7 @@ import { getChatConversations } from '@/api/chat'
 import { NOTIFICATION_TYPE_CONFIGS, NOTIFICATION_TYPE_MAP, getNotificationPreferenceField } from '@/pages-sub/utils/notificationTypes'
 import { isLoggedIn } from '@/utils/auth'
 import { ensureIM } from '@/utils/im'
+import { transformEmojiKeys } from '../utils/emoji'
 
 const PAGE_SIZE = 20
 const CONVERSATION_TAB = 'conversation'
@@ -448,7 +449,7 @@ function toConversationRow(conversation) {
     name,
     initial: name.slice(0, 1),
     avatar: conversation.getAvatar() || '',
-    summary: conversation.getLastMessage('text') || '',
+    summary: transformEmojiKeys(conversation.getLastMessage('text') || ''),
     time: conversation.getLastMessage('time') || '',
     rawTime: lastMsg.lastTime || lastMsg.time || 0,
     unreadCount: conversation.unreadCount || 0,

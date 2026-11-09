@@ -449,7 +449,7 @@ function toConversationRow(conversation) {
     name,
     initial: name.slice(0, 1),
     avatar: conversation.getAvatar() || '',
-    summary: transformEmojiKeys(conversation.getLastMessage('text') || ''),
+    summary: conversation.getLastMessage('text') || '',
     time: conversation.getLastMessage('time') || '',
     rawTime: lastMsg.lastTime || lastMsg.time || 0,
     unreadCount: conversation.unreadCount || 0,
@@ -477,7 +477,8 @@ function mergeConversations(sdkRows, dbRows) {
     if (!peerIM || !dbIndex.has(peerIM)) continue
     const dbRow = dbIndex.get(peerIM)
     // 合并：SDK 提供实时状态（未读数），DB 提供基础信息（名字、头像），summary/time 取有值的一方
-    const summary = sdkRow.summary || dbRow.summary || ''
+    // 注意：SDK 的 summary 已在 toConversationRow 中转换过，DB 的 summary 需要在这里转换
+    const summary = sdkRow.summary || transformEmojiKeys(dbRow.summary || '')
     const rawTime = sdkRow.rawTime || dbRow.last_msg_time || 0
     merged.set(peerIM, {
       conversationID: sdkRow.conversationID,
@@ -499,7 +500,7 @@ function mergeConversations(sdkRows, dbRows) {
         name: row.name,
         initial: (row.name || '').slice(0, 1),
         avatar: row.avatar || '',
-        summary: row.summary || '',
+        summary: transformEmojiKeys(row.summary || ''),
         time: formatAbsoluteTime(row.last_msg_time),
         rawTime: row.last_msg_time || 0,
         unreadCount: 0,

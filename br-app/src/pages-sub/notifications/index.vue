@@ -476,8 +476,8 @@ function mergeConversations(sdkRows, dbRows) {
     const peerIM = sdkRow.conversationID && sdkRow.conversationID.replace(/^C2C/, '')
     if (!peerIM || !dbIndex.has(peerIM)) continue
     const dbRow = dbIndex.get(peerIM)
-    // 合并：SDK 提供实时状态（未读数），DB 提供基础信息（名字、头像），summary/time 取有值的一方
-    // 注意：SDK 的 summary 已在 toConversationRow 中转换过，DB 的 summary 需要在这里转换
+    // 合并：SDK 提供实时状态，DB 提供基础信息（名字、头像）和超出漫游窗口的未读数
+    // 注意：SDK 的 summary 已是中文表情名，DB 的 summary 需要在这里转换
     const summary = sdkRow.summary || transformEmojiKeys(dbRow.summary || '')
     const rawTime = sdkRow.rawTime || dbRow.last_msg_time || 0
     merged.set(peerIM, {
@@ -488,7 +488,8 @@ function mergeConversations(sdkRows, dbRows) {
       summary,
       time: sdkRow.time || formatAbsoluteTime(dbRow.last_msg_time),
       rawTime,
-      unreadCount: sdkRow.unreadCount || 0,
+      // 两边统计的是同一批未读消息，相加会重复计数；取较大值才能覆盖 SDK 已丢弃的深历史未读
+      unreadCount: Math.max(sdkRow.unreadCount || 0, dbRow.unread_count || 0),
     })
   }
   // 添加 DB 中有但 SDK 中没有的会话（超过 7 天的深历史）
@@ -503,7 +504,7 @@ function mergeConversations(sdkRows, dbRows) {
         summary: transformEmojiKeys(row.summary || ''),
         time: formatAbsoluteTime(row.last_msg_time),
         rawTime: row.last_msg_time || 0,
-        unreadCount: 0,
+        unreadCount: row.unread_count || 0,
       })
     }
   }

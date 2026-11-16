@@ -126,7 +126,7 @@ async def get_conversation_list(
 ):
     """返回当前用户的所有会话（从 DB 聚合），用于补齐 SDK 7 天漫游之外的历史会话。
 
-    返回每个会话对象的最后一条消息时间、摘要和对端用户信息。
+    返回每个会话对象的最后一条消息时间、摘要、对端用户信息和未读数。
     """
     self_account = to_im_user_id(user_id)
 
@@ -151,6 +151,20 @@ async def get_conversation_list(
 
     if not peer_accounts:
         return {"conversations": []}
+
+    # 未读数按「对端发给我且未读」统计，已读状态由 C2C.CallbackAfterMsgReport 回写
+    unread_result = await db.execute(
+        select(
+            ImMessage.im_from_account.label("peer_account"),
+            func.count(ImMessage.id).label("unread_count"),
+        )
+        .where(
+            ImMessage.im_to_account == self_account,
+            ImMessage.is_read.is_(False),
+        )
+        .group_by(ImMessage.im_from_account)
+    )
+    unread_counts = {row.peer_account: row.unread_count for row in unread_result}
 
     # 为每个对端取最新消息时间和用户信息
     conversations = []
@@ -210,6 +224,7 @@ async def get_conversation_list(
             "summary": summary,
             "name": user_row.nickname if user_row else (str(peer_uuid)[:8] if peer_uuid else peer_account),
             "avatar": user_row.avatar if user_row else "",
+            "unread_count": unread_counts.get(peer_account, 0),
         })
 
     # 按最后消息时间降序排序

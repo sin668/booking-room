@@ -655,6 +655,28 @@ class TestConversationListAPI:
         response = await client.get("/api/v1/chat/conversations")
         assert response.status_code == 401
 
+    async def test_unread_count_counts_only_unread_incoming(self, auth_history_client: AsyncClient):
+        """未读数只算对端发给我且未读的消息：h-2 计入，自己发出的 h-1 不计入。"""
+        response = await auth_history_client.get("/api/v1/chat/conversations")
+        assert response.json()["conversations"][0]["unread_count"] == 1
+
+    async def test_unread_count_clears_after_read_report(
+        self, auth_history_client: AsyncClient, db_session: AsyncSession
+    ):
+        """已读回执回写后未读数归零。"""
+        await apply_msg_report(
+            db_session,
+            {"Report_Account": SELF_IM, "Peer_Account": PEER_IM, "LastReadTime": 200},
+        )
+        await db_session.commit()
+        response = await auth_history_client.get("/api/v1/chat/conversations")
+        assert response.json()["conversations"][0]["unread_count"] == 0
+
+    async def test_sent_messages_do_not_count_as_unread(self, other_history_client: AsyncClient):
+        """THIRD_ID 只有发出的 h-3，未读数应为 0。"""
+        response = await other_history_client.get("/api/v1/chat/conversations")
+        assert response.json()["conversations"][0]["unread_count"] == 0
+
     async def test_empty_conversations_for_new_user(
         self, client: AsyncClient, db_session: AsyncSession, im_users
     ):

@@ -355,6 +355,8 @@ const onCurrentConversationIDUpdated = (conversationID: string) => {
 onMounted(() => {
   // Retrieve the information about whether the audio has been played from localStorage
   audioPlayedMapping.value = chatStorage.getChatStorage('audioPlayedMapping') || {};
+  // 会话可能在本组件挂载前就已切换，watcher 补不上这一次
+  currentConversationID.value = TUIStore.getData(StoreName.CONV, 'currentConversationID') || '';
 
   TUIStore.watch(StoreName.CHAT, {
     messageList: onMessageListUpdated,
@@ -478,6 +480,10 @@ function scrollAndBlinkMessage(message: IMessageModel) {
 
 function onChatCompletedUpdated(flag: boolean) {
   isCompleted.value = flag;
+  // 全部消息都超出 SDK 漫游窗口（免费版 7 天）时，引擎只会给回空列表，此时直接从数据库取最近一页
+  if (flag && !props.isGroup && !TUIStore.getData(StoreName.CHAT, 'messageList')?.length) {
+    loadDatabaseHistoryPage();
+  }
 }
 
 const getHistoryMessageList = () => {
@@ -498,13 +504,19 @@ const getHistoryMessageList = () => {
         clearTimeout(timer);
       }, 500);
     });
+  }).catch(() => {
+    // SDK 不可用时若不复位，「查看更多」就永久点不动了
+    isLoadingMessage.value = false;
   });
 };
 
 /** 向数据库取比当前最早一条更早的一页消息，按 SDK 消息结构前插到消息列表。 */
-async function loadDatabaseHistoryPage() {
-  const earliestTime = messageList.value?.[0]?.time;
-  if (!earliestTime) return;
+async function loadDatabaseHistoryPage(cursor?: number) {
+  // 游标取列表最早一条；SDK 一条都没给时（深历史会话）没有游标可用，用当前时间取最近一页
+  const earliestTime =
+    cursor ||
+    TUIStore.getData(StoreName.CHAT, 'messageList')?.[0]?.time ||
+    Math.floor(Date.now() / 1000);
   isLoadingMessage.value = true;
   const currentFirstMessageID = messageList.value?.[0]?.ID || '';
   try {
@@ -535,8 +547,10 @@ async function loadDatabaseHistoryPage() {
       userInfo,
     });
     if (!messages.length) {
-      // 整页都是不支持重建的类型：继续往前取，否则按钮点下去没反应
-      if (page.hasMore) loadDatabaseHistoryPage();
+      // 整页都是不支持重建的类型：带上本页最早时间继续往前取，否则游标不变会原地打转
+      if (page.hasMore) {
+        loadDatabaseHistoryPage(Math.min(...page.messages.map(row => row.msg_time)));
+      }
       return;
     }
     // unshift 合并：按 ID 去重、前插、重排，且不会触发已读上报

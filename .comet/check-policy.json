@@ -1,20 +1,12 @@
 {
   "version": 1,
-  "argv": [
-    "/bin/sh",
-    "-c",
-    "cd br-server && /opt/miniconda3/envs/booking-room/bin/python -m pytest tests/test_im_callback_sync.py -q -p no:cacheprovider && cd ../br-app && npm run test:im-history && npm run test:im-history-merge && npm run test:chat-read-on-visible && npm run test:chat-read-gate"
-  ],
-  "cwd": ".",
+  "argv": ["pnpm", "test:business-refactor"],
+  "cwd": "br-admin",
   "files": [
-    "br-server/app",
-    "br-server/tests",
-    "br-server/pyproject.toml",
-    "br-server/alembic",
-    "br-app/src/utils",
-    "br-app/src/TUIKit/components/TUIChat",
-    "br-app/scripts",
-    "br-app/package.json"
+    "src",
+    "scripts",
+    "package.json"
   ],
-  "env": ["PATH"]
+  "git": "none",
+  "taskCheckboxes": "ignore"
 }

@@ -7,7 +7,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { FormSchema, useForm } from '@/components/Form';
+  import { BasicForm, FormSchema, useForm } from '@/components/Form';
   import { basicModal, useModal } from '@/components/Modal';
   import { createRole } from '@/api/system/role';
 

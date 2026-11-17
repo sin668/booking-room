@@ -79,7 +79,7 @@ function testSharedViewBuilders() {
   assert.deepEqual(ROOM_STATUS_OPTIONS[0], { label: '全部', value: '' });
   assert.equal(SEAT_ZONE_OPTIONS.find((item) => item.value === 'vip')?.label, 'VIP区');
   assert.equal(WALLET_TRANSACTION_TYPE_TAGS.recharge.label, '钱包充值');
-  assert.equal(getTagConfig(BOOKING_STATUS_TAGS, 'confirmed').label, '已确认');
+  assert.equal(getTagConfig(BOOKING_STATUS_TAGS, 'in_progress').label, '进行中');
   assert.equal(getTagConfig(BOOKING_STATUS_TAGS, 'unknown').label, 'unknown');
   assert.equal(formatAdminMoney(12), '¥12.00');
   assert.equal(formatAdminDate(1717027200000), '2024-05-30');
@@ -111,7 +111,7 @@ function testPageBuilders() {
     buildBookingTableColumns().some((column) => column.key === 'status'),
     true
   );
-  assert.equal(buildRoomSearchSchemas().length, 2);
+  assert.equal(buildRoomSearchSchemas().length, 4);
   assert.equal(
     buildRoomTableColumns().some((column) => column.key === 'min_price'),
     true

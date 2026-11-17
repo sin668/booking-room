@@ -8,7 +8,7 @@
 
 <script lang="ts" setup>
   import { nextTick } from 'vue';
-  import { FormSchema, useForm } from '@/components/Form';
+  import { BasicForm, FormSchema, useForm } from '@/components/Form';
   import { basicModal, useModal } from '@/components/Modal';
   import { updateRole } from '@/api/system/role';
 

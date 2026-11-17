@@ -120,6 +120,7 @@
           {
             label: '分配角色',
             key: 'assignRole',
+            ifShow: () => !(record.user_type === 'admin' && record.is_super_admin),
           },
           {
             label: '切换状态',

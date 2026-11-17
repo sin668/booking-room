@@ -62,6 +62,19 @@ export const columns = [
     },
   },
   {
+    title: '用户类型',
+    key: 'is_super_admin',
+    width: 110,
+    render(row) {
+      if (row.user_type !== 'admin') return '-';
+      return h(
+        NTag,
+        { type: row.is_super_admin ? 'warning' : 'default', size: 'small' },
+        { default: () => (row.is_super_admin ? '超级管理员' : '普通用户') }
+      );
+    },
+  },
+  {
     title: '状态',
     key: 'status',
     width: 80,

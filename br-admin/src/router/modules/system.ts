@@ -32,6 +32,16 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/system/role/role.vue'),
       },
       {
+        path: 'role/edit/:id?',
+        name: 'system_role_edit',
+        meta: {
+          title: '编辑角色',
+          hideInMenu: true,
+          activeMenu: 'system_role',
+        },
+        component: () => import('@/views/system/role/edit.vue'),
+      },
+      {
         path: 'user',
         name: 'system_user',
         meta: {

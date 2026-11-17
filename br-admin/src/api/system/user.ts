@@ -80,6 +80,7 @@ export interface UserListItem {
   email: string | null;
   status: string;
   avatar: string | null;
+  is_super_admin?: boolean;
   created_at: string;
   roles: AdminRoleSummary[];
   booking_count: number;
@@ -114,6 +115,7 @@ export interface UserCreateParams {
   password: string;
   nickname?: string;
   avatar?: string;
+  is_super_admin?: boolean;
 }
 
 export interface UserUpdateParams {
@@ -122,6 +124,8 @@ export interface UserUpdateParams {
   avatar?: string;
   balance?: number;
   role_ids?: number[];
+  status?: string;
+  is_super_admin?: boolean;
 }
 
 const nativeMeta = ADMIN_NATIVE_META;

@@ -69,6 +69,12 @@ export async function getRoleList(params: RoleListParams = {}) {
   };
 }
 
+export function getRoleDetail(id: string | number) {
+  return Alova.Get<RoleItem>(`/v1/admin/roles/${id}`, {
+    meta: nativeMeta,
+  });
+}
+
 export function createRole(data: RoleSaveParams) {
   return Alova.Post<RoleItem>('/v1/admin/roles', data, {
     meta: nativeMeta,

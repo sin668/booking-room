@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import require_admin_permission
+from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
 from app.schemas.activity import (
     ActivityAdminResponse,
@@ -11,6 +11,7 @@ from app.schemas.activity import (
     ActivityUpdate,
 )
 from app.services import activity_service
+from app.services.data_scope import creator_id
 
 router = APIRouter(prefix="/api/v1/admin/activities", tags=["admin-activities"])
 
@@ -22,8 +23,9 @@ async def list_activities(
     keyword: str | None = None,
     is_active: bool | None = None,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> ActivityListResponse:
-    return await activity_service.list_activities(db, page=page, page_size=page_size, keyword=keyword, is_active=is_active)
+    return await activity_service.list_activities(db, page=page, page_size=page_size, keyword=keyword, is_active=is_active, viewer=context)
 
 
 @router.post(
@@ -32,16 +34,24 @@ async def list_activities(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_admin_permission("activity:create"))],
 )
-async def create_activity(data: ActivityCreate, db: AsyncSession = Depends(get_db)) -> ActivityAdminResponse:
+async def create_activity(
+    data: ActivityCreate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> ActivityAdminResponse:
     try:
-        return await activity_service.create_activity(db, data.model_dump())
+        return await activity_service.create_activity(db, data.model_dump(), created_by=creator_id(context))
     except activity_service.ActivityCouponError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
 
 @router.get("/{activity_id}", response_model=ActivityAdminResponse, dependencies=[Depends(require_admin_permission("activity:view"))])
-async def get_activity(activity_id: int, db: AsyncSession = Depends(get_db)) -> ActivityAdminResponse:
-    activity = await activity_service.get_admin_activity_response(db, activity_id)
+async def get_activity(
+    activity_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> ActivityAdminResponse:
+    activity = await activity_service.get_admin_activity_response(db, activity_id, viewer=context)
     if not activity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动不存在")
     return activity

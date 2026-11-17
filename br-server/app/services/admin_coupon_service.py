@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.activity import ActivityCoupon
 from app.models.coupon import Coupon, UserCoupon
 from app.schemas.coupon_admin import AdminCouponListResponse, AdminCouponResponse
+from app.services.data_scope import scope_condition
 
 from app.utils.timezone import CHINA_TIMEZONE
 
@@ -100,10 +101,14 @@ async def list_coupons(
     scope: str | None = None,
     is_active: bool | None = None,
     valid_now: bool | None = None,
+    viewer=None,
 ) -> AdminCouponListResponse:
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
     conditions = []
+    condition = scope_condition(Coupon, viewer)
+    if condition is not None:
+        conditions.append(condition)
     if keyword:
         like = f"%{keyword.strip()}%"
         conditions.append(or_(Coupon.name.ilike(like), Coupon.description.ilike(like)))
@@ -135,8 +140,12 @@ async def list_coupons(
     )
 
 
-async def get_coupon(db: AsyncSession, coupon_id: int) -> AdminCouponResponse | None:
-    coupon = await db.get(Coupon, coupon_id)
+async def get_coupon(db: AsyncSession, coupon_id: int, viewer=None) -> AdminCouponResponse | None:
+    stmt = select(Coupon).where(Coupon.id == coupon_id)
+    condition = scope_condition(Coupon, viewer)
+    if condition is not None:
+        stmt = stmt.where(condition)
+    coupon = (await db.execute(stmt)).scalar_one_or_none()
     return AdminCouponResponse.model_validate(coupon) if coupon else None
 
 
@@ -147,11 +156,11 @@ async def _get_coupon_model(db: AsyncSession, coupon_id: int) -> Coupon:
     return coupon
 
 
-async def create_coupon(db: AsyncSession, data: dict[str, Any]) -> AdminCouponResponse:
+async def create_coupon(db: AsyncSession, data: dict[str, Any], created_by=None) -> AdminCouponResponse:
     data = _clean_coupon_data(data)
     _validate_coupon_rule(data)
     _validate_time_range(data)
-    coupon = Coupon(**data)
+    coupon = Coupon(**data, created_by=created_by)
     db.add(coupon)
     await db.flush()
     await db.refresh(coupon)

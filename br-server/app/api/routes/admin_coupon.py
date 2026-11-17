@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import require_admin_permission
+from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
 from app.schemas.coupon_admin import (
     AdminCouponCreate,
@@ -11,6 +11,7 @@ from app.schemas.coupon_admin import (
     AdminCouponUpdate,
 )
 from app.services import admin_coupon_service
+from app.services.data_scope import creator_id
 
 router = APIRouter(prefix="/api/v1/admin/coupons", tags=["admin-coupons"])
 
@@ -34,6 +35,7 @@ async def list_coupons(
     is_active: bool | None = None,
     valid_now: bool | None = None,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> AdminCouponListResponse:
     return await admin_coupon_service.list_coupons(
         db,
@@ -44,6 +46,7 @@ async def list_coupons(
         scope=scope,
         is_active=is_active,
         valid_now=valid_now,
+        viewer=context,
     )
 
 
@@ -53,16 +56,24 @@ async def list_coupons(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_admin_permission("coupon:create"))],
 )
-async def create_coupon(data: AdminCouponCreate, db: AsyncSession = Depends(get_db)) -> AdminCouponResponse:
+async def create_coupon(
+    data: AdminCouponCreate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> AdminCouponResponse:
     try:
-        return await admin_coupon_service.create_coupon(db, data.model_dump())
+        return await admin_coupon_service.create_coupon(db, data.model_dump(), created_by=creator_id(context))
     except admin_coupon_service.AdminCouponError as exc:
         raise _service_error(exc) from exc
 
 
 @router.get("/{coupon_id}", response_model=AdminCouponResponse, dependencies=[Depends(require_admin_permission("coupon:view"))])
-async def get_coupon(coupon_id: int, db: AsyncSession = Depends(get_db)) -> AdminCouponResponse:
-    coupon = await admin_coupon_service.get_coupon(db, coupon_id)
+async def get_coupon(
+    coupon_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> AdminCouponResponse:
+    coupon = await admin_coupon_service.get_coupon(db, coupon_id, viewer=context)
     if not coupon:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="卡券不存在")
     return coupon

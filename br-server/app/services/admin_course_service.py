@@ -18,6 +18,7 @@ from app.models.lesson_schedule import LessonSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.domain.booking_status import resolve_course_status
+from app.services.data_scope import scope_condition
 from app.schemas.admin_course import (
     AdminCourseCreate,
     AdminCourseDetailResponse,
@@ -49,12 +50,16 @@ class AdminCourseService:
         status: str | None = None,
         keyword: str | None = None,
         teacher_id: int | None = None,
+        viewer=None,
     ) -> AdminCourseListResponse:
         """分页查询课程列表，附带排课信息。"""
         page_size = min(page_size, MAX_PAGE_SIZE)
         offset = (page - 1) * page_size
 
         filters = []
+        condition = scope_condition(Course, viewer)
+        if condition is not None:
+            filters.append(condition)
         if category:
             filters.append(Course.category == category)
         if status:
@@ -129,9 +134,13 @@ class AdminCourseService:
             items=items, total=total, page=page, page_size=page_size
         )
 
-    async def get_course_detail(self, db: AsyncSession, course_id: int) -> AdminCourseDetailResponse | None:
+    async def get_course_detail(self, db: AsyncSession, course_id: int, viewer=None) -> AdminCourseDetailResponse | None:
         """获取课程详情，包含所有排课记录和教师信息。"""
-        course_result = await db.execute(select(Course).where(Course.id == course_id))
+        stmt = select(Course).where(Course.id == course_id)
+        condition = scope_condition(Course, viewer)
+        if condition is not None:
+            stmt = stmt.where(condition)
+        course_result = await db.execute(stmt)
         course = course_result.scalar_one_or_none()
         if not course:
             return None
@@ -208,7 +217,7 @@ class AdminCourseService:
             lessons=lessons,
         )
 
-    async def create_course(self, db: AsyncSession, data: AdminCourseCreate) -> Course:
+    async def create_course(self, db: AsyncSession, data: AdminCourseCreate, created_by=None) -> Course:
         """创建新课程及其排课记录。"""
         course = Course(
             name=data.name,
@@ -220,6 +229,7 @@ class AdminCourseService:
             is_hot=data.is_hot,
             sort_order=data.sort_order,
             status=data.status,
+            created_by=created_by,
         )
         db.add(course)
         await db.flush()

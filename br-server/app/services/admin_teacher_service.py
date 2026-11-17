@@ -19,6 +19,7 @@ from app.schemas.admin_teacher import (
     AdminTeacherUpdate,
     TeacherRoomBrief,
 )
+from app.services.data_scope import scope_condition
 
 ALLOWED_ROOM_TYPES = ("training", "comprehensive")
 
@@ -89,8 +90,12 @@ async def list_teachers(
     page_size: int = 10,
     keyword: str | None = None,
     status: str | None = None,
+    viewer=None,
 ) -> AdminTeacherListResponse:
     filters = []
+    condition = scope_condition(Teacher, viewer)
+    if condition is not None:
+        filters.append(condition)
     if keyword:
         filters.append(Teacher.name.ilike(f"%{keyword}%"))
     if status:
@@ -115,8 +120,12 @@ async def list_teachers(
     return AdminTeacherListResponse(items=items, total=total, page=page, page_size=page_size)
 
 
-async def get_teacher_detail(db: AsyncSession, teacher_id: int) -> AdminTeacherDetail | None:
-    teacher = await db.get(Teacher, teacher_id)
+async def get_teacher_detail(db: AsyncSession, teacher_id: int, viewer=None) -> AdminTeacherDetail | None:
+    stmt = select(Teacher).where(Teacher.id == teacher_id)
+    condition = scope_condition(Teacher, viewer)
+    if condition is not None:
+        stmt = stmt.where(condition)
+    teacher = (await db.execute(stmt)).scalar_one_or_none()
     if teacher is None:
         return None
     # server-side onupdate/default（func.now()）在 flush 后会 expire，
@@ -137,7 +146,7 @@ async def get_teacher_detail(db: AsyncSession, teacher_id: int) -> AdminTeacherD
     )
 
 
-async def create_teacher(db: AsyncSession, data: AdminTeacherCreate) -> Teacher:
+async def create_teacher(db: AsyncSession, data: AdminTeacherCreate, created_by=None) -> Teacher:
     await _validate_room_ids(db, data.room_ids)
     teacher = Teacher(
         name=data.name,
@@ -151,6 +160,7 @@ async def create_teacher(db: AsyncSession, data: AdminTeacherCreate) -> Teacher:
         teaching_tags=_tags_to_db(data.teaching_tags),
         qualifications=[q.model_dump() for q in data.qualifications] or None,
         status=data.status,
+        created_by=created_by,
     )
     db.add(teacher)
     await db.flush()

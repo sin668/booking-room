@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import require_admin_permission
+from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
 from app.schemas.seat import (
     SeatAdminResponse,
@@ -70,20 +70,26 @@ async def list_seats(
     zone: str | None = None,
     status: str | None = None,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> list[SeatAdminResponse]:
     try:
-        return await seat_service.admin_list_seats(db, room_id, zone=zone, status=status)
+        return await seat_service.admin_list_seats(db, room_id, zone=zone, status=status, viewer=context)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        # 本函数的 status 查询参数遮蔽了 fastapi.status 模块，故用字面量
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 # ---- Flat seat endpoints ----
 
 
 @flat_seats_router.get("/{seat_id}", response_model=SeatAdminResponse, dependencies=[Depends(require_admin_permission("seat:view"))])
-async def get_seat(seat_id: int, db: AsyncSession = Depends(get_db)) -> SeatAdminResponse:
+async def get_seat(
+    seat_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> SeatAdminResponse:
     try:
-        return await seat_service.admin_get_seat(db, seat_id)
+        return await seat_service.admin_get_seat(db, seat_id, viewer=context)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 

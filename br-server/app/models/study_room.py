@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
+import uuid
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -29,6 +30,7 @@ class StudyRoom(Base):
     room_type: Mapped[str] = mapped_column(String(20), default="study", nullable=False)
     min_price: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     rating: Mapped[float] = mapped_column(Numeric(3, 1), default=0.0, nullable=False)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False

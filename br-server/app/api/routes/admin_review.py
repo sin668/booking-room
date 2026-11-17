@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import AdminContext, require_admin_permission
+from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
 from app.schemas.admin_review import (
     AdminReviewItem,
@@ -33,6 +33,7 @@ async def list_reviews(
     page: int = Query(1, ge=1),
     page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=ADMIN_MAX_PAGE_SIZE),
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> AdminReviewListResponse:
     return await admin_review_service.list_reviews(
         db,
@@ -42,6 +43,7 @@ async def list_reviews(
         sort=sort,
         page=page,
         page_size=page_size,
+        viewer=context,
     )
 
 

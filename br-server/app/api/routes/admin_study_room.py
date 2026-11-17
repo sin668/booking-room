@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import require_admin_permission
+from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
 from app.schemas.study_room import (
     RoomAdminListResponse,
@@ -11,6 +11,7 @@ from app.schemas.study_room import (
     RoomUpdate,
 )
 from app.services import study_room_service
+from app.services.data_scope import creator_id
 
 router = APIRouter(
     prefix="/api/v1/admin/rooms",
@@ -26,9 +27,11 @@ async def list_rooms(
     room_type: str | None = Query(None, pattern="^(study|training|comprehensive)$"),
     city_id: int | None = Query(None, ge=1),
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> RoomAdminListResponse:
     return await study_room_service.admin_list_rooms(
-        db, page=page, page_size=page_size, status=status, room_type=room_type, city_id=city_id
+        db, page=page, page_size=page_size, status=status, room_type=room_type, city_id=city_id,
+        viewer=context,
     )
 
 
@@ -38,14 +41,22 @@ async def list_rooms(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_admin_permission("room:create"))],
 )
-async def create_room(data: RoomCreate, db: AsyncSession = Depends(get_db)) -> RoomAdminResponse:
-    return await study_room_service.create_room(db, data.model_dump())
+async def create_room(
+    data: RoomCreate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> RoomAdminResponse:
+    return await study_room_service.create_room(db, data.model_dump(), created_by=creator_id(context))
 
 
 @router.get("/{room_id}", response_model=RoomAdminResponse, dependencies=[Depends(require_admin_permission("room:view"))])
-async def get_room(room_id: int, db: AsyncSession = Depends(get_db)) -> RoomAdminResponse:
+async def get_room(
+    room_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> RoomAdminResponse:
     try:
-        return await study_room_service.admin_get_room(db, room_id)
+        return await study_room_service.admin_get_room(db, room_id, viewer=context)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 

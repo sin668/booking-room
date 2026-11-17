@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.dependencies import AdminContext, get_current_admin
 from app.core.database import get_db
 from app.schemas.admin_course import (
     AdminCourseCreate,
@@ -17,6 +18,7 @@ from app.schemas.admin_course import (
     CourseScheduleUpdate,
 )
 from app.services.admin_course_service import AdminCourseService
+from app.services.data_scope import creator_id
 
 router = APIRouter(prefix="/api/v1/admin/courses", tags=["admin-courses"])
 
@@ -30,34 +32,44 @@ async def list_courses(
     keyword: str | None = None,
     teacher_id: int | None = None,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """分页查询课程列表。"""
     service = AdminCourseService()
     return await service.list_courses(
         db, page=page, page_size=page_size,
         category=category, status=status, keyword=keyword, teacher_id=teacher_id,
+        viewer=context,
     )
 
 
 @router.get("/{course_id}", response_model=AdminCourseDetailResponse)
-async def get_course_detail(course_id: int, db: AsyncSession = Depends(get_db)):
+async def get_course_detail(
+    course_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+):
     """获取课程详情。"""
     service = AdminCourseService()
-    result = await service.get_course_detail(db, course_id)
+    result = await service.get_course_detail(db, course_id, viewer=context)
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="课程不存在")
     return result
 
 
 @router.post("", response_model=AdminCourseDetailResponse, status_code=status.HTTP_201_CREATED)
-async def create_course(data: AdminCourseCreate, db: AsyncSession = Depends(get_db)):
+async def create_course(
+    data: AdminCourseCreate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+):
     """创建新课程。"""
     service = AdminCourseService()
     try:
-        course = await service.create_course(db, data)
+        course = await service.create_course(db, data, created_by=creator_id(context))
         await db.commit()
         # 重新查询以返回完整详情
-        result = await service.get_course_detail(db, course.id)
+        result = await service.get_course_detail(db, course.id, viewer=context)
         if not result:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="创建失败")
         return result

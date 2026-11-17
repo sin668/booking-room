@@ -8,10 +8,15 @@ from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.schemas.seat import SeatAdminResponse, SeatResponse, SeatStatsResponse, SeatWithAvailabilityResponse
+from app.services.data_scope import scope_condition
 
 
-async def _room_exists(db: AsyncSession, room_id: int) -> bool:
-    result = await db.execute(select(StudyRoom.id).where(StudyRoom.id == room_id))
+async def _room_exists(db: AsyncSession, room_id: int, viewer=None) -> bool:
+    stmt = select(StudyRoom.id).where(StudyRoom.id == room_id)
+    condition = scope_condition(StudyRoom, viewer)
+    if condition is not None:
+        stmt = stmt.where(condition)
+    result = await db.execute(stmt)
     return result.scalar_one_or_none() is not None
 
 
@@ -131,8 +136,9 @@ async def admin_list_seats(
     room_id: int,
     zone: str | None = None,
     status: str | None = None,
+    viewer=None,
 ) -> list[SeatAdminResponse]:
-    if not await _room_exists(db, room_id):
+    if not await _room_exists(db, room_id, viewer=viewer):
         raise ValueError(f"Room {room_id} not found")
 
     stmt = select(Seat).where(Seat.room_id == room_id)
@@ -147,8 +153,11 @@ async def admin_list_seats(
     return [SeatAdminResponse.model_validate(s) for s in seats]
 
 
-async def admin_get_seat(db: AsyncSession, seat_id: int) -> SeatAdminResponse:
+async def admin_get_seat(db: AsyncSession, seat_id: int, viewer=None) -> SeatAdminResponse:
     stmt = select(Seat, StudyRoom.name).join(StudyRoom, Seat.room_id == StudyRoom.id).where(Seat.id == seat_id)
+    condition = scope_condition(StudyRoom, viewer)
+    if condition is not None:
+        stmt = stmt.where(condition)
     result = await db.execute(stmt)
     row = result.one_or_none()
     if row is None:

@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import require_admin_permission
+from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
 from app.schemas.admin_teacher import (
     AdminTeacherCreate,
@@ -14,6 +14,7 @@ from app.schemas.admin_teacher import (
     TeacherAvailableTimeSlotsUpdate,
 )
 from app.services import admin_teacher_service
+from app.services.data_scope import creator_id
 
 router = APIRouter(prefix="/api/v1/admin/teachers", tags=["admin-teachers"])
 
@@ -25,32 +26,41 @@ async def list_teachers(
     keyword: str | None = None,
     status_filter: str | None = Query(None, alias="status", pattern="^(active|inactive)$"),
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """分页查询老师列表（兼容排课老师下拉）。"""
     return await admin_teacher_service.list_teachers(
-        db, page=page, page_size=page_size, keyword=keyword, status=status_filter
+        db, page=page, page_size=page_size, keyword=keyword, status=status_filter, viewer=context
     )
 
 
 @router.get("/{teacher_id}", response_model=AdminTeacherDetail, dependencies=[Depends(require_admin_permission("teacher:view"))])
-async def get_teacher_detail(teacher_id: int, db: AsyncSession = Depends(get_db)):
+async def get_teacher_detail(
+    teacher_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+):
     """获取老师详情。"""
-    result = await admin_teacher_service.get_teacher_detail(db, teacher_id)
+    result = await admin_teacher_service.get_teacher_detail(db, teacher_id, viewer=context)
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="老师不存在")
     return result
 
 
 @router.post("", response_model=AdminTeacherDetail, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin_permission("teacher:create"))])
-async def create_teacher(data: AdminTeacherCreate, db: AsyncSession = Depends(get_db)):
+async def create_teacher(
+    data: AdminTeacherCreate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+):
     """新增老师。"""
     try:
-        teacher = await admin_teacher_service.create_teacher(db, data)
+        teacher = await admin_teacher_service.create_teacher(db, data, created_by=creator_id(context))
         await db.commit()
     except ValueError as e:
         await db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    result = await admin_teacher_service.get_teacher_detail(db, teacher.id)
+    result = await admin_teacher_service.get_teacher_detail(db, teacher.id, viewer=context)
     assert result is not None
     return result
 

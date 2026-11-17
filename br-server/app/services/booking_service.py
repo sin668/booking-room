@@ -55,6 +55,7 @@ from app.domain.booking_status import (
     resolve_seat_status,
 )
 from app.services import coupon_service
+from app.services.data_scope import booking_scope_condition
 from app.services.booking_cancellation_policy import (
     booking_now,
     calculate_cancellation_policy,
@@ -923,6 +924,7 @@ async def admin_list_bookings(
     room_id: int | None = None,
     date_start: date | None = None,
     date_end: date | None = None,
+    viewer=None,
 ) -> BookingAdminListResponse:
     """List all bookings (admin view) with pagination and optional filters."""
     page_size = min(page_size, MAX_PAGE_SIZE)
@@ -938,16 +940,27 @@ async def admin_list_bookings(
     if date_end is not None:
         conditions.append(Booking.date <= date_end)
 
+    scope = booking_scope_condition(viewer)
+    if scope is not None:
+        conditions.append(scope)
+
     where_clause = and_(*conditions) if conditions else True
 
-    count_result = await db.execute(
-        select(func.count()).select_from(Booking).where(where_clause)
-    )
+    count_stmt = select(func.count()).select_from(Booking)
+    list_stmt = select(Booking)
+    if scope is not None:
+        count_stmt = count_stmt.outerjoin(Course, Booking.course_id == Course.id).outerjoin(
+            StudyRoom, Booking.room_id == StudyRoom.id
+        )
+        list_stmt = list_stmt.outerjoin(Course, Booking.course_id == Course.id).outerjoin(
+            StudyRoom, Booking.room_id == StudyRoom.id
+        )
+
+    count_result = await db.execute(count_stmt.where(where_clause))
     total = count_result.scalar_one()
 
     result = await db.execute(
-        select(Booking)
-        .where(where_clause)
+        list_stmt.where(where_clause)
         .order_by(Booking.id.desc())
         .offset(offset)
         .limit(page_size)
@@ -1014,13 +1027,19 @@ async def admin_list_bookings(
     )
 
 
-async def admin_get_booking(db: AsyncSession, booking_id: int) -> BookingAdminDetailResponse:
+async def admin_get_booking(db: AsyncSession, booking_id: int, viewer=None) -> BookingAdminDetailResponse:
     """Get any booking detail (admin view) with related-table aggregation.
 
     手动逐表查询并用纯 Pydantic 组装响应，不返回带懒加载 relationship 的 ORM 对象，
     避免 async session 外触发 MissingGreenlet。
     """
-    result = await db.execute(select(Booking).where(Booking.id == booking_id))
+    stmt = select(Booking).where(Booking.id == booking_id)
+    scope = booking_scope_condition(viewer)
+    if scope is not None:
+        stmt = stmt.outerjoin(Course, Booking.course_id == Course.id).outerjoin(
+            StudyRoom, Booking.room_id == StudyRoom.id
+        ).where(scope)
+    result = await db.execute(stmt)
     booking = result.scalar_one_or_none()
 
     if booking is None:

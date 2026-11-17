@@ -12,6 +12,7 @@ from app.schemas.study_room import (
     StudyRoomListResponse,
     StudyRoomResponse,
 )
+from app.services.data_scope import scope_condition
 
 MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
@@ -92,12 +93,16 @@ async def admin_list_rooms(
     status: str | None = None,
     room_type: str | None = None,
     city_id: int | None = None,
+    viewer=None,
 ) -> RoomAdminListResponse:
     """Return paginated list of all rooms, optionally filtered by status/type/city."""
     page_size = min(page_size, MAX_PAGE_SIZE)
     offset = (page - 1) * page_size
 
     filters = []
+    condition = scope_condition(StudyRoom, viewer)
+    if condition is not None:
+        filters.append(condition)
     if status is not None:
         filters.append(StudyRoom.status == status)
     if room_type is not None:
@@ -135,13 +140,17 @@ async def admin_list_rooms(
     )
 
 
-async def admin_get_room(db: AsyncSession, room_id: int) -> RoomAdminResponse:
+async def admin_get_room(db: AsyncSession, room_id: int, viewer=None) -> RoomAdminResponse:
     """Get room by ID with seat counts."""
-    result = await db.execute(
+    stmt = (
         select(StudyRoom, City.name.label("city_name"))
         .outerjoin(City, StudyRoom.city_id == City.id)
         .where(StudyRoom.id == room_id)
     )
+    condition = scope_condition(StudyRoom, viewer)
+    if condition is not None:
+        stmt = stmt.where(condition)
+    result = await db.execute(stmt)
     row = result.one_or_none()
     if row is None:
         raise ValueError(f"Room {room_id} not found")
@@ -169,9 +178,9 @@ async def admin_get_room(db: AsyncSession, room_id: int) -> RoomAdminResponse:
     )
 
 
-async def create_room(db: AsyncSession, data: dict) -> RoomAdminResponse:
+async def create_room(db: AsyncSession, data: dict, created_by=None) -> RoomAdminResponse:
     """Create a new study room."""
-    room = StudyRoom(**data)
+    room = StudyRoom(**data, created_by=created_by)
     db.add(room)
     await db.commit()
     await db.refresh(room)

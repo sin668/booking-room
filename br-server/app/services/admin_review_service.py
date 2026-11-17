@@ -13,7 +13,10 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.review_status import ReviewStatus
+from app.models.booking import Booking
+from app.models.course import Course
 from app.models.review import Review
+from app.models.study_room import StudyRoom
 from app.models.user import User
 from app.schemas.admin_review import (
     AdminReviewItem,
@@ -21,6 +24,7 @@ from app.schemas.admin_review import (
     ReviewReplyUpdate,
     ReviewStatusUpdate,
 )
+from app.services.data_scope import review_scope_condition
 from app.services.review_service import (
     DEFAULT_PAGE_SIZE,
     RATING_BANDS,
@@ -62,6 +66,7 @@ async def list_reviews(
     sort: str = "new",
     page: int = 1,
     page_size: int = DEFAULT_PAGE_SIZE,
+    viewer=None,
 ) -> AdminReviewListResponse:
     """后台评价列表：返回全部状态，支持状态/评分档位/关键词筛选。"""
     conditions: list = []
@@ -77,11 +82,26 @@ async def list_reviews(
         pattern = f"%{trimmed}%"
         conditions.append(or_(Review.content.ilike(pattern), User.nickname.ilike(pattern)))
 
+    scope = review_scope_condition(viewer)
+    if scope is not None:
+        conditions.append(scope)
+
     stmt = select(Review)
     count_stmt = select(func.count()).select_from(Review)
     if trimmed:
         stmt = stmt.join(User, Review.user_id == User.id)
         count_stmt = count_stmt.join(User, Review.user_id == User.id)
+    if scope is not None:
+        stmt = (
+            stmt.outerjoin(Course, Review.course_id == Course.id)
+            .outerjoin(Booking, Review.booking_id == Booking.id)
+            .outerjoin(StudyRoom, Booking.room_id == StudyRoom.id)
+        )
+        count_stmt = (
+            count_stmt.outerjoin(Course, Review.course_id == Course.id)
+            .outerjoin(Booking, Review.booking_id == Booking.id)
+            .outerjoin(StudyRoom, Booking.room_id == StudyRoom.id)
+        )
     if conditions:
         stmt = stmt.where(*conditions)
         count_stmt = count_stmt.where(*conditions)

@@ -3,7 +3,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import require_admin_permission
+from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
 from app.schemas.booking import (
     BookingAdminDetailResponse,
@@ -24,16 +24,22 @@ async def list_bookings(
     date_start: date | None = None,
     date_end: date | None = None,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> BookingAdminListResponse:
     return await booking_service.admin_list_bookings(
-        db, page=page, page_size=page_size, status=status, room_id=room_id, date_start=date_start, date_end=date_end
+        db, page=page, page_size=page_size, status=status, room_id=room_id,
+        date_start=date_start, date_end=date_end, viewer=context,
     )
 
 
 @router.get("/{booking_id}", response_model=BookingAdminDetailResponse, dependencies=[Depends(require_admin_permission("booking:view"))])
-async def get_booking(booking_id: int, db: AsyncSession = Depends(get_db)) -> BookingAdminDetailResponse:
+async def get_booking(
+    booking_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> BookingAdminDetailResponse:
     try:
-        return await booking_service.admin_get_booking(db, booking_id)
+        return await booking_service.admin_get_booking(db, booking_id, viewer=context)
     except booking_service.BookingNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="预约不存在")
 

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.activity import Activity, ActivityCoupon
 from app.models.coupon import Coupon, UserCoupon
+from app.services.data_scope import scope_condition
 from app.schemas.activity import (
     ActivityAdminResponse,
     ActivityCouponAdminResponse,
@@ -322,10 +323,16 @@ async def list_activities(
     page_size: int = 10,
     keyword: str | None = None,
     is_active: bool | None = None,
+    viewer=None,
 ) -> dict:
     """Return paginated activity list with optional keyword search and status filter."""
     query = select(Activity)
     count_query = select(func.count(Activity.id))
+
+    condition = scope_condition(Activity, viewer)
+    if condition is not None:
+        query = query.where(condition)
+        count_query = count_query.where(condition)
 
     if keyword:
         pattern = f"%{keyword}%"
@@ -365,11 +372,11 @@ async def get_activity_by_id(db: AsyncSession, activity_id: int) -> Activity | N
     return result.scalar_one_or_none()
 
 
-async def create_activity(db: AsyncSession, data: dict) -> ActivityAdminResponse:
+async def create_activity(db: AsyncSession, data: dict, created_by=None) -> ActivityAdminResponse:
     """Create a new activity."""
     activity_coupons = data.pop("activity_coupons", [])
     data["content_html"] = sanitize_activity_content(data.get("content_html"))
-    activity = Activity(**data)
+    activity = Activity(**data, created_by=created_by)
     db.add(activity)
     await db.flush()
     await _replace_activity_coupons(db, activity, activity_coupons)
@@ -413,8 +420,12 @@ async def toggle_activity_status(db: AsyncSession, activity: Activity, is_active
     return _activity_to_admin_response(activity, await _load_activity_coupon_rows(db, activity.id))
 
 
-async def get_admin_activity_response(db: AsyncSession, activity_id: int) -> ActivityAdminResponse | None:
-    activity = await get_activity_by_id(db, activity_id)
+async def get_admin_activity_response(db: AsyncSession, activity_id: int, viewer=None) -> ActivityAdminResponse | None:
+    stmt = select(Activity).where(Activity.id == activity_id)
+    condition = scope_condition(Activity, viewer)
+    if condition is not None:
+        stmt = stmt.where(condition)
+    activity = (await db.execute(stmt)).scalar_one_or_none()
     if activity is None:
         return None
     return _activity_to_admin_response(activity, await _load_activity_coupon_rows(db, activity.id))

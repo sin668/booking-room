@@ -839,3 +839,323 @@ async function switchConversation(conversationID: string) {
 - `br-server/app/api/routes/im_callback.py` — 视频缩略图转存逻辑
 - `br-server/app/models/im_message.py` — 新增 `thumbnail_oss_url` 字段
 - `br-app/src/TUIKit/components/TUIChat/entry-chat-only.ts` — 模拟会话对象创建
+
+## 聊天窗口向上翻到顶不自动加载，必须点「查看更多」
+
+### 现象
+
+- 会话窗口往上滚到最顶，历史消息不会继续加载，一定要点顶部的「查看更多」才出一页。
+- 无任何报错，纯交互缺陷。
+
+### 根本原因
+
+`message-list/index.vue` 的 `handelScrollListScroll` 只做了一件事：`scrollButtonInstanceRef.value?.judgeScrollOverOneScreen(e)`（判断要不要显示「回到底部」按钮）。滚动位置从来没有被当成加载信号，唯一的加载入口是「查看更多」的 `@click="getHistoryMessageList"`。
+
+### 解决方案
+
+在已有的 throttle 回调里读 `scroll-view` 的滚动位置，到顶就复用同一个加载入口（commit `058d540`）：
+
+```typescript
+const handelScrollListScroll = throttle(
+  function (e: Event) {
+    scrollButtonInstanceRef.value?.judgeScrollOverOneScreen(e);
+    const detail = (e as any).detail || {};
+    const scrollTop = detail.scrollTop || 0;
+    const canLoadMore = !isCompleted.value || (!props.isGroup && dbHasMore.value);
+    if (scrollTop < 50 && canLoadMore && !isLoadingMessage.value) {
+      getHistoryMessageList();
+    }
+  },
+  500,
+  { leading: true },
+);
+```
+
+三个条件缺一不可：`canLoadMore` 沿用「查看更多」的显示条件（SDK 没到头，或单聊且数据库还有更早的），`!isLoadingMessage` 防止一次滚动触发多页。
+
+### 经验教训
+
+1. 小程序 `scroll-view` 的滚动位置在 `e.detail.scrollTop`，不在 `e.target` 上；H5 的写法搬过来会永远读到 0。
+2. 自动加载不要另写一套加载逻辑，复用按钮的入口函数，分页状态（`isCompleted` / `dbHasMore` / `isLoadingMessage`）才只有一份。
+3. 节流用 `{ leading: true }`：第一次滚动立刻响应，后续 500ms 内的抖动被吃掉，手感才不会「滚到顶了还要等一下」。
+
+### 涉及文件
+
+- `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — `handelScrollListScroll`
+
+## 会话列表条目只有昵称，摘要和时间空白
+
+### 现象
+
+- 消息通知「会话」TAB（以及「全部」TAB 的会话入口）里，部分会话只显示对端昵称，下面一行摘要和时间都是空的。
+- 数据库 `im_messages` 里这些会话明明有最后一条消息。
+
+### 根本原因
+
+上一轮为了过滤「SDK 缓存了不属于当前用户的会话」，把 `mergeConversations` 写成**整行采用 SDK 数据**：
+
+```javascript
+// 注释写的是「以 DB 为准」，代码却是整行取 SDK row
+if (peerIM && dbIndex.has(peerIM)) {
+  merged.set(peerIM, row)   // row 是 SDK 行
+}
+```
+
+SDK 的 `conversation.getLastMessage('text')` / `getLastMessage('time')` 在会话刚同步、`lastMessage` 还没落到本地时可能返回空字符串。整行覆盖等于把 DB 里现成的摘要和时间一起丢掉——过滤条件（哪些会话该出现）和字段来源（每个字段信谁）被绑成了一件事。
+
+### 解决方案
+
+改成字段级互补，过滤条件保持不变（commit `058d540`）：
+
+```javascript
+const summary = sdkRow.summary || dbRow.summary || ''
+const rawTime = sdkRow.rawTime || dbRow.last_msg_time || 0
+merged.set(peerIM, {
+  conversationID: sdkRow.conversationID,
+  name: sdkRow.name || dbRow.name || '',
+  avatar: sdkRow.avatar || dbRow.avatar || '',
+  summary,
+  time: sdkRow.time || formatAbsoluteTime(dbRow.last_msg_time),
+  rawTime,
+  unreadCount: sdkRow.unreadCount || 0,   // 未读数是实时状态，只信 SDK（本轮之后改为 max，见后文）
+})
+```
+
+### 经验教训
+
+1. 多数据源合并要分开决定两件事：**哪些行该出现**（过滤）和**每个字段信谁**（兜底）。用「整行取一方」实现过滤，一定会顺手把字段兜底也做死。
+2. 注释和代码不一致时以代码为准。本例注释写着「以 DB 为准」，实际是 SDK 整行覆盖，照着注释排查会找错方向。
+3. SDK 的 getter（`getLastMessage('text')`）不是同步可靠的快照，会话列表刚同步完时可能为空，凡是展示字段都要有第二来源。
+
+### 涉及文件
+
+- `br-app/src/pages-sub/notifications/index.vue` — `mergeConversations`
+
+## 会话摘要显示 [TUIEmoji_Guffaw] 而不是 [大笑]
+
+### 报错信息
+
+显示层面（「全部」和「会话」两个 TAB 的摘要）：
+
+```
+[TUIEmoji_Guffaw][TUIEmoji_Speechless]
+```
+
+修复过程中先后撞到的两个运行时错误：
+
+```
+Error: module 'TUIKit/components/TUIChat/emoji-config/locales/zh_cn.js' is not defined,
+require args is '../../TUIKit/components/TUIChat/emoji-config/locales/zh_cn.js'
+
+Error: module 'TUIKit/components/TUIChat/emoji-config/index.js' is not defined,
+require args is '../../TUIKit/components/TUIChat/emoji-config/index.js'
+```
+
+以及 IM 初始化失败时同样是 key：
+
+```
+IM init failed: IM登录超时(15000ms)
+```
+
+### 根本原因
+
+1. **表情在传输和落库时都是 key**。TUIKit 只在聊天页渲染消息时用 `emoji-config` 把 `[TUIEmoji_*]` 换成图片；会话列表摘要是纯文本，没有这层转换，于是 key 直接露出来。
+2. **两个数据源的格式不一样**：SDK 的 `conversation.getLastMessage('text')` 已经返回中文名（`[大笑]`），而 DB 的 `im_messages.content` 存的是原始 key。只在一个地方转换必然漏掉另一条路径。
+3. **小程序分包隔离**：`pages-sub` 和 `TUIKit` 是两个独立子包，子包之间不能 `require`，编译能过、运行时模块找不到。
+
+### 解决方案
+
+1. 在 `pages-sub` 内新建 `br-app/src/pages-sub/utils/emoji.js`：维护一份 key→中文映射副本（数据来自 `TUIKit/components/TUIChat/emoji-config/locales/zh_cn.ts`，62 条）和替换函数：
+
+```javascript
+const EMOJI_KEY_REG = /\[TUIEmoji_\w+\]/g
+export function transformEmojiKeys(text) {
+  if (!text) return ''
+  return text.replace(EMOJI_KEY_REG, (match) => EMOJI_KEY_TO_CN[match] || match)
+}
+```
+
+2. 转换点放在 `mergeConversations` 里**读到 DB 数据的那两处**，而不是放在 SDK 行上（commit `a54b6fe` → `fdabdae`）：
+
+```javascript
+// SDK + DB 都有的会话：SDK 的 summary 已是中文，只在用到 DB 兜底时转换
+const summary = sdkRow.summary || transformEmojiKeys(dbRow.summary || '')
+
+// 只有 DB 的深历史会话（含 IM 登录超时、消息全部超 7 天）
+summary: transformEmojiKeys(row.summary || ''),
+```
+
+3. `toConversationRow`（SDK 行）**不做转换**——它拿到的已经是中文，再转一次是多余动作。
+
+这样无论 IM 是否初始化成功、会话是否在漫游窗口内，摘要都是中文。
+
+### 走过的弯路（务必避免重复）
+
+| 轮次 | 做法 | 结果 |
+| --- | --- | --- |
+| 1 | 直接 `import` TUIKit 的 `emoji-config/locales/zh_cn` | 跨子包 require，模块未定义 |
+| 2 | 改 `import` `emoji-config/index` | 同样报错，index 内部还会 require 别的 TUIKit 模块 |
+| 3 | 映射复制到本子包，但 `transformEmojiKeys` 放在 `toConversationRow` | 表面修好；IM 超时或深历史走 DB-only 路径时根本不经过它，用户截图仍是 key |
+| 4 | 加日志打印 `rawSummary` 与 `summary` | 才看清 SDK 已是 `[大笑][无语][星星眼]`，未转换的是 DB 分支 |
+
+### 验证
+
+- `npm run build:mp-weixin` 通过，`dist/build/mp-weixin/pages-sub/utils/emoji.js` 存在（同子包内相对路径引用，不再跨包）。
+- 真机：IM 正常、`IM登录超时(15000ms)`、超 7 天深历史三种情况下摘要都显示 `[大笑]`。
+
+### 经验教训
+
+1. **跨子包不能 require**。两个子包都要用的东西放主包 `src/utils/`；本例映射只有 62 条且只服务于摘要，复制到本子包比抽到主包更划算（主包体积敏感，当前 1.15MB）。
+2. **格式归一化要放在每个数据源各自的入口**，不是放在最终渲染前。合并函数有两条分支（SDK+DB、DB-only），只改一条就会在另一条路径上漏。
+3. 别对已经是目标格式的数据再转换一次。先加日志确认数据实际形态，再决定转换点——本例靠日志才发现 SDK 侧早已是中文。
+4. 复制第三方映射表要写清来源文件路径，将来 TUIKit 升级新增表情时知道去哪儿同步。
+
+### 涉及文件
+
+- `br-app/src/pages-sub/utils/emoji.js` — 新增，key→中文映射与 `transformEmojiKeys`
+- `br-app/src/pages-sub/notifications/index.vue` — `mergeConversations` 两处 DB 摘要转换
+
+## 全部消息超过 7 天的会话，进入聊天页一片空白，「查看更多」也点不出消息
+
+### 报错信息
+
+界面无报错：标题栏显示对端昵称，顶部一个「查看更多」，底部输入框，中间全白。控制台：
+
+```
+[TUIChat] Conversation not in SDK, attempting switch: C2Cc904bd6f84a147aeb3272f92616dc156
+GetConversationProfile.getConversationProfile conversationID:C2Cc904bd6f84a147aeb3272f92616dc156 isNewConversation:true
+LiteChat [getConversationList] getConversationList success
+TUIConversationService.init, getConversationList count:0 isSyncCompleted:true
+```
+
+### 根本原因
+
+**两条加载路径同时是死的**：
+
+1. 引擎 `chat-uikit-engine-lite` 的 `onCurrentConversationIDUpdated()` 监听 `currentConversationID`，切会话时会自动 `getMessageList()`。这种会话在 SDK 里一条漫游消息都没有，返回 `messageList: []` + `isCompleted: true`。
+2. 组件的数据库翻页第一行就把空列表挡死了：
+
+```typescript
+const earliestTime = messageList.value?.[0]?.time;
+if (!earliestTime) return;   // 空列表没有游标 → 数据库一页都不取
+```
+
+3. 「查看更多」的路由条件是 `isCompleted && !isGroup` 才走数据库。首次点击时 `isCompleted` 还是 false，走 SDK 又拿到空；等 `isCompleted` 变 true 后再点，就撞上第 2 条的 `return`。按钮永远点不出东西。
+4. 附带一个会把入口永久锁死的问题：`TUIChatService.getMessageList()` 在 `chat.isReady()` 为 false 时是 **reject**，而调用处只有 `.then()` 没有 `.catch()`，`isLoadingMessage` 卡在 true，之后所有点击和滚动都被开头的 `if (isLoadingMessage.value) return` 挡掉。
+
+### 解决方案
+
+commit `82df23d`，全部在 `message-list/index.vue`：
+
+1. **进入页面即自动取数据库最近一页**，触发点选引擎的状态信号而不是猜延时：
+
+```typescript
+function onChatCompletedUpdated(flag: boolean) {
+  isCompleted.value = flag;
+  // 全部消息都超出 SDK 漫游窗口时，引擎只会给回空列表
+  if (flag && !props.isGroup && !TUIStore.getData(StoreName.CHAT, 'messageList')?.length) {
+    loadDatabaseHistoryPage();
+  }
+}
+```
+
+2. **游标兜底到「现在」**。后端 `before` 是严格小于（`msg_time < before`），所以当前时间正好取到最近一页：
+
+```typescript
+async function loadDatabaseHistoryPage(cursor?: number) {
+  const earliestTime =
+    cursor ||
+    TUIStore.getData(StoreName.CHAT, 'messageList')?.[0]?.time ||
+    Math.floor(Date.now() / 1000);
+```
+
+3. **空判断和游标都读 store，不读组件 ref**。引擎是先 `updateMessageList` 再 `update(isCompleted)`，读 `TUIStore.getData` 与引擎同一份事实，不受 Vue watcher 时序影响；读组件 ref 有可能拿到上一个会话的残留列表，游标就错了。
+4. `getHistoryMessageList()` 补 `.catch(() => { isLoadingMessage.value = false })`，SDK 不可用时按钮还能再点。
+5. `onMounted` 补一次 `currentConversationID.value = TUIStore.getData(StoreName.CONV, 'currentConversationID') || ''`：会话可能在本组件挂载前就已切换，watcher 补不上这一次，否则 `fetchImHistoryPage('')` 直接返回空页并把 `dbHasMore` 置 false，连按钮都消失。
+6. 整页都是不可重建类型时的重试，带上本页最早时间做游标：`loadDatabaseHistoryPage(Math.min(...page.messages.map(row => row.msg_time)))`。原来无参递归时游标不变，会**原地打转无限取同一页**。
+
+### 验证
+
+- `npm run build:mp-weixin` 通过，主包 1.15MB、子包布局校验通过。
+- 编译产物断言：`Date.now()/1e3` 兜底、`.catch(()=>{O.value=!1})` 复位、`isCompleted` 触发器 `!t||f.isGroup||(getData(CHAT,"messageList")?.length)||te()` 均在 `dist/build/mp-weixin/TUIKit/components/TUIChat/message-list/index.js` 中。
+- 真机由使用者确认：进入该会话即出现最近一页消息，继续上滑能翻页。
+
+### 经验教训
+
+1. 「翻页游标来自列表第一条」这个前提在**空列表**时不成立，而深历史会话恰恰就是空列表。凡是游标式分页都要想清楚第一页从哪儿起。
+2. 自动加载的触发点要用引擎已有的状态信号（`isCompleted` 置真 + 列表为空），不要靠 `setTimeout` 猜 SDK 什么时候返回。
+3. 判断「SDK 有没有给消息」要读 store 而不是组件 ref：引擎更新 store 和 Vue watcher 回写 ref 之间有时序差，跨会话时 ref 还可能是上一个会话的数据。
+4. **任何在 `.then()` 里复位 loading 标志的写法都必须配 `.catch()`**，否则一次失败就把入口永久锁死，表现为「点了没反应」而不是报错。
+5. 递归重试翻页必须推进游标，否则是无限循环；这类 bug 只在「整页都不可重建」时才触发，平时看不出来。
+
+### 涉及文件
+
+- `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — `onChatCompletedUpdated`、`loadDatabaseHistoryPage`、`getHistoryMessageList`、`onMounted`
+
+## 会话未读数只统计 SDK，超出 7 天漫游窗口的未读不显示
+
+### 现象
+
+- 「全部」TAB 的会话入口红点、「会话」TAB 的未读角标，只反映 SDK 漫游窗口内的未读。
+- 深历史会话（SDK 里没有、只有 DB 有）即使库里有未读消息，角标也永远是 0。
+
+### 根本原因
+
+1. 前端未读数的唯一来源是 `conversation.unreadCount`（SDK）；`mergeConversations` 的 DB-only 分支更是硬编码 `unreadCount: 0`。
+2. 后端 `GET /api/v1/chat/conversations` 从来没返回未读数字段——尽管 `im_messages.is_read` 一直由 `C2C.CallbackAfterMsgReport` 回调（`apply_msg_report()`，按 `msg_time <= LastReadTime` 置位）在维护。数据早就有，只是没被统计和下发。
+
+### 解决方案
+
+**后端**（commit `da25391`，`br-server/app/api/routes/chat.py`）：一条分组聚合拿到所有对端的未读数，避免在已有的 per-peer 循环里再加一次查询：
+
+```python
+unread_result = await db.execute(
+    select(
+        ImMessage.im_from_account.label("peer_account"),
+        func.count(ImMessage.id).label("unread_count"),
+    )
+    .where(
+        ImMessage.im_to_account == self_account,
+        ImMessage.is_read.is_(False),
+    )
+    .group_by(ImMessage.im_from_account)
+)
+unread_counts = {row.peer_account: row.unread_count for row in unread_result}
+```
+
+每个会话返回 `"unread_count": unread_counts.get(peer_account, 0)`。口径是**对端发给我且未读**，自己发出的消息不计入。
+
+**前端**（`mergeConversations`）：
+
+```javascript
+// SDK + DB 都有的会话
+unreadCount: Math.max(sdkRow.unreadCount || 0, dbRow.unread_count || 0),
+// 只有 DB 的深历史会话
+unreadCount: row.unread_count || 0,
+```
+
+**为什么是 max 而不是相加**：两边统计的是同一批未读消息（DB 的 `is_read` 就是 SDK 已读上报回写的），相加会翻倍。取较大值既保留 SDK 的实时值，又能补上 SDK 已丢弃的深历史未读——正常情况下 DB 未读 ≥ SDK 未读，因为 DB 不受 7 天窗口限制。
+
+两个 TAB 共用同一份 `conversations`，`conversationSummary.hasUnread`（`list.some(item => item.unreadCount > 0)`）自动跟着生效，不需要分别改。
+
+### 验证
+
+- `pytest tests/test_im_callback_sync.py::TestConversationListAPI` → 8 passed，含新增 3 个：只计未读来信（自己发的不计）、已读回执回写后归零、只有发出消息的用户未读为 0。
+- `npm run build:mp-weixin` 通过；产物断言两处 `unread_count` 都在（`Math.max(u.unreadCount||0,a.unread_count||0)` 与 `unreadCount:u.unread_count||0`）。
+
+### 已知前提
+
+- **依赖 IM 控制台开启「单聊消息已读上报之后回调」**。没开的话 `is_read` 永不置位，红点会一直清不掉。
+- 后端要重新部署才生效。
+
+### 经验教训
+
+1. 未读这类「状态计数」在两个数据源里是**同一批事实的两种视图**，合并用 `max` 而不是 `sum`；先想清楚两边统计的是不是同一批对象，再决定合并算子。
+2. DB 侧统计未读必须限定方向（`im_to_account == 自己`），否则把自己发出的消息也算成未读。
+3. 字段早就在库里（`is_read`）不等于功能就有了；排查「数量不对」先确认接口到底返没返这个字段。
+
+### 涉及文件
+
+- `br-server/app/api/routes/chat.py` — `get_conversation_list` 新增未读聚合与 `unread_count`
+- `br-server/tests/test_im_callback_sync.py` — `TestConversationListAPI` 新增 3 个未读数测试
+- `br-app/src/pages-sub/notifications/index.vue` — `mergeConversations` 两处未读数合并

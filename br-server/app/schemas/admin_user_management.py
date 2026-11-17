@@ -34,6 +34,7 @@ class AdminUserListItem(BaseModel):
     email: str | None = None
     status: str
     avatar: str | None = None
+    is_super_admin: bool = False
     created_at: datetime
     roles: list[AdminRoleSummary] = []
     booking_count: int = 0
@@ -62,6 +63,7 @@ class AdminUserCreate(BaseModel):
     password: str = Field(..., min_length=6, max_length=128)
     nickname: str | None = Field(None, max_length=50)
     avatar: str | None = Field(None, max_length=512)
+    is_super_admin: bool = False
 
     @classmethod
     def get_contact_field(cls, data: dict) -> str:
@@ -75,6 +77,7 @@ class AdminUserUpdate(BaseModel):
     avatar: str | None = Field(None, max_length=512)
     balance: Decimal | None = None
     role_ids: list[int] | None = None
+    is_super_admin: bool | None = None
 
 
 # ---------------------------------------------------------------------------

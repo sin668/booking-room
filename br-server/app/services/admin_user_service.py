@@ -72,6 +72,7 @@ class AdminUserService:
                 email=user.email,
                 status=user.status,
                 avatar=user.avatar,
+                is_super_admin=user.is_super_admin,
                 created_at=user.created_at,
                 roles=[AdminRoleSummary(id=r.id, name=r.name, code=r.code) for r in user.roles],
                 booking_count=booking_count,
@@ -117,6 +118,7 @@ class AdminUserService:
             nickname=data.nickname or username or data.phone or "",
             password_hash=password_hash,
             avatar=data.avatar,
+            is_super_admin=data.is_super_admin if data.user_type == "admin" else False,
         )
         self._db.add(user)
         await self._db.flush()
@@ -154,6 +156,11 @@ class AdminUserService:
 
         for key, value in update_data.items():
             setattr(user, key, value)
+
+        if update_data.get("is_super_admin") is True:
+            await self._db.execute(
+                delete(admin_user_roles).where(admin_user_roles.c.user_id == user_id)
+            )
 
         if role_ids is not None:
             await self._assign_roles(user_id, role_ids)

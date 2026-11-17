@@ -31,6 +31,9 @@ class AdminRoleService:
         roles = list((await self._db.execute(stmt)).scalars().all())
         return roles, total
 
+    async def get(self, role_id: int) -> AdminRole:
+        return await self._get(role_id)
+
     async def create(self, data: AdminRoleCreate) -> AdminRole:
         if await self._code_exists(data.code):
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="角色编码已存在")

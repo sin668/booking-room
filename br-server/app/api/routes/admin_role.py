@@ -37,6 +37,15 @@ async def create_role(data: AdminRoleCreate, db: AsyncSession = Depends(get_db))
     return await AdminRoleService(db).create(data)
 
 
+@router.get(
+    "/{role_id}",
+    response_model=AdminRoleResponse,
+    dependencies=[Depends(require_admin_permission("system:role:view"))],
+)
+async def get_role(role_id: int, db: AsyncSession = Depends(get_db)) -> AdminRoleResponse:
+    return await AdminRoleService(db).get(role_id)
+
+
 @router.put(
     "/{role_id}",
     response_model=AdminRoleResponse,

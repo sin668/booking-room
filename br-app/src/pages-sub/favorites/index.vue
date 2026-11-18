@@ -216,6 +216,57 @@
         </view>
       </view>
 
+      <!-- 关注供需 -->
+      <view v-if="activeTab === 'listing'" class="list-section">
+        <view v-if="loading" class="skeleton-list">
+          <view v-for="i in 3" :key="i" class="skeleton-card">
+            <view class="skeleton-block skeleton-cover" />
+            <view class="skeleton-info">
+              <view class="skeleton-line skeleton-line-long" />
+              <view class="skeleton-line skeleton-line-medium" />
+              <view class="skeleton-line skeleton-line-short" />
+            </view>
+          </view>
+        </view>
+        <view v-else-if="listings.length === 0" class="empty-state">
+          <view class="empty-icon-wrap">
+            <view class="empty-icon empty-icon-course" />
+          </view>
+          <text class="empty-title">还没有关注供需</text>
+          <text class="empty-desc">去教培供需广场发现感兴趣的信息</text>
+          <view class="empty-btn" @tap="goExploreListings">
+            <text class="empty-btn-text">去发现</text>
+          </view>
+        </view>
+        <view v-else class="list">
+          <view
+            v-for="listing in listings"
+            :key="listing.id"
+            class="course-card"
+            @tap="onTapListing(listing)"
+          >
+            <image
+              v-if="listing.cover_image"
+              class="course-cover"
+              :src="listing.cover_image"
+              mode="aspectFill"
+            />
+            <view v-else class="course-cover-ph">
+              <view class="course-cover-icon" />
+            </view>
+            <view class="course-info">
+              <text class="course-name">{{ listing.name }}</text>
+              <text v-if="listing.description" class="course-desc">{{ listing.description }}</text>
+              <view class="course-meta">
+                <text v-if="Number(listing.min_price) > 0" class="course-price">¥{{ listing.min_price }}</text>
+                <text v-else class="course-price free">面议</text>
+                <view class="icon icon-arrow-right course-arrow" />
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <view style="height: 60rpx;" />
     </scroll-view>
   </view>
@@ -242,6 +293,7 @@ export default {
       trainingRooms: [],
       courses: [],
       teachers: [],
+      listings: [],
     }
   },
   computed: {
@@ -251,6 +303,7 @@ export default {
         { key: 'training', label: '关注培训室' },
         { key: 'course', label: '关注课程' },
         { key: 'teacher', label: '关注教师' },
+        { key: 'listing', label: '关注供需' },
       ]
     },
   },
@@ -286,6 +339,7 @@ export default {
         this.trainingRooms = categories.trainingRooms
         this.courses = categories.courses
         this.teachers = categories.teachers
+        this.listings = categories.listings
       } catch {
         // keep current data on error
       } finally {
@@ -323,12 +377,21 @@ export default {
       uni.navigateTo({ url: `/pages-sub/teacher/profile?teacher_id=${teacher.id}` })
     },
 
+    onTapListing(listing) {
+      if (!listing?.id) return
+      uni.navigateTo({ url: `/pages-sub/edu-market/detail?id=${listing.id}` })
+    },
+
     goExploreRooms() {
       uni.switchTab({ url: '/pages/booking/index' })
     },
 
     goExploreTraining() {
       uni.switchTab({ url: '/pages/training/index' })
+    },
+
+    goExploreListings() {
+      uni.switchTab({ url: '/pages/edu-market/index' })
     },
 
     onReachBottom() {},

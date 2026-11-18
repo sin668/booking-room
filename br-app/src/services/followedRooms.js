@@ -45,14 +45,15 @@ export function getFollowedRoomsSummary(rooms = []) {
 }
 
 /**
- * 获取所有分类的关注列表（自习室、培训室、课程、教师）
+ * 获取所有分类的关注列表（自习室、培训室、课程、教师、教培供需）
  * cityId 传入时由服务端按城市过滤；不传则返回全部
  */
 export async function getAllFollowedCategories(cityId = null) {
-  const [roomItems, courseItems, teacherItems] = await Promise.allSettled([
+  const [roomItems, courseItems, teacherItems, listingItems] = await Promise.allSettled([
     getFollowedRooms('room', cityId),
     getFollowedRooms('course', cityId),
     getFollowedRooms('teacher', cityId),
+    getFollowedRooms('listing', cityId),
   ])
 
   const allRooms = roomItems.status === 'fulfilled' ? roomItems.value : []
@@ -60,6 +61,7 @@ export async function getAllFollowedCategories(cityId = null) {
   const trainingRooms = allRooms.filter(r => r.room_type === 'training')
   const courses = courseItems.status === 'fulfilled' ? courseItems.value : []
   const teachers = teacherItems.status === 'fulfilled' ? teacherItems.value : []
+  const listings = listingItems.status === 'fulfilled' ? listingItems.value : []
 
-  return { studyRooms, trainingRooms, courses, teachers }
+  return { studyRooms, trainingRooms, courses, teachers, listings }
 }

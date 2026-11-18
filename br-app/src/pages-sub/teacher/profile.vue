@@ -193,13 +193,16 @@
       <view style="height: 180rpx;" />
     </scroll-view>
 
-    <!-- 底部操作栏 -->
+    <!-- 底部操作栏：关注 + 客服（平台客服）+ 返回培训室 -->
     <view class="bottom-bar">
-      <view class="chat-btn">
-        <text class="chat-icon">✎</text>
+      <view class="icon-btn" @tap="onToggleFav">
+        <text :class="['heart-icon', { active: isFav }]">♥</text>
+      </view>
+      <view class="icon-btn" @tap="onOpenCS">
+        <text class="cs-icon">🎧</text>
       </view>
       <view class="action-btn" @tap="onBackToCourses">
-        <text class="action-btn-text">返回课程</text>
+        <text class="action-btn-text">返回培训室</text>
       </view>
     </view>
   </view>
@@ -212,6 +215,7 @@ import { getReviewList } from '@/api/review'
 import { buildStarChars, formatRelativeDay } from '@/utils/formatters'
 import { followTeacher, unfollowTeacher, isTeacherFollowed } from '@/pages-sub/services/followedTeachers'
 import { ensureLogin } from '@/utils/auth'
+import { openCSChat } from '@/utils/customerService'
 
 export default {
   data() {
@@ -368,6 +372,10 @@ export default {
 
     onBackToCourses() {
       uni.switchTab({ url: '/pages/training/index' })
+    },
+
+    onOpenCS() {
+      openCSChat()
     },
 
     onCourseDetail(course) {
@@ -993,7 +1001,7 @@ export default {
   z-index: 100;
 }
 
-.chat-btn {
+.icon-btn {
   width: 88rpx;
   height: 88rpx;
   border-radius: 50%;
@@ -1005,9 +1013,22 @@ export default {
   background: $white;
 }
 
-.chat-icon {
-  font-size: 36rpx;
-  color: $text-secondary;
+.heart-icon {
+  font-size: 50rpx;
+  line-height: 1;
+  color: $white;
+  -webkit-text-stroke: 3rpx $text-muted;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.heart-icon.active {
+  color: $danger;
+  -webkit-text-stroke-color: $danger;
+}
+
+.cs-icon {
+  font-size: 44rpx;
+  line-height: 1;
 }
 
 .action-btn {

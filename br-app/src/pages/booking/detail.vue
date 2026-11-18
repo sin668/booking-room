@@ -19,7 +19,7 @@
       </view>
     </view>
 
-    <scroll-view class="content" scroll-y>
+    <scroll-view class="content" scroll-y :scroll-into-view="scrollIntoView" scroll-with-animation>
       <view class="hero">
         <image
           class="hero-image"
@@ -291,7 +291,7 @@
       </view>
 
       <!-- 本培训室课程（仅 training/comprehensive） -->
-      <view v-if="isTrainingRoom || isComprehensiveRoom" class="section frame-section animate-in" style="animation-delay: 0.4s;">
+      <view v-if="isTrainingRoom || isComprehensiveRoom" id="room-courses" class="section frame-section animate-in" style="animation-delay: 0.4s;">
         <view class="section-header">
           <view class="section-title-group">
             <view class="section-bar" />
@@ -364,15 +364,20 @@
         <text :class="['heart-icon', { active: isFav }]">♥</text>
       </view>
 
+      <!-- 客服按钮（所有类型通用）：打开与房间创建人会话，创建人为空/自己时回退平台客服 -->
+      <view class="fav-btn" @tap="onOpenCS">
+        <text class="cs-icon">🎧</text>
+      </view>
+
       <!-- 自习室：立即预约 -->
       <view v-if="isStudyRoom" class="book-btn" @tap="onBook">
         <text class="book-btn-sub">{{ seatStats.available }} 个座位可选</text>
         <text class="book-btn-text">立即预约</text>
       </view>
 
-      <!-- 培训室：返回课程 -->
-      <view v-else-if="isTrainingRoom" class="back-btn" @tap="onBackToCourses">
-        <text class="back-btn-text">返回课程</text>
+      <!-- 培训室：查看课程（定位到本培训室课程列表） -->
+      <view v-else-if="isTrainingRoom" class="back-btn" @tap="onViewCourses">
+        <text class="back-btn-text">查看课程</text>
       </view>
 
       <!-- 综合室：预约自习室 -->
@@ -396,6 +401,7 @@ import {
 import { fetchBookingRoom } from '@/services/bookingPageService'
 import { buildStarChars, formatCourseSchedule, formatCourseStartDate, formatRelativeDay } from '@/utils/formatters'
 import { isLoggedIn, ensureLogin } from '@/utils/auth'
+import { openCSChat } from '@/utils/customerService'
 
 const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
@@ -418,6 +424,7 @@ export default {
       loading: true,
       expandedScheduleIds: {},
       isFav: false,
+      scrollIntoView: '',
       reviewCount: 0,
       reviews: [],
       reviewsLoading: true,
@@ -725,8 +732,15 @@ export default {
       uni.navigateTo({ url: '/pages/booking/seat-select?room_id=' + this.roomId })
     },
 
-    onBackToCourses() {
-      uni.navigateTo({ url: '/pages/training/index' })
+    onOpenCS() {
+      openCSChat(this.room.creator_username)
+    },
+
+    onViewCourses() {
+      this.scrollIntoView = ''
+      this.$nextTick(() => {
+        this.scrollIntoView = 'room-courses'
+      })
     },
 
     onBookStudy() {
@@ -1564,6 +1578,11 @@ export default {
 .heart-icon.active {
   color: $danger;
   -webkit-text-stroke-color: $danger;
+}
+
+.cs-icon {
+  font-size: 44rpx;
+  line-height: 1;
 }
 
 .book-btn {

@@ -125,11 +125,15 @@
       <view class="bottom-space" />
     </scroll-view>
 
-    <!-- 底部操作栏 -->
+    <!-- 底部操作栏：关注 + 客服（平台客服）+ 立即联系/编辑 -->
     <view v-if="loaded" class="action-bar">
-      <view class="action-ico" @tap="onConsult">
-        <view class="icon icon-eye-off action-ico-icon" />
-        <text class="action-ico-text">咨询</text>
+      <view class="action-ico" @tap="onToggleFav">
+        <text :class="['fav-heart', { active: isFav }]">♥</text>
+        <text class="action-ico-text">关注</text>
+      </view>
+      <view class="action-ico" @tap="onOpenCS">
+        <text class="cs-emoji">🎧</text>
+        <text class="action-ico-text">客服</text>
       </view>
       <view v-if="isOwner" class="action-primary" @tap="goEdit">
         <text class="action-primary-text">编辑</text>
@@ -146,6 +150,9 @@ import { getEduListingDetail } from '@/api/eduMarket'
 import { formatErrorDetail } from '@/utils/formatters'
 import { useUserStore } from '@/store/modules/user'
 import { ensureIM, getIMLastError } from '@/utils/im'
+import { followRoom, unfollowRoom, getFollowedRooms } from '@/api/roomFollows'
+import { openCSChat } from '@/utils/customerService'
+import { ensureLogin, isLoggedIn } from '@/utils/auth'
 
 const TYPE_META = {
   tutor: { label: '家教', icon: 'icon-graduation-cap', role: '个人家教' },
@@ -160,6 +167,7 @@ export default {
       listingId: null,
       detail: {},
       loaded: false,
+      isFav: false,
     }
   },
 
@@ -197,6 +205,7 @@ export default {
       return
     }
     this.loadDetail()
+    this.loadFollowStatus()
   },
 
   onShow() {},
@@ -242,8 +251,40 @@ export default {
       })
     },
 
-    onConsult() {
-      this.openChat()
+    async loadFollowStatus() {
+      if (!isLoggedIn()) return
+      try {
+        const res = await getFollowedRooms('listing')
+        this.isFav = (res.items || []).some((item) => item.id === this.listingId)
+      } catch {
+        this.isFav = false
+      }
+    },
+
+    async onToggleFav() {
+      if (!this.listingId) return
+      if (!ensureLogin()) return
+      if (this.isFav) {
+        try {
+          await unfollowRoom(this.listingId, 'listing')
+          this.isFav = false
+          uni.showToast({ title: '已取消关注', icon: 'none' })
+        } catch {
+          uni.showToast({ title: '取消关注失败，请重试', icon: 'none' })
+        }
+        return
+      }
+      try {
+        await followRoom(this.listingId, 'listing')
+        this.isFav = true
+        uni.showToast({ title: '已加入关注供需', icon: 'none' })
+      } catch {
+        uni.showToast({ title: '关注失败，请重试', icon: 'none' })
+      }
+    },
+
+    onOpenCS() {
+      openCSChat()
     },
 
     onContact() {
@@ -734,9 +775,22 @@ export default {
   transform: scale(0.95);
 }
 
-.action-ico-icon {
-  font-size: 34rpx;
-  color: $text-muted;
+.fav-heart {
+  font-size: 40rpx;
+  line-height: 1;
+  color: $white;
+  -webkit-text-stroke: 2rpx $text-muted;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.fav-heart.active {
+  color: $danger;
+  -webkit-text-stroke-color: $danger;
+}
+
+.cs-emoji {
+  font-size: 36rpx;
+  line-height: 1;
 }
 
 .action-ico-text {

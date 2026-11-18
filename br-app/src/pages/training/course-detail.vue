@@ -266,6 +266,9 @@
       <view class="fav-btn" @tap="onToggleFav">
         <text :class="['heart-icon', { active: isFav }]">♥</text>
       </view>
+      <view class="fav-btn" @tap="onOpenCS">
+        <text class="cs-icon">🎧</text>
+      </view>
       <view class="bottom-price">
         <text class="bottom-price-label">单课时</text>
         <view class="bottom-price-row">
@@ -286,6 +289,7 @@ import { getReviewList, getReviewSummary } from '@/api/review'
 import { buildStarChars, formatRelativeDay } from '@/utils/formatters'
 import { followCourse, isCourseFollowed, unfollowCourse } from '@/services/followedCourses'
 import { ensureLogin } from '@/utils/auth'
+import { openCSChat } from '@/utils/customerService'
 
 export default {
   data() {
@@ -435,6 +439,10 @@ export default {
       uni.navigateTo({
         url: `/pages/training/course-booking?course_id=${this.courseId}`,
       })
+    },
+
+    onOpenCS() {
+      openCSChat(this.course.creator_username)
     },
 
     toggleLessons() {
@@ -1227,6 +1235,11 @@ export default {
 .heart-icon.active {
   color: $danger;
   -webkit-text-stroke-color: $danger;
+}
+
+.cs-icon {
+  font-size: 44rpx;
+  line-height: 1;
 }
 
 .bottom-price {

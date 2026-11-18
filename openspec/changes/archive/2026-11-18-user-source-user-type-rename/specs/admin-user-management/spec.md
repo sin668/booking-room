@@ -33,7 +33,7 @@
 ### Requirement: Admin user type management
 系统 SHALL 在用户管理列表与新增/编辑表单中暴露用户来源（`user_source`：app/admin）与管理员用户类型（`user_type`：`super-admin` 超级管理员 / `normal-user` 普通用户）。超级管理员拥有全部菜单与数据权限，不需要分配角色；普通用户按角色分配菜单，数据权限按创建人归属。
 
-#### Scenario: User source and type columns in list
+#### Scenario: User type column in list
 - **WHEN** 管理员打开用户管理列表
 - **THEN** 列表展示「用户来源」列（按 `user_source` 显示）与「用户类型」列
 - **AND** admin 用户按 `user_type` 显示「超级管理员」或「普通用户」
@@ -54,6 +54,6 @@
 - **WHEN** 通过 `PUT /api/v1/admin/users/{id}` 设置 `user_type='super-admin'`
 - **THEN** 该用户的角色关联被清空
 
-#### Scenario: List API exposes user_source and user_type
+#### Scenario: List API exposes is_super_admin
 - **WHEN** 请求 `GET /api/v1/admin/users`
-- **THEN** 列表项包含 `user_source` 与 `user_type` 字段，不再包含 `is_super_admin`
+- **THEN** 列表项包含 `user_source` 与 `user_type` 字段，不再包含 `is_super_admin`（原 `is_super_admin` 暴露场景随字段重命名更新）

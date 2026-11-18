@@ -272,7 +272,8 @@ async def test_booking_follows_associated_content(client: AsyncClient, seed_cont
 
     as_admin(ctx(ADMIN_B))
     body = (await client.get("/api/v1/admin/bookings")).json()
-    assert {item["id"] for item in body["items"]} == {booking_seat.id, booking_legacy.id}
+    # B 拥有 room_b：可见该室全部订单，含 A 创建课程 course_a 在 room_b 产生的 booking_course
+    assert {item["id"] for item in body["items"]} == {booking_course.id, booking_seat.id, booking_legacy.id}
 
     as_admin(ctx(ADMIN_A, super_admin=True))
     body = (await client.get("/api/v1/admin/bookings")).json()
@@ -289,11 +290,33 @@ async def test_review_follows_associated_content(client: AsyncClient, seed_conte
 
     as_admin(ctx(ADMIN_B))
     body = (await client.get("/api/v1/admin/reviews")).json()
-    assert {item["id"] for item in body["items"]} == {review_seat.id}
+    # B 拥有 room_b：可见该室全部评价，含 A 创建课程 course_a 的 review_course
+    assert {item["id"] for item in body["items"]} == {review_course.id, review_seat.id}
 
     as_admin(ctx(ADMIN_B, super_admin=True))
     body = (await client.get("/api/v1/admin/reviews")).json()
     assert body["total"] == 2
+
+
+@pytest.mark.asyncio
+async def test_room_owner_sees_cross_created_course_records(client: AsyncClient, seed_content):
+    """学习室拥有者可见该室他人创建课程的订单/评价；课程创建者同样可见。"""
+    booking_course, _, _ = seed_content["bookings"]
+    review_course, _ = seed_content["reviews"]
+
+    # booking_course/review_course：课程 course_a 归 A，但发生在 B 拥有的 room_b
+    as_admin(ctx(ADMIN_B))  # 学习室拥有者
+    body = (await client.get("/api/v1/admin/bookings")).json()
+    assert booking_course.id in {item["id"] for item in body["items"]}
+    assert (await client.get(f"/api/v1/admin/bookings/{booking_course.id}")).status_code == 200
+    body = (await client.get("/api/v1/admin/reviews")).json()
+    assert review_course.id in {item["id"] for item in body["items"]}
+
+    as_admin(ctx(ADMIN_A))  # 课程创建者
+    body = (await client.get("/api/v1/admin/bookings")).json()
+    assert booking_course.id in {item["id"] for item in body["items"]}
+    body = (await client.get("/api/v1/admin/reviews")).json()
+    assert review_course.id in {item["id"] for item in body["items"]}
 
 
 # ---------------------------------------------------------------------------

@@ -125,8 +125,9 @@ async def ensure_review_writable(db, review_id, viewer: AdminContext | None) -> 
 
 
 def booking_scope_condition(viewer: AdminContext | None):
-    """预约随关联内容归属：课程订单随课程创建人，座位订单随自习室创建人。
+    """预约可见 = 所属学习室创建人可见 OR（课程订单且课程创建人可见）。
 
+    学习室拥有者可见该室全部订单（含他人创建课程产生的）；课程创建者可见自己课程订单。
     调用方需先 outerjoin Course（Booking.course_id）与 StudyRoom（Booking.room_id）。
     """
     if _unrestricted(viewer):
@@ -136,37 +137,46 @@ def booking_scope_condition(viewer: AdminContext | None):
     from app.models.study_room import StudyRoom
 
     return or_(
+        _visible_creator_condition(StudyRoom.created_by, viewer),
         and_(
             Booking.course_id.is_not(None),
             _visible_creator_condition(Course.created_by, viewer),
-        ),
-        and_(
-            Booking.course_id.is_(None),
-            _visible_creator_condition(StudyRoom.created_by, viewer),
         ),
     )
 
 
 def review_scope_condition(viewer: AdminContext | None):
-    """评价随关联内容归属：有课程随课程创建人，否则随订单所属自习室创建人。
+    """评价可见 = 关联订单所属学习室创建人可见 OR（有课程且课程创建人可见）。
 
     调用方需先 outerjoin Course（Review.course_id）、Booking（Review.booking_id）
     与 StudyRoom（Booking.room_id）。
     """
     if _unrestricted(viewer):
         return None
-    from app.models.booking import Booking
     from app.models.course import Course
     from app.models.review import Review
     from app.models.study_room import StudyRoom
 
     return or_(
+        _visible_creator_condition(StudyRoom.created_by, viewer),
         and_(
             Review.course_id.is_not(None),
             _visible_creator_condition(Course.created_by, viewer),
         ),
-        and_(
-            Review.course_id.is_(None),
-            _visible_creator_condition(StudyRoom.created_by, viewer),
-        ),
+    )
+
+
+def wallet_scope_condition(viewer: AdminContext | None):
+    """钱包流水可见 = 关联预约可见 且 booking_id 非空（充值等无归属流水排除）。
+
+    调用方需先 outerjoin Booking（WalletTransaction.booking_id）、
+    Course（Booking.course_id）与 StudyRoom（Booking.room_id）。
+    """
+    if _unrestricted(viewer):
+        return None
+    from app.models.wallet import WalletTransaction
+
+    return and_(
+        WalletTransaction.booking_id.is_not(None),
+        booking_scope_condition(viewer),
     )

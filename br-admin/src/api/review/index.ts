@@ -32,6 +32,7 @@ export interface AdminReviewItem {
   reviewed_by: string | null;
   reviewed_at: string | null;
   created_at: string;
+  readonly?: boolean;
 }
 
 export interface AdminReviewListParams {

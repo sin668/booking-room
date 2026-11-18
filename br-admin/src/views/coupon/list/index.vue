@@ -9,6 +9,7 @@
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: AdminCouponItem) => row.id"
+        :row-class-name="(row: AdminCouponItem) => (row.readonly ? 'readonly-row' : '')"
         :actionColumn="actionColumn"
         :scroll-x="1280"
         :striped="true"
@@ -129,11 +130,13 @@
             label: '编辑',
             onClick: handleEdit.bind(null, record),
             auth: ['coupon:update'],
+            disabled: !!record.readonly,
           },
           {
             label: '删除',
             onClick: handleDelete.bind(null, record),
             auth: ['coupon:delete'],
+            disabled: !!record.readonly,
           },
         ],
         dropDownActions: [
@@ -141,7 +144,7 @@
             label: record.is_active ? '停用' : '启用',
             key: record.is_active ? 'disable' : 'enable',
             auth: ['coupon:update'],
-            disabled: isCouponExpired(record),
+            disabled: isCouponExpired(record) || !!record.readonly,
           },
         ],
         select: () => handleToggleStatus(record),

@@ -9,6 +9,7 @@
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: CourseItem) => row.id"
+        :row-class-name="(row: CourseItem) => (row.readonly ? 'readonly-row' : '')"
         :actionColumn="actionColumn"
         :scroll-x="1200"
         :striped="true"
@@ -75,19 +76,23 @@
           {
             label: '编辑',
             onClick: () => editCourse(record),
+            disabled: !!record.readonly,
           },
           {
             label: '排课',
             onClick: () => handleSchedule(record),
+            disabled: !!record.readonly,
           },
           {
             label: record.status === 'active' ? '下架' : '上架',
             onClick: () => handleToggleStatus(record),
+            disabled: !!record.readonly,
           },
           {
             label: '删除',
             type: 'error',
             onClick: () => handleDelete(record),
+            disabled: !!record.readonly,
           },
         ],
       });

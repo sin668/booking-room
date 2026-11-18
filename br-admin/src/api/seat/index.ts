@@ -16,6 +16,7 @@ export interface SeatItem {
   created_at: string;
   updated_at: string;
   room_name: string;
+  readonly?: boolean;
 }
 
 export interface SeatFormParams {

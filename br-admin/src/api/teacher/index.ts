@@ -28,6 +28,7 @@ export interface AdminTeacherItem {
   course_count: number;
   status: string;
   created_at: string;
+  readonly?: boolean;
 }
 
 export interface AdminTeacherListResult {

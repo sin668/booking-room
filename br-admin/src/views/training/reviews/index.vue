@@ -9,6 +9,7 @@
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: AdminReviewItem) => row.id"
+        :row-class-name="(row: AdminReviewItem) => (row.readonly ? 'readonly-row' : '')"
         :actionColumn="actionColumn"
         :scroll-x="1900"
         :striped="true"
@@ -162,6 +163,7 @@
           {
             label: '审核',
             onClick: () => handleAudit(record),
+            disabled: !!record.readonly,
           },
         ],
       });

@@ -30,6 +30,7 @@ export interface CourseItem {
   schedules: CourseScheduleItem[];
   created_at: string;
   updated_at: string;
+  readonly?: boolean;
 }
 
 export interface CourseListResult {

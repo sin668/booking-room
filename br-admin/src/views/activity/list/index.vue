@@ -9,6 +9,7 @@
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: ActivityItem) => row.id"
+        :row-class-name="(row: ActivityItem) => (row.readonly ? 'readonly-row' : '')"
         :actionColumn="actionColumn"
         :scroll-x="1100"
         :striped="true"
@@ -81,11 +82,13 @@
             label: '编辑',
             onClick: handleEdit.bind(null, record),
             auth: ['activity:update'],
+            disabled: !!record.readonly,
           },
           {
             label: '删除',
             onClick: handleDelete.bind(null, record),
             auth: ['activity:delete'],
+            disabled: !!record.readonly,
           },
         ],
         dropDownActions: [
@@ -93,6 +96,7 @@
             label: record.is_active ? '下架' : '上架',
             key: record.is_active ? 'offline' : 'online',
             auth: ['activity:status'],
+            disabled: !!record.readonly,
           },
         ],
         select: () => {

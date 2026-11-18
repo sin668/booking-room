@@ -21,6 +21,7 @@ export interface RoomItem {
   updated_at: string;
   seat_count: number;
   available_seat_count: number;
+  readonly?: boolean;
 }
 
 export interface RoomListResult {

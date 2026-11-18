@@ -9,6 +9,7 @@
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: AdminTeacherItem) => row.id"
+        :row-class-name="(row: AdminTeacherItem) => (row.readonly ? 'readonly-row' : '')"
         :actionColumn="actionColumn"
         :scroll-x="1200"
         :striped="true"
@@ -106,6 +107,7 @@
           {
             label: '编辑',
             onClick: () => editTeacher(record),
+            disabled: !!record.readonly,
           },
           {
             label: '可排课',
@@ -114,15 +116,18 @@
               currentTeacherName.value = record.name;
               scheduleModalShow.value = true;
             },
+            disabled: !!record.readonly,
           },
           {
             label: record.status === 'active' ? '停用' : '启用',
             onClick: () => handleToggleStatus(record),
+            disabled: !!record.readonly,
           },
           {
             label: '删除',
             type: 'error',
             onClick: () => handleDelete(record),
+            disabled: !!record.readonly,
           },
         ],
       });

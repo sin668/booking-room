@@ -18,6 +18,7 @@ export interface ActivityItem {
   activity_coupons?: ActivityCouponItem[];
   created_at: string;
   updated_at: string;
+  readonly?: boolean;
 }
 
 export interface ActivityListResult {

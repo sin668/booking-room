@@ -24,6 +24,7 @@
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: SeatItem) => row.id"
+        :row-class-name="(row: SeatItem) => (row.readonly ? 'readonly-row' : '')"
         ref="actionRef"
         :actionColumn="actionColumn"
         :scroll-x="1100"
@@ -31,7 +32,12 @@
       >
         <template #tableTitle>
           <n-space>
-            <n-button v-permission="{ action: ['seat:create'] }" type="primary" @click="addTable">
+            <n-button
+              v-permission="{ action: ['seat:create'] }"
+              type="primary"
+              :disabled="roomReadonly"
+              @click="addTable"
+            >
               <template #icon>
                 <n-icon><PlusOutlined /></n-icon>
               </template>
@@ -40,6 +46,7 @@
             <n-button
               v-permission="{ action: ['seat:bulk_create'] }"
               type="info"
+              :disabled="roomReadonly"
               @click="handleBulkCreate"
             >
               <template #icon>
@@ -80,11 +87,13 @@
 
   const roomId = computed(() => Number(route.params.id));
   const roomName = ref('');
+  const roomReadonly = ref(false);
 
   onMounted(async () => {
     try {
       const room = await getRoomById(roomId.value);
       roomName.value = room.name;
+      roomReadonly.value = !!room.readonly;
     } catch {
       roomName.value = '座位管理';
     }
@@ -224,6 +233,7 @@
             label: '编辑',
             onClick: handleEdit.bind(null, record),
             auth: ['seat:update'],
+            disabled: !!record.readonly,
           },
         ],
         dropDownActions: [
@@ -231,11 +241,13 @@
             label: '删除',
             key: 'delete',
             auth: ['seat:delete'],
+            disabled: !!record.readonly,
           },
           {
             label: record.status === 'available' ? '设为维护中' : '设为可用',
             key: 'toggleStatus',
             auth: ['seat:status'],
+            disabled: !!record.readonly,
           },
         ],
         select: (key: string) => {

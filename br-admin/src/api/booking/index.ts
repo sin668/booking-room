@@ -33,6 +33,7 @@ export interface BookingItem {
     name: string;
     address: string;
   };
+  readonly?: boolean;
 }
 
 // --- 详情聚合类型（对应后端 BookingAdminDetailResponse）---

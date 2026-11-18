@@ -9,6 +9,7 @@
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: RoomItem) => row.id"
+        :row-class-name="(row: RoomItem) => (row.readonly ? 'readonly-row' : '')"
         :actionColumn="actionColumn"
         :scroll-x="1200"
         :striped="true"
@@ -96,11 +97,13 @@
             label: '编辑',
             onClick: handleEdit.bind(null, record),
             auth: ['room:update'],
+            disabled: !!record.readonly,
           },
           {
             label: '删除',
             onClick: handleDelete.bind(null, record),
             auth: ['room:delete'],
+            disabled: !!record.readonly,
           },
           {
             label: '管理座位',
@@ -115,6 +118,7 @@
             label: record.status === 'open' ? '下架' : '上架',
             key: 'toggleStatus',
             auth: ['room:status'],
+            disabled: !!record.readonly,
           },
         ],
         select: (key: string) => {

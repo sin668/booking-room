@@ -35,4 +35,5 @@ export interface BasicTableProps {
   canResize: boolean;
   resizeHeightOffset: number;
   loading: boolean;
+  rowClassName?: string | ((row: any, index: number) => string);
 }

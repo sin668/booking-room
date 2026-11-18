@@ -9,6 +9,7 @@
         :columns="columns"
         :request="loadDataTable"
         :row-key="(row: BookingItem) => row.id"
+        :row-class-name="(row: BookingItem) => (row.readonly ? 'readonly-row' : '')"
         :actionColumn="actionColumn"
         :scroll-x="1640"
         :striped="true"
@@ -131,6 +132,7 @@
           label: '确认',
           onClick: handleConfirm.bind(null, record),
           auth: ['booking:cancel'],
+          disabled: !!record.readonly,
         });
       }
       // 仅课程预约的待开始订单展示取消按钮（自习室订单不提供取消操作）
@@ -142,6 +144,7 @@
           label: '取消',
           onClick: handleCancel.bind(null, record),
           auth: ['booking:cancel'],
+          disabled: !!record.readonly,
         });
       }
       return h(TableAction as any, {

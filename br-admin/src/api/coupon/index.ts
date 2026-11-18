@@ -16,6 +16,7 @@ export interface AdminCouponItem {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  readonly?: boolean;
 }
 
 export interface AdminCouponListResult {

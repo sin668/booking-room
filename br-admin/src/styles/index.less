@@ -1,1 +1,7 @@
 @import url('./transition/index.less');
+
+// 超管创建的数据对非超管只读：列表整行置灰（修改类按钮另行禁用，查看入口保留）
+.n-data-table-tr.readonly-row > .n-data-table-td {
+  color: #bfbfbf;
+  background-color: #fafafa;
+}

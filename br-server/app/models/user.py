@@ -6,7 +6,7 @@ from decimal import Decimal
 import random
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Index, Numeric, String, Text, func
+from sqlalchemy import CheckConstraint, Date, DateTime, Index, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -25,7 +25,8 @@ def _default_username() -> str:
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
-        CheckConstraint("user_type IN ('app', 'admin')", name="ck_users_user_type"),
+        CheckConstraint("user_source IN ('app', 'admin')", name="ck_users_user_source"),
+        CheckConstraint("user_type IN ('super-admin', 'normal-user')", name="ck_users_user_type"),
         CheckConstraint(
             "status IN ('active', 'banned', 'disabled', 'deleted')",
             name="ck_users_status",
@@ -36,9 +37,14 @@ class User(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    user_type: Mapped[str] = mapped_column(
+    user_source: Mapped[str] = mapped_column(
         String(10),
         default="app",
+        nullable=False,
+    )
+    user_type: Mapped[str] = mapped_column(
+        String(20),
+        default="normal-user",
         nullable=False,
     )
     phone: Mapped[str | None] = mapped_column(
@@ -95,11 +101,6 @@ class User(Base):
     signature: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
-    )
-    is_super_admin: Mapped[bool] = mapped_column(
-        Boolean,
-        default=False,
-        nullable=False,
     )
     status: Mapped[str] = mapped_column(
         String(20),

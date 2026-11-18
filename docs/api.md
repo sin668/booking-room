@@ -622,7 +622,8 @@ Authorization: Bearer <access_token>
   "nickname": "学习达人",
   "avatar": null,
   "status": "active",
-  "user_type": "app",
+  "user_source": "app",
+  "user_type": "normal-user",
   "wechat_openid": null,
   "invite_code": null,
   "created_at": "2026-04-17T00:00:00"
@@ -658,7 +659,7 @@ Authorization: Bearer <access_token>
   "nickname": "学习达人",
   "avatar": "https://example.com/avatar.png",
   "status": "active",
-  "user_type": "app",
+  "user_source": "app",
   "created_at": "2026-04-17T00:00:00"
 }
 ```
@@ -672,7 +673,7 @@ Authorization: Bearer <access_token>
 | nickname | string \| null | 昵称 |
 | avatar | string \| null | 头像 URL |
 | status | string | 用户状态 |
-| user_type | string | 用户类型，用户端为 `app` |
+| user_source | string | 用户来源，用户端为 `app` |
 | created_at | string | 创建时间 |
 
 **错误码：**
@@ -683,7 +684,7 @@ Authorization: Bearer <access_token>
 
 ### PATCH /api/v1/users/me
 
-更新当前登录用户资料。仅允许更新安全资料字段：`username`、`nickname`、`avatar`。不能通过该接口修改 `phone`、`status`、`user_type`、`roles`、`balance`、密码或 Token 相关字段。
+更新当前登录用户资料。仅允许更新安全资料字段：`username`、`nickname`、`avatar`。不能通过该接口修改 `phone`、`status`、`user_source`、`user_type`、`roles`、`balance`、密码或 Token 相关字段。
 
 **认证：** Bearer Token
 
@@ -717,7 +718,7 @@ Authorization: Bearer <access_token>
   "nickname": "学习达人",
   "avatar": "https://example.com/avatar.png",
   "status": "active",
-  "user_type": "app",
+  "user_source": "app",
   "created_at": "2026-04-17T00:00:00"
 }
 ```
@@ -3934,7 +3935,7 @@ Get a single booking detail. Requires authentication. Only returns bookings belo
 
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| user_type | string | - | 用户类型筛选：app / admin |
+| user_source | string | - | 用户来源筛选：app / admin |
 | keyword | string | - | 搜索关键词（匹配手机号/昵称/用户名） |
 | status | string | - | 状态筛选：active / banned / disabled |
 | page | integer | 1 | 页码 |
@@ -3948,7 +3949,8 @@ Get a single booking detail. Requires authentication. Only returns bookings belo
       "id": "uuid-string",
       "phone": "13800138000",
       "nickname": "学习达人",
-      "user_type": "app",
+      "user_source": "app",
+      "user_type": "normal-user",
       "status": "active",
       "avatar": null,
       "created_at": "2026-04-17T00:00:00",
@@ -3978,7 +3980,7 @@ Get a single booking detail. Requires authentication. Only returns bookings belo
 **请求体：**
 ```json
 {
-  "user_type": "app",
+  "user_source": "app",
   "phone": "13800138000",
   "password": "Abc123456",
   "nickname": "新用户"
@@ -3987,7 +3989,8 @@ Get a single booking detail. Requires authentication. Only returns bookings belo
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| user_type | string | 是 | 用户类型：app / admin |
+| user_source | string | 是 | 用户来源：app / admin |
+| user_type | string | 否 | 用户类型：super-admin / normal-user，默认 normal-user；仅 admin 来源可为 super-admin，app 来源强制 normal-user |
 | phone | string | 条件必填 | 手机号（app 用户必填），需匹配 `^1[3-9]\d{9}$` |
 | username | string | 条件必填 | 用户名（admin 用户必填） |
 | password | string | 是 | 密码，6-128 位 |
@@ -4016,14 +4019,14 @@ App 用户创建后自动分配 `app_register_user` 角色。
   "id": "uuid-string",
   "phone": "13800138000",
   "nickname": "学习达人",
-  "user_type": "app",
+  "user_source": "app",
+  "user_type": "normal-user",
   "username": null,
   "email": null,
   "mobile": null,
   "avatar": null,
   "status": "active",
   "balance": 0,
-  "is_super_admin": false,
   "wechat_openid": null,
   "invite_code": null,
   "created_at": "2026-04-17T00:00:00",
@@ -4064,6 +4067,7 @@ App 用户创建后自动分配 `app_register_user` 角色。
 | avatar | string | 头像 URL |
 | balance | decimal | 余额 |
 | role_ids | integer[] | 角色ID列表 |
+| user_type | string | 用户类型：super-admin / normal-user；设为 super-admin 时清空该用户角色关联 |
 
 **响应 200：** 返回更新后的 `AdminUserDetail`。
 

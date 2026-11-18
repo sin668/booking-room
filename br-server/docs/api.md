@@ -34,7 +34,8 @@ This documents the API endpoints and schema changes for the booking-room project
     "phone": "13800138000",
     "username": "user123",
     "nickname": "User Name",
-    "user_type": "app",
+    "user_source": "app",
+    "user_type": "normal-user",
     "status": "active",
     "avatar": null,
     "balance": 1000
@@ -59,7 +60,7 @@ This documents the API endpoints and schema changes for the booking-room project
 **Validation Rules:**
 - At least one of `username` or `phone` must be provided
 - Both fields can be provided (the system checks both)
-- The user must have admin privileges (is_super_admin=true or has admin roles)
+- The user must have admin privileges (user_type='super-admin' or has admin roles)
 
 #### Response
 
@@ -72,9 +73,9 @@ This documents the API endpoints and schema changes for the booking-room project
     "username": "admin",
     "phone": "13800138000",
     "nickname": "Admin User",
-    "user_type": "admin",
+    "user_source": "admin",
+    "user_type": "super-admin",
     "status": "active",
-    "is_super_admin": true,
     "roles": [
       {"id": 1, "name": "超级管理员", "code": "super_admin"}
     ]
@@ -89,9 +90,9 @@ This documents the API endpoints and schema changes for the booking-room project
 **Schema Change (unified-user-access):** The `User` and `AdminUser` models have been unified into a single `User` model.
 
 **Key Constraints:**
-- `phone` must be unique across all users (regardless of user_type)
-- `username` must be unique across all users (regardless of user_type)
-- `user_type` field is retained for tracking registration source but no longer used for auth filtering
+- `phone` must be unique across all users (regardless of user_source)
+- `username` must be unique across all users (regardless of user_source)
+- `user_source` field tracks registration source but is not used for auth filtering
 
 **Fields:**
 - `id`: UUID primary key
@@ -99,10 +100,10 @@ This documents the API endpoints and schema changes for the booking-room project
 - `username`: Optional, unique, used for admin user login
 - `password_hash`: Hashed password (bcrypt)
 - `nickname`: Display name
-- `user_type`: Either "app" or "admin" (CHECK constraint)
+- `user_source`: Either "app" or "admin" (CHECK constraint ck_users_user_source)
 - `status`: "active", "banned", or "disabled"
 - `balance`: Decimal wallet balance
-- `is_super_admin`: Boolean flag for super administrators
+- `user_type`: Either "super-admin" or "normal-user" (CHECK constraint ck_users_user_type); app-source users are always "normal-user"
 - `roles`: Many-to-many relationship with AdminRole
 
 ## Data Migration Notes
@@ -129,7 +130,7 @@ When migrating from the old separate `User` and `AdminUser` models to the unifie
 
 ## User Type Usage Guidelines
 
-The `user_type` field is **not used for authentication filtering** anymore. Instead, it serves these purposes:
+The `user_source` field is **not used for authentication filtering**. Instead, it serves these purposes:
 
 ### Valid Uses:
 - **Admin UI filtering** - Filter user lists by type in admin management screens
@@ -137,8 +138,10 @@ The `user_type` field is **not used for authentication filtering** anymore. Inst
 - **Analytics/reporting** - Track user registration sources
 - **Model validation** - CHECK constraint ensures only "app" or "admin" values
 
+The `user_type` field ("super-admin"/"normal-user") controls admin privilege level: super admins get all menus and data scope; normal users follow role-based menus and creator-owned data scope.
+
 ### Invalid Uses (DO NOT):
-- **Auth/login query filters** - Never use `User.user_type == X` in login or registration queries
+- **Auth/login query filters** - Never use `User.user_source == X` in login or registration queries
 - **Permission checks** - Use roles and permissions system instead
 - **User lookup** - Lookup by phone/username directly without type filter
 

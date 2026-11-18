@@ -71,16 +71,19 @@ export interface AdminPasswordParams {
   confirm_password: string;
 }
 
+export type UserSource = 'app' | 'admin';
+export type UserType = 'super-admin' | 'normal-user';
+
 export interface UserListItem {
   id: string;
   phone: string;
   nickname: string | null;
-  user_type: string;
+  user_source: UserSource;
+  user_type: UserType;
   username: string | null;
   email: string | null;
   status: string;
   avatar: string | null;
-  is_super_admin?: boolean;
   created_at: string;
   roles: AdminRoleSummary[];
   booking_count: number;
@@ -91,14 +94,13 @@ export interface UserDetail extends UserListItem {
   username: string | null;
   email: string | null;
   balance: number;
-  is_super_admin: boolean;
   wechat_openid: string | null;
   invite_code: string | null;
   updated_at: string | null;
 }
 
 export interface UserListParams {
-  user_type?: string;
+  user_source?: string;
   keyword?: string;
   status?: string;
   page?: number;
@@ -109,13 +111,13 @@ export interface UserListParams {
 export type UserListResponse = AdminPageResponse<UserListItem>;
 
 export interface UserCreateParams {
-  user_type: string;
+  user_source: UserSource;
+  user_type?: UserType;
   phone?: string;
   username?: string;
   password: string;
   nickname?: string;
   avatar?: string;
-  is_super_admin?: boolean;
 }
 
 export interface UserUpdateParams {
@@ -125,7 +127,7 @@ export interface UserUpdateParams {
   balance?: number;
   role_ids?: number[];
   status?: string;
-  is_super_admin?: boolean;
+  user_type?: UserType;
 }
 
 const nativeMeta = ADMIN_NATIVE_META;

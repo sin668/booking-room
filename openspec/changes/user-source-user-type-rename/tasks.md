@@ -12,7 +12,7 @@
 
 ## 3. br-admin 前端
 
-- [ ] 3.1 api/system/user.ts 类型、columns.ts 两列、index.vue 分配角色隐藏条件、edit.vue 枚举下拉与回填/payload、CreateModal.vue user_source 单选；pnpm build 通过
+- [x] 3.1 api/system/user.ts 类型、columns.ts 两列、index.vue 分配角色隐藏条件、edit.vue 枚举下拉与回填/payload、CreateModal.vue user_source 单选；pnpm build 通过
 
 ## 4. 测试与文档
 

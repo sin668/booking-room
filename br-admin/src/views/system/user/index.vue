@@ -6,9 +6,9 @@
     <n-card :bordered="false" class="mt-4 proCard">
       <div class="mb-4 flex items-center gap-3">
         <n-select
-          v-model:value="params.user_type"
-          :options="userTypeOptions"
-          placeholder="用户类型"
+          v-model:value="params.user_source"
+          :options="userSourceOptions"
+          placeholder="用户来源"
           clearable
           style="width: 140px"
           @update:value="reloadTable"
@@ -76,12 +76,12 @@
   const roleModalRef = ref();
 
   const params = reactive({
-    user_type: null as string | null,
+    user_source: null as string | null,
     keyword: '',
     status: null as string | null,
   });
 
-  const userTypeOptions = [
+  const userSourceOptions = [
     { label: '全部', value: null },
     { label: 'App注册', value: 'app' },
     { label: '后台创建', value: 'admin' },
@@ -120,7 +120,7 @@
           {
             label: '分配角色',
             key: 'assignRole',
-            ifShow: () => !(record.user_type === 'admin' && record.is_super_admin),
+            ifShow: () => !(record.user_source === 'admin' && record.user_type === 'super-admin'),
           },
           {
             label: '切换状态',
@@ -144,7 +144,7 @@
 
   const loadDataTable = async (res: any) => {
     const _params = {
-      user_type: params.user_type || undefined,
+      user_source: params.user_source || undefined,
       keyword: params.keyword || undefined,
       status: params.status || undefined,
       ...res,

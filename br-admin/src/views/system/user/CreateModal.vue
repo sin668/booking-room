@@ -76,9 +76,9 @@
   ];
 
   const baseSchema: FormSchema = {
-    field: 'user_type',
+    field: 'user_source',
     component: 'NRadioGroup',
-    label: '用户类型',
+    label: '用户来源',
     defaultValue: 'app',
     componentProps: {
       options: [
@@ -104,12 +104,12 @@
   });
 
   async function openModalWithType(type?: string) {
-    const userType = type || 'app';
-    const dynamicSchemas = userType === 'admin' ? adminSchemas : appSchemas;
+    const userSource = type || 'app';
+    const dynamicSchemas = userSource === 'admin' ? adminSchemas : appSchemas;
     await setSchema([baseSchema, ...dynamicSchemas]);
     await resetFields();
     openModal();
-    await setFieldsValue({ user_type: userType });
+    await setFieldsValue({ user_source: userSource });
   }
 
   async function okModal() {

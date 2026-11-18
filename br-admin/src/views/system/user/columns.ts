@@ -46,31 +46,32 @@ export const columns = [
   },
   {
     title: '用户来源',
-    key: 'user_type',
+    key: 'user_source',
     width: 100,
     render(row) {
       return h(
         NTag,
         {
-          type: row.user_type === 'admin' ? 'success' : 'primary',
+          type: row.user_source === 'admin' ? 'success' : 'primary',
           size: 'small',
         },
         {
-          default: () => (row.user_type === 'admin' ? '后台创建' : 'App注册'),
+          default: () => (row.user_source === 'admin' ? '后台创建' : 'App注册'),
         }
       );
     },
   },
   {
     title: '用户类型',
-    key: 'is_super_admin',
+    key: 'user_type',
     width: 110,
     render(row) {
-      if (row.user_type !== 'admin') return '-';
+      if (row.user_source !== 'admin') return '-';
+      const isSuper = row.user_type === 'super-admin';
       return h(
         NTag,
-        { type: row.is_super_admin ? 'warning' : 'default', size: 'small' },
-        { default: () => (row.is_super_admin ? '超级管理员' : '普通用户') }
+        { type: isSuper ? 'warning' : 'default', size: 'small' },
+        { default: () => (isSuper ? '超级管理员' : '普通用户') }
       );
     },
   },

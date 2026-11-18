@@ -61,10 +61,10 @@
               <n-form-item-gi v-if="isEdit" label="邮箱" path="email">
                 <n-input v-model:value="formValues.email" placeholder="请输入邮箱" :maxlength="100" />
               </n-form-item-gi>
-              <n-form-item-gi v-if="formValues.user_type === 'admin'" label="用户类型" path="is_super_admin">
+              <n-form-item-gi v-if="formValues.user_source === 'admin'" label="用户类型" path="user_type">
                 <n-select
-                  v-model:value="formValues.is_super_admin"
-                  :options="superAdminOptions"
+                  v-model:value="formValues.user_type"
+                  :options="userTypeOptions"
                   placeholder="请选择用户类型"
                 />
               </n-form-item-gi>
@@ -141,7 +141,8 @@
   const saving = ref(false);
 
   const formValues = reactive({
-    user_type: 'admin',
+    user_source: 'admin',
+    user_type: 'normal-user',
     phone: '',
     username: '',
     password: '',
@@ -149,12 +150,11 @@
     email: '',
     avatar: '',
     status: 'active',
-    is_super_admin: false,
   });
 
-  const superAdminOptions = [
-    { label: '超级管理员', value: true },
-    { label: '普通用户', value: false },
+  const userTypeOptions = [
+    { label: '超级管理员', value: 'super-admin' },
+    { label: '普通用户', value: 'normal-user' },
   ];
 
   const rules = computed<FormRules>(() => {
@@ -197,14 +197,14 @@
     loading.value = true;
     try {
       const detail = await getUserDetail(id);
-      formValues.user_type = detail.user_type || 'app';
+      formValues.user_source = detail.user_source || 'app';
       formValues.phone = detail.phone || '';
       formValues.username = detail.username || '';
       formValues.nickname = detail.nickname || '';
       formValues.email = detail.email || '';
       formValues.avatar = detail.avatar || '';
       formValues.status = detail.status || 'active';
-      formValues.is_super_admin = detail.is_super_admin ?? false;
+      formValues.user_type = detail.user_type || 'normal-user';
     } catch {
       window['$message']?.error('加载用户信息失败');
     } finally {
@@ -253,20 +253,20 @@
           avatar: formValues.avatar || null,
           status: formValues.status,
         };
-        if (formValues.user_type === 'admin') {
-          payload.is_super_admin = formValues.is_super_admin;
+        if (formValues.user_source === 'admin') {
+          payload.user_type = formValues.user_type;
         }
         await updateUser(userId.value, payload);
         window['$message']?.success('用户信息更新成功');
         saved = true;
       } else {
         const payload: Record<string, any> = {
-          user_type: 'admin',
+          user_source: 'admin',
+          user_type: formValues.user_type,
           username: formValues.username,
           password: formValues.password,
           nickname: formValues.nickname || undefined,
           avatar: formValues.avatar || undefined,
-          is_super_admin: formValues.is_super_admin,
         };
         if (formValues.phone) {
           payload.phone = formValues.phone;

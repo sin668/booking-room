@@ -12,7 +12,7 @@ async def admin_user(db_session):
     permission = AdminMenu(type="button", title="Role create", permission_code="system:role:create")
     role = AdminRole(name="Role manager", code="role_manager")
     role.menus.append(permission)
-    user = User(user_type="admin", phone="",
+    user = User(user_source="admin", phone="",
         username="admin",
         password_hash=AdminAuthService.hash_password("secret123"),
         nickname="Admin",
@@ -47,7 +47,7 @@ async def test_admin_login_and_me_return_permissions(client: AsyncClient, admin_
 @pytest.mark.asyncio
 async def test_admin_login_rejects_disabled_user(client: AsyncClient, db_session):
     db_session.add(
-        User(user_type="admin", phone="",
+        User(user_source="admin", phone="",
             username="disabled",
             password_hash=AdminAuthService.hash_password("secret123"),
             nickname="Disabled",
@@ -172,7 +172,7 @@ async def test_profile_update_rejects_invalid_username_format(client: AsyncClien
 @pytest.mark.asyncio
 async def test_profile_update_rejects_duplicate_username(client: AsyncClient, admin_user, db_session):
     db_session.add(
-        User(user_type="app", username="taken_name", password_hash="x", nickname="Other")
+        User(user_source="app", username="taken_name", password_hash="x", nickname="Other")
     )
     await db_session.commit()
     token = AdminAuthService.create_access_token(admin_user.id)
@@ -232,7 +232,7 @@ async def test_profile_update_persists_gender_birthday_signature(
 @pytest.mark.asyncio
 async def test_profile_update_rejects_conflicting_phone(client: AsyncClient, admin_user, db_session):
     db_session.add(
-        User(user_type="app", phone="13800138000", password_hash="x", nickname="Other")
+        User(user_source="app", phone="13800138000", password_hash="x", nickname="Other")
     )
     await db_session.commit()
     token = AdminAuthService.create_access_token(admin_user.id)
@@ -320,7 +320,7 @@ class TestAdminPhoneChangeWithSms:
         self, client: AsyncClient, admin_user, db_session, monkeypatch
     ):
         db_session.add(
-            User(user_type="app", phone="13800138000", password_hash="x", nickname="Other")
+            User(user_source="app", phone="13800138000", password_hash="x", nickname="Other")
         )
         await db_session.commit()
         await self._patch_sms(monkeypatch, verify_ok=True)

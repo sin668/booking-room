@@ -1,4 +1,4 @@
-"""用户类型（超级管理员/普通用户）：创建/更新生效，设超管清空角色关联。"""
+"""用户类型（super-admin/normal-user）：创建/更新生效，设超管清空角色关联。"""
 
 import uuid
 
@@ -18,7 +18,7 @@ def legacy_headers():
 @pytest.fixture
 async def admin_user(db_session):
     user = User(
-        user_type="admin",
+        user_source="admin",
         username="typeuser",
         nickname="类型用户",
         password_hash=AdminAuthService.hash_password("secret123"),
@@ -46,43 +46,76 @@ async def test_create_super_admin(client: AsyncClient, monkeypatch):
         "/api/v1/admin/users",
         headers=legacy_headers(),
         json={
-            "user_type": "admin",
+            "user_source": "admin",
+            "user_type": "super-admin",
             "username": "superadmin1",
             "password": "secret123",
-            "is_super_admin": True,
         },
     )
     assert resp.status_code == 201
     body = resp.json()
-    assert body["is_super_admin"] is True
+    assert body["user_source"] == "admin"
+    assert body["user_type"] == "super-admin"
 
     listing = (
         await client.get(
             "/api/v1/admin/users", headers=legacy_headers(), params={"keyword": "superadmin1"}
         )
     ).json()
-    assert listing["items"][0]["is_super_admin"] is True
+    assert listing["items"][0]["user_type"] == "super-admin"
 
 
 @pytest.mark.asyncio
-async def test_create_app_user_ignores_super_flag(client: AsyncClient, db_session, monkeypatch):
+async def test_create_admin_defaults_normal_user(client: AsyncClient, monkeypatch):
     monkeypatch.setattr("app.core.config.settings.ADMIN_TOKEN", "test-admin-token")
     resp = await client.post(
         "/api/v1/admin/users",
         headers=legacy_headers(),
         json={
-            "user_type": "app",
+            "user_source": "admin",
+            "username": "normaladmin1",
+            "password": "secret123",
+        },
+    )
+    assert resp.status_code == 201
+    assert resp.json()["user_type"] == "normal-user"
+
+
+@pytest.mark.asyncio
+async def test_create_app_user_forced_normal_user(client: AsyncClient, db_session, monkeypatch):
+    monkeypatch.setattr("app.core.config.settings.ADMIN_TOKEN", "test-admin-token")
+    resp = await client.post(
+        "/api/v1/admin/users",
+        headers=legacy_headers(),
+        json={
+            "user_source": "app",
+            "user_type": "super-admin",
             "phone": "13900001111",
             "password": "secret123",
-            "is_super_admin": True,
         },
     )
     assert resp.status_code == 201
     user_id = resp.json()["id"]
-    flag = (
-        await db_session.execute(select(User.is_super_admin).where(User.id == uuid.UUID(user_id)))
+    value = (
+        await db_session.execute(select(User.user_type).where(User.id == uuid.UUID(user_id)))
     ).scalar_one()
-    assert flag is False
+    assert value == "normal-user"
+
+
+@pytest.mark.asyncio
+async def test_create_invalid_user_type_rejected(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr("app.core.config.settings.ADMIN_TOKEN", "test-admin-token")
+    resp = await client.post(
+        "/api/v1/admin/users",
+        headers=legacy_headers(),
+        json={
+            "user_source": "admin",
+            "user_type": "invalid",
+            "username": "badtype1",
+            "password": "secret123",
+        },
+    )
+    assert resp.status_code == 422
 
 
 @pytest.mark.asyncio
@@ -94,10 +127,10 @@ async def test_update_to_super_clears_roles(client: AsyncClient, db_session, mon
     resp = await client.put(
         f"/api/v1/admin/users/{admin_user.id}",
         headers=legacy_headers(),
-        json={"is_super_admin": True},
+        json={"user_type": "super-admin"},
     )
     assert resp.status_code == 200
-    assert resp.json()["is_super_admin"] is True
+    assert resp.json()["user_type"] == "super-admin"
     assert resp.json()["roles"] == []
 
     remaining = (
@@ -114,8 +147,8 @@ async def test_update_to_normal_keeps_roles(client: AsyncClient, db_session, mon
     resp = await client.put(
         f"/api/v1/admin/users/{admin_user.id}",
         headers=legacy_headers(),
-        json={"is_super_admin": False, "role_ids": [role.id]},
+        json={"user_type": "normal-user", "role_ids": [role.id]},
     )
     assert resp.status_code == 200
-    assert resp.json()["is_super_admin"] is False
+    assert resp.json()["user_type"] == "normal-user"
     assert [r["id"] for r in resp.json()["roles"]] == [role.id]

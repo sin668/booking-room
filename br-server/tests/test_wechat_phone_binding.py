@@ -390,7 +390,7 @@ async def test_merge_target_must_be_app_user(
 ) -> None:
     temp = await _temp_wechat_user(db_session)
     admin_user = await _phone_user(db_session, "13800138000")
-    admin_user.user_type = "admin"
+    admin_user.user_source = "admin"
     await db_session.flush()
 
     with pytest.raises(HTTPException) as exc_info:

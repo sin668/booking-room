@@ -64,7 +64,7 @@ async def test_app_user_registration_auto_assigns_role(db_session):
 
     # Create a new app user
     user = User(
-        user_type="app",
+        user_source="app",
         phone="13800138000",
         nickname="测试用户",
         password_hash="hashed_password",
@@ -101,7 +101,7 @@ async def test_registration_doesnt_block_when_role_missing(db_session):
     """Test that registration doesn't block when role is missing (mock scenario)."""
     # Create an app user without the app_register_user role in the database
     user = User(
-        user_type="app",
+        user_source="app",
         phone="13800138001",
         nickname="无角色用户",
         password_hash="hashed_password",

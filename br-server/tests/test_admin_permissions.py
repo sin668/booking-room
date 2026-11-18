@@ -65,7 +65,7 @@ async def test_bearer_admin_token_can_access_permissioned_route(db_session, real
     menu = AdminMenu(type="button", title="Menu view", permission_code="system:menu:view")
     role = AdminRole(name="Menu viewer", code="menu_viewer")
     role.menus.append(menu)
-    admin = User(user_type="admin", phone="",
+    admin = User(user_source="admin", phone="",
         id=uuid.uuid4(),
         username="manager",
         nickname="Manager",
@@ -86,7 +86,7 @@ async def test_bearer_admin_token_can_access_permissioned_route(db_session, real
 
 @pytest.mark.asyncio
 async def test_permission_dependency_rejects_missing_permission(db_session):
-    admin = User(user_type="admin", phone="",
+    admin = User(user_source="admin", phone="",
         id=uuid.uuid4(),
         username="manager",
         nickname="Manager",

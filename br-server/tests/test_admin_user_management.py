@@ -23,7 +23,7 @@ async def seed_users(db_session):
     # App users
     for i in range(5):
         u = User(
-            user_type="app",
+            user_source="app",
             phone=f"1380013800{i}",
             nickname=f"appuser{i}",
             password_hash=AdminAuthService.hash_password("secret123"),
@@ -34,7 +34,7 @@ async def seed_users(db_session):
     # Admin users - use unique phone values to avoid UNIQUE constraint
     for i in range(3):
         u = User(
-            user_type="admin",
+            user_source="admin",
             phone=f"admin_phone_{i}",
             username=f"adminuser{i}",
             nickname=f"Admin {i}",
@@ -98,33 +98,33 @@ async def test_list_users_pagination_page2(client: AsyncClient, monkeypatch, see
 
 
 @pytest.mark.asyncio
-async def test_list_users_filter_by_user_type_app(client: AsyncClient, monkeypatch, seed_users):
+async def test_list_users_filter_by_user_source_app(client: AsyncClient, monkeypatch, seed_users):
     monkeypatch.setattr("app.core.config.settings.ADMIN_TOKEN", "test-admin-token")
     resp = await client.get(
         "/api/v1/admin/users",
         headers=legacy_headers(),
-        params={"user_type": "app"},
+        params={"user_source": "app"},
     )
     assert resp.status_code == 200
     body = resp.json()
     assert body["total"] == 5
     for item in body["items"]:
-        assert item["user_type"] == "app"
+        assert item["user_source"] == "app"
 
 
 @pytest.mark.asyncio
-async def test_list_users_filter_by_user_type_admin(client: AsyncClient, monkeypatch, seed_users):
+async def test_list_users_filter_by_user_source_admin(client: AsyncClient, monkeypatch, seed_users):
     monkeypatch.setattr("app.core.config.settings.ADMIN_TOKEN", "test-admin-token")
     resp = await client.get(
         "/api/v1/admin/users",
         headers=legacy_headers(),
-        params={"user_type": "admin"},
+        params={"user_source": "admin"},
     )
     assert resp.status_code == 200
     body = resp.json()
     assert body["total"] == 3
     for item in body["items"]:
-        assert item["user_type"] == "admin"
+        assert item["user_source"] == "admin"
 
 
 @pytest.mark.asyncio
@@ -233,7 +233,7 @@ async def test_get_user_detail(client: AsyncClient, monkeypatch, seed_users):
     assert body["id"] == str(user.id)
     assert body["phone"] == user.phone
     assert body["nickname"] == user.nickname
-    assert body["user_type"] == user.user_type
+    assert body["user_source"] == user.user_source
 
 
 @pytest.mark.asyncio
@@ -259,7 +259,7 @@ async def test_create_app_user(client: AsyncClient, monkeypatch):
         "/api/v1/admin/users",
         headers=legacy_headers(),
         json={
-            "user_type": "app",
+            "user_source": "app",
             "phone": "13900139001",
             "password": "testpass123",
             "nickname": "New App User",
@@ -267,7 +267,7 @@ async def test_create_app_user(client: AsyncClient, monkeypatch):
     )
     assert resp.status_code == 201
     body = resp.json()
-    assert body["user_type"] == "app"
+    assert body["user_source"] == "app"
     assert body["phone"] == "13900139001"
     assert body["nickname"] == "New App User"
 
@@ -279,7 +279,7 @@ async def test_create_admin_user(client: AsyncClient, monkeypatch):
         "/api/v1/admin/users",
         headers=legacy_headers(),
         json={
-            "user_type": "admin",
+            "user_source": "admin",
             "username": "newadmin",
             "password": "testpass123",
             "nickname": "New Admin",
@@ -287,7 +287,7 @@ async def test_create_admin_user(client: AsyncClient, monkeypatch):
     )
     assert resp.status_code == 201
     body = resp.json()
-    assert body["user_type"] == "admin"
+    assert body["user_source"] == "admin"
     assert body["username"] == "newadmin"
     assert body["nickname"] == "New Admin"
 
@@ -299,7 +299,7 @@ async def test_create_app_user_requires_phone(client: AsyncClient, monkeypatch):
         "/api/v1/admin/users",
         headers=legacy_headers(),
         json={
-            "user_type": "app",
+            "user_source": "app",
             "password": "testpass123",
             "nickname": "No Phone",
         },
@@ -314,7 +314,7 @@ async def test_create_admin_user_requires_username(client: AsyncClient, monkeypa
         "/api/v1/admin/users",
         headers=legacy_headers(),
         json={
-            "user_type": "admin",
+            "user_source": "admin",
             "password": "testpass123",
             "nickname": "No Username",
         },
@@ -329,7 +329,7 @@ async def test_create_duplicate_phone_returns_409(client: AsyncClient, monkeypat
         "/api/v1/admin/users",
         headers=legacy_headers(),
         json={
-            "user_type": "app",
+            "user_source": "app",
             "phone": "13800138001",
             "password": "testpass123",
         },
@@ -344,7 +344,7 @@ async def test_create_duplicate_username_returns_409(client: AsyncClient, monkey
         "/api/v1/admin/users",
         headers=legacy_headers(),
         json={
-            "user_type": "admin",
+            "user_source": "admin",
             "username": "adminuser0",
             "password": "testpass123",
         },
@@ -359,7 +359,7 @@ async def test_create_app_user_invalid_phone_format(client: AsyncClient, monkeyp
         "/api/v1/admin/users",
         headers=legacy_headers(),
         json={
-            "user_type": "app",
+            "user_source": "app",
             "phone": "123",
             "password": "testpass123",
         },
@@ -374,7 +374,7 @@ async def test_create_user_short_password(client: AsyncClient, monkeypatch):
         "/api/v1/admin/users",
         headers=legacy_headers(),
         json={
-            "user_type": "app",
+            "user_source": "app",
             "phone": "13900139002",
             "password": "abc",
         },
@@ -552,7 +552,7 @@ async def test_toggle_status_not_found(client: AsyncClient, monkeypatch):
 async def test_delete_user(client: AsyncClient, monkeypatch, db_session):
     monkeypatch.setattr("app.core.config.settings.ADMIN_TOKEN", "test-admin-token")
     user = User(
-        user_type="app",
+        user_source="app",
         phone="13700137001",
         nickname="Delete Me",
         password_hash=AdminAuthService.hash_password("secret123"),
@@ -620,7 +620,7 @@ async def test_unauthenticated_create_user(client: AsyncClient):
         resp = await client.post(
             "/api/v1/admin/users",
             json={
-                "user_type": "app",
+                "user_source": "app",
                 "phone": "13900139003",
                 "password": "testpass123",
             },
@@ -636,7 +636,7 @@ async def test_unauthenticated_get_user(client: AsyncClient, db_session):
     from app.main import app
 
     user = User(
-        user_type="app",
+        user_source="app",
         phone="13700137002",
         nickname="Auth Test",
         password_hash=AdminAuthService.hash_password("secret123"),
@@ -659,7 +659,7 @@ async def test_unauthenticated_update_user(client: AsyncClient, db_session):
     from app.main import app
 
     user = User(
-        user_type="app",
+        user_source="app",
         phone="13700137003",
         nickname="Auth Test",
         password_hash=AdminAuthService.hash_password("secret123"),
@@ -685,7 +685,7 @@ async def test_unauthenticated_delete_user(client: AsyncClient, db_session):
     from app.main import app
 
     user = User(
-        user_type="app",
+        user_source="app",
         phone="13700137004",
         nickname="Auth Test",
         password_hash=AdminAuthService.hash_password("secret123"),
@@ -708,7 +708,7 @@ async def test_unauthenticated_reset_password(client: AsyncClient, db_session):
     from app.main import app
 
     user = User(
-        user_type="app",
+        user_source="app",
         phone="13700137005",
         nickname="Auth Test",
         password_hash=AdminAuthService.hash_password("secret123"),
@@ -734,7 +734,7 @@ async def test_unauthenticated_toggle_status(client: AsyncClient, db_session):
     from app.main import app
 
     user = User(
-        user_type="app",
+        user_source="app",
         phone="13700137006",
         nickname="Auth Test",
         password_hash=AdminAuthService.hash_password("secret123"),
@@ -771,12 +771,11 @@ async def test_forbidden_without_permission(client: AsyncClient, db_session):
     role = AdminRole(name="No user perm", code="no_user_perm")
     role.menus.append(menu)
     admin = User(
-        user_type="admin",
+        user_source="admin",
         phone="",
         username="nopermadmin",
         password_hash=AdminAuthService.hash_password("secret123"),
         nickname="NoPerm",
-        is_super_admin=False,
     )
     admin.roles.append(role)
     db_session.add(admin)

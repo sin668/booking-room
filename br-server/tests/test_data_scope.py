@@ -81,7 +81,7 @@ async def seed_content(db_session):
     db_session.add_all([seat_a, seat_b])
     await db_session.flush()
 
-    user = User(user_type="app", phone="13800000001", nickname="学员", password_hash="x")
+    user = User(user_source="app", phone="13800000001", nickname="学员", password_hash="x")
     db_session.add(user)
     await db_session.flush()
 

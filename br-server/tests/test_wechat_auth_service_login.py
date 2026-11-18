@@ -83,7 +83,7 @@ async def test_first_wechat_login_creates_phone_null_user_and_caches_session_key
     ).scalar_one()
     assert user.phone is None
     assert user.status == "active"
-    assert user.user_type == "app"
+    assert user.user_source == "app"
     assert user.nickname.startswith("微信用户")
     assert user.username
     assert _token_sub(result.access_token, settings) == str(user.id)

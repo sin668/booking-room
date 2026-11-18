@@ -16,7 +16,7 @@
 
 ## 4. 测试与文档
 
-- [ ] 4.1 测试同步：11 个文件 kwargs 按语义改名、test_user_type.py 枚举语义重写、CHECK 约束测试更新；相关测试通过且相对基线（19 存量失败）零回归
+- [x] 4.1 测试同步：11 个文件 kwargs 按语义改名、test_user_type.py 枚举语义重写、CHECK 约束测试更新；相关测试通过且相对基线（19 存量失败）零回归
 - [ ] 4.2 文档同步：br-server/docs/api.md、根 docs/api.md 字段说明改名
 
 ## 5. 验收

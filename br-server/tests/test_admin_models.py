@@ -12,8 +12,8 @@ from app.services.seed_admin import BUTTON_SEEDS, MENU_SEEDS
 async def test_admin_user_username_is_unique(db_session):
     db_session.add_all(
         [
-            User(user_type="admin", username="admin", phone="", password_hash="hash"),
-            User(user_type="admin", username="admin", phone="", password_hash="hash"),
+            User(user_source="admin", username="admin", phone="", password_hash="hash"),
+            User(user_source="admin", username="admin", phone="", password_hash="hash"),
         ]
     )
 

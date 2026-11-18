@@ -1,12 +1,14 @@
 {
   "version": 1,
-  "argv": ["pnpm", "test:business-refactor"],
-  "cwd": "br-admin",
+  "argv": [".venv/bin/python", "-m", "pytest", "tests/test_data_scope.py", "tests/test_user_type.py", "tests/test_admin_role_api.py", "-q"],
+  "cwd": "br-server",
   "files": [
-    "src",
-    "scripts",
-    "package.json"
+    "br-server/app",
+    "br-server/tests",
+    "br-server/pyproject.toml",
+    "br-server/.env"
   ],
+  "env": ["PATH", "HOME", "NODE_ENV", "NODE_OPTIONS"],
   "git": "none",
   "taskCheckboxes": "ignore"
 }

@@ -17,6 +17,7 @@ class StudyRoomResponse(BaseModel):
     status: str
     room_type: str
     min_price: Decimal
+    creator_username: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

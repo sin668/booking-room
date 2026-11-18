@@ -186,6 +186,7 @@ class CourseDetailResponse(BaseModel):
     description: str | None = None
     teacher: TeacherBrief | None = None
     room: RoomBrief | None = None
+    creator_username: str | None = None
     lessons: list[LessonResponse] = []
     related_courses: list[RelatedCourseItem] = []
 

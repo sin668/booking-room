@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.city import City
 from app.models.course import Course
 from app.models.course_schedule import CourseSchedule
+from app.models.edu_listing import EduListing
 from app.models.room_follow import RoomFollow
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
@@ -42,12 +43,60 @@ def _city_or_null_condition(city_id: int):
     return or_(StudyRoom.city_id == city_id, StudyRoom.city_id.is_(None))
 
 
+def _to_followed_listing(listing: EduListing, followed_at) -> FollowedRoomResponse:
+    images = listing.images or []
+    return FollowedRoomResponse(
+        id=listing.id,
+        name=listing.title,
+        description=listing.description or "",
+        cover_image=images[0] if images else None,
+        address=listing.area or "",
+        city_id=listing.city_id,
+        city_name=None,
+        business_hours=None,
+        status="active",
+        min_price=listing.price or 0,
+        room_type="listing",
+        followed_at=followed_at,
+    )
+
+
 async def list_followed_rooms(
     db: AsyncSession,
     user_id: uuid.UUID,
     follow_type: str = "room",
     city_id: int | None = None,
 ) -> FollowedRoomListResponse:
+    if follow_type == "listing":
+        listing_filters = [
+            RoomFollow.user_id == user_id,
+            RoomFollow.follow_type == "listing",
+            EduListing.status == "approved",
+        ]
+        if city_id is not None:
+            listing_filters.append(
+                or_(EduListing.city_id == city_id, EduListing.city_id.is_(None))
+            )
+        count = (
+            await db.execute(
+                select(func.count())
+                .select_from(RoomFollow)
+                .join(EduListing, RoomFollow.room_id == EduListing.id)
+                .where(*listing_filters)
+            )
+        ).scalar_one()
+        result = await db.execute(
+            select(RoomFollow, EduListing)
+            .join(EduListing, RoomFollow.room_id == EduListing.id)
+            .where(*listing_filters)
+            .order_by(RoomFollow.created_at.desc(), RoomFollow.id.desc())
+        )
+        items = [
+            _to_followed_listing(listing, follow.created_at)
+            for follow, listing in result.all()
+        ]
+        return FollowedRoomListResponse(items=items, total=count)
+
     if follow_type == "teacher":
         # Teacher follows: join with teachers table
         teacher_filters = [
@@ -205,6 +254,28 @@ async def follow_room(
     room_id: int,
     follow_type: str = "room",
 ) -> tuple[FollowedRoomResponse, bool]:
+    if follow_type == "listing":
+        listing = await db.get(EduListing, room_id)
+        if listing is None or listing.status != "approved":
+            raise ValueError(f"Listing {room_id} not found")
+        follow = (
+            await db.execute(
+                select(RoomFollow).where(
+                    RoomFollow.user_id == user_id,
+                    RoomFollow.room_id == room_id,
+                    RoomFollow.follow_type == follow_type,
+                )
+            )
+        ).scalar_one_or_none()
+        created = follow is None
+        if follow is None:
+            follow = RoomFollow(user_id=user_id, room_id=room_id, follow_type=follow_type)
+            db.add(follow)
+            await db.flush()
+        await db.commit()
+        await db.refresh(follow)
+        return _to_followed_listing(listing, follow.created_at), created
+
     if follow_type == "teacher":
         # Validate against teachers table
         teacher = await db.get(Teacher, room_id)

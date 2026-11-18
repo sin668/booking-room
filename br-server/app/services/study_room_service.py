@@ -1,6 +1,7 @@
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.im import to_im_user_id
 from app.domain.booking_status import BookingStatus
 from app.models.booking import Booking
 from app.models.city import City
@@ -83,6 +84,7 @@ async def get_study_room(db: AsyncSession, room_id: int) -> StudyRoomResponse:
     room, city_name = row
     item = StudyRoomResponse.model_validate(room)
     item.city_name = city_name
+    item.creator_username = to_im_user_id(room.created_by) if room.created_by else None
     return item
 
 

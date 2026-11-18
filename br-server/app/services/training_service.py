@@ -4,6 +4,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Exists
 
+from app.core.im import to_im_user_id
 from app.models.city import City
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
@@ -455,6 +456,11 @@ async def get_course_detail(
         description=course.description,
         teacher=teacher_brief,
         room=room_brief,
+        creator_username=(
+            to_im_user_id(study_room.created_by)
+            if study_room and study_room.created_by
+            else None
+        ),
         lessons=lessons,
         related_courses=related_courses,
     )

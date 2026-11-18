@@ -82,5 +82,6 @@ class SeatAdminResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     room_name: str = ""
+    readonly: bool = False
 
     model_config = ConfigDict(from_attributes=True)

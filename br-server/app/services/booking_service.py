@@ -55,7 +55,7 @@ from app.domain.booking_status import (
     resolve_seat_status,
 )
 from app.services import coupon_service
-from app.services.data_scope import booking_scope_condition
+from app.services.data_scope import booking_scope_condition, readonly_creators
 from app.services.booking_cancellation_policy import (
     booking_now,
     calculate_cancellation_policy,
@@ -992,6 +992,7 @@ async def admin_list_bookings(
 
     # 查询课程名称和课时标题
     course_map: dict[int, str] = {}  # course_id -> course_name
+    course_creator_map: dict[int, uuid.UUID | None] = {}
     lesson_title_by_booking: dict[int, list[str]] = {}  # booking_id -> lesson_titles
     course_bookings = [b for b in bookings if getattr(b, "booking_type", None) == "course"]
     if course_bookings:
@@ -1000,6 +1001,7 @@ async def admin_list_bookings(
             courses_result = await db.execute(select(Course).where(Course.id.in_(course_ids)))
             for c in courses_result.scalars().all():
                 course_map[c.id] = c.name
+                course_creator_map[c.id] = c.created_by
         # 查询课时标题
         for b in course_bookings:
             if b.lesson_ids:
@@ -1008,16 +1010,26 @@ async def admin_list_bookings(
                 )
                 lesson_title_by_booking[b.id] = list(lessons_result.scalars().all())
 
+    # 只读判定与 ensure_booking_writable 同口径：课程订单看课程创建人，否则看房间创建人
+    creator_by_booking: dict[int, uuid.UUID | None] = {}
+    for b in bookings:
+        if getattr(b, "course_id", None):
+            creator_by_booking[b.id] = course_creator_map.get(b.course_id)
+        else:
+            room = room_map.get(b.room_id)
+            creator_by_booking[b.id] = room.created_by if room is not None else None
+    ro_creators = await readonly_creators(db, list(creator_by_booking.values()), viewer)
+
     items: list[BookingAdminResponse] = []
     for b in bookings:
-        items.append(
-            _build_admin_booking_response(
-                b, seat_map.get(b.seat_id), room_map.get(b.room_id),
-                user_nickname=user_nickname_map.get(b.user_id),
-                course_name=course_map.get(b.course_id) if getattr(b, "course_id", None) else None,
-                lesson_titles=lesson_title_by_booking.get(b.id),
-            )
+        item = _build_admin_booking_response(
+            b, seat_map.get(b.seat_id), room_map.get(b.room_id),
+            user_nickname=user_nickname_map.get(b.user_id),
+            course_name=course_map.get(b.course_id) if getattr(b, "course_id", None) else None,
+            lesson_titles=lesson_title_by_booking.get(b.id),
         )
+        item.readonly = creator_by_booking.get(b.id) in ro_creators
+        items.append(item)
 
     return BookingAdminListResponse(
         items=items,
@@ -1079,12 +1091,14 @@ async def admin_get_booking(db: AsyncSession, booking_id: int, viewer=None) -> B
     schedule_brief: AdminScheduleBrief | None = None
     lesson_items: list[AdminLessonScheduleItem] = []
 
+    course_creator: uuid.UUID | None = None
     if booking.course_id:
         course = (
             await db.execute(select(Course).where(Course.id == booking.course_id))
         ).scalar_one_or_none()
         if course is not None:
             course_brief = AdminCourseBrief(id=course.id, name=course.name, category=course.category)
+            course_creator = course.created_by
 
     schedule: CourseSchedule | None = None
     if getattr(booking, "schedule_id", None):
@@ -1178,6 +1192,8 @@ async def admin_get_booking(db: AsyncSession, booking_id: int, viewer=None) -> B
         room,
         user_nickname=user_row[1] if user_row is not None else None,
     )
+    creator = course_creator if booking.course_id else (room.created_by if room is not None else None)
+    base.readonly = bool(await readonly_creators(db, [creator], viewer))
     return BookingAdminDetailResponse(
         **base.model_dump(),
         lesson_ids=getattr(booking, "lesson_ids", None),

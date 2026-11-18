@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
+from app.models.study_room import StudyRoom
 from app.schemas.seat import (
     SeatAdminResponse,
     SeatBulkCreate,
@@ -11,6 +12,7 @@ from app.schemas.seat import (
     SeatUpdate,
 )
 from app.services import seat_service
+from app.services.data_scope import ensure_seat_writable, ensure_writable
 
 # Nested routes: /api/v1/admin/rooms/{room_id}/seats/...
 room_seats_router = APIRouter(
@@ -38,7 +40,9 @@ async def create_seat(
     room_id: int,
     data: SeatCreate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> SeatAdminResponse:
+    await ensure_writable(db, StudyRoom, room_id, context)
     try:
         return await seat_service.create_seat(db, room_id, data.model_dump())
     except ValueError as e:
@@ -53,7 +57,9 @@ async def bulk_create_seats(
     room_id: int,
     data: SeatBulkCreate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> dict[str, int]:
+    await ensure_writable(db, StudyRoom, room_id, context)
     try:
         created = await seat_service.bulk_create_seats(db, room_id, [z.model_dump() for z in data.seats])
         return {"created": created}
@@ -99,7 +105,9 @@ async def update_seat(
     seat_id: int,
     data: SeatUpdate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> SeatAdminResponse:
+    await ensure_seat_writable(db, seat_id, context)
     try:
         return await seat_service.update_seat(db, seat_id, data.model_dump(exclude_unset=True))
     except ValueError as e:
@@ -110,7 +118,12 @@ async def update_seat(
 
 
 @flat_seats_router.delete("/{seat_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin_permission("seat:delete"))])
-async def delete_seat(seat_id: int, db: AsyncSession = Depends(get_db)) -> None:
+async def delete_seat(
+    seat_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> None:
+    await ensure_seat_writable(db, seat_id, context)
     try:
         await seat_service.delete_seat(db, seat_id)
     except ValueError as e:
@@ -125,7 +138,9 @@ async def toggle_seat_status(
     seat_id: int,
     data: SeatStatusUpdate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> SeatAdminResponse:
+    await ensure_seat_writable(db, seat_id, context)
     try:
         return await seat_service.toggle_seat_status(db, seat_id, data.status)
     except ValueError as e:

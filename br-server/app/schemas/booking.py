@@ -157,6 +157,7 @@ class BookingAdminResponse(BaseModel):
     updated_at: datetime
     seat: SeatBrief | None = None
     room: RoomBrief | None = None
+    readonly: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -24,7 +24,7 @@ from app.schemas.admin_review import (
     ReviewReplyUpdate,
     ReviewStatusUpdate,
 )
-from app.services.data_scope import review_scope_condition
+from app.services.data_scope import readonly_creators, review_scope_condition
 from app.services.review_service import (
     DEFAULT_PAGE_SIZE,
     RATING_BANDS,
@@ -35,14 +35,39 @@ from app.services.review_service import (
 from app.utils.timezone import booking_now
 
 
-async def _to_admin_items(db: AsyncSession, reviews: list[Review]) -> list[AdminReviewItem]:
+async def _to_admin_items(
+    db: AsyncSession, reviews: list[Review], viewer=None
+) -> list[AdminReviewItem]:
     """复用 C 端的批量关联查询，再补上后台独有的审核元数据。"""
     base_items = await assemble_items(db, reviews, mask_anonymous=False)
+
+    # 只读判定与 ensure_review_writable 同口径：课程评价看课程创建人，否则看预约房间创建人
+    course_creators: dict[int, uuid.UUID | None] = {}
+    course_ids = {r.course_id for r in reviews if r.course_id}
+    if course_ids:
+        rows = await db.execute(select(Course.id, Course.created_by).where(Course.id.in_(course_ids)))
+        course_creators = dict(rows.all())
+    room_creators: dict[int, uuid.UUID | None] = {}
+    booking_ids = {r.booking_id for r in reviews if not r.course_id and r.booking_id}
+    if booking_ids:
+        rows = await db.execute(
+            select(Booking.id, StudyRoom.created_by)
+            .join(StudyRoom, Booking.room_id == StudyRoom.id)
+            .where(Booking.id.in_(booking_ids))
+        )
+        room_creators = dict(rows.all())
+    creator_by_review = {
+        r.id: course_creators.get(r.course_id) if r.course_id else room_creators.get(r.booking_id)
+        for r in reviews
+    }
+    ro_creators = await readonly_creators(db, list(creator_by_review.values()), viewer)
+
     return [
         AdminReviewItem(
             **base.model_dump(),
             reviewed_by=review.reviewed_by,
             reviewed_at=review.reviewed_at,
+            readonly=creator_by_review.get(review.id) in ro_creators,
         )
         for base, review in zip(base_items, reviews)
     ]
@@ -112,7 +137,7 @@ async def list_reviews(
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
-    items = await _to_admin_items(db, list(result.scalars().all()))
+    items = await _to_admin_items(db, list(result.scalars().all()), viewer=viewer)
     return AdminReviewListResponse(items=items, total=total, page=page, page_size=page_size)
 
 

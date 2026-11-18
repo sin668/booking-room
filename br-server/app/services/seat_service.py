@@ -8,7 +8,7 @@ from app.models.booking import Booking
 from app.models.seat import Seat
 from app.models.study_room import StudyRoom
 from app.schemas.seat import SeatAdminResponse, SeatResponse, SeatStatsResponse, SeatWithAvailabilityResponse
-from app.services.data_scope import scope_condition
+from app.services.data_scope import readonly_creators, scope_condition
 
 
 async def _room_exists(db: AsyncSession, room_id: int, viewer=None) -> bool:
@@ -150,11 +150,15 @@ async def admin_list_seats(
 
     result = await db.execute(stmt)
     seats = result.scalars().all()
-    return [SeatAdminResponse.model_validate(s) for s in seats]
+    room_creator = (
+        await db.execute(select(StudyRoom.created_by).where(StudyRoom.id == room_id))
+    ).scalar_one_or_none()
+    readonly = bool(await readonly_creators(db, [room_creator], viewer))
+    return [SeatAdminResponse.model_validate(s).model_copy(update={"readonly": readonly}) for s in seats]
 
 
 async def admin_get_seat(db: AsyncSession, seat_id: int, viewer=None) -> SeatAdminResponse:
-    stmt = select(Seat, StudyRoom.name).join(StudyRoom, Seat.room_id == StudyRoom.id).where(Seat.id == seat_id)
+    stmt = select(Seat, StudyRoom.name, StudyRoom.created_by).join(StudyRoom, Seat.room_id == StudyRoom.id).where(Seat.id == seat_id)
     condition = scope_condition(StudyRoom, viewer)
     if condition is not None:
         stmt = stmt.where(condition)
@@ -162,9 +166,10 @@ async def admin_get_seat(db: AsyncSession, seat_id: int, viewer=None) -> SeatAdm
     row = result.one_or_none()
     if row is None:
         raise ValueError(f"Seat {seat_id} not found")
-    seat, room_name = row
+    seat, room_name, room_creator = row
     resp = SeatAdminResponse.model_validate(seat)
-    return resp.model_copy(update={"room_name": room_name})
+    readonly = bool(await readonly_creators(db, [room_creator], viewer))
+    return resp.model_copy(update={"room_name": room_name, "readonly": readonly})
 
 
 async def create_seat(db: AsyncSession, room_id: int, data: dict) -> SeatAdminResponse:

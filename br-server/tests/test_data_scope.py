@@ -578,3 +578,91 @@ async def test_own_and_legacy_content_writable(client: AsyncClient, seed_content
     room_s = seed_super_content["room"]
     resp = await client.put(f"/api/v1/admin/rooms/{room_s.id}", json={"name": "超管教室改"})
     assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# 写端点 403 与 readonly 标志（座位/预约/评价）
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_super_record_write_endpoints_rejected(client: AsyncClient, db_session, seed_content, seed_super_content):
+    room_s = seed_super_content["room"]
+    seat_s = seed_super_content["seat"]
+    booking_course_s, booking_seat_s = seed_super_content["bookings"]
+    review_course_s, review_seat_s = seed_super_content["reviews"]
+
+    as_admin(ctx(ADMIN_A))
+    requests = [
+        ("post", f"/api/v1/admin/rooms/{room_s.id}/seats",
+         {"seat_number": "S-02", "zone": "quiet", "price_per_hour": 10, "row": 1, "col": 2}),
+        ("post", f"/api/v1/admin/rooms/{room_s.id}/seats/bulk",
+         {"seats": [{"zone": "quiet", "rows": 1, "cols": 1, "prefix": "S", "price_per_hour": 10}]}),
+        ("put", f"/api/v1/admin/seats/{seat_s.id}", {"seat_number": "S-99"}),
+        ("delete", f"/api/v1/admin/seats/{seat_s.id}", None),
+        ("patch", f"/api/v1/admin/seats/{seat_s.id}/status", {"status": "maintenance"}),
+        ("post", f"/api/v1/admin/bookings/{booking_course_s.id}/cancel", None),
+        ("post", f"/api/v1/admin/bookings/{booking_seat_s.id}/confirm", None),
+        ("patch", f"/api/v1/admin/reviews/{review_course_s.id}/status", {"status": "approved"}),
+        ("patch", f"/api/v1/admin/reviews/{review_seat_s.id}/reply", {"reply_content": "回复"}),
+    ]
+    for method, url, body in requests:
+        resp = await getattr(client, method)(url, **({"json": body} if body is not None else {}))
+        assert resp.status_code == 403, f"{method.upper()} {url} -> {resp.status_code}"
+
+    # 数据未被修改
+    await db_session.refresh(seat_s)
+    assert seat_s.seat_number == "S-01"
+    await db_session.refresh(review_seat_s)
+    assert review_seat_s.reply_content is None
+
+
+@pytest.mark.asyncio
+async def test_readonly_flags_in_record_lists(client: AsyncClient, seed_content, seed_super_content):
+    room_s = seed_super_content["room"]
+    seat_s = seed_super_content["seat"]
+    room_a = seed_content["rooms"][0]
+    booking_course_s, booking_seat_s = seed_super_content["bookings"]
+    booking_course, _, booking_legacy = seed_content["bookings"]
+    review_course_s, review_seat_s = seed_super_content["reviews"]
+    review_course, _ = seed_content["reviews"]
+
+    as_admin(ctx(ADMIN_A))
+    seats = (await client.get(f"/api/v1/admin/rooms/{room_s.id}/seats")).json()
+    assert seats and all(s["readonly"] is True for s in seats)
+    assert (await client.get(f"/api/v1/admin/seats/{seat_s.id}")).json()["readonly"] is True
+    seats = (await client.get(f"/api/v1/admin/rooms/{room_a.id}/seats")).json()
+    assert seats and all(s["readonly"] is False for s in seats)
+
+    body = (await client.get("/api/v1/admin/bookings")).json()
+    flags = {i["id"]: i["readonly"] for i in body["items"]}
+    assert flags == {
+        booking_course_s.id: True, booking_seat_s.id: True,
+        booking_course.id: False, booking_legacy.id: False,
+    }
+    assert (await client.get(f"/api/v1/admin/bookings/{booking_course_s.id}")).json()["readonly"] is True
+    assert (await client.get(f"/api/v1/admin/bookings/{booking_course.id}")).json()["readonly"] is False
+
+    body = (await client.get("/api/v1/admin/reviews")).json()
+    flags = {i["id"]: i["readonly"] for i in body["items"]}
+    assert flags == {review_course_s.id: True, review_seat_s.id: True, review_course.id: False}
+
+    as_admin(ctx(SUPER_ADMIN, super_admin=True))
+    body = (await client.get("/api/v1/admin/bookings")).json()
+    assert all(i["readonly"] is False for i in body["items"])
+    body = (await client.get("/api/v1/admin/reviews")).json()
+    assert all(i["readonly"] is False for i in body["items"])
+
+
+@pytest.mark.asyncio
+async def test_own_records_writable(client: AsyncClient, seed_content, seed_super_content):
+    seat_a = seed_content["seats"][0]
+    review_course = seed_content["reviews"][0]
+
+    as_admin(ctx(ADMIN_A))
+    resp = await client.put(f"/api/v1/admin/seats/{seat_a.id}", json={"seat_number": "A-02"})
+    assert resp.status_code == 200
+    assert resp.json()["readonly"] is False
+    resp = await client.patch(f"/api/v1/admin/reviews/{review_course.id}/reply", json={"reply_content": "感谢反馈"})
+    assert resp.status_code == 200
+    assert resp.json()["readonly"] is False

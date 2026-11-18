@@ -12,6 +12,7 @@ class AdminReviewItem(ReviewItem):
 
     reviewed_by: UUID | None = None
     reviewed_at: datetime | None = None
+    readonly: bool = False
 
 
 class AdminReviewListResponse(BaseModel):

@@ -10,6 +10,7 @@ from app.schemas.admin_review import (
     ReviewStatusUpdate,
 )
 from app.services import admin_review_service
+from app.services.data_scope import ensure_review_writable
 from app.services.review_service import DEFAULT_PAGE_SIZE
 
 router = APIRouter(prefix="/api/v1/admin/reviews", tags=["admin-reviews"])
@@ -60,6 +61,7 @@ async def update_review_status(
     ),
     db: AsyncSession = Depends(get_db),
 ) -> AdminReviewItem:
+    await ensure_review_writable(db, review_id, context)
     return await admin_review_service.update_status(
         db,
         review_id,
@@ -77,5 +79,7 @@ async def update_review_reply(
     review_id: int,
     data: ReviewReplyUpdate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> AdminReviewItem:
+    await ensure_review_writable(db, review_id, context)
     return await admin_review_service.update_reply(db, review_id, data)

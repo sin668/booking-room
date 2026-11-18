@@ -11,6 +11,7 @@ from app.schemas.booking import (
     BookingAdminResponse,
 )
 from app.services import booking_service
+from app.services.data_scope import ensure_booking_writable
 
 router = APIRouter(prefix="/api/v1/admin/bookings", tags=["admin-bookings"])
 
@@ -45,7 +46,12 @@ async def get_booking(
 
 
 @router.post("/{booking_id}/cancel", response_model=BookingAdminResponse, dependencies=[Depends(require_admin_permission("booking:cancel"))])
-async def cancel_booking(booking_id: int, db: AsyncSession = Depends(get_db)) -> BookingAdminResponse:
+async def cancel_booking(
+    booking_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> BookingAdminResponse:
+    await ensure_booking_writable(db, booking_id, context)
     try:
         return await booking_service.admin_cancel_booking(db, booking_id)
     except booking_service.BookingNotFoundError:
@@ -57,7 +63,12 @@ async def cancel_booking(booking_id: int, db: AsyncSession = Depends(get_db)) ->
 
 
 @router.post("/{booking_id}/confirm", response_model=BookingAdminResponse, dependencies=[Depends(require_admin_permission("booking:cancel"))])
-async def confirm_booking(booking_id: int, db: AsyncSession = Depends(get_db)) -> BookingAdminResponse:
+async def confirm_booking(
+    booking_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> BookingAdminResponse:
+    await ensure_booking_writable(db, booking_id, context)
     try:
         return await booking_service.admin_confirm_booking(db, booking_id)
     except booking_service.BookingNotFoundError:

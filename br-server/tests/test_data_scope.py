@@ -18,6 +18,7 @@ from app.models.user import User
 
 ADMIN_A = uuid.uuid4()
 ADMIN_B = uuid.uuid4()
+SUPER_ADMIN = uuid.uuid4()
 
 PERMS = {
     "room:view", "room:create", "seat:view", "seat:create",
@@ -287,3 +288,102 @@ async def test_review_follows_associated_content(client: AsyncClient, seed_conte
     as_admin(ctx(ADMIN_B, super_admin=True))
     body = (await client.get("/api/v1/admin/reviews")).json()
     assert body["total"] == 2
+
+
+# ---------------------------------------------------------------------------
+# 超管创建的数据对有权限用户公开可见
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+async def seed_super_content(db_session, seed_content):
+    """超管创建的教室/课程/座位/预约/评价。"""
+    super_user = User(
+        id=SUPER_ADMIN, user_source="admin", user_type="super-admin",
+        phone="13900000001", username="superadmin", nickname="超管", password_hash="x",
+    )
+    db_session.add(super_user)
+    room_s = make_room("超管教室", SUPER_ADMIN)
+    db_session.add(room_s)
+    await db_session.flush()
+
+    course_s = make_course("超管课程", room_s.id, SUPER_ADMIN)
+    db_session.add(course_s)
+    await db_session.flush()
+
+    seat_s = Seat(room_id=room_s.id, seat_number="S-01", zone="S", price_per_hour=10, row=1, col=1)
+    db_session.add(seat_s)
+    await db_session.flush()
+
+    user = seed_content["user"]
+    booking_course_s = make_booking(room_s.id, str(user.id), course_id=course_s.id, booking_type="course")
+    booking_seat_s = make_booking(room_s.id, str(user.id))
+    db_session.add_all([booking_course_s, booking_seat_s])
+    await db_session.flush()
+
+    review_course_s = Review(booking_id=booking_course_s.id, user_id=user.id, course_id=course_s.id, rating=5, content="超管课程评价")
+    review_seat_s = Review(booking_id=booking_seat_s.id, user_id=user.id, rating=4, content="超管座位评价")
+    db_session.add_all([review_course_s, review_seat_s])
+    await db_session.commit()
+
+    return {
+        "super_user": super_user,
+        "room": room_s,
+        "course": course_s,
+        "seat": seat_s,
+        "bookings": (booking_course_s, booking_seat_s),
+        "reviews": (review_course_s, review_seat_s),
+    }
+
+
+@pytest.mark.asyncio
+async def test_super_admin_content_public_to_normal_admin(client: AsyncClient, seed_content, seed_super_content):
+    room_s = seed_super_content["room"]
+    course_s = seed_super_content["course"]
+    room_b = seed_content["rooms"][1]
+
+    as_admin(ctx(ADMIN_A))
+    body = (await client.get("/api/v1/admin/rooms")).json()
+    assert room_s.id in {item["id"] for item in body["items"]}
+    body = (await client.get("/api/v1/admin/courses")).json()
+    assert course_s.id in {item["id"] for item in body["items"]}
+    assert (await client.get(f"/api/v1/admin/rooms/{room_s.id}")).status_code == 200
+    assert (await client.get(f"/api/v1/admin/courses/{course_s.id}")).status_code == 200
+    # 其他普通管理员创建的数据仍被过滤
+    assert (await client.get(f"/api/v1/admin/rooms/{room_b.id}")).status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_super_admin_seats_bookings_reviews_public(client: AsyncClient, seed_content, seed_super_content):
+    room_s = seed_super_content["room"]
+    seat_s = seed_super_content["seat"]
+    booking_course_s, booking_seat_s = seed_super_content["bookings"]
+    review_course_s, review_seat_s = seed_super_content["reviews"]
+
+    as_admin(ctx(ADMIN_A))
+    resp = await client.get(f"/api/v1/admin/rooms/{room_s.id}/seats")
+    assert resp.status_code == 200
+    assert [s["id"] for s in resp.json()] == [seat_s.id]
+
+    body = (await client.get("/api/v1/admin/bookings")).json()
+    ids = {item["id"] for item in body["items"]}
+    assert {booking_course_s.id, booking_seat_s.id} <= ids
+
+    body = (await client.get("/api/v1/admin/reviews")).json()
+    ids = {item["id"] for item in body["items"]}
+    assert {review_course_s.id, review_seat_s.id} <= ids
+
+
+@pytest.mark.asyncio
+async def test_demoted_super_admin_content_not_public(client: AsyncClient, db_session, seed_content, seed_super_content):
+    room_s = seed_super_content["room"]
+    course_s = seed_super_content["course"]
+
+    super_user = await db_session.get(User, SUPER_ADMIN)
+    super_user.user_type = "normal-user"
+    await db_session.commit()
+
+    as_admin(ctx(ADMIN_A))
+    body = (await client.get("/api/v1/admin/rooms")).json()
+    assert room_s.id not in {item["id"] for item in body["items"]}
+    assert (await client.get(f"/api/v1/admin/courses/{course_s.id}")).status_code == 404

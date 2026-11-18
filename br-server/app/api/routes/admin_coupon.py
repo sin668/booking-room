@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
+from app.models.coupon import Coupon
 from app.schemas.coupon_admin import (
     AdminCouponCreate,
     AdminCouponListResponse,
@@ -11,7 +12,7 @@ from app.schemas.coupon_admin import (
     AdminCouponUpdate,
 )
 from app.services import admin_coupon_service
-from app.services.data_scope import creator_id
+from app.services.data_scope import creator_id, ensure_writable
 
 router = APIRouter(prefix="/api/v1/admin/coupons", tags=["admin-coupons"])
 
@@ -80,7 +81,13 @@ async def get_coupon(
 
 
 @router.put("/{coupon_id}", response_model=AdminCouponResponse, dependencies=[Depends(require_admin_permission("coupon:update"))])
-async def update_coupon(coupon_id: int, data: AdminCouponUpdate, db: AsyncSession = Depends(get_db)) -> AdminCouponResponse:
+async def update_coupon(
+    coupon_id: int,
+    data: AdminCouponUpdate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> AdminCouponResponse:
+    await ensure_writable(db, Coupon, coupon_id, context)
     try:
         return await admin_coupon_service.update_coupon(db, coupon_id, data.model_dump(exclude_unset=True))
     except admin_coupon_service.AdminCouponError as exc:
@@ -92,7 +99,9 @@ async def toggle_coupon_status(
     coupon_id: int,
     data: AdminCouponStatusUpdate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> AdminCouponResponse:
+    await ensure_writable(db, Coupon, coupon_id, context)
     try:
         return await admin_coupon_service.toggle_status(db, coupon_id, data.is_active)
     except admin_coupon_service.AdminCouponError as exc:
@@ -100,7 +109,12 @@ async def toggle_coupon_status(
 
 
 @router.delete("/{coupon_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin_permission("coupon:delete"))])
-async def delete_coupon(coupon_id: int, db: AsyncSession = Depends(get_db)) -> None:
+async def delete_coupon(
+    coupon_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> None:
+    await ensure_writable(db, Coupon, coupon_id, context)
     try:
         await admin_coupon_service.delete_coupon(db, coupon_id)
     except admin_coupon_service.AdminCouponError as exc:

@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.activity import Activity, ActivityCoupon
 from app.models.coupon import Coupon, UserCoupon
-from app.services.data_scope import scope_condition
+from app.services.data_scope import readonly_creators, scope_condition
 from app.schemas.activity import (
     ActivityAdminResponse,
     ActivityCouponAdminResponse,
@@ -201,6 +201,7 @@ def _admin_coupon_to_response(activity_coupon: ActivityCoupon, coupon: Coupon | 
 def _activity_to_admin_response(
     activity: Activity,
     activity_coupon_rows: list[tuple[ActivityCoupon, Coupon]] | None = None,
+    readonly: bool = False,
 ) -> ActivityAdminResponse:
     rows = activity_coupon_rows or []
     activity_coupons = [_admin_coupon_to_response(activity_coupon, coupon) for activity_coupon, coupon in rows]
@@ -218,6 +219,7 @@ def _activity_to_admin_response(
         activity_coupons=activity_coupons,
         activity_coupon_count=len(activity_coupons),
         activity_coupon_claimed_count=sum(item.claimed_quantity for item in activity_coupons),
+        readonly=readonly,
     )
 
 
@@ -358,10 +360,13 @@ async def list_activities(
     query = query.order_by(Activity.created_at.desc()).offset(offset).limit(page_size)
     result = await db.execute(query)
     items = list(result.scalars().all())
+    ro_creators = await readonly_creators(db, [a.created_by for a in items], viewer)
     response_items: list[ActivityAdminResponse] = []
     for activity in items:
         rows = await _load_activity_coupon_rows(db, activity.id)
-        response_items.append(_activity_to_admin_response(activity, rows))
+        response_items.append(
+            _activity_to_admin_response(activity, rows, readonly=activity.created_by in ro_creators)
+        )
 
     return {"total": total, "page": page, "page_size": page_size, "items": response_items}
 
@@ -428,7 +433,8 @@ async def get_admin_activity_response(db: AsyncSession, activity_id: int, viewer
     activity = (await db.execute(stmt)).scalar_one_or_none()
     if activity is None:
         return None
-    return _activity_to_admin_response(activity, await _load_activity_coupon_rows(db, activity.id))
+    readonly = bool(await readonly_creators(db, [activity.created_by], viewer))
+    return _activity_to_admin_response(activity, await _load_activity_coupon_rows(db, activity.id), readonly=readonly)
 
 
 async def _count_user_claims(

@@ -19,7 +19,7 @@ from app.schemas.admin_teacher import (
     AdminTeacherUpdate,
     TeacherRoomBrief,
 )
-from app.services.data_scope import scope_condition
+from app.services.data_scope import readonly_creators, scope_condition
 
 ALLOWED_ROOM_TYPES = ("training", "comprehensive")
 
@@ -111,9 +111,10 @@ async def list_teachers(
     )
     teachers = list(result.scalars().all())
     counts = await _course_count_map(db, [t.id for t in teachers])
+    ro_creators = await readonly_creators(db, [t.created_by for t in teachers], viewer)
     items = [
         AdminTeacherListItem.model_validate(t, from_attributes=True).model_copy(
-            update={"course_count": counts.get(t.id, 0)}
+            update={"course_count": counts.get(t.id, 0), "readonly": t.created_by in ro_creators}
         )
         for t in teachers
     ]
@@ -142,6 +143,7 @@ async def get_teacher_detail(db: AsyncSession, teacher_id: int, viewer=None) -> 
             "qualifications": qualifications if isinstance(qualifications, list) else [],
             "room_ids": [r.id for r in rooms],
             "rooms": rooms,
+            "readonly": bool(await readonly_creators(db, [teacher.created_by], viewer)),
         }
     )
 

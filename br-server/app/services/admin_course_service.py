@@ -18,7 +18,7 @@ from app.models.lesson_schedule import LessonSchedule
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.domain.booking_status import resolve_course_status
-from app.services.data_scope import scope_condition
+from app.services.data_scope import readonly_creators, scope_condition
 from app.schemas.admin_course import (
     AdminCourseCreate,
     AdminCourseDetailResponse,
@@ -85,6 +85,7 @@ class AdminCourseService:
 
         result = await db.execute(query)
         rows = result.all()
+        ro_creators = await readonly_creators(db, [course.created_by for course, _ in rows], viewer)
 
         items = []
         for course, room_name in rows:
@@ -127,6 +128,7 @@ class AdminCourseService:
                 schedules=schedule_items,
                 created_at=course.created_at.isoformat() if isinstance(course.created_at, datetime) else str(course.created_at),
                 updated_at=course.updated_at.isoformat() if isinstance(course.updated_at, datetime) else str(course.updated_at),
+                readonly=course.created_by in ro_creators,
             )
             items.append(item)
 
@@ -215,6 +217,7 @@ class AdminCourseService:
             teacher=teacher_brief,
             description=course.description,
             lessons=lessons,
+            readonly=bool(await readonly_creators(db, [course.created_by], viewer)),
         )
 
     async def create_course(self, db: AsyncSession, data: AdminCourseCreate, created_by=None) -> Course:

@@ -70,6 +70,7 @@ class AdminTeacherListItem(BaseModel):
     status: str = "active"
     available_time_slots: str | None = None
     created_at: datetime
+    readonly: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -107,6 +108,7 @@ class AdminTeacherDetail(BaseModel):
     rooms: list[TeacherRoomBrief] = []
     created_at: datetime
     updated_at: datetime
+    readonly: bool = False
 
     @field_validator("teaching_tags", mode="before")
     @classmethod

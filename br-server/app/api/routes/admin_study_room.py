@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
+from app.models.study_room import StudyRoom
 from app.schemas.study_room import (
     RoomAdminListResponse,
     RoomAdminResponse,
@@ -11,7 +12,7 @@ from app.schemas.study_room import (
     RoomUpdate,
 )
 from app.services import study_room_service
-from app.services.data_scope import creator_id
+from app.services.data_scope import creator_id, ensure_writable
 
 router = APIRouter(
     prefix="/api/v1/admin/rooms",
@@ -62,7 +63,13 @@ async def get_room(
 
 
 @router.put("/{room_id}", response_model=RoomAdminResponse, dependencies=[Depends(require_admin_permission("room:update"))])
-async def update_room(room_id: int, data: RoomUpdate, db: AsyncSession = Depends(get_db)) -> RoomAdminResponse:
+async def update_room(
+    room_id: int,
+    data: RoomUpdate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> RoomAdminResponse:
+    await ensure_writable(db, StudyRoom, room_id, context)
     try:
         return await study_room_service.update_room(db, room_id, data.model_dump(exclude_unset=True))
     except ValueError as e:
@@ -70,7 +77,12 @@ async def update_room(room_id: int, data: RoomUpdate, db: AsyncSession = Depends
 
 
 @router.delete("/{room_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin_permission("room:delete"))])
-async def delete_room(room_id: int, db: AsyncSession = Depends(get_db)) -> None:
+async def delete_room(
+    room_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> None:
+    await ensure_writable(db, StudyRoom, room_id, context)
     try:
         await study_room_service.delete_room(db, room_id)
     except ValueError as e:
@@ -81,7 +93,13 @@ async def delete_room(room_id: int, db: AsyncSession = Depends(get_db)) -> None:
 
 
 @router.patch("/{room_id}/status", response_model=RoomAdminResponse, dependencies=[Depends(require_admin_permission("room:status"))])
-async def toggle_room_status(room_id: int, data: RoomStatusUpdate, db: AsyncSession = Depends(get_db)) -> RoomAdminResponse:
+async def toggle_room_status(
+    room_id: int,
+    data: RoomStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> RoomAdminResponse:
+    await ensure_writable(db, StudyRoom, room_id, context)
     try:
         return await study_room_service.toggle_room_status(db, room_id, data.status)
     except ValueError as e:

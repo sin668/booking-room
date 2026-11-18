@@ -12,7 +12,7 @@ from app.schemas.study_room import (
     StudyRoomListResponse,
     StudyRoomResponse,
 )
-from app.services.data_scope import scope_condition
+from app.services.data_scope import readonly_creators, scope_condition
 
 MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
@@ -126,10 +126,13 @@ async def admin_list_rooms(
         query = query.where(*filters)
 
     result = await db.execute(query)
+    rows = result.all()
+    ro_creators = await readonly_creators(db, [room.created_by for room, _ in rows], viewer)
     items = []
-    for room, city_name in result.all():
+    for room, city_name in rows:
         item = RoomAdminResponse.model_validate(room)
         item.city_name = city_name
+        item.readonly = room.created_by in ro_creators
         items.append(item)
 
     return RoomAdminListResponse(
@@ -175,6 +178,7 @@ async def admin_get_room(db: AsyncSession, room_id: int, viewer=None) -> RoomAdm
         city_name=city_name,
         seat_count=seat_count,
         available_seat_count=available_seat_count,
+        readonly=bool(await readonly_creators(db, [room.created_by], viewer)),
     )
 
 

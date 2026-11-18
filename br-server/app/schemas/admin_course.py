@@ -64,6 +64,7 @@ class AdminCourseItem(BaseModel):
     schedules: list[CourseScheduleItem] = []
     created_at: str
     updated_at: str
+    readonly: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

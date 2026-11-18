@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
+from app.models.activity import Activity
 from app.schemas.activity import (
     ActivityAdminResponse,
     ActivityCreate,
@@ -11,7 +12,7 @@ from app.schemas.activity import (
     ActivityUpdate,
 )
 from app.services import activity_service
-from app.services.data_scope import creator_id
+from app.services.data_scope import creator_id, ensure_writable
 
 router = APIRouter(prefix="/api/v1/admin/activities", tags=["admin-activities"])
 
@@ -58,7 +59,13 @@ async def get_activity(
 
 
 @router.put("/{activity_id}", response_model=ActivityAdminResponse, dependencies=[Depends(require_admin_permission("activity:update"))])
-async def update_activity(activity_id: int, data: ActivityUpdate, db: AsyncSession = Depends(get_db)) -> ActivityAdminResponse:
+async def update_activity(
+    activity_id: int,
+    data: ActivityUpdate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> ActivityAdminResponse:
+    await ensure_writable(db, Activity, activity_id, context)
     activity = await activity_service.get_activity_by_id(db, activity_id)
     if not activity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动不存在")
@@ -69,7 +76,12 @@ async def update_activity(activity_id: int, data: ActivityUpdate, db: AsyncSessi
 
 
 @router.delete("/{activity_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin_permission("activity:delete"))])
-async def delete_activity(activity_id: int, db: AsyncSession = Depends(get_db)) -> None:
+async def delete_activity(
+    activity_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> None:
+    await ensure_writable(db, Activity, activity_id, context)
     activity = await activity_service.get_activity_by_id(db, activity_id)
     if not activity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动不存在")
@@ -77,7 +89,13 @@ async def delete_activity(activity_id: int, db: AsyncSession = Depends(get_db)) 
 
 
 @router.patch("/{activity_id}/status", response_model=ActivityAdminResponse, dependencies=[Depends(require_admin_permission("activity:status"))])
-async def toggle_status(activity_id: int, data: ActivityStatusUpdate, db: AsyncSession = Depends(get_db)) -> ActivityAdminResponse:
+async def toggle_status(
+    activity_id: int,
+    data: ActivityStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+) -> ActivityAdminResponse:
+    await ensure_writable(db, Activity, activity_id, context)
     activity = await activity_service.get_activity_by_id(db, activity_id)
     if not activity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动不存在")

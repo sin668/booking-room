@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import AdminContext, get_current_admin
 from app.core.database import get_db
+from app.models.course import Course
 from app.schemas.admin_course import (
     AdminCourseCreate,
     AdminCourseDetailResponse,
@@ -18,7 +19,7 @@ from app.schemas.admin_course import (
     CourseScheduleUpdate,
 )
 from app.services.admin_course_service import AdminCourseService
-from app.services.data_scope import creator_id
+from app.services.data_scope import creator_id, ensure_writable
 
 router = APIRouter(prefix="/api/v1/admin/courses", tags=["admin-courses"])
 
@@ -79,8 +80,14 @@ async def create_course(
 
 
 @router.put("/{course_id}", response_model=AdminCourseDetailResponse)
-async def update_course(course_id: int, data: AdminCourseUpdate, db: AsyncSession = Depends(get_db)):
+async def update_course(
+    course_id: int,
+    data: AdminCourseUpdate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+):
     """更新课程信息。"""
+    await ensure_writable(db, Course, course_id, context)
     service = AdminCourseService()
     try:
         course = await service.update_course(db, course_id, data)
@@ -99,8 +106,13 @@ async def update_course(course_id: int, data: AdminCourseUpdate, db: AsyncSessio
 
 
 @router.delete("/{course_id}")
-async def delete_course(course_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_course(
+    course_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+):
     """删除课程。"""
+    await ensure_writable(db, Course, course_id, context)
     service = AdminCourseService()
     success = await service.delete_course(db, course_id)
     if not success:
@@ -114,8 +126,10 @@ async def toggle_course_status(
     course_id: int,
     status_param: str = Query(..., alias="status"),
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """切换课程状态。"""
+    await ensure_writable(db, Course, course_id, context)
     service = AdminCourseService()
     course = await service.toggle_course_status(db, course_id, status_param)
     if not course:
@@ -143,8 +157,10 @@ async def create_lesson(
     course_id: int,
     data: AdminLessonCreate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """创建课时。"""
+    await ensure_writable(db, Course, course_id, context)
     service = AdminCourseService()
     try:
         lesson = await service.create_lesson(db, course_id, data)
@@ -161,8 +177,10 @@ async def update_lesson(
     lesson_id: int,
     data: AdminLessonUpdate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """更新课时。"""
+    await ensure_writable(db, Course, course_id, context)
     service = AdminCourseService()
     try:
         lesson = await service.update_lesson(db, lesson_id, data)
@@ -182,8 +200,10 @@ async def delete_lesson(
     course_id: int,
     lesson_id: int,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """删除课时。"""
+    await ensure_writable(db, Course, course_id, context)
     service = AdminCourseService()
     success = await service.delete_lesson(db, lesson_id)
     if not success:
@@ -211,8 +231,10 @@ async def create_schedule(
     course_id: int,
     data: CourseScheduleCreate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """新增排课记录。"""
+    await ensure_writable(db, Course, course_id, context)
     service = AdminCourseService()
     try:
         result = await service.create_schedule(db, course_id, data)
@@ -231,8 +253,10 @@ async def update_schedule(
     schedule_id: int,
     data: CourseScheduleUpdate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """更新排课记录。"""
+    await ensure_writable(db, Course, course_id, context)
     service = AdminCourseService()
     try:
         result = await service.update_schedule(db, schedule_id, data)
@@ -252,12 +276,14 @@ async def delete_schedule(
     course_id: int,
     schedule_id: int,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """删除排课记录及其对应的课时上课时间记录。
 
     仅当排课无关联订单、或关联订单全部已取消时允许删除；
     存在未取消订单时返回 409，禁止删除。
     """
+    await ensure_writable(db, Course, course_id, context)
     service = AdminCourseService()
     result = await service.delete_schedule(db, schedule_id)
     if result == "not_found":
@@ -277,8 +303,10 @@ async def postpone_lesson(
     schedule_id: int,
     data: dict,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """延期某一课时及其后续所有课时。"""
+    await ensure_writable(db, Course, course_id, context)
     lesson_id = data.get("lesson_id")
     if not lesson_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="lesson_id is required")

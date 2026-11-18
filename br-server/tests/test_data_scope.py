@@ -24,6 +24,12 @@ PERMS = {
     "room:view", "room:create", "seat:view", "seat:create",
     "booking:view", "training:reviews:view",
     "coupon:view", "coupon:create", "teacher:view", "teacher:create",
+    "room:update", "room:delete", "room:status",
+    "seat:update", "seat:delete", "seat:status", "seat:bulk_create",
+    "activity:view", "activity:update", "activity:delete", "activity:status",
+    "coupon:update", "coupon:delete",
+    "teacher:update", "teacher:delete", "teacher:status",
+    "booking:cancel", "training:reviews:audit", "training:reviews:reply",
 }
 
 
@@ -324,6 +330,20 @@ async def seed_super_content(db_session, seed_content):
     review_course_s = Review(booking_id=booking_course_s.id, user_id=user.id, course_id=course_s.id, rating=5, content="超管课程评价")
     review_seat_s = Review(booking_id=booking_seat_s.id, user_id=user.id, rating=4, content="超管座位评价")
     db_session.add_all([review_course_s, review_seat_s])
+
+    from datetime import datetime
+
+    from app.models.activity import Activity
+    from app.models.coupon import Coupon
+    from app.models.teacher import Teacher
+
+    activity_s = Activity(title="超管活动", is_active=False, created_by=SUPER_ADMIN)
+    coupon_s = Coupon(
+        name="超管券", type="amount_off", discount_amount=5, created_by=SUPER_ADMIN,
+        valid_from=datetime(2026, 1, 1), expires_at=datetime(2027, 1, 1),
+    )
+    teacher_s = Teacher(name="超管师", created_by=SUPER_ADMIN)
+    db_session.add_all([activity_s, coupon_s, teacher_s])
     await db_session.commit()
 
     return {
@@ -333,6 +353,9 @@ async def seed_super_content(db_session, seed_content):
         "seat": seat_s,
         "bookings": (booking_course_s, booking_seat_s),
         "reviews": (review_course_s, review_seat_s),
+        "activity": activity_s,
+        "coupon": coupon_s,
+        "teacher": teacher_s,
     }
 
 
@@ -464,3 +487,94 @@ async def test_ensure_record_writable_helpers(db_session, seed_content, seed_sup
 
     await ensure_seat_writable(db_session, seat_a.id, viewer)
     await ensure_seat_writable(db_session, seat_s.id, ctx(SUPER_ADMIN, super_admin=True))
+
+
+# ---------------------------------------------------------------------------
+# 写端点 403 与 readonly 标志（内容型五类）
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_super_content_write_endpoints_rejected(client: AsyncClient, db_session, seed_content, seed_super_content):
+    room_s = seed_super_content["room"]
+    course_s = seed_super_content["course"]
+    activity_s = seed_super_content["activity"]
+    coupon_s = seed_super_content["coupon"]
+    teacher_s = seed_super_content["teacher"]
+
+    as_admin(ctx(ADMIN_A))
+    requests = [
+        ("put", f"/api/v1/admin/rooms/{room_s.id}", {"name": "改名"}),
+        ("delete", f"/api/v1/admin/rooms/{room_s.id}", None),
+        ("patch", f"/api/v1/admin/rooms/{room_s.id}/status", {"status": "closed"}),
+        ("put", f"/api/v1/admin/courses/{course_s.id}", {"name": "改名"}),
+        ("delete", f"/api/v1/admin/courses/{course_s.id}", None),
+        ("patch", f"/api/v1/admin/courses/{course_s.id}/status?status=closed", None),
+        ("post", f"/api/v1/admin/courses/{course_s.id}/lessons", {"title": "课时", "sort_order": 1}),
+        ("delete", f"/api/v1/admin/courses/{course_s.id}/lessons/1", None),
+        ("delete", f"/api/v1/admin/courses/{course_s.id}/schedules/1", None),
+        ("put", f"/api/v1/admin/activities/{activity_s.id}", {"title": "改名"}),
+        ("delete", f"/api/v1/admin/activities/{activity_s.id}", None),
+        ("patch", f"/api/v1/admin/activities/{activity_s.id}/status", {"is_active": False}),
+        ("put", f"/api/v1/admin/coupons/{coupon_s.id}", {"name": "改名"}),
+        ("patch", f"/api/v1/admin/coupons/{coupon_s.id}/status", {"is_active": False}),
+        ("delete", f"/api/v1/admin/coupons/{coupon_s.id}", None),
+        ("put", f"/api/v1/admin/teachers/{teacher_s.id}", {"name": "改名"}),
+        ("patch", f"/api/v1/admin/teachers/{teacher_s.id}/status", {"status": "inactive"}),
+        ("delete", f"/api/v1/admin/teachers/{teacher_s.id}", None),
+        ("put", f"/api/v1/admin/teachers/{teacher_s.id}/available-time-slots", {"available_time_slots": []}),
+    ]
+    for method, url, body in requests:
+        resp = await getattr(client, method)(url, **({"json": body} if body is not None else {}))
+        assert resp.status_code == 403, f"{method.upper()} {url} -> {resp.status_code}"
+
+    # 数据未被修改
+    await db_session.refresh(room_s)
+    assert room_s.name == "超管教室"
+
+
+@pytest.mark.asyncio
+async def test_readonly_flags_in_content_lists(client: AsyncClient, seed_content, seed_super_content):
+    room_s = seed_super_content["room"]
+    course_s = seed_super_content["course"]
+    room_a, _, room_legacy = seed_content["rooms"]
+    course_a, _, course_legacy = seed_content["courses"]
+
+    as_admin(ctx(ADMIN_A))
+    body = (await client.get("/api/v1/admin/rooms")).json()
+    flags = {item["id"]: item["readonly"] for item in body["items"]}
+    assert flags == {room_s.id: True, room_a.id: False, room_legacy.id: False}
+    assert (await client.get(f"/api/v1/admin/rooms/{room_s.id}")).json()["readonly"] is True
+    assert (await client.get(f"/api/v1/admin/rooms/{room_a.id}")).json()["readonly"] is False
+
+    body = (await client.get("/api/v1/admin/courses")).json()
+    flags = {item["id"]: item["readonly"] for item in body["items"]}
+    assert flags == {course_s.id: True, course_a.id: False, course_legacy.id: False}
+    assert (await client.get(f"/api/v1/admin/courses/{course_s.id}")).json()["readonly"] is True
+
+    for path, obj_key in (("activities", "activity"), ("coupons", "coupon"), ("teachers", "teacher")):
+        body = (await client.get(f"/api/v1/admin/{path}")).json()
+        item = next(i for i in body["items"] if i["id"] == seed_super_content[obj_key].id)
+        assert item["readonly"] is True
+
+    as_admin(ctx(SUPER_ADMIN, super_admin=True))
+    body = (await client.get("/api/v1/admin/rooms")).json()
+    assert all(item["readonly"] is False for item in body["items"])
+
+
+@pytest.mark.asyncio
+async def test_own_and_legacy_content_writable(client: AsyncClient, seed_content, seed_super_content):
+    room_a, _, room_legacy = seed_content["rooms"]
+
+    as_admin(ctx(ADMIN_A))
+    resp = await client.put(f"/api/v1/admin/rooms/{room_a.id}", json={"name": "教室A改"})
+    assert resp.status_code == 200
+    assert resp.json()["readonly"] is False
+    resp = await client.patch(f"/api/v1/admin/rooms/{room_legacy.id}/status", json={"status": "closed"})
+    assert resp.status_code == 200
+
+    # 超管本人可写自己的数据
+    as_admin(ctx(SUPER_ADMIN, super_admin=True))
+    room_s = seed_super_content["room"]
+    resp = await client.put(f"/api/v1/admin/rooms/{room_s.id}", json={"name": "超管教室改"})
+    assert resp.status_code == 200

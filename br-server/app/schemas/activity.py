@@ -127,6 +127,7 @@ class ActivityAdminResponse(BaseModel):
     activity_coupons: list[ActivityCouponAdminResponse] = Field(default_factory=list)
     activity_coupon_count: int = 0
     activity_coupon_claimed_count: int = 0
+    readonly: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

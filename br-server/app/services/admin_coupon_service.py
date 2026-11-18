@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.activity import ActivityCoupon
 from app.models.coupon import Coupon, UserCoupon
 from app.schemas.coupon_admin import AdminCouponListResponse, AdminCouponResponse
-from app.services.data_scope import scope_condition
+from app.services.data_scope import readonly_creators, scope_condition
 
 from app.utils.timezone import CHINA_TIMEZONE
 
@@ -132,11 +132,18 @@ async def list_coupons(
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
+    coupons = list(result.scalars().all())
+    ro_creators = await readonly_creators(db, [c.created_by for c in coupons], viewer)
+    items = []
+    for coupon in coupons:
+        item = AdminCouponResponse.model_validate(coupon)
+        item.readonly = coupon.created_by in ro_creators
+        items.append(item)
     return AdminCouponListResponse(
         total=total,
         page=page,
         page_size=page_size,
-        items=[AdminCouponResponse.model_validate(item) for item in result.scalars().all()],
+        items=items,
     )
 
 
@@ -146,7 +153,11 @@ async def get_coupon(db: AsyncSession, coupon_id: int, viewer=None) -> AdminCoup
     if condition is not None:
         stmt = stmt.where(condition)
     coupon = (await db.execute(stmt)).scalar_one_or_none()
-    return AdminCouponResponse.model_validate(coupon) if coupon else None
+    if coupon is None:
+        return None
+    response = AdminCouponResponse.model_validate(coupon)
+    response.readonly = bool(await readonly_creators(db, [coupon.created_by], viewer))
+    return response
 
 
 async def _get_coupon_model(db: AsyncSession, coupon_id: int) -> Coupon:

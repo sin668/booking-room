@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
+from app.models.teacher import Teacher
 from app.schemas.admin_teacher import (
     AdminTeacherCreate,
     AdminTeacherDetail,
@@ -14,7 +15,7 @@ from app.schemas.admin_teacher import (
     TeacherAvailableTimeSlotsUpdate,
 )
 from app.services import admin_teacher_service
-from app.services.data_scope import creator_id
+from app.services.data_scope import creator_id, ensure_writable
 
 router = APIRouter(prefix="/api/v1/admin/teachers", tags=["admin-teachers"])
 
@@ -66,8 +67,14 @@ async def create_teacher(
 
 
 @router.put("/{teacher_id}", response_model=AdminTeacherDetail, dependencies=[Depends(require_admin_permission("teacher:update"))])
-async def update_teacher(teacher_id: int, data: AdminTeacherUpdate, db: AsyncSession = Depends(get_db)):
+async def update_teacher(
+    teacher_id: int,
+    data: AdminTeacherUpdate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+):
     """更新老师信息。"""
+    await ensure_writable(db, Teacher, teacher_id, context)
     try:
         teacher = await admin_teacher_service.update_teacher(db, teacher_id, data)
         if teacher is None:
@@ -85,8 +92,13 @@ async def update_teacher(teacher_id: int, data: AdminTeacherUpdate, db: AsyncSes
 
 
 @router.delete("/{teacher_id}", dependencies=[Depends(require_admin_permission("teacher:delete"))])
-async def delete_teacher(teacher_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_teacher(
+    teacher_id: int,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
+):
     """删除老师；存在关联排课时拒绝删除。"""
+    await ensure_writable(db, Teacher, teacher_id, context)
     result = await admin_teacher_service.delete_teacher(db, teacher_id)
     if result == "not_found":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="老师不存在")
@@ -101,8 +113,10 @@ async def toggle_teacher_status(
     teacher_id: int,
     data: AdminTeacherStatusUpdate,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """停用/启用老师。"""
+    await ensure_writable(db, Teacher, teacher_id, context)
     teacher = await admin_teacher_service.toggle_status(db, teacher_id, data.status)
     if teacher is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="老师不存在")
@@ -123,9 +137,13 @@ async def get_teacher_available_time_slots(teacher_id: int, db: AsyncSession = D
 
 @router.put("/{teacher_id}/available-time-slots", dependencies=[Depends(require_admin_permission("teacher:update"))])
 async def update_teacher_available_time_slots(
-    teacher_id: int, data: TeacherAvailableTimeSlotsUpdate, db: AsyncSession = Depends(get_db)
+    teacher_id: int,
+    data: TeacherAvailableTimeSlotsUpdate,
+    db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ):
     """更新老师可排课时间段。"""
+    await ensure_writable(db, Teacher, teacher_id, context)
     success = await admin_teacher_service.update_available_time_slots(db, teacher_id, data.available_time_slots)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="老师不存在")

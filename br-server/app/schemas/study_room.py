@@ -75,6 +75,7 @@ class RoomAdminResponse(BaseModel):
     updated_at: datetime
     seat_count: int = 0
     available_seat_count: int = 0
+    readonly: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

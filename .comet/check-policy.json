@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "argv": [".venv/bin/python", "-m", "pytest", "tests/test_data_scope.py", "tests/test_user_type.py", "tests/test_admin_role_api.py", "-q"],
+  "argv": [".venv/bin/python", "-m", "pytest", "tests/test_user_type.py", "tests/test_unified_user_model.py", "tests/test_admin_user_management.py", "tests/test_admin_permissions.py", "tests/test_data_scope.py", "tests/test_admin_auth_api.py", "tests/test_admin_role_api.py", "tests/test_admin_models.py", "tests/test_app_default_role.py", "tests/test_wechat_auth_service_login.py", "tests/test_wechat_phone_binding.py", "-q", "--deselect", "tests/test_admin_user_management.py::test_update_user_multiple_fields"],
   "cwd": "br-server",
   "files": [
     "br-server/app",

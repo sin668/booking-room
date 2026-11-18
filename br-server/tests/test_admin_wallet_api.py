@@ -25,6 +25,7 @@ async def test_export_transactions_returns_400_when_result_exceeds_limit() -> No
             date_start=date(2026, 5, 1),
             date_end=date(2026, 5, 31),
             db=db,
+            context=None,
         )
 
     assert exc_info.value.status_code == 400

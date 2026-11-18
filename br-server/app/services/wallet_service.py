@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, NamedTuple
 
-from sqlalchemy import String, cast, func, select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
@@ -17,7 +17,10 @@ from app.domain.wallet_rules import (
     transaction_direction,
     transaction_title,
 )
+from app.models.booking import Booking
 from app.models.coupon import Coupon, UserCoupon
+from app.models.course import Course
+from app.models.study_room import StudyRoom
 from app.models.user import User
 from app.models.wallet import WalletTransaction
 from app.repositories.wallet_repository import WalletRepository
@@ -33,6 +36,7 @@ from app.schemas.wallet import (
     WalletTransactionResponse,
     WalletTransactionType,
 )
+from app.services.data_scope import wallet_scope_condition
 from app.services.wechat_pay_client import (
     WechatPayConfigError,
     WechatPayDecryptError,
@@ -102,6 +106,31 @@ def _transaction_direction(transaction_type: str) -> str:
 def _admin_wallet_base_conditions() -> list:
     """管理端钱包流水默认不展示待处理记录."""
     return [WalletTransaction.status != "pending"]
+
+
+def _wallet_scope_joins(stmt):
+    """钱包归属过滤所需的 outerjoin：交易→预约→课程/学习室."""
+    return (
+        stmt.outerjoin(Booking, WalletTransaction.booking_id == Booking.id)
+        .outerjoin(Course, Booking.course_id == Course.id)
+        .outerjoin(StudyRoom, Booking.room_id == StudyRoom.id)
+    )
+
+
+async def _wallet_user_info_map(db: AsyncSession, user_ids) -> dict[str, tuple]:
+    """按 user_id（字符串）批量取昵称/手机号，UUID 类型感知绑定，跨数据库一致."""
+    valid: list[uuid.UUID] = []
+    for uid in user_ids:
+        try:
+            valid.append(uuid.UUID(uid))
+        except (ValueError, AttributeError, TypeError):
+            continue
+    if not valid:
+        return {}
+    result = await db.execute(
+        select(User.id, User.nickname, User.phone).where(User.id.in_(valid))
+    )
+    return {str(row[0]): (row[1], row[2]) for row in result.all()}
 
 
 def _transaction_completed_at(transaction: WalletTransaction) -> datetime | None:
@@ -595,6 +624,7 @@ async def admin_list_transactions(
     user_id: str | None = None,
     date_start: datetime | None = None,
     date_end: datetime | None = None,
+    viewer=None,
 ) -> AdminWalletTransactionListResponse:
     """管理端查询钱包交易列表，支持多种筛选条件."""
     conditions = _admin_wallet_base_conditions()
@@ -609,25 +639,33 @@ async def admin_list_transactions(
     if date_end is not None:
         conditions.append(WalletTransaction.created_at <= date_end)
 
-    count_result = await db.execute(
-        select(func.count()).select_from(WalletTransaction).where(*conditions)
-    )
+    scope = wallet_scope_condition(viewer)
+    if scope is not None:
+        conditions.append(scope)
+
+    count_stmt = select(func.count()).select_from(WalletTransaction)
+    if scope is not None:
+        count_stmt = _wallet_scope_joins(count_stmt)
+    count_result = await db.execute(count_stmt.where(*conditions))
     total = count_result.scalar_one()
 
     offset = (page - 1) * page_size
+    stmt = select(WalletTransaction)
+    if scope is not None:
+        stmt = _wallet_scope_joins(stmt)
     stmt = (
-        select(WalletTransaction, User.nickname, User.phone)
-        .join(User, WalletTransaction.user_id == cast(User.id, String))
-        .where(*conditions)
+        stmt.where(*conditions)
         .order_by(WalletTransaction.created_at.desc(), WalletTransaction.id.desc())
         .offset(offset)
         .limit(page_size)
     )
     result = await db.execute(stmt)
-    rows = result.all()
+    transactions = result.scalars().all()
+    user_map = await _wallet_user_info_map(db, [t.user_id for t in transactions])
 
     items = []
-    for transaction, nickname, phone in rows:
+    for transaction in transactions:
+        nickname, phone = user_map.get(transaction.user_id, (None, None))
         transaction_type = transaction.type
         status = transaction.status
         items.append(
@@ -668,6 +706,7 @@ async def admin_get_statistics(
     db: AsyncSession,
     date_start: datetime | None = None,
     date_end: datetime | None = None,
+    viewer=None,
 ) -> AdminWalletStatisticsResponse:
     """管理端获取钱包统计信息，包括充值、消费、退款金额和活跃用户数."""
     conditions = _admin_wallet_base_conditions()
@@ -676,17 +715,20 @@ async def admin_get_statistics(
     if date_end is not None:
         conditions.append(WalletTransaction.created_at <= date_end)
 
+    scope = wallet_scope_condition(viewer)
+    if scope is not None:
+        conditions.append(scope)
+
     # 按类型分组统计金额
-    stmt = (
-        select(
-            WalletTransaction.type,
-            WalletTransaction.status,
-            func.coalesce(func.sum(WalletTransaction.amount), Decimal("0")).label("total_amount"),
-            func.count(WalletTransaction.id).label("count"),
-        )
-        .where(*conditions)
-        .group_by(WalletTransaction.type, WalletTransaction.status)
-    )
+    stmt = select(
+        WalletTransaction.type,
+        WalletTransaction.status,
+        func.coalesce(func.sum(WalletTransaction.amount), Decimal("0")).label("total_amount"),
+        func.count(WalletTransaction.id).label("count"),
+    ).select_from(WalletTransaction)
+    if scope is not None:
+        stmt = _wallet_scope_joins(stmt)
+    stmt = stmt.where(*conditions).group_by(WalletTransaction.type, WalletTransaction.status)
     result = await db.execute(stmt)
     rows = result.all()
 
@@ -702,11 +744,12 @@ async def admin_get_statistics(
     total_transactions = sum(row.count for row in rows)
 
     # 统计活跃用户数
-    active_users_stmt = (
-        select(func.count(func.distinct(WalletTransaction.user_id)))
-        .where(*conditions)
+    active_users_stmt = select(func.count(func.distinct(WalletTransaction.user_id))).select_from(
+        WalletTransaction
     )
-    active_users_result = await db.execute(active_users_stmt)
+    if scope is not None:
+        active_users_stmt = _wallet_scope_joins(active_users_stmt)
+    active_users_result = await db.execute(active_users_stmt.where(*conditions))
     active_users = active_users_result.scalar_one() or 0
 
     return AdminWalletStatisticsResponse(

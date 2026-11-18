@@ -30,6 +30,7 @@ PERMS = {
     "coupon:update", "coupon:delete",
     "teacher:update", "teacher:delete", "teacher:status",
     "booking:cancel", "training:reviews:audit", "training:reviews:reply",
+    "wallet:view", "wallet:export",
 }
 
 
@@ -689,3 +690,115 @@ async def test_own_records_writable(client: AsyncClient, seed_content, seed_supe
     resp = await client.patch(f"/api/v1/admin/reviews/{review_course.id}/reply", json={"reply_content": "感谢反馈"})
     assert resp.status_code == 200
     assert resp.json()["readonly"] is False
+
+
+# ---------------------------------------------------------------------------
+# 钱包流水随关联预约的学习室/课程归属
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+async def seed_wallet(db_session, seed_content):
+    """各类归属的钱包交易：A 室消费/退款、B 室消费、跨创建人课程消费、存量消费、充值。"""
+    from app.models.wallet import WalletTransaction
+
+    user = seed_content["user"]
+    room_a = seed_content["rooms"][0]
+    booking_course, booking_seat, booking_legacy = seed_content["bookings"]
+
+    booking_a = make_booking(room_a.id, str(user.id))
+    db_session.add(booking_a)
+    await db_session.flush()
+
+    def tx(type, amount, booking_id=None):
+        return WalletTransaction(
+            user_id=str(user.id), type=type, amount=amount,
+            order_id=str(uuid.uuid4()), status="completed", booking_id=booking_id,
+        )
+
+    tx_consume_a = tx("consume", 10, booking_a.id)
+    tx_refund_a = tx("booking_refund", 5, booking_a.id)
+    tx_consume_b = tx("consume", 20, booking_seat.id)
+    tx_consume_course = tx("consume", 30, booking_course.id)
+    tx_consume_legacy = tx("consume", 15, booking_legacy.id)
+    tx_recharge = tx("recharge", 100)
+    db_session.add_all([
+        tx_consume_a, tx_refund_a, tx_consume_b,
+        tx_consume_course, tx_consume_legacy, tx_recharge,
+    ])
+    await db_session.commit()
+
+    return {
+        "consume_a": tx_consume_a,
+        "refund_a": tx_refund_a,
+        "consume_b": tx_consume_b,
+        "consume_course": tx_consume_course,
+        "consume_legacy": tx_consume_legacy,
+        "recharge": tx_recharge,
+    }
+
+
+@pytest.mark.asyncio
+async def test_wallet_list_follows_room_ownership(client: AsyncClient, seed_wallet):
+    w = seed_wallet
+
+    as_admin(ctx(ADMIN_A))  # 拥有 room_a，且 course_a 归 A
+    body = (await client.get("/api/v1/admin/wallet/transactions")).json()
+    assert {item["id"] for item in body["items"]} == {
+        str(w["consume_a"].id), str(w["refund_a"].id),
+        str(w["consume_course"].id), str(w["consume_legacy"].id),
+    }
+
+    as_admin(ctx(ADMIN_B))  # 拥有 room_b
+    body = (await client.get("/api/v1/admin/wallet/transactions")).json()
+    assert {item["id"] for item in body["items"]} == {
+        str(w["consume_b"].id), str(w["consume_course"].id), str(w["consume_legacy"].id),
+    }
+
+    as_admin(ctx(SUPER_ADMIN, super_admin=True))
+    body = (await client.get("/api/v1/admin/wallet/transactions")).json()
+    assert body["total"] == 6
+
+
+@pytest.mark.asyncio
+async def test_wallet_recharge_hidden_from_normal(client: AsyncClient, seed_wallet):
+    as_admin(ctx(ADMIN_A))
+    body = (await client.get("/api/v1/admin/wallet/transactions?type=recharge")).json()
+    assert body["total"] == 0
+
+    as_admin(ctx(SUPER_ADMIN, super_admin=True))
+    body = (await client.get("/api/v1/admin/wallet/transactions?type=recharge")).json()
+    assert body["total"] == 1
+
+
+@pytest.mark.asyncio
+async def test_wallet_statistics_scope(client: AsyncClient, seed_wallet):
+    as_admin(ctx(ADMIN_A))
+    stats = (await client.get("/api/v1/admin/wallet/statistics")).json()
+    assert float(stats["total_consume"]) == 55  # 10 + 30 + 15
+    assert float(stats["total_refund"]) == 5
+    assert float(stats["total_recharge"]) == 0
+    assert stats["total_transactions"] == 4
+
+    as_admin(ctx(SUPER_ADMIN, super_admin=True))
+    stats = (await client.get("/api/v1/admin/wallet/statistics")).json()
+    assert float(stats["total_consume"]) == 75  # 10 + 20 + 30 + 15
+    assert float(stats["total_refund"]) == 5
+    assert float(stats["total_recharge"]) == 100
+    assert stats["total_transactions"] == 6
+
+
+@pytest.mark.asyncio
+async def test_wallet_export_scope(client: AsyncClient, seed_wallet):
+    as_admin(ctx(ADMIN_A))
+    resp = await client.get("/api/v1/admin/wallet/transactions/export")
+    assert resp.status_code == 200
+    lines = resp.text.strip().splitlines()
+    assert len(lines) == 5  # 表头 + 4 条可见交易
+    assert "钱包充值" not in resp.text
+
+    as_admin(ctx(SUPER_ADMIN, super_admin=True))
+    resp = await client.get("/api/v1/admin/wallet/transactions/export")
+    lines = resp.text.strip().splitlines()
+    assert len(lines) == 7  # 表头 + 6 条
+    assert "钱包充值" in resp.text

@@ -66,8 +66,9 @@ def wallet_scope_condition(viewer):
 
 ### wallet_service.py
 
-- `admin_list_transactions(..., viewer=None)`：scope 非空时给 count 与 list 查询加上述三个 outerjoin，并把 scope 加入 conditions。list 查询已 join User，再追加 outerjoin。
+- `admin_list_transactions(..., viewer=None)`：scope 非空时给 count 与 list 查询加上述三个 outerjoin，并把 scope 加入 conditions。
 - `admin_get_statistics(..., viewer=None)`：分组统计 stmt 与活跃用户 stmt 在 scope 非空时加 `select_from(WalletTransaction)` + 三个 outerjoin，conditions 加 scope。统计与列表同口径（普通用户充值统计为 0）。
+- 昵称/手机号解析改为批量映射 `_wallet_user_info_map`（`User.id.in_([uuid])` 类型感知绑定），替代原 `join(User, user_id == cast(User.id, String))`。原因：原 SQL CAST 在 SQLite（测试库）把 UUID 渲染为 32 位无连字符 hex，与 `user_id`（36 位带连字符字符串）不匹配，导致列表/导出 INNER join 丢行；生产 PostgreSQL 虽正常，但映射模式与 `booking_service` 一致且跨库正确。list/export 主查询改为 `select(WalletTransaction)`，取行后按 `str(uuid)` 映射昵称/手机号。
 
 ### admin_wallet.py
 

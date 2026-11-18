@@ -5,19 +5,21 @@ import io
 from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import String, cast, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
 
-from app.api.dependencies import require_admin_permission
+from app.api.dependencies import AdminContext, get_current_admin, require_admin_permission
 from app.core.database import get_db
-from app.models.user import User
 from app.models.wallet import WalletTransaction
 from app.schemas.wallet import (
     AdminWalletStatisticsResponse,
     AdminWalletTransactionListResponse,
 )
+from app.services.data_scope import wallet_scope_condition
 from app.services.wallet_service import (
+    _wallet_scope_joins,
+    _wallet_user_info_map,
     admin_get_statistics,
     admin_list_transactions,
 )
@@ -40,6 +42,7 @@ async def list_transactions(
     date_start: date | None = None,
     date_end: date | None = None,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> AdminWalletTransactionListResponse:
     """获取钱包交易流水列表（分页）."""
     # 将 date 转换为 datetime
@@ -55,6 +58,7 @@ async def list_transactions(
         user_id=user_id,
         date_start=start_dt,
         date_end=end_dt,
+        viewer=context,
     )
 
 
@@ -63,6 +67,7 @@ async def get_statistics(
     date_start: date | None = None,
     date_end: date | None = None,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> AdminWalletStatisticsResponse:
     """获取财务统计信息."""
     # 将 date 转换为 datetime
@@ -73,6 +78,7 @@ async def get_statistics(
         db,
         date_start=start_dt,
         date_end=end_dt,
+        viewer=context,
     )
 
 
@@ -84,6 +90,7 @@ async def export_transactions(
     date_start: date | None = None,
     date_end: date | None = None,
     db: AsyncSession = Depends(get_db),
+    context: AdminContext | None = Depends(get_current_admin),
 ) -> StreamingResponse:
     """导出钱包交易流水为 CSV."""
     # 将 date 转换为 datetime
@@ -103,10 +110,15 @@ async def export_transactions(
     if end_dt is not None:
         conditions.append(WalletTransaction.created_at <= end_dt)
 
+    scope = wallet_scope_condition(context)
+    if scope is not None:
+        conditions.append(scope)
+
     # 查询总数
-    count_result = await db.execute(
-        select(func.count()).select_from(WalletTransaction).where(*conditions)
-    )
+    count_stmt = select(func.count()).select_from(WalletTransaction)
+    if scope is not None:
+        count_stmt = _wallet_scope_joins(count_stmt)
+    count_result = await db.execute(count_stmt.where(*conditions))
     total = count_result.scalar_one()
 
     # 检查是否超过上限
@@ -117,14 +129,15 @@ async def export_transactions(
         )
 
     # 查询数据
-    stmt = (
-        select(WalletTransaction, User.nickname, User.phone)
-        .join(User, WalletTransaction.user_id == cast(User.id, String))
-        .where(*conditions)
-        .order_by(WalletTransaction.created_at.desc(), WalletTransaction.id.desc())
+    stmt = select(WalletTransaction)
+    if scope is not None:
+        stmt = _wallet_scope_joins(stmt)
+    stmt = stmt.where(*conditions).order_by(
+        WalletTransaction.created_at.desc(), WalletTransaction.id.desc()
     )
     result = await db.execute(stmt)
-    rows = result.all()
+    transactions = result.scalars().all()
+    user_map = await _wallet_user_info_map(db, [t.user_id for t in transactions])
 
     # 生成 CSV
     output = io.StringIO()
@@ -145,7 +158,8 @@ async def export_transactions(
     writer.writerow(headers)
 
     # 写入数据行
-    for transaction, nickname, phone in rows:
+    for transaction in transactions:
+        nickname, phone = user_map.get(transaction.user_id, (None, None))
         transaction_type = transaction.type
         transaction_status = transaction.status
 

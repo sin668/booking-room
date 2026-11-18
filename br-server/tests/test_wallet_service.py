@@ -248,7 +248,7 @@ async def test_list_transactions_orders_newest_first(
     assert "wallet_transactions.id DESC" in str(list_stmt)
 
 
-async def test_admin_list_transactions_joins_users_and_maps_user_fields(
+async def test_admin_list_transactions_maps_user_fields_via_batch_lookup(
     mock_db: AsyncMock,
 ) -> None:
     user_id = _test_user_id()
@@ -266,12 +266,13 @@ async def test_admin_list_transactions_joins_users_and_maps_user_fields(
         notify_processed_at=None,
         created_at=datetime(2026, 5, 17, 10, 0, 0),
     )
-    rows_result = MagicMock()
-    rows_result.all.return_value = [(transaction, "Alice", "13800138000")]
+    user_map_result = MagicMock()
+    user_map_result.all.return_value = [(user_id, "Alice", "13800138000")]
     mock_db.execute = AsyncMock(
         side_effect=[
             _mock_scalar_one_result(1),
-            rows_result,
+            _mock_scalars_result([transaction]),
+            user_map_result,
         ]
     )
 
@@ -293,11 +294,11 @@ async def test_admin_list_transactions_joins_users_and_maps_user_fields(
     assert result.items[0].user_phone == "13800138000"
     list_stmt = mock_db.execute.await_args_list[1].args[0]
     list_sql = str(list_stmt)
-    assert "JOIN users" in list_sql
-    assert "CAST(users.id AS VARCHAR)" in list_sql
     assert "wallet_transactions.status != :status_1" in list_sql
     assert "wallet_transactions.created_at >=" in list_sql
     assert "wallet_transactions.created_at <=" in list_sql
+    user_stmt = mock_db.execute.await_args_list[2].args[0]
+    assert "users.id IN" in str(user_stmt)
 
 
 async def test_admin_get_statistics_aggregates_totals_and_active_users(

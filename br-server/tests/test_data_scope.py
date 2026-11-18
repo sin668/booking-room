@@ -387,3 +387,80 @@ async def test_demoted_super_admin_content_not_public(client: AsyncClient, db_se
     body = (await client.get("/api/v1/admin/rooms")).json()
     assert room_s.id not in {item["id"] for item in body["items"]}
     assert (await client.get(f"/api/v1/admin/courses/{course_s.id}")).status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# 写保护助手：超管创建的数据对非超管只读
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_readonly_creators(db_session, seed_content, seed_super_content):
+    from app.services.data_scope import readonly_creators
+
+    ids = [SUPER_ADMIN, ADMIN_B, None]
+    assert await readonly_creators(db_session, ids, ctx(ADMIN_A)) == {SUPER_ADMIN}
+    assert await readonly_creators(db_session, ids, ctx(ADMIN_A, super_admin=True)) == set()
+    assert await readonly_creators(db_session, [], ctx(ADMIN_A)) == set()
+
+
+@pytest.mark.asyncio
+async def test_ensure_writable_helper(db_session, seed_content, seed_super_content):
+    from fastapi import HTTPException
+
+    from app.services.data_scope import ensure_writable
+
+    room_s = seed_super_content["room"]
+    room_a, _, room_legacy = seed_content["rooms"]
+
+    with pytest.raises(HTTPException) as exc:
+        await ensure_writable(db_session, StudyRoom, room_s.id, ctx(ADMIN_A))
+    assert exc.value.status_code == 403
+
+    # 自己创建、存量、超管查看、目标不存在均不拦截
+    await ensure_writable(db_session, StudyRoom, room_a.id, ctx(ADMIN_A))
+    await ensure_writable(db_session, StudyRoom, room_legacy.id, ctx(ADMIN_A))
+    await ensure_writable(db_session, StudyRoom, room_s.id, ctx(ADMIN_A, super_admin=True))
+    await ensure_writable(db_session, StudyRoom, 999999, ctx(ADMIN_A))
+
+
+@pytest.mark.asyncio
+async def test_ensure_writable_after_demotion(db_session, seed_content, seed_super_content):
+    from app.services.data_scope import ensure_writable
+
+    room_s = seed_super_content["room"]
+    super_user = await db_session.get(User, SUPER_ADMIN)
+    super_user.user_type = "normal-user"
+    await db_session.flush()
+    await ensure_writable(db_session, StudyRoom, room_s.id, ctx(ADMIN_A))
+
+
+@pytest.mark.asyncio
+async def test_ensure_record_writable_helpers(db_session, seed_content, seed_super_content):
+    from fastapi import HTTPException
+
+    from app.services.data_scope import (
+        ensure_booking_writable,
+        ensure_review_writable,
+        ensure_seat_writable,
+    )
+
+    seat_s = seed_super_content["seat"]
+    seat_a = seed_content["seats"][0]
+    booking_course_s, booking_seat_s = seed_super_content["bookings"]
+    review_course_s, review_seat_s = seed_super_content["reviews"]
+    viewer = ctx(ADMIN_A)
+
+    for helper, obj_id in (
+        (ensure_seat_writable, seat_s.id),
+        (ensure_booking_writable, booking_course_s.id),
+        (ensure_booking_writable, booking_seat_s.id),
+        (ensure_review_writable, review_course_s.id),
+        (ensure_review_writable, review_seat_s.id),
+    ):
+        with pytest.raises(HTTPException) as exc:
+            await helper(db_session, obj_id, viewer)
+        assert exc.value.status_code == 403
+
+    await ensure_seat_writable(db_session, seat_a.id, viewer)
+    await ensure_seat_writable(db_session, seat_s.id, ctx(SUPER_ADMIN, super_admin=True))

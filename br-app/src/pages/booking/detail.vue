@@ -19,7 +19,7 @@
       </view>
     </view>
 
-    <scroll-view class="content" scroll-y :scroll-into-view="scrollIntoView" scroll-with-animation>
+    <scroll-view class="content" scroll-y :scroll-into-view="scrollIntoView">
       <view class="hero">
         <image
           class="hero-image"

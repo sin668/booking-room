@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -14,7 +15,7 @@ from app.schemas.admin_auth import AdminRoleSummary
 # ---------------------------------------------------------------------------
 
 class AdminUserListParams(BaseModel):
-    user_type: str | None = None
+    user_source: str | None = None
     keyword: str | None = Field(None, max_length=100)
     status: str | None = None
     page: int = Field(1, ge=1)
@@ -29,12 +30,12 @@ class AdminUserListItem(BaseModel):
     id: UUID
     phone: str | None = None
     nickname: str | None = None
-    user_type: str
+    user_source: str
+    user_type: str = "normal-user"
     username: str | None = None
     email: str | None = None
     status: str
     avatar: str | None = None
-    is_super_admin: bool = False
     created_at: datetime
     roles: list[AdminRoleSummary] = []
     booking_count: int = 0
@@ -57,13 +58,13 @@ class AdminUserListResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 class AdminUserCreate(BaseModel):
-    user_type: str = Field(..., min_length=1, max_length=20)
+    user_source: Literal["app", "admin"]
+    user_type: Literal["super-admin", "normal-user"] = "normal-user"
     phone: str | None = Field(None, pattern=r"^1[3-9]\d{9}$")
     username: str | None = Field(None, min_length=1, max_length=50)
     password: str = Field(..., min_length=6, max_length=128)
     nickname: str | None = Field(None, max_length=50)
     avatar: str | None = Field(None, max_length=512)
-    is_super_admin: bool = False
 
     @classmethod
     def get_contact_field(cls, data: dict) -> str:
@@ -77,7 +78,7 @@ class AdminUserUpdate(BaseModel):
     avatar: str | None = Field(None, max_length=512)
     balance: Decimal | None = None
     role_ids: list[int] | None = None
-    is_super_admin: bool | None = None
+    user_type: Literal["super-admin", "normal-user"] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -88,13 +89,13 @@ class AdminUserDetail(BaseModel):
     id: UUID
     phone: str | None = None
     nickname: str | None = None
-    user_type: str
+    user_source: str
+    user_type: str = "normal-user"
     username: str | None = None
     email: str | None = None
     avatar: str | None = None
     status: str
     balance: int = 0
-    is_super_admin: bool = False
     wechat_openid: str | None = None
     invite_code: str | None = None
     created_at: datetime

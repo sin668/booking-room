@@ -44,12 +44,12 @@ async def me(
     service = AdminAuthService(db, settings)
     if context.admin_id.int == 0 and context.is_super_admin:
         admin = User(
-            user_type='admin',
+            user_source='admin',
+            user_type='super-admin',
             id=context.admin_id,
             username=context.username,
             password_hash="",
             nickname="超级管理员",
-            is_super_admin=True,
         )
         permissions = await service.permissions_for(admin)
     else:

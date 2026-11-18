@@ -64,14 +64,14 @@ class UserResponse(BaseModel):
     phone: str | None = None
     nickname: str
     status: str
-    user_type: str
+    user_source: str
+    user_type: str = "normal-user"
     username: str | None = None
     username_updated_at: datetime | None = None
     email: str | None = None
     avatar: str | None = None
     balance: int = 0
     membership_level: str = "none"
-    is_super_admin: bool = False
     roles: list[AdminRoleSummary] = []
     wechat_openid: str | None = None
     invite_code: str | None = None
@@ -93,7 +93,7 @@ class UserProfileResponse(BaseModel):
     birthday: date | None = None
     signature: str | None = None
     status: str
-    user_type: str
+    user_source: str
     membership_level: str = "none"
     created_at: datetime
 

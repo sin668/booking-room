@@ -95,7 +95,7 @@ async def get_current_admin_context(
     return AdminContext(
         admin_id=admin.id,
         username=admin.username,
-        is_super_admin=admin.is_super_admin,
+        is_super_admin=admin.user_type == "super-admin",
         permission_codes=await service.permission_codes_for(admin),
         menu_ids=menu_ids,
     )

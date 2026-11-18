@@ -196,19 +196,19 @@ async def _get_or_create_admin(session, password: str) -> User:
     admin = (await session.execute(select(User).where(User.username == username))).scalar_one_or_none()
     if admin is None:
         admin = User(
-            user_type='admin',
+            user_source='admin',
+            user_type='super-admin',
             username=username,
             password_hash=AdminAuthService.hash_password(password),
             nickname="超级管理员",
             email=settings.ADMIN_DEFAULT_EMAIL or None,
             status="active",
-            is_super_admin=True,
         )
         session.add(admin)
         await session.flush()
     else:
         admin.status = "active"
-        admin.is_super_admin = True
+        admin.user_type = "super-admin"
         if settings.ADMIN_DEFAULT_EMAIL:
             admin.email = settings.ADMIN_DEFAULT_EMAIL
     return admin

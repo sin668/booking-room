@@ -139,7 +139,7 @@ class WechatAuthService:
         if not self._is_temp_wechat_user(current_user):
             raise self._merge_conflict()
 
-        if target_user.user_type != "app":
+        if target_user.user_source != "app":
             raise self._merge_conflict()
 
         if target_user.wechat_openid:
@@ -224,7 +224,7 @@ class WechatAuthService:
             nickname=f"微信用户{random.randint(100000, 999999)}",
             password_hash="",
             status="active",
-            user_type="app",
+            user_source="app",
             wechat_openid=openid,
         )
         self._db.add(user)

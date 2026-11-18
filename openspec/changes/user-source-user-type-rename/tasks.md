@@ -6,9 +6,9 @@
 
 ## 2. br-server 后端
 
-- [ ] 2.1 schemas 改名：admin_user_management.py（user_source/user_type 枚举+校验）、admin_auth.py（AdminCurrentResponse.user_type、admin_profile_from_model）、user.py（UserResponse/UserProfileResponse）
-- [ ] 2.2 服务与依赖：admin_user_service.py（列表过滤/创建/更新/清空角色/setattr）、dependencies.py（AdminContext 派生布尔）、admin_auth_service.py、admin_menu_service.py、wechat_auth_service.py、admin_auth.py 路由 legacy 合成 User、admin_user.py 路由参数
-- [ ] 2.3 种子与脚本：seed_admin.py（幂等设 super-admin）、seed_data.py（user_source='app'）、scripts/check_user_uniqueness.sql
+- [x] 2.1 schemas 改名：admin_user_management.py（user_source/user_type 枚举+校验）、admin_auth.py（AdminCurrentResponse.user_type、admin_profile_from_model）、user.py（UserResponse/UserProfileResponse）
+- [x] 2.2 服务与依赖：admin_user_service.py（列表过滤/创建/更新/清空角色/setattr）、dependencies.py（AdminContext 派生布尔）、admin_auth_service.py、admin_menu_service.py、wechat_auth_service.py、admin_auth.py 路由 legacy 合成 User、admin_user.py 路由参数
+- [x] 2.3 种子与脚本：seed_admin.py（幂等设 super-admin）、seed_data.py（user_source='app'）、scripts/check_user_uniqueness.sql
 
 ## 3. br-admin 前端
 

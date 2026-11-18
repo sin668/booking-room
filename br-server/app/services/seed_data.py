@@ -209,7 +209,7 @@ DEMO_APP_USER = {
     "nickname": "消息演示用户",
     "username": "notify_demo_user",
     "password_hash": "seed-demo-user-not-for-login",
-    "user_type": "app",
+    "user_source": "app",
     "status": "active",
 }
 
@@ -409,7 +409,7 @@ async def seed_notifications(session: AsyncSession) -> None:
     users = (
         await session.execute(
             select(User).where(
-                User.user_type == "app",
+                User.user_source == "app",
                 User.status == "active",
             )
         )
@@ -537,7 +537,7 @@ async def seed_edu_listings(session: AsyncSession) -> None:
     """幂等写入教培供需演示数据，按 (发布者, 标题) 去重。"""
     users = (
         await session.execute(
-            select(User).where(User.user_type == "app", User.status == "active")
+            select(User).where(User.user_source == "app", User.status == "active")
         )
     ).scalars().all()
     if not users:

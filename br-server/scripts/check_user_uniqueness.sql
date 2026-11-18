@@ -1,4 +1,4 @@
--- Check for duplicate phone numbers across user_types
+-- Check for duplicate phone numbers across user_sources
 -- This script helps verify the uniqueness constraint after unifying User and AdminUser models
 --
 -- Expected result: No rows (empty result set) means no duplicates found
@@ -7,13 +7,13 @@
 SELECT
     phone,
     COUNT(*) as cnt,
-    STRING_AGG(user_type, ', ' ORDER BY user_type) as types
+    STRING_AGG(user_source, ', ' ORDER BY user_source) as sources
 FROM users
 WHERE phone IS NOT NULL AND phone != ''
 GROUP BY phone
 HAVING COUNT(*) > 1;
 
--- Check for duplicate usernames across user_types
+-- Check for duplicate usernames across user_sources
 -- Same purpose as phone check, but for username field
 --
 -- Expected result: No rows (empty result set) means no duplicates found
@@ -21,7 +21,7 @@ HAVING COUNT(*) > 1;
 SELECT
     username,
     COUNT(*) as cnt,
-    STRING_AGG(user_type, ', ' ORDER BY user_type) as types
+    STRING_AGG(user_source, ', ' ORDER BY user_source) as sources
 FROM users
 WHERE username IS NOT NULL AND username != ''
 GROUP BY username

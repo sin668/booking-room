@@ -48,7 +48,7 @@ class AdminCurrentResponse(BaseModel):
     signature: str | None = None
     username_updated_at: datetime | None = None
     phone_updated_at: datetime | None = None
-    is_super_admin: bool
+    user_type: str
     roles: list[AdminRoleSummary]
     permissions: list[AdminPermissionItem]
     created_at: datetime | None = None
@@ -96,7 +96,7 @@ def admin_profile_from_model(admin: Any) -> dict[str, Any]:
         "signature": admin.signature,
         "username_updated_at": admin.username_updated_at,
         "phone_updated_at": admin.phone_updated_at,
-        "is_super_admin": admin.is_super_admin,
+        "user_type": admin.user_type,
         "created_at": admin.created_at,
         "updated_at": admin.updated_at,
     }

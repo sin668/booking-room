@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/v1/admin/users", tags=["admin-users"])
 
 @router.get("", response_model=AdminUserListResponse)
 async def list_users(
-    user_type: str | None = None,
+    user_source: str | None = None,
     keyword: str | None = None,
     status_filter: str | None = None,
     page: int = 1,
@@ -31,7 +31,7 @@ async def list_users(
     _=Depends(require_admin_permission("system:user:view")),
 ) -> AdminUserListResponse:
     return await AdminUserService(db).list_users(
-        user_type=user_type, keyword=keyword, status=status_filter,
+        user_source=user_source, keyword=keyword, status=status_filter,
         page=page, page_size=page_size,
     )
 

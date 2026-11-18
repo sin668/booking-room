@@ -29,7 +29,7 @@ class AdminUserService:
 
     async def list_users(
         self,
-        user_type: str | None = None,
+        user_source: str | None = None,
         keyword: str | None = None,
         status: str | None = None,
         page: int = 1,
@@ -37,8 +37,8 @@ class AdminUserService:
     ) -> AdminUserListResponse:
         # Build base query with filters
         stmt = select(User).options(selectinload(User.roles))
-        if user_type:
-            stmt = stmt.where(User.user_type == user_type)
+        if user_source:
+            stmt = stmt.where(User.user_source == user_source)
         if status:
             stmt = stmt.where(User.status == status)
         if keyword:
@@ -67,12 +67,12 @@ class AdminUserService:
                 id=user.id,
                 phone=user.phone,
                 nickname=user.nickname,
+                user_source=user.user_source,
                 user_type=user.user_type,
                 username=user.username,
                 email=user.email,
                 status=user.status,
                 avatar=user.avatar,
-                is_super_admin=user.is_super_admin,
                 created_at=user.created_at,
                 roles=[AdminRoleSummary(id=r.id, name=r.name, code=r.code) for r in user.roles],
                 booking_count=booking_count,
@@ -87,13 +87,13 @@ class AdminUserService:
 
     async def create_user(self, data: AdminUserCreate) -> AdminUserDetail:
         # Validate: app users need phone, admin users need username
-        if data.user_type == "app" and not data.phone:
+        if data.user_source == "app" and not data.phone:
             raise HTTPException(status_code=400, detail="app用户需要手机号")
-        if data.user_type == "admin" and not data.username:
+        if data.user_source == "admin" and not data.username:
             raise HTTPException(status_code=400, detail="admin用户需要用户名")
 
         username = data.username
-        if data.user_type == "app" and not username:
+        if data.user_source == "app" and not username:
             username = await UsernameService(self._db).generate_unique_username()
 
         # Check uniqueness
@@ -112,19 +112,19 @@ class AdminUserService:
 
         password_hash = bcrypt.hashpw(data.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         user = User(
-            user_type=data.user_type,
+            user_source=data.user_source,
+            user_type=data.user_type if data.user_source == "admin" else "normal-user",
             phone=data.phone,
             username=username,
             nickname=data.nickname or username or data.phone or "",
             password_hash=password_hash,
             avatar=data.avatar,
-            is_super_admin=data.is_super_admin if data.user_type == "admin" else False,
         )
         self._db.add(user)
         await self._db.flush()
 
         # Auto-assign app_register_user role for app users
-        if data.user_type == "app":
+        if data.user_source == "app":
             app_role = await self._db.scalar(
                 select(AdminRole).where(AdminRole.code == "app_register_user", AdminRole.status == "active")
             )
@@ -157,7 +157,7 @@ class AdminUserService:
         for key, value in update_data.items():
             setattr(user, key, value)
 
-        if update_data.get("is_super_admin") is True:
+        if update_data.get("user_type") == "super-admin":
             await self._db.execute(
                 delete(admin_user_roles).where(admin_user_roles.c.user_id == user_id)
             )
@@ -250,13 +250,13 @@ class AdminUserService:
             id=user.id,
             phone=user.phone,
             nickname=user.nickname,
+            user_source=user.user_source,
             user_type=user.user_type,
             username=user.username,
             email=user.email,
             avatar=user.avatar,
             status=user.status,
             balance=int(user.balance) if user.balance else 0,
-            is_super_admin=user.is_super_admin,
             wechat_openid=user.wechat_openid,
             invite_code=user.invite_code,
             created_at=user.created_at,

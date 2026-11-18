@@ -102,7 +102,7 @@ class AdminAuthService:
         return admin, self.create_access_token(admin.id, self._config)
 
     async def permissions_for(self, admin: User) -> list[AdminPermissionItem]:
-        if admin.is_super_admin:
+        if admin.user_type == "super-admin":
             stmt = (
                 select(AdminMenu)
                 .where(AdminMenu.enabled.is_(True), AdminMenu.permission_code.is_not(None))

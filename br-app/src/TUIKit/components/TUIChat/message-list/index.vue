@@ -34,7 +34,6 @@
         scroll-y="true"
         :scroll-anchoring="true"
         :scroll-top="scrollTop"
-        :scroll-into-view="`tui-${scrollAnchorID}`"
         @scroll="handelScrollListScroll"
       >
         <div id="messageScrollContent">
@@ -417,12 +416,11 @@ const isLongpressing = ref(false);
 const blinkMessageIDList = ref<string[]>([]);
 const messageTarget = ref<IMessageModel>();
 const scrollButtonInstanceRef = ref<InstanceType<typeof ScrollButton>>();
-// scroll-into-view 锚点只用于「滚到末条」（初次加载/收到新消息/定位原消息）。
-// 前插历史不再用它：小程序原生 scroll-view 会在前插子节点布局前就执行 scroll-into-view，
-// 锚到旧首条的旧位置（≈顶部），前插内容随后把视口往下顶，表现为跳到超一屏、需往下拉。
-// 前插改用确定性的「高度差补偿 scroll-top」，见 anchorPrepend。
-const scrollAnchorID = ref<string>('');
-let anchorClearTimer: any = null;
+// 滚底统一用数值 scroll-top：原生 scroll-view 会把它 clamp 到最大滚动位置（即底部），
+// 不会滚出内容外。不用 scroll-into-view 锚末条——它把末条「顶部」对齐视口顶部，
+// 末条高度不足一屏时会滚过内容末尾，出现整屏白屏，再点一次才恢复。
+// 递增哨兵保证每次设值都不同：手动滚动后 ref 不跟随原生位置，同值重设不会触发滚动。
+let bottomScrollSeq = 0;
 // 自动续拉防抖：上一轮续拉没有新增消息时停止，避免原地打转刷接口
 let autoFillLastCount = -1;
 const isShowSimpleMessageList = ref<boolean>(false);
@@ -439,33 +437,8 @@ const isShowReadUserStatusPanel = ref<boolean>(false);
 const reSendDialogShow = ref(false);
 const resendMessageData = ref();
 
-function scheduleAnchorClear() {
-  if (anchorClearTimer) clearTimeout(anchorClearTimer);
-  anchorClearTimer = setTimeout(() => {
-    scrollAnchorID.value = '';
-    anchorClearTimer = null;
-  }, 600);
-}
-
-/** 设置 scroll-into-view 锚点；force 时先清空再设以强制同值重触发。 */
-function setAnchor(messageID: string, force = false) {
-  if (!messageID) return;
-  if (force && scrollAnchorID.value === messageID) {
-    scrollAnchorID.value = '';
-    nextTick(() => {
-      scrollAnchorID.value = messageID;
-      scheduleAnchorClear();
-    });
-    return;
-  }
-  scrollAnchorID.value = messageID;
-  scheduleAnchorClear();
-}
-
 const scrollToBottom = () => {
-  const last = messageList.value?.[messageList.value?.length - 1];
-  // 锚末条：原生 scroll-view 会 clamp 到最大滚动位置即底部，避免盲增 scroll-top 滚出内容外白屏
-  setAnchor(last?.ID || '', true);
+  scrollTop.value = 1e9 + (++bottomScrollSeq);
 };
 
 // 末条变化（初次加载/收到新消息）才滚底；前插历史末条不变，这里不触发，
@@ -480,7 +453,7 @@ watch(
     if (newLast && newLast !== oldLast) {
       const lastFlow = messageList.value?.[messageList.value.length - 1]?.flow;
       if (!(scrollButtonInstanceRef.value?.isScrollButtonVisible && lastFlow === 'in')) {
-        setAnchor(newLast);
+        scrollToBottom();
       }
     }
   },
@@ -520,12 +493,6 @@ function anchorPrepend(before: ScrollMeasure | null, afterHeight: number) {
   if (!before || !afterHeight) return;
   const delta = afterHeight - before.height;
   if (delta <= 0) return;
-  // 清掉 scroll-into-view 锚点，避免与 scroll-top 抢占滚动
-  scrollAnchorID.value = '';
-  if (anchorClearTimer) {
-    clearTimeout(anchorClearTimer);
-    anchorClearTimer = null;
-  }
   const target = before.height <= before.vp + 10 ? afterHeight : before.top + delta;
   scrollTo(target);
 }
@@ -549,11 +516,6 @@ async function measureBatchHeight(batch: IMessageModel[]): Promise<number> {
  * delta 来自插入前的离屏镜像预测量；before 为插入前基准（spinner 已移出内容流，不占高度）。
  */
 function commitPrepend(batch: IMessageModel[], before: ScrollMeasure | null, delta: number) {
-  scrollAnchorID.value = '';
-  if (anchorClearTimer) {
-    clearTimeout(anchorClearTimer);
-    anchorClearTimer = null;
-  }
   if (before && delta > 0) {
     scrollTop.value = before.height <= before.vp + 10
       ? before.height + delta
@@ -592,11 +554,6 @@ const onCurrentConversationIDUpdated = (conversationID: string) => {
   dbHasMore.value = true;
   autoFillLastCount = -1;
   measureMessages.value = [];
-  scrollAnchorID.value = '';
-  if (anchorClearTimer) {
-    clearTimeout(anchorClearTimer);
-    anchorClearTimer = null;
-  }
   if (isEnabledMessageReadReceiptGlobal()) {
     const { groupProfile }
       = TUIStore.getConversationModel(conversationID) || {};
@@ -642,11 +599,6 @@ onUnmounted(() => {
 
   observer?.disconnect();
   observer = null;
-
-  if (anchorClearTimer) {
-    clearTimeout(anchorClearTimer);
-    anchorClearTimer = null;
-  }
 
   uni.$off('scroll-to-bottom');
 

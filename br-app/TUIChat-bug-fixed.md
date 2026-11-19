@@ -1,1161 +1,188 @@
-# Bug 修复记录
+# TUIKit 会话窗口问题修复记录
 
-## 微信小程序生产环境 IM 聊天初始化超时
+> 适用范围：`br-app`（uni-app vue3 + 腾讯 TUIKit），主战场 **微信小程序（mp-weixin）**，兼顾 H5 / App。
+> 核心文件：`src/TUIKit/components/TUIChat/message-list/index.vue`、`src/utils/im-history.js`、`src/utils/im.js`。
+> 本文按「报错信息 → 根本原因 → 解决方案」记录本轮会话窗口加载与滚动相关的缺陷修复。
 
-### 报错信息
+## 背景：两条历史来源与小程序滚动机制
 
-- **调试模式（开发模式）**：可正常进入 TUIKit Chat 聊天窗口
-- **关闭调试模式（生产环境）**：长时间显示"正在连接..."，最终提示 `"unknow failed error..."` 或 `"IM登录超时(15000ms)"`
+IM 云端只漫游 **7 天**消息（免费版）。超过 7 天的深历史由本系统数据库镜像补齐：
+`fetchImHistoryPage`（后端 `/messages`，`before` 秒级游标，`has_more` 分页）拉行 →
+`buildImHistoryMessages` 按 SDK 消息结构重建 → `TUIChatService.updateMessageList(msgs, 'unshift')` 前插。
 
-### 根本原因
+微信小程序原生 `scroll-view` 的两个滚动入口语义不同，是本轮多数缺陷的根源：
 
-腾讯云 IM lite-chat SDK 在登录时需要通过 WebSocket 连接到腾讯服务器（触发 `SDK_READY` 事件后 login promise 才 resolve）。SDK 内部通过 `getconninfo` API 获取最优服务器地址，可能返回以下任意域名：
-
-- `wss.im.qcloud.com` / `wss.tim.qq.com` / `wss.im.tencent.cn` / `wss.my-imcloud.com`
-- 各区域节点：`wssidn.*` / `wssind.*` / `wssger.*` / `wssjpn.*` / `wsskr.*` / `wssksa.*` / `wsssgp.*` / `wssusa.*`（含 v6 变体）
-
-微信小程序**调试模式会放宽域名校验**，因此只配置了 `wss.im.qcloud.com` 和 `wss.tim.qq.com` 时调试可正常连接。但**生产环境严格执行域名白名单**，当 `getconninfo` 返回的服务器不在白名单中时，`wx.connectSocket()` 直接失败，SDK 重试后放弃，`SDK_READY` 永不触发，login promise 挂起直到超时。
-
-### 解决方案
-
-在微信公众平台 → 开发管理 → 开发设置 → 服务器域名中，添加以下全部域名：
-
-**socket 合法域名**（29 个）：
-
-```
-wss://wss.im.qcloud.com
-wss://wss.tim.qq.com
-wss://wss.im.tencent.cn
-wss://wss.my-imcloud.com
-wss://wssv6.im.qcloud.com
-wss://wssger.im.qcloud.com
-wss://wssger.my-imcloud.com
-wss://wssgerv6.im.qcloud.com
-wss://wssidn.im.qcloud.com
-wss://wssidn.my-imcloud.com
-wss://wssidnv6.im.qcloud.com
-wss://wssind.im.qcloud.com
-wss://wssind.my-imcloud.com
-wss://wssindv6.im.qcloud.com
-wss://wssjpn.im.qcloud.com
-wss://wssjpn.my-imcloud.com
-wss://wssjpnv6.im.qcloud.com
-wss://wsskr.im.qcloud.com
-wss://wsskr.my-imcloud.com
-wss://wsskrv6.im.qcloud.com
-wss://wssksa.im.qcloud.com
-wss://wssksa.my-imcloud.com
-wss://wssksav6.im.qcloud.com
-wss://wsssgp.im.qcloud.com
-wss://wsssgp.my-imcloud.com
-wss://wsssgpv6.im.qcloud.com
-wss://wssusa.im.qcloud.com
-wss://wssusa.my-imcloud.com
-wss://wssusav6.im.qcloud.com
-```
-
-**request 合法域名**（4 个）：
-
-```
-https://api.my-imcloud.com
-https://boce-cdn.my-imcloud.com
-https://events.im.qcloud.com
-https://web.sdk.qcloud.com
-```
-
-### 经验教训
-
-1. 微信小程序**调试模式不校验域名白名单**，不能作为生产环境的验证依据，必须在关闭调试模式的真机上测试
-2. 腾讯云 IM SDK 的 WebSocket 域名不是固定的，`getconninfo` 会根据用户地理位置返回最优节点，**必须把所有区域域名都加入白名单**
-3. SDK 报错 `"unknow failed error..."`（注意拼写错误 `unknow`）是腾讯 SDK 内部抛出的，说明是 SDK 层面的连接失败
-
-### 涉及文件
-
-- `br-app/src/utils/im.js` — IM 初始化逻辑，添加了 `withTimeout()` 超时保护和错误信息暴露
-- `br-app/src/pages-sub/edu-market/detail.vue` — 聊天入口页，展示具体错误信息
-- SDK 源码：`node_modules/@tencentcloud/lite-chat/basic.js` — 域名列表和连接逻辑
-
----
-
-## TUIKit 聊天输入框右侧表情/更多图标中间一块实心黑方块
-
-### 报错信息
-
-无 JS 报错、无编译告警，纯渲染问题：
-
-- 聊天页（`TUIKit/components/TUIChat/index`）输入行右侧两个图标（表情、更多）各显示为**一块实心深色方块**，图标图形看不见
-- 同一行左侧 mic 图标**一直正常**
-- 截图实测方块色 `rgb(44,52,54)`，方块尺寸约 1em 见方、正好居中盖在 23px 图标中央
-- **连续更换图标资产（五版 svg + 一版官方 PNG）后，方块逐像素没有任何变化**
-
-### 根本原因
-
-`br-app/src/static/icons/iconfont.css` 第 7 行为自家 mask-image 图标体系定义了**裸 `.icon` 基准规则**：
-
-```css
-.icon {
-  background-color: currentColor;   /* 靠 mask-image 挖出图形 */
-  width: 1em; height: 1em;
-  display: inline-flex; ...
-}
-```
-
-该文件被 `br-app/src/App.vue` 以 `@import '@/static/icons/iconfont.css'` **全局引入**，小程序端全局样式会命中所有页面与组件里的 `.icon` 元素。
-
-而 TUIKit **原厂模板**（`git show b270e05` 引入 TUIKit 时即存在，非本项目改动）在输入图标上写的是：
-
-```html
-<Icon class="icon icon-face" ... />
-<Icon class="icon icon-more" ... />
-```
-
-这些元素拿不到 iconfont 的 `mask-image`，于是 `background-color: currentColor` 直接画成一块 1em 见方的纯色方块盖在图标中央。`currentColor` 继承自 `br-app/uni.scss` 的主题文字色 `$text-primary: #2D3436` = `rgb(45,52,54)`，与截图实测 `rgb(44,52,54)` 一致——**颜色对上主题 token 即证明方块由 CSS 绘制，与图片解码无关**。mic 正常只是因为它没带 `.icon` 类。
-
-同一泄漏还潜在影响 TUIKit 其他 `.icon` 元素：`common/Dialog`、`common/ImagePreviewer` 的 `icon icon-close`，`plugins/.../message-call-c2c` 的 `.icon`（它只声明了 `width/height:20px`，未覆盖 `background-color`），`common/Transfer`、`TUIGroup/create-group/group-introduction`、`common/DatePicker`。
-
-### 解决方案
-
-把 iconfont 基准样式的选择器从裸 `.icon` 改为**显式列出本文件定义的 23 个具名图标类**（`.icon-location, .icon-search, …, .icon-order`），全局规则在结构上就不再可能命中第三方组件的 `.icon`。
-
-回归面已穷举核对：应用内 112 处用法全部是 `class="icon icon-<23 类之一>"`，**零处裸 `class="icon"`**；唯一的动态绑定 `pages/index/index.vue:75` 的 `entry.iconClass`（`icon-wallet/ticket/book/order`）与 `login.vue` 的 `icon-eye`/`icon-eye-off` 均在名单内，渲染不变。
-
-验证：`dist/build/mp-weixin/app.wxss` 中已无裸 `.icon{...}` 规则，只剩分组选择器。commit `f398f74`。
-
-### 走过的弯路（务必避免重复）
-
-前五轮全部误判为"小程序 svg 渲染器不支持某个特性"，依次猜测：不支持 `stroke` → 不支持 `fill-rule="evenodd"` → 不支持 `A` 弧线命令 → 不支持同 path 多子路径挖孔 → 填充型 path 被按包围盒整块涂黑。对应 commit `85afc0b` → `cf3f2b6` → `8a15d93` → `eb3fe52` → `511040a`，全部无效。
-
-- **反证一直摆在眼前**：正常显示的 mic 资产 `br-app/src/TUIKit/assets/icon/audio.svg` 里 `stroke` + `A` 弧线 + `fill-rule="evenodd"` + `transform` + 多子路径填充**全都在用**，且它的圆环 path 与手写的完全一致。
-- **否证手段（下次照抄）**：对不同版本截图跑同一套 PIL 连通域暗像素统计。`eb3fe52`（填充版）与 `511040a`（纯描边版）**逐像素一致**（方块 776 vs 756 暗像素、fill 0.60 vs 0.58），只有被改动的描边圆环 bbox 从 34px 变 36px；换成官方 `face-uni.png`/`more-uni.png` 后仍是 763/743、0.57/0.56。**我的改动在数值上没有体现 = 目标层选错了**。
-- 那次 svg→png（`9c452a4`）并不是修复，只是顺手采用了 TUIKit 对 uni 端的 png 约定（同族 `camera-uni.png`/`image-uni.png`）。
-
-### 经验教训
-
-1. 引入第三方组件库时，全局样式表**绝不能定义裸通用类名**（`.icon`、`.btn`、`.close`…）的可见属性（背景、尺寸）；要么加自家前缀，要么把基准样式挂在自己的具名修饰类上。
-2. 排查第三方组件"多出实心色块"：**先 grep 全局 CSS 是否命中该元素类名**，再考虑资产；把异常区颜色对一遍主题 token，命中即确认是 CSS 画的。
-3. 假设被截图否证一次就停手，不要在同一层继续猜第二种可能——第二轮无效时就该换层（资产 → 样式/DOM）。
-4. 注意维护陷阱：以后新增第 24 个图标类，必须同时补进 `iconfont.css` 的基准名单，否则该图标会渲染成"完全不可见"（无尺寸无背景）。
-
-### 涉及文件
-
-- `br-app/src/static/icons/iconfont.css` — 修复点（基准选择器去裸 `.icon`）
-- `br-app/src/App.vue` — 全局 `@import` 造成泄漏的路径
-- `br-app/src/TUIKit/components/TUIChat/message-input/index.vue` — 受害元素（原厂 `class="icon icon-face"` / `icon-more`）
-- `br-app/uni.scss` — `$text-primary: #2D3436`，方块颜色来源
-
----
-
-## TUIKit 聊天文字输入框输入首字符就撑成两行
-
-### 报错信息
-
-无 JS 报错、无编译告警，纯渲染问题：
-
-- 微信小程序端（mp-weixin）聊天窗口文字输入框，**未输入时是一行高度**；输入任意一个字符、文字还没换行，白色圆角输入框立刻变成两行高
-- 现象只在小程序端出现，H5 端正常
-- 该输入框由 commit `0015e6e` 从单行 `<input>` 改为多行 `<textarea auto-height>`，改动前不存在此问题
-
-### 根本原因
-
-`auto-height` 的原生 `<textarea>` **高度完全由组件自己算**，而当时把盒子的外观样式全压在了 textarea 身上：`padding: 8px 12px` + `border: 1px` + `min-height` + `background` + `border-radius`。
-
-微信官方 textarea 文档里有两条决定性的说明：
-
-1. `设置 auto-height 时，style.height 不生效` —— 高度由组件接管，外部只留下 min-height/padding 这类它会叠加计算的量
-2. `disable-default-padding` **只对 iOS 有效** —— Android 侧组件自带默认内边距，无法用该属性去掉
-
-于是 CSS 的上下 padding 与组件内部测量出的行高相互叠加（Android 还额外带自身默认内边距），第一次输入就把高度撑到约两行。换句话说：**问题不在 auto-height，也不在任何"行数"属性，而在于给一个自管高度的原生表单组件加了垂直盒子内边距**。
-
-### 解决方案
-
-把盒子外观交给外层容器，textarea 只保留纯内容区（commit `61e6c53`）：
-
-```html
-<div class="message-input-area-box">
-  <textarea class="message-input-area" auto-height ... />
-</div>
-```
-
-```scss
-.message-input-area-box {
-  box-sizing: border-box;
-  min-width: 0;
-  background: #fff;
-  border: 1px solid #e5e8ee;
-  border-radius: 20px;
-  padding: 8px 12px;
-  min-height: 38px;
-}
-
-.message-input-area {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  background: transparent;
-  border: none;
-  padding: 0;          // 关键：textarea 上不留垂直内边距
-  font-size: 15px;
-  line-height: 22px;
-}
-```
-
-这样 textarea 的高度等于内容行高（一行 22px），盒子高度 = 22 + 16 + 2 = 40px，**空内容与单字符结果相同，不再跳变**；文字换行时 textarea 自然增高，盒子随之撑开。视觉尺寸与原设计一致，未引入任何 JS 高度计算。
-
-验证：`npm run build:mp-weixin` 通过（主包 1.15MB），产物 `message-input-editor.wxml` 中 textarea 的 `padding` 已为 0、外观类落在新增的 `message-input-area-box` 上。**注意：本节按官方文档的生效范围推导出根因并落地修复，构建侧证据齐全，但"输入首字符不再跳成两行"仍需你在微信开发者工具/真机上做一次目视确认。**
-
-### 走过的弯路（务必避免重复）
-
-连错五轮，全部是在 textarea 自身的高度属性上打转，没有一条去查官方文档的生效范围：
-
-| commit | 猜测 | 结果 |
+| 入口 | 语义 | 陷阱 |
 | --- | --- | --- |
-| `a039c0d` | 空 textarea 塌陷，加 `height: 38px` | 无效（auto-height 下 style.height 根本不生效，文档明写） |
-| `de7376d` | 关掉 auto-height、用 JS 算高度 | 代码量大，用户要求撤回 → `a4bbd1e` revert |
-| `b376d31` | `box-sizing` 内容区 20px < `line-height` 22px 放不下，改 `min-height: 40px` | 无效 |
-| `1baa35d` | 小程序 textarea 有 `rows` 属性、默认 2 行，加 `:rows="1"` | **属性根本不存在**，无效 |
-| `eec0bd7` | 列方向 flex 父容器把 textarea 拉伸，移除 `flex: 1` | 无效 |
+| `scroll-top`（数值） | 滚动到指定偏移，**原生 clamp 到 `[0, maxScroll]`** | 同值重设不触发；手动滚动后 ref 不跟随原生位置 |
+| `scroll-into-view`（元素 id） | 把目标元素**顶部**对齐视口**顶部** | 前插子节点布局前就执行 → 锚到旧位置；目标不足一屏时滚过内容末尾 → 白屏 |
 
-- `min-height: 40px` 那一版还被本地一次未记录的编辑悄悄改回 `38px`，等于从未被真正验证过——排查期间要确认工作区文件与预期一致。
-- 两次凭记忆断言原生属性默认值（`rows=2`）都是错的。**小程序组件的属性名与默认值必须以官方文档为准，不要按 Web/HTML textarea 或别的框架类推。**
-
-### 经验教训
-
-1. 原生表单组件（textarea / input / picker）一旦带上"自管高度/自管尺寸"的开关（`auto-height` 等），**外观盒子就要另起一层容器**，不要往组件上压 padding、border、min-height。
-2. 排查这类"只在小程序端、只在某个交互之后出现"的样式问题，第一步是读官方组件文档的**属性生效范围与平台差异**（本例的 `disable-default-padding 仅 iOS`、`auto-height 下 style.height 失效`就是答案本身），而不是逐个属性试。
-3. 同一个假设层连续两次无效即停手换层：五轮里有四轮仍在调 textarea 的高度数值。参见上一条图标问题的同类教训。
-
-### 涉及文件
-
-- `br-app/src/TUIKit/components/TUIChat/message-input/message-input-editor.vue` — 修复点（新增 `message-input-area-box` 外层容器，textarea 清空垂直内边距与盒子样式）
-- `br-app/src/TUIKit/components/TUIChat/message-input/index.vue` — `:not(not)` 全局 flex 与 `.message-input-editor` flex 容器，排查时确认过不是拉伸来源
-
+`maxScroll = 内容总高 - 视口高`。小程序 `scrollOffset` 查询只返回 `scrollTop/scrollLeft`，
+**不返回 `scrollHeight`**，内容总高需另测包裹层 `#messageScrollContent`。
 
 ---
 
-## 微信小程序生产环境语音消息发送失败（调试模式正常）
+## 问题一：「查看更多」出现过早，加载白屏卡顿，媒体预览返回跳回最新
 
 ### 报错信息
-
-- **调试模式（打开"不校验合法域名"）**：按住说话正常录音、正常发送，气泡与 Toast 都正常。
-- **关闭调试模式（生产环境）**：按住说话正常录音，松手后气泡显示"发送失败"，Toast 显示 `Unknown failed. error: {"message": }`（注意 SDK 拼写 `failed`，用户看到的可能是 `fail` 的简写）。
+- 会话只有几条消息就出现「查看更多」按钮，需手点才加载。
+- 点加载后窗口闪一下白屏、卡一下才显示更多消息，不像微信原生顺滑。
+- 打开图片/视频预览，关闭后视口跳到**最新消息**，而非停留在刚看的媒体位置。
 
 ### 根本原因
-
-腾讯云 IM 小程序语音上传走的是**服务端下发的 COS 预签名地址**，不是固定主机。域名按 SDKAppID 分配，本项目 SDKAppID = **20049215**（来自 `br-server/.env` 的 `IM_SDK_APP_ID`），实际上传主机为 `20049215-sg.rich.my-imcloud.com`（新加坡区域节点）。
-
-微信公众平台"服务器域名"配置**不支持通配符**，必须逐条填写完整主机名。`*.rich.my-imcloud.com` 这类写法在后台根本填不进去，也不会生效。
-
-SDK 内部 `wx.uploadFile` 失败分支（`lite-chat/standard.js` 的 `_handleResponse`）把 `wx` 的 `errMsg` 整个丢弃，只留 `{code: +res.statusCode, message: JSON.stringify(res.data)}`。fail 回调里两者都是 `undefined`，于是 `code=NaN`（判假）、`message=undefined`（落回空串），最终 SDK 错误类 `Ws` 拼成 `Unknown failed. error: {"message": }`——**线上完全看不出是哪个域名被拦**，只能看到空 message。
+1. 加载入口是手点按钮，且分页步长小，少量消息即触发「查看更多」。
+2. 加载指示 spinner 在内容流内占高度，前插时高度核算被干扰，产生白屏过渡。
+3. 预览返回走页面 `onShow` → 重新 `initChat`，把视口重置到最新。
 
 ### 解决方案
+- 去掉手点「查看更多」：**滚动到顶部自动加载**（`scrollTop < 50 && canLoadMore && !isLoadingMessage`）
+  + **不足一屏自动续拉**（`autoFillViewport`，铺满视口为止，带防抖 `autoFillLastCount` 避免原地刷接口）。
+- 分页步长提到 50，spinner 移出内容流改为**覆盖层**（`message-loading-overlay`，`position:absolute`），
+  不再参与前插高度差核算。
+- 媒体预览返回位置保持：`handleImagePreview` 预览前 `uni.$emit('media-preview-start')`，
+  页面置 `isPreviewingMedia` 标志，`onHide` 跳过重置、`onShow` 跳过 `initChat`，返回后视口不动。
 
-**1. 域名白名单**
+---
 
-在微信公众平台 → 开发管理 → 开发设置 → 服务器域名中，把以下域名加入对应类别（本项目实际使用的是新加坡节点）：
-
-**uploadFile 合法域名**：
-
-```
-https://20049215-sg.rich.my-imcloud.com
-```
-
-**downloadFile 合法域名**（语音播放同样需要）：
-
-```
-https://20049215-sg.rich.my-imcloud.com
-```
-
-其他区域节点（按需添加，取决于腾讯云 IM 控制台分配）：
-
-```
-https://20049215-cn.rich.my-imcloud.com
-https://20049215w4c.my-imcloud.com
-```
-
-**2. 代码层诊断兜底**
-
-在 `src/utils/im.js` 的 `ensureIM` 登录前给 `TUIGlobal.uploadFile`（即全局 `wx.uploadFile`，SDK 每次调用时才取这个属性）包一层，记录本次上传的 `url` 与 `errMsg`；`message-input-audio.vue` 的失败提示优先显示它们。这样下次遇到同类问题，Toast 直接显示被拦的域名和 wx 原始 errMsg，不再只能看到空 message。
-
-同时修正了 `sendAudioMessage` 的 `.then(onSendAudioFailure)` 误把成功当失败的 bug——改为只 `.catch`，成功时不再弹 Toast。
-
-### 经验教训
-
-1. 腾讯云 IM 小程序四类域名白名单（socket / request / uploadFile / downloadFile）中，**uploadFile / downloadFile 的域名是按 SDKAppID 分配的子域名**，不是固定主机；必须从实际上传失败日志或 Toast 里拿到真实主机名，不能凭官方文档的"示例"猜。
-2. 微信小程序**调试模式不校验合法域名**，不能作为生产环境的验证依据；必须在关闭调试模式的真机上测试。
-3. 微信公众平台**服务器域名配置不支持通配符**，必须逐条完整主机名。
-4. SDK 的错误类会丢字段（本例中 `errMsg` 被整个丢弃），需要自己拦截 `wx` 原生 API 才能拿到真实失败原因。
-5. 后台改完域名后，真机要**下拉删除该小程序再重新进入**，域名列表有客户端缓存，否则看着像"配了还是失败"。
-
-### 涉及文件
-
-- `br-app/src/utils/im.js` — `hookUploadDiagnostic` 拦截 `TUIGlobal.uploadFile`，记录 url + errMsg
-- `br-app/src/TUIKit/components/TUIChat/message-input/message-input-audio.vue` — 失败 Toast 回显 url + errMsg；移除 `.then(onSendAudioFailure)` 避免成功也弹提示
-- SDK 源码：`node_modules/@tencentcloud/lite-chat/standard.js` — 错误类 `Ws` 与 `_handleResponse` 的 fail 分支
-
-## 发一条消息出现两条回调 + 消息刚发出就显示"已读"
+## 问题二：超 7 天历史会话进入聊天页整屏白屏、「查看更多」无效
 
 ### 报错信息
-
-后端 uvicorn 访问日志里，发一条消息同一秒内出现四条请求：
-
-```
-GET  /api/v1/chat/messages?peer=05a0adcc33d44f58ae03caa0b537e033&limit=200   200 OK
-GET  /api/v1/chat/messages?peer=c904bd6f84a147aeb3272f92616dc156&limit=200   200 OK
-POST /api/v1/im/callback?CallbackCommand=C2C.CallbackAfterSendMsg&...&Sign=bde7c8fa...&RequestTime=1792662316   200 OK
-POST /api/v1/im/callback?CallbackCommand=C2C.CallbackAfterMsgReport&...&Sign=bde7c8fa...&RequestTime=1792662316  200 OK
-```
-
-同时小程序端：消息刚发出去就马上从"未读"变成"已读"。
+- 全部消息都超出 7 天漫游窗口的会话，进入聊天页**一片空白**。
+- 点「查看更多」无任何反应，再点屏幕才偶尔出消息。
 
 ### 根本原因
-
-**1. 两条 POST 回调不是重复，是两个不同的 CallbackCommand**
-
-`C2C.CallbackAfterSendMsg`（发送落地）和 `C2C.CallbackAfterMsgReport`（对端已读上报）是两件事。回调鉴权 `Sign = sha256(Token + RequestTime)` 只精确到秒，两条回调落在同一秒里，所以 `Sign` 和 `RequestTime` 完全一样，看起来像同一条请求发了两次。
-
-**2. 两条 GET 也不是同一客户端重复请求**
-
-两条的 `peer` 参数分别是 `05a0adcc…`（brian77）和 `c904bd6f…`（Noah63007），是**两个不同登录用户的客户端各自拉自己视角的会话历史**。日志里的 `172.18.188.98` 是容器网关地址，不能用来判断调用方。
-
-**3. 客户端确实存在过度轮询（真 bug）**
-
-`src/utils/im.js` 的 `loadChatMediaMap` 用"列表里最新媒体时间 > 数据库快照最新时间"作为"要不要重拉"的判据，本意是给回调落库的秒级延迟留重试。但**回调开启之前发出的历史图片/语音永远不会进数据库**，该条件恒为真，只剩 2 秒节流挡着 → 聊天页停留期间每 2 秒打一次 `limit=200` 的会话历史接口。
-
-**4. "秒已读"是真实已读上报，不是回调写坏了状态**
-
-- TUIKit 引擎 `chat-uikit-engine-lite` 的 `updateMessageList` 在 `case "push" / "contact"` 分支里**无条件**调用 `chat.setMessageRead({conversationID})`（只有 `case "received"` 才判断 `enableAutoMessageRead`）。只要对端小程序停在聊天页，新消息一push 就整会话标记已读。
-- SDK 侧 `openim.get_peer_read_time` 拿到对端已读时间后，把 `time <= peerReadTime && flow === 'out'` 的消息全部置 `isPeerRead = true` 并抛 `MESSAGE_READ_BY_PEER`，角标随即变"已读"。
-- 生产库 `im_messages` 的 `read_at` 与发送时间相差 2~4 秒，和日志里同一秒的 `C2C.CallbackAfterMsgReport` 完全对得上。
-- 角标渲染 100% 走 SDK 状态：`message-elements/read-status/index.vue` 与 npm 原版 `@tencentcloud/chat-uikit-uniapp` **逐字节相同**，本系统加的 OSS 覆盖只改 `payload` 里的图片/语音地址，不碰任何已读字段。
+SDK 漫游到头（`isCompleted`）后引擎只回空列表，旧逻辑没有数据库兜底入口，
+聊天页拿不到任何消息可渲染。
 
 ### 解决方案
+- `onChatCompletedUpdated`：`isCompleted && !isGroup && 引擎消息列表为空` 时，
+  直接 `loadDatabaseHistoryPage()` 从数据库取最近一页。
+- `getHistoryMessageList`：先判 `isCompleted && !isGroup` 再转数据库翻页，
+  SDK 窗口未到头仍归 SDK，避免重复来源。
+- 数据库游标取当前最早一条消息的时间（`messageList[0].time`），按时间分区不与 SDK 消息重复上屏。
+- 重建消息 `ID` 用 `MsgKey`、`status` 固定 `success`、媒体优先用转存 OSS 地址
+  （IM 的 COS 域名可能不在小程序白名单），并补齐 `readReceiptInfo` 对象
+  （`read-status` 组件直接解构，缺对象会抛异常）。
 
-`src/utils/im.js`：
+---
 
-1. 给重试加上限 `MEDIA_MAP_MAX_TRIES = 5`，并且每出现一条更新的媒体才重置计数（`mediaMapTarget`），保证"新发的图片有 5 次机会等回调落库，补不齐的历史媒体不再无限轮询"。
-2. 判据顺序改为：数据库已覆盖 → 直接返回；重试次数用尽 → 直接返回；最后才是 2 秒节流。
-3. 会话 ID 从消息自身取（`targets[0].message.conversationID`），不再由调用方传 `currentConversationID.value`——切会话时 `messageList` 可能先于 `currentConversationID` 更新，用旧 ID 会拉错对端历史并多打一次接口。
+## 问题三：加载更多白屏闪烁 + 锚定前跳超一屏
 
-回归检查：`npm run test:chat-media-map`（`scripts/verify-chat-media-map.js`）。
-
-### 经验教训
-
-1. 判断"重复请求"要先按**参数**区分调用方，不要只看同一网关 IP；两条 GET 的 `peer` 不同就是两个客户端。
-2. 重试判据必须同时有次数上限：只有时间节流的"等一个永远等不到的数据"，等于无限轮询。
-3. `Sign`/`RequestTime` 只精确到秒，同一秒内的多条回调鉴权值相同，不能用来判断是否重复投递；要按 `CallbackCommand` 区分。
-4. 已读状态由**对端客户端**上报决定，服务端回调只是把它抄进数据库；排查"秒已读"要先确认对端是否停在聊天页（引擎在 push 时无条件 `setMessageRead`），而不是查回调代码。后来定位到真正的主因是会话绑定没随页面隐藏释放，见下一节。
-5. 怀疑 TUIKit 组件被我们改坏时，先和 `node_modules/@tencentcloud/chat-uikit-uniapp` 里的原版 `diff` 一次，比读代码猜快得多。
-
-### 涉及文件
-
-- `br-app/src/utils/im.js` — `loadChatMediaMap` 有界重试；`applyChatMediaUrls` 从消息自身取会话 ID
-- `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — 调用点去掉 `currentConversationID`
-- `br-app/scripts/verify-chat-media-map.js` — 上述约束的回归检查
-- SDK 源码：`node_modules/@tencentcloud/chat-uikit-engine-lite/index.js` — `updateMessageList` 的 `push`/`contact` 分支无条件 `setMessageRead`
-- SDK 源码：`node_modules/@tencentcloud/lite-chat/basic.es.js` — `get_peer_read_time` 回写 `isPeerRead`、`_initC2CReadReceiptInfo`
-
-## 对方没打开聊天窗口，消息却 1~4 秒就变"已读"
-
-### 现象
-
-- 发送方气泡刚发出就从"未读"翻成"已读"，接收方表示没打开过聊天窗口。
-- 生产库 `im_messages` 里 `read_at - msg_time` 大量是 1~4 秒：
-
-```
-id  sent(+08)            read_at               delta  from->to
-11  2026-10-23 08:28:12  2026-10-23 00:28:14      2s  05a0adcc->c904bd6f
- 9  2026-10-23 08:20:01  2026-10-23 00:20:03      2s  c904bd6f->05a0adcc
- 1  2026-10-22 17:40:08  2026-10-22 09:42:27    139s  05a0adcc->c904bd6f
-```
-
-  同一对账号，1~4 秒和 139 秒都出现过，说明不是网络抖动，而是接收端有没有"绑定这个会话"的差别。
+### 报错信息
+- 小程序加载更多（尤其超 7 天历史）时窗口闪白屏、卡一下。
+- 加载后视口**往前跳到超一屏**的位置，需往下拉才能看到刚加载的消息。
 
 ### 根本原因
-
-腾讯云 IM 的已读只由**接收端客户端**调用 `chat.setMessageRead()` 产生，服务端回调只是抄写。TUIKit 引擎会自动调用它，而它的判据只有 `currentConversationID`，**完全不关心聊天页是否可见**：
-
-- `chat-uikit-engine-lite/index.js` 的 APP store 默认 `enableAutoMessageRead: true`；
-- `updateTargetMessageList()` 的 `case "received"`（`onMessageReceived` 走的分支）里 `o && chat.setMessageRead({conversationID: currentConversationID})`，只要消息属于当前绑定会话就上报；`case "push" / "contact"` 更是无条件上报；
-- `switchConversation(id)` 一绑定就对会话上报已读，且 `currentConversationID` 只由 `switchConversation` / `deleteConversation` 写入；
-- 引擎收到消息后先按 `message.conversationID === currentConversationID` 过滤，过滤结果为空就直接返回，不上报。
-
-聊天页原来只在 `onUnload` 里 `reset()` 释放会话。但 uni-app 小程序端还有 `onHide`：用户从聊天页 `navigateTo` 跳到别的页面，或把小程序切到后台时，页面仍在栈里、不会 `onUnload`，会话因此一直绑着。于是接收人明明不在聊天窗口，新消息一到达就被引擎自动上报已读，发送方 1~4 秒内看到"已读"。
+前插历史后用 `scroll-into-view` 锚**旧首条**：小程序原生 `scroll-view` 会在前插子节点
+**布局前**就执行 `scroll-into-view`，锚到旧首条的旧位置（≈顶部），前插内容随后把视口往下顶，
+表现为跳到超一屏外。盲增 `scroll-top += 300` 又会滚出内容外白屏。
 
 ### 解决方案
+前插改用确定性的**高度差补偿 `scroll-top`**（`anchorPrepend`）：
+- 加载前 `measureScroll` 测 `{ top: scrollTop, height: 内容总高, vp: 视口高 }`。
+- 加载后 `measureContentHeight` 单查询补测内容总高，`delta = afterHeight - before.height`。
+- 目标 `scrollTop = before.top + delta`，使原首条停在原来的视觉位置；
+  加载前内容不足一屏（`before.height <= before.vp + 10`）时改为滚到底看最新。
+- 这是全平台一致的确定性兜底，不依赖 `scroll-into-view` 的渲染时序。
 
-把「会话绑定」和「聊天页可见」绑在一起（`br-app/src/TUIKit/components/TUIChat/index.vue`）：
+---
 
-- `onLoad` 记录本次打开的 `conversationID`（不能依赖 store，切会话时可能还是旧值）；
-- `onHide` → `reset()` 释放会话，页面不可见期间引擎不会自动上报，未读红点也才正确；
-- `onShow` → 仅在确实被 `onHide` 释放过时，用记录的 ID 重新 `initChat({ conversationID })` 绑回，此时上报已读才等于"用户真的看了"；首次进入 `onLoad` 已绑定，靠 `releasedOnHide` 守卫避免重复绑定；
-- `onUnload` 原有 `reset()` 保留。
+## 问题四：安卓 webview 前插「先跳超一屏再拉回」的可见过渡帧
 
-`TUIChatKit.init()` 有 `isInitialized` 短路，重复调用安全。
-
-### 验证
-
-- `scripts/verify-chat-read-gate.mjs`：用**真实引擎包**注入假 `chat`，喂同一条 `C2Cpeer1` 的消息，断言「绑定 C2Cpeer1 → 恰好一次 `setMessageRead`」「`currentConversationID` 释放 → 零次」「绑到别的会话 → 零次」。这条直接证明释放会话能止血，而不是只读压缩代码猜。
-- `scripts/verify-chat-read-on-visible.js`：锁住源码约束（引入 `onShow/onHide`、`onHide` 里 `reset()`、`onShow` 用 `pageConversationID` 绑回、`onUnload` 仍释放）。
-- `npm run build:mp-weixin` 后检查产物：`dist/build/mp-weixin/TUIKit/components/TUIChat/index.js` 里 `onHide(()=>{r||(r=!0,_())})`、`_ = () => switchConversation("")` 均在。
-
-### 经验教训
-
-1. 第三方 SDK 的"自动"行为要查它的**判据变量**，不要按常识推断。引擎自动已读的判据是 `currentConversationID`（会话有没有绑），不是"页面可见"，所以只写 `onUnload` 不够，小程序还有 `onHide`（跳页 / 切后台）这条路径。
-2. `onLoad → onShow` 首次进入都会触发，用 `releasedOnHide` 这类状态守卫区分「首次」和「返回」，别在 `onShow` 无条件重绑。
-3. 会话释放会连带 `TUIStore.reset(CHAT, ['messageList', ...])`，返回聊天页要重新拉一次历史；先确认重新绑定用的是页面入参里的会话 ID，否则会拉错对端。
-4. 判断是不是"自动已读"造成的，看数据库 `read_at - msg_time` 的分布最省事：1~4 秒是引擎自动上报，几十上百秒才是真人打开窗口，同一对账号两种值并存就说明绑约未释放。
-5. IM 已读按**账号**统计：同一账号在开发者工具或另一台手机上停在聊天页，秒已读同样会发生，这类不属于本 Bug，别把它当修复失败。
-6. 光读压缩产物不足以证明修复有效，能注入假对象跑真实包就做，`process.exit(0)` 收尾（引擎有常驻定时器）。
-
-### 涉及文件
-
-- `br-app/src/TUIKit/components/TUIChat/index.vue` — `onLoad` 记录会话 ID、`onHide` 释放、`onShow` 绑回
-- `br-app/scripts/verify-chat-read-gate.mjs` — 引擎自动已读判据的行为验证
-- `br-app/scripts/verify-chat-read-on-visible.js` — 聊天页生命周期约束的源码断言
-- `br-app/package.json` — `test:chat-read-gate`、`test:chat-read-on-visible`
-- SDK 源码：`node_modules/@tencentcloud/chat-uikit-engine-lite/index.js` — `enableAutoMessageRead` 默认 true、`updateTargetMessageList` 的 `received` 分支、`switchConversation` 上报已读
-
-## 聊天窗口只能往前翻 7 天，更早的消息一片空白
-
-### 现象
-
-- 打开与他人的单聊，点「查看更多」把 SDK 漫游历史翻到底之后按钮就消失，再往前的消息一条都看不到。
-- 数据库 `im_messages` 里其实有更早的记录（服务端回调一直在落库），但聊天页从没读过它们。
+### 报错信息
+- 安卓小程序前插历史时，仍能看到视口**先跳到超一屏、再被快速拉回**正确位置的过渡。
 
 ### 根本原因
-
-1. **腾讯云 IM 单聊消息云端只免费漫游 7 天**（官方文档《消息漫游》：体验版与专业版均为 7 天，延长时长要单独开通增值服务；富媒体文件的存储时长与漫游一致）。`getMessageList()` 翻到漫游头部后 `isCompleted` 置真，组件的「查看更多」是 `v-if="!isCompleted"`，于是彻底封口。
-2. 数据库镜像是 2026-10-22 才开启回调开始写的，**比 IM 漫游窗口更晚**，所以不能整体换成读数据库：否则回调开启之前那 7 天内的消息反而消失了。两边必须是「SDK 负责自己的窗口，数据库负责窗口之前」。
-3. 原来读数据库只为一件事——把图片/语音地址换成转存后的 OSS 地址（`applyChatMediaUrls`）。它按「秒数 + 收发方向 + 元素类型」这种模糊键去猜哪条 SDK 消息对应哪条库记录，同秒同类多条会错配，还要为重试控制加一堆模块级状态。数据库既然已经有 `MsgKey`，就不该再靠猜。
+两帧过渡：前插（setData#1 → paint A 错位）→ 渲染后测量+补偿（setData#2 → paint B 正确）。
+微信 `scroll-view` 内部滚动容器 `.wx-scroll-view` 默认关闭 `overflow-anchor`，
+安卓 webview 下浏览器原生滚动锚定不生效，前插先画一帧错位再被补偿拉回。
+（`scroll-anchoring` 属性：webview 渲染器仅 iOS 生效；Skyline 3.6.2+ 默认开。）
 
 ### 解决方案
+- 开启 iOS/Skyline 原生 `:scroll-anchoring="true"` 作免闪第一道防线。
+- 安卓 webview：CSS 覆盖内部滚动容器 `overflow-anchor: auto !important`
+  （`:deep(.wx-scroll-view), :deep(.uni-scroll-view)`），让浏览器原生锚定原子接管前插。
+- 补偿式与原生锚定幂等共存：原生若已原子补偿，`anchorPrepend` 算出的目标值与之相同，再设一次不二次跳动。
 
-**服务端补齐重建所需的事实**（`br-server`）：
+---
 
-- `im_messages` 增加 `cloud_custom_data` / `is_revoked` / `revoke_time`，随消息落库 `CloudCustomData`（引用回复的内容就塞在这里），迁移见 `alembic/versions/2026_10_23_1100-j5k1l7m3n9p4_...py`。
-- 新增 `C2C.CallbackAfterMsgWithDraw` 分发与 `apply_msg_withdraw()`：按 `MsgKey` 只标状态、不删记录，重复投递靠 `is_revoked is false` 天然幂等。
-- `GET /api/v1/chat/messages` 排序改成 `msg_time desc, msg_seq desc, id desc`（对齐 IM 单聊「先 MsgTime、同秒按 MsgSeq」的口径），并把 `elements`(原始 MsgBody)、`cloud_custom_data`、`is_revoked`、`msg_seq`、`im_from_account`、`im_to_account`、`media_url`/`oss_url`、`is_read` 全部回给客户端。
+## 问题五：彻底消除错位帧 paint A（离屏镜像原子前插）
 
-**客户端按 SDK 消息结构重建**（`br-app/src/utils/im-history.js`）：只重建 `text/image/sound/face/custom`，其余类型一律跳过——消息列表把认不出的类型落到 `v-else` 的 `MessageRevoked` 分支，会显示成「撤回了一条消息」。payload 结构按渲染组件的契约来：图片 `payload.imageInfoArray[0].{url,width,height}`、语音 `payload.{url,second}`、自定义 `payload.extension`，媒体地址优先用转存好的 `oss_url`。`ID` 用 `msg_key`，`status` 固定 `success`（回调只落 `SendMsgResult == 0` 的消息），`isPeerRead` 由 `is_read` 推导。
-
-**翻页分工**（`message-list/index.vue`）：`getHistoryMessageList()` 先看 SDK 是否到头，没到头继续走 `getMessageList()`；`isCompleted` 为真且是单聊时才用当前最早一条消息的 `time` 作 `before` 游标向数据库取更早一页，`TUIChatService.updateMessageList(messages, 'unshift')` 注入。「查看更多」显示条件改成 `!isCompleted || (!isGroup && dbHasMore)`，切会话时重置 `dbHasMore`（引擎 `switchConversation` 会清空 CHAT store 的消息列表）。
-
-### 为什么是 unshift
-
-`chat-uikit-engine-lite` 的 `updateTargetMessageList()` 里只有 `case "received"` 会 `chat.setMessageRead()`，`case "push" / "contact"` 更是**无条件**上报已读；`case "unshift"` 只做三件事：按 `ID` 过滤掉已存在的、把新消息并进列表、`sortMessageList()` 重排，**完全不碰已读**。把几十条几年前的历史用 `push` 注进去，等于替对端把整段历史标成已读——这正是上一节「秒已读」的同一个坑，别在补齐历史时再踩一次。
-
-### 验证
-
-- `scripts/verify-im-history-merge.mjs`：用**真实引擎包**喂假 `chat`，把数据库行重建出的消息与一条 SDK 消息一起 `unshift`，断言「按 ID 去重、深历史前插且时间升序、`setMessageRead` 零次」，同时锁住重建字段的渲染契约（`getMessageContent().url` 拿到的是 OSS 地址）。
-- `scripts/verify-im-history.js`：源码断言旧的媒体地址替换逻辑确实清干净、`fetchImHistoryPage` 只对 `C2C` 会话发请求、注入只走 `unshift`。
-- `br-server` `pytest tests/test_im_callback_sync.py`（撤回标记与幂等、`CloudCustomData` 落库、历史接口返回重建字段、`before` 游标严格更早）。
-
-### 已知边界（都是有意接受，不是待修）
-
-- 深历史消息不是 SDK 消息实例，长按菜单里的撤回/删除/转发点了不会生效，最多报个错；读它、看它、找它都正常。
-- 回调开启（2026-10-22）之前、又超出当前漫游窗口的消息，两个来源都没有，看不见也补不回来。
-- 媒体转存失败的记录没有 `oss_url`，深历史里仍会用 IM 的 COS 地址，小程序没配那个域名就显示占位图。
-
-### 经验教训
-
-1. 第三方 IM 的"历史"受服务商配额限制，**免费档位的能力边界要先查官方文档再设计数据源**。7 天漫游决定了数据库镜像是必需项，不是优化项。
-2. 新增数据源时别做模糊匹配。`「秒+方向+元素类型」`猜对应关系这种设计，只有在两边没有共同主键时才被迫接受；本例早就有 `MsgKey`，直接把它当 `ID` 就干净了。
-3. 往 TUIKit 的消息 store 注入数据前，先去压缩产物里确认 `updateTargetMessageList` 的分支副作用（尤其会不会上报已读），选对合并类型比写多少防御代码都管用。
-4. 未知类型宁可不显示。消息列表的 `v-else` 分支是"撤回消息"，把认不出的元素类型塞进去等于给用户造假记录。
-5. 游标要写成严格比较（`before = 最早一条的 msg_time`，SQL 用 `<`），等号会让边界那条在上一页下一页各出现一次。
-
-### 涉及文件
-
-- `br-server/app/models/im_message.py`、`br-server/alembic/versions/2026_10_23_1100-j5k1l7m3n9p4_add_im_message_history_rebuild_fields.py` — 三个新列
-- `br-server/app/services/im_callback_service.py` — `CloudCustomData` 落库、`apply_msg_withdraw()`
-- `br-server/app/api/routes/im_callback.py` — 分发 `C2C.CallbackAfterMsgWithDraw`
-- `br-server/app/api/routes/chat.py` — 排序口径与重建字段
-- `br-app/src/utils/im-history.js` — 数据库行 → SDK 消息结构
-- `br-app/src/utils/im.js` — `fetchImHistoryPage()`，删掉媒体地址映射
-- `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — SDK 到头后转数据库翻页，`unshift` 注入
-- `br-app/scripts/verify-im-history.js`、`br-app/scripts/verify-im-history-merge.mjs` — 替代 `verify-chat-media-map.js`
-
-## 主包内不应存在主包未使用的 JS 文件：utils/im-history.js
-
-### 现象
-
-- 深历史功能上线后，微信开发者工具构建产物提示：`主包内不应该存在主包未使用的JS文件：utils/im-history.js`。
-- 文件确实在 `dist/build/mp-weixin/utils/` 下，但主包没有任何页面引用它——只有 `TUIKit/components/TUIChat/message-list` 这个子包页面在用。
+### 报错信息
+- 过渡已压到最短，但「先画一帧错位（paint A）、渲染后补偿再画一帧正确（paint B）」的最短过渡依然存在。
 
 ### 根本原因
-
-uni-app 编译 mp-weixin 时把 `src/utils/*.js` 整体提升到主包的 `utils/`，不按「谁引用」下沉到分包。项目里 `src/utils` 大部分模块（`auth.js`、`request.js`、`im.js`）主包真的在用，所以这个提升平时是对的；`im-history.js` 是第一个只被 `TUIKit` 子包引用的 utils，于是撞上了微信的「主包未使用 JS」检查。
-
-同类问题项目里早有解法：`scripts/post-build-move-assets.js` 在 build 之后把只被 TUIKit 用到的 `assets/` 图标和 `common/assets.js` 搬进 `TUIKit/`，并改写两侧相对 `require`。缺的只是把这套机制延伸到 utils JS。
+只要「前插」与「补偿滚动」分属两次 setData，就必然有一帧错位。
+要原子化，必须**在插入前就知道批次会增加多少高度**，把列表与目标 `scroll-top` 放进同一次 setData。
 
 ### 解决方案
+**离屏镜像预测量 + 原子前插**：
+1. `measureBatchHeight(batch)`：把批次渲染进离屏镜像 `#measureMirror`
+   （`visibility:hidden` 保留布局、`z-index:-1`、`pointer-events:none`），
+   `getBoundingClientRect` 量得前插后会增加的内容高度 `delta`。
+   图片高度由 payload `width/height` 经 `watchEffect` 在加载前确定（`DEFAULT_MAX_SIZE=155`），
+   视频用 `snapshotWidth/Height`，故镜像量高与真实渲染一致。
+2. `commitPrepend(batch, before, delta)`：**同一次 flush 内**先设目标 `scroll-top`
+   （`before.top + delta`，不足一屏则 `before.height + delta`）→ 清镜像 → `updateMessageList(batch, 'unshift')`
+   → 复位加载态。渲染层在绘制前同时应用列表与滚动位置，**第一帧即定位正确**，无 paint A。
+3. `verifyPrepend` 安全网：仅当真实位置与理想位置偏差 `> 40px`
+   （同帧 `scroll-top` 被旧高度钳制、缺尺寸图片加载后大幅撑高）才用 `+1px` 微 nudging 强制重设；
+   阈值内小残差忽略，原子前插到位时本函数不动、无额外绘制。
 
-1. `post-build-move-assets.js` 增加 `MOVES` 表和 `moveMainPackageJs()`：按表把主包 JS 搬进子包，搬迁时改写该文件自身对外的 `require`（基准从旧目录换成新目录），再全量扫描子包目录，把指向旧路径的 `require` 改成指向新路径。
-2. 新增产物守卫 `scripts/verify-mp-subpackage-layout.js`，接进 `build:mp-weixin` 末尾，也在 `test:mp-subpackage-layout` 单跑。两条断言：每条相对 `require` 都能解析到真实文件；主包 JS 若引用者全部落在同一个子包，就报错并提示「加进 MOVES」。以后再把只被子包用的模块写进 `src/utils`，构建阶段就会自己报出来，不用等开发者工具提醒。
-3. 用显式 `MOVES` 表而不是自动搬迁：被两个子包共享的文件搬进任意一个都会让另一个找不到，自动化只能挑一个错的。表里一行一条，人工判断归属。
+---
 
-### 走过的弯路
+## 问题六：「回到最新位置」首次点击白屏，再点一次才正确
 
-- 第一版改写「消费者 require」时，基准目录错用了目标文件的新目录，`message-list/index.js` 里的 `../../../utils/im-history.js` 被写成了 `./im-history.js`，构建时被自己的新守卫拦下（`require("./im-history.js") 解析不到文件`）。基准必须是**引用方所在目录**，不是被引用文件所在目录。
+### 报错信息
+- 会话窗口点击「回到最新位置」按钮，**首次点击出现白屏**，再点一次才回到正确的最新消息位置。
 
-### 验证
+### 根本原因
+滚底用 `scroll-into-view` 锚**末条**（`setAnchor(last.ID, true)`）。
+`scroll-into-view` 把末条**顶部**对齐视口**顶部**：当末条高度不足一屏时，
+对齐后的 `scrollTop = 内容总高 - 末条高 > maxScroll = 内容总高 - 视口高`，
+即滚过内容末尾 `(视口高 - 末条高)`，超出部分整屏白屏。
+第二次点击的强制重触发（先清空再设）落点不同才恢复正确。
 
-- `npm run build:mp-weixin` 输出 `Moved utils/im-history.js → TUIKit/utils/im-history.js (rewrote 1 require)`、`Main package size: 1.15MB`、`mp subpackage layout checks passed (182 js, subpackages: pages-sub, TUIKit)`。
-- 产物核对：主包 `utils/` 已无该文件；`TUIKit/utils/im-history.js` 自身对 vendor 的引用改写为 `../../common/vendor.js`；`TUIKit/components/TUIChat/message-list/index.js` 引用为 `../../../utils/im-history.js`。
-
-### 经验教训
-
-1. uni-app 的 `src/utils` 一律进主包，**新增只给分包页面用的 utils 时，同步在 `MOVES` 加一行**，否则主包体积和「未使用 JS」告警都会找上门。
-2. 搬文件必须两侧一起改写：被搬文件自己的 `require` 是「旧目录 → 新目录」，引用它的人是「以引用方目录为基准」，两个基准不一样，很容易只改一半。
-3. 这类「构建产物布局」问题适合用产物级断言守，源码级断言守不住——编译器改的是路径，不是代码。
-
-### 涉及文件
-
-- `br-app/scripts/post-build-move-assets.js` — `MOVES` 表、`moveMainPackageJs()`、`resolveRelative()` / `relativize()` / `rewriteRequires()`
-- `br-app/scripts/verify-mp-subpackage-layout.js` — 新增产物守卫
-- `br-app/package.json` — `build:mp-weixin` 链尾接入守卫，新增 `test:mp-subpackage-layout`
-
-## 正式版真机发视频点了没反应，开发者工具却正常
-
-### 现象
-
-- 图片在开发者工具和正式版小程序上都能发。
-- 视频在微信开发者工具能发出去；正式版小程序里点「拍摄」入口选完视频，**界面上什么都不发生**：没有选择器报错、没有失败气泡、没有 Toast。
-
-### 根本原因（三层错误全被丢弃，所以「没反应」是代码上的必然）
-
-1. 聊天工具栏里根本没有独立的「视频」按钮，能发视频的是「拍摄」入口（`UploadType.CAMERA`），它调的是 `TUIGlobal?.chooseVideo({ sourceType: ['album','camera'], compressed: false, success })`，**只写了 success**。`sourceType` 含 `camera` 会在真机触发相机授权，一旦被拒，微信返回 `chooseVideo:fail user denied`，没有 fail 回调就等于把这个错误吞掉；开发者工具不校验授权、直接弹文件选择框，所以看起来正常。图片走「相册」入口的 `chooseImage`，不需要相机权限——两条链路的权限要求正好不同。
-2. `TUIChatService.sendVideoMessage(...)` 没有 `.catch`。lite-chat 的 `_processMiniVideoFile` 拿 `tempFilePath` 的**扩展名**当类型，只接受 `["mp4","quicktime","mov","video"]`，个别机型返回无扩展名或不认识的格式时，SDK 在消息进列表前就抛 ChatError(2352)，同样完全无反应。
-3. 上传阶段的失败至少会有失败气泡（SDK 的 `_upload` catch 里 `storeConversationMessage`），但错误信息被 SDK 拼成 `Unknown failed. error: {"message": }`，看不出是哪个域名没过白名单——这一点和语音那次同源。
-
-### 关于「视频是不是有独立白名单」
-
-不是。四类富媒体（image/audio/video/file）在 lite-chat 里共用一条通道：`im_cos_msg.simple_sig`/`pre_sig` 信令向服务端换取预签名 `upload_url`，再交给同一个 `wx.uploadFile` 包装器，SDK 里唯一的富媒体域名常量是 `["rich.my-imcloud.com","imrich.qcloud.com"]`（`rich` = 富媒体统称），没有任何按视频切换域名的分支。所以本项目就是已加白的 `20049215-sg.rich.my-imcloud.com`，**不需要为视频单独加域名**。
-
-但同一段代码里有一个只在真机才会换 host 的分支，很可能才是真正缺的那条白名单：
-
+### 解决方案
+滚底统一改用**数值 `scroll-top` 递增哨兵**，移除整套 `scroll-into-view` 锚点机制：
 ```js
-resolveUploadOrigin()  -> _resolveTargetOrigin(getFileUploadProxy())
-_resolveTargetOrigin(e) -> e || (shouldUseIpv6Host() ? _resolveIpv6Host() : '')
-shouldUseIpv6Host()    -> login.isIPv6 && isSimpleCos()
-_getRawOrUploadProxyUrl(url) -> host 整体替换成上面解析出的 origin
+let bottomScrollSeq = 0;
+const scrollToBottom = () => {
+  scrollTop.value = 1e9 + (++bottomScrollSeq);
+};
 ```
-
-新加坡区域的 IPv6 常量写死为 `https://sgpv6.rich.my-imcloud.com`。手机在 5G（基本都是 IPv6）或 IPv6-only Wi-Fi 下，SDK 会把预签名地址的 host 整个换成它；开发者工具跑在 Mac 的 IPv4 上永远不命中。微信公众平台域名配置不支持通配符，这条没加就一定被拦。判别法：**关 Wi-Fi 用 5G 发一条语音或图片**，同样失败就是这条 IPv6 域名；5G 下都正常则回到第 1 条（相机权限）。
-
-### 解决方案
-
-不改行为，只把错误暴露出来，和语音那次同一套路（复用现成的 `getIMLastUploadError()`）：
-
-- `useUpload.ts` 给四个 `chooseImage/chooseVideo` 调用统一挂 `fail: genChooseFailHandler(...)`，Toast 显示 wx 原始 `errMsg`；`errMsg` 含 `cancel` 时不提示（用户主动取消是正常操作）。
-- `uploadToolkit/utils.ts` 给 `sendVideoMessage` 补 `?.catch(reportSendFailure('视频'))`，Toast 依次给出 **SDK 错误码 + 真实上传 host + errMsg**，host 直接取自拦截到的上传 URL，一眼分清域名还是权限。
-- `src/utils/im.js` 的 `hookUploadDiagnostic` 保持原样，它是 host 的唯一来源。
-
-### 验证
-
-- `scripts/verify-media-send-diagnostics.js`（`npm run test:media-send-diagnostics`）：断言四个 `choose*` 调用都带 fail、`sendVideoMessage` 有 catch、Toast 取的是真实上传 url 的 host 和 `err.code`、`getIMLastUploadError` 出口仍在，并额外校验两条 import 能解析到真实文件（`@/` 按 uni-app 别名映射到 `src`）。
-- `npm run build:mp-weixin` 通过，产物里 `useUpload.js` 有 4 处 `fail:`、`utils.js` 有 `发送失败 ${e?.code}`，`TUIKit → ../../../../../utils/im.js` 的跨包引用被 `verify-mp-subpackage-layout.js` 判定可解析。
-- 待用户在真机确认：5G 下点拍摄，Toast 会直接写明是 `user denied`（权限）还是 `sgpv6.rich.my-imcloud.com`（域名）。
-
-### 经验教训
-
-1. 「开发者工具正常、正式版不行」在这类项目里只有三种成因：**域名白名单、系统权限、真机才走的分支**。前两种是环境差异，第三种最容易漏——本例 SDK 的 IPv6 换 host 分支就是第三种。
-2. 富媒体上传域名要连 IPv6 变体一起配。`*.v6.rich.my-imcloud.com` 由 SDK 在检测到 IPv6 网络时整体替换 host，白名单里没有它，就会出现「同一操作有人失败有人正常」的诡异现象，按人按网络分裂，极难复现。
-3. 只写 success 不写 fail 的第三方 API 调用是静默失败制造机。SDK/框架代码可以照抄，但**错误出口必须在自己的层补回来**，否则线上只能看到「没反应」。
-4. 错误文案要带**可判别的最小信息**：域名问题给 host、权限问题给 wx 原始 errMsg、超限/格式问题给 SDK code，三者一次就能分开；只给「发送失败」等于没给。
-
-### 涉及文件
-
-- `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/useUpload.ts` — `genChooseFailHandler()`，四个 choose 调用挂 `fail`
-- `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/utils.ts` — `reportSendFailure()` + `sendVideoMessage().catch(...)`
-- `br-app/scripts/verify-media-send-diagnostics.js`、`br-app/package.json` — 新增断言脚本与 `test:media-send-diagnostics`
-- SDK 源码：`node_modules/@tencentcloud/lite-chat/standard.js` — `_processMiniVideoFile`/`_validateBeforeUploadVideo`/`Br` 格式白名单、`resolveUploadOrigin`/`_resolveIpv6Host` 的 IPv6 host 替换、`Xi=["rich.my-imcloud.com","imrich.qcloud.com"]`
-
-## 正式版真机发视频连 Toast 都不弹（同步抛错被 wx 回调吞掉）
-
-### 报错信息
-
-上一轮给 `sendVideoMessage` 补了 `?.catch(reportSendFailure('视频'))`，但真机测试发现：**点拍摄 → 选视频 → 完全没反应，连 Toast 都不弹**。开发者工具正常。
-
-### 根本原因
-
-`?.catch` 只能捕获 Promise reject，但 SDK 的视频错误出口是**同步 throw**：
-
-```
-TUIChatService.sendVideoMessage(options, sendMessageOptions)
-  → this.getEngine().chat.createVideoMessage(...)   // ← 同步抛错点
-    → this._processVideo(e)
-      → this._processMiniVideoFile(r)
-        → if (Mr(e)) throw new ChatError({message:"FileUnsupportedInMiniApp"})
-        → 或后续 _validateBeforeUploadVideo 校验失败也 throw
-  → this.sendMessage(s, t)   // ← 永远走不到
-```
-
-`createVideoMessage` 内部有 `try { ... } catch(e) { throw e }`——捕获后原样再抛，等于没有 catch。同步错误冒泡到 `wx.chooseVideo` 的 `success` 回调里，被微信框架吞掉（只写 console），UI 完全看不到。
-
-开发者工具正常是因为 `_processMiniVideoFile` 的 `Mr(e)` 检查（判断输入是否为 web File 对象）在工具里返回 false，真机上可能因为 `tempFiles` 结构差异或权限问题返回 true。
-
-### 解决方案
-
-三层防护，确保任何一层失败都能弹 Toast：
-
-1. **`utils.ts` 的 `sendVideoMessage`**：用 `try-catch` 包裹 `TUIChatService.sendVideoMessage(...)` 调用，同步抛错走 catch，异步 reject 走 `.catch`，两者都调 `reportSendFailure`。
-2. **`useUpload.ts` 的 `chooseVideoInUniApp` / `chooseCameraInUniApp`**：用 `try-catch` 包裹整个 `TUIGlobal.chooseVideo(...)` 调用，防止 API 本身同步抛错；`success` 回调里 `currentConversation` 为空时弹提示而不是静默跳过。
-3. **诊断日志**：`sendVideoMessage` 入口 `console.log` 打印 `chooseVideo` 返回的完整数据结构（`tempFilePath`/`fileType`/`size`/`tempFiles[0]` 的 keys），真机排查时直接从 vconsole 看。
-
-### 验证
-
-- `scripts/verify-media-send-diagnostics.js` 更新断言：两个 `chooseVideo` 入口必须有 `try{`、`TUIGlobal.chooseVideo(`（不能只用 `?.`）、`fail:` 回调、`genChooseFailHandler`；`sendVideoMessage` 必须用 `try-catch` 包裹 `TUIChatService.sendVideoMessage`；success 回调必须处理 `currentConversation` 为空；诊断日志必须记录 `tempFilePath`。
-- `npm run build:mp-weixin` 通过（主包 1.15MB，子包布局守卫 182 js）。
-- 产物内确认：`utils.js` 有 `try{...sendVideoMessage`、`发送失败`、`getIMLastUploadError`；`useUpload.js` 有 2 处 `try{...chooseVideo`、`当前环境不支持`、`会话未加载`。
-- 待用户在真机确认：选视频后要么成功发送，要么 Toast 显示具体错误（同步抛错现在也能被捕获了），vconsole 里能看到 `[TUIChat] 视频发送入参:` 的完整数据结构。
-
-### 走过的弯路
-
-上一轮只加了 `?.catch`，以为 `createVideoMessage` 的错误会走 Promise reject。实际上 SDK 的 `createVideoMessage` 内部是 `try { ... } catch(e) { throw e }`——同步抛错，根本不会创建 Promise。`?.catch` 对同步错误完全无效，必须在调用方用 `try-catch` 包裹。
-
-### 经验教训
-
-1. **第三方 SDK 的错误出口有两种：同步 throw 和 Promise reject**。`.catch` 只能抓后者。如果 SDK 文档没明确说，必须看源码确认——本例 `createVideoMessage` 的 `try-catch-rethrow` 模式就是典型的同步抛错。
-2. **wx 回调里的同步错误会被框架吞掉**。`success`/`fail` 回调里如果抛错，微信只写 console 不弹 UI，用户看到的就是「没反应」。所以回调内部必须有 try-catch。
-3. **诊断日志比错误处理更重要**。真机排查时，能看到「发生了什么」比「弹个 Toast 说失败了」有用得多。`console.log` 打印入参的完整结构，vconsole 里一眼就能看出是数据问题还是 API 问题。
-4. **「开发者工具正常、真机不行」的第三种成因**：除了域名白名单和系统权限，还有**SDK 内部的同步校验分支**。真机可能走了不同的代码路径（比如 `IN_MINI_APP` 判断、`tempFiles` 结构差异），这些分支在工具里不触发。
-
-### 涉及文件
-
-- `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/utils.ts` — `sendVideoMessage` 改为 `try-catch` 包裹 + 诊断日志
-- `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/useUpload.ts` — `chooseVideoInUniApp` / `chooseCameraInUniApp` 加 `try-catch` + `currentConversation` 空值提示
-- `br-app/scripts/verify-media-send-diagnostics.js` — 更新断言覆盖同步抛错防护
-- SDK 源码：`node_modules/@tencentcloud/lite-chat/node.es.js` — `createVideoMessage` 的 `try-catch-rethrow`、`_processMiniVideoFile` 的 `Mr(e)` 检查、`_validateBeforeUploadVideo` 的三项校验
-
-## 发送视频/图片后发送方窗口看不到新消息（会话被 onHide 清空）
-
-### 报错信息
-
-- 发送视频/图片后，接收方窗口正常显示新消息，但**发送方窗口看不到新发送的视频/图片**
-- 发送方窗口先变一片空白，再加载出之前的历史消息，然后出现"回到最新位置"按钮
-- vconsole 日志显示：
-  ```
-  TUIConversationService.switchConversation conversationID is empty, conversationID:
-  [TUIChat] 视频发送入参：{tempFilePath: "wxfile://...", duration: 12, size: 3525499, ...}
-  [_upload] uploadFile message: {ID: "144115268479202146-...", ...}
-  ```
-- SDK 确实在上传文件（`_upload` 日志存在），但发送方窗口不显示
-
-### 根本原因
-
-**`onHide` → `reset()` 清空了会话和消息列表，但 `success` 回调执行时会话尚未恢复**
-
-时序问题：
-1. 用户点击「拍摄/相册」→ 打开系统选择器 → 触发 `onHide`
-2. `onHide` 调用 `reset()` → `TUIConversationService.switchConversation('')` → 清空 `currentConversationID` 和消息列表
-3. 用户选择视频/图片 → `success` 回调执行
-4. 此时 `currentConversationID` 已被清空，虽然代码缓存了 `conversationID`，但 SDK 的消息列表已经被清空
-5. 调用 `sendVideoMessage(conversation, res)` 时，SDK 创建消息并尝试添加到消息列表，但消息列表关联的是空会话
-6. 然后 `onShow` 触发，调用 `initChat` 恢复会话，消息列表重新加载，但新发送的消息不在列表中（因为消息被添加到了错误的上下文）
-
-**关键发现**：`TUIConversationService.switchConversation()` 返回 Promise，是异步操作。之前代码同步调用后立即发送消息，此时会话可能尚未恢复。
-
-### 解决方案
-
-在 `chooseImage/chooseVideo/chooseMedia/chooseCamera` 的 `success` 回调中：
-
-1. 检查 `currentConversationID` 是否为空
-2. 如果为空且有缓存的 `conversationID`，调用 `TUIConversationService.switchConversation(cachedConversationID)` 并等待 Promise 完成
-3. 在 `.then()` 回调中获取 `conversation` 并发送消息
-4. 添加 `.catch()` 处理会话恢复失败的情况
-
-```typescript
-const currentID = TUIStore.getData(StoreName.CONV, 'currentConversationID');
-if (!currentID && cachedConversationID) {
-  // switchConversation 返回 Promise，等待会话恢复后再发送
-  TUIConversationService.switchConversation(cachedConversationID)
-    .then(() => {
-      const conversation = TUIStore.getConversationModel(cachedConversationID);
-      if (conversation) {
-        sendVideoMessage(conversation, res);
-      }
-    })
-    .catch((err) => {
-      console.error('[TUIChat] switchConversation 失败:', err);
-      Toast({ message: '会话恢复失败，请稍后重试', type: TOAST_TYPE.ERROR });
-    });
-  return;
-}
-```
-
-### 验证
-
-- `npm run build:mp-weixin` 通过（主包 1.15MB）
-- 真机测试：发送视频/图片后，发送方窗口立即显示新消息和进度条
-- vconsole 日志确认：`switchConversation` 成功后才发送消息
-
-### 经验教训
-
-1. **第三方 SDK 的异步 API 必须等待完成**。`switchConversation` 返回 Promise，同步调用后立即执行依赖会话的操作，会话可能尚未恢复。
-2. **`onHide` 会清空会话状态**。打开系统选择器（相册/相机）会触发 `onHide`，导致 `currentConversationID` 被清空。在 `success` 回调中必须检查会话是否有效。
-3. **缓存 ID 不够，还要恢复会话**。只缓存 `conversationID` 并调用 `getConversationModel` 不够，因为 SDK 的消息列表与 `currentConversation` 关联，必须先恢复会话再发送消息。
-4. **Promise 链式调用确保时序**。用 `.then()` 等待异步操作完成，再执行依赖结果的操作，避免竞态条件。
-
-### 涉及文件
-
-- `br-app/src/TUIKit/components/TUIChat/message-input-toolbar/uploadToolkit/useUpload.ts` — `chooseImage/chooseVideo/chooseMedia/chooseCamera` 的 `success` 回调中等待 `switchConversation` 完成
-- SDK 源码：`node_modules/@tencentcloud/chat-uikit-engine-lite/index.js` — `TUIConversationService.switchConversation` 返回 Promise
-
-## 历史消息图片和视频无法显示（超过 7 天的深历史）
-
-### 报错信息
-
-- 点击通知页中大于 7 天的历史会话进入聊天窗口
-- 图片消息显示为**灰色占位方块**，点击无法放大预览
-- 视频消息显示为**灰色方块**，点击无法播放
-- 无 JS 报错，控制台无异常
-
-### 根本原因
-
-**问题 1：图片 payload 结构不完整**
-
-TUIKit 组件访问图片 URL 有两种方式：
-1. `message-image.vue` 显示用 `content.url`（IImageMessageContent 接口）
-2. `handleImagePreview` 预览用 `content.imageInfoArray[2].url`
-
-原来的 `imagePayload` 只构建了 `imageInfoArray` 结构：
-```javascript
-return {
-  imageInfoArray: [{ url, width, height, size, type }]
-}
-```
-缺少顶层 `url`、`width`、`height` 字段，导致 `message-image.vue` 的 `:src="props.content.url"` 拿到 `undefined`，图片无法显示。
-
-**问题 2：视频缩略图未转存 OSS**
-
-后端回调只转存了视频主文件（`VideoUrl`）到 OSS，没有转存缩略图（`ThumbUrl`）。前端 `videoPayload` 使用 `row.thumbnail_oss_url`，但数据库中该字段为空，导致缩略图显示失败。
-
-**问题 3：深历史会话在 SDK 中不存在**
-
-腾讯云 IM 免费版只漫游 7 天会话，超过 7 天的会话在 SDK 中不存在。`TUIConversationService.switchConversation()` 要求会话必须存在于 SDK 中，lite-chat SDK 没有 `createConversation` 方法，导致报错：
-```
-[TUIChat] createConversation failed, trying switch anyway: 
-TypeError: t.et.createConversation is not a function
-```
-然后显示"会话不存在"。
-
-### 解决方案
-
-**修复 1：imagePayload 同时提供两种结构**
-
-修改 `br-app/src/utils/im-history.js`：
-```javascript
-function imagePayload(row, content) {
-  const info = (content.ImageInfoArray || []).find(i => i && i.URL)
-  const url = row.oss_url || (info && info.URL) || row.media_url || ''
-  const size = info || {}
-  const width = size.width || size.Width || 0
-  const height = size.height || size.Height || 0
-  // 同时支持 content.url（显示）和 content.imageInfoArray[2].url（预览）
-  const imageItem = { url, width, height, size: 0, type: 2 }
-  return {
-    url,
-    width,
-    height,
-    imageInfoArray: [imageItem, imageItem, imageItem],
-  }
-}
-```
-
-**修复 2：后端转存视频缩略图**
-
-修改 `br-server/app/services/im_callback_service.py`：
-- `ParsedMessage` 新增 `thumbnail_url` 字段
-- `parse_message` 提取视频的 `ThumbUrl`
-
-修改 `br-server/app/api/routes/im_callback.py`：
-```python
-# 视频缩略图单独转存 OSS
-if kind == "video" and thumbnail_url:
-    thumb_oss_url = await fetch_and_upload("image", thumbnail_url)
-    if thumb_oss_url:
-        await session.execute(
-            update(ImMessage).where(ImMessage.id == msg_id).values(thumbnail_oss_url=thumb_oss_url)
-        )
-        await session.commit()
-```
-
-新增数据库字段 `thumbnail_oss_url`（迁移文件 `2026_11_06_1000-k6l2m8n4p0q5_add_video_thumbnail_oss_url.py`）。
-
-**修复 3：创建模拟会话对象**
-
-修改 `br-app/src/TUIKit/components/TUIChat/entry-chat-only.ts`：
-```typescript
-function createMockConversation(conversationID: string): any {
-  const peerID = conversationID.replace(/^C2C/, '').replace(/^GROUP/, '')
-  return {
-    conversationID,
-    type: conversationID.startsWith('C2C') ? 'C2C' : 'GROUP',
-    userProfile: { userID: peerID },
-    getShowName() { return peerID.slice(0, 8) },
-    // ... 最小属性集
-  }
-}
-
-async function switchConversation(conversationID: string) {
-  // 先尝试正常切换
-  try {
-    await TUIConversationService.switchConversation(conversationID)
-    const currentConv = TUIStore.getData(StoreName.CONV, 'currentConversation')
-    if (currentConv && currentConv.conversationID === conversationID) {
-      return true
-    }
-  } catch (e) {
-    console.warn('[TUIChat] switchConversation failed:', e)
-  }
-  
-  // 切换失败，创建模拟会话对象
-  const mockConv = createMockConversation(conversationID)
-  TUIStore.update(StoreName.CONV, 'currentConversation', mockConv)
-  return true
-}
-```
-
-### 验证
-
-- `npm run build:mp-weixin` 通过（主包 1.15MB）
-- 真机测试：点击大于 7 天的历史会话，能正常进入聊天窗口
-- 图片消息正常显示，点击能放大预览
-- 视频消息缩略图正常显示，点击能播放
-- 不再报"会话不存在"错误
-
-### 经验教训
-
-1. **TUIKit 组件的 payload 结构必须同时满足显示和预览两种访问方式**。只构建 `imageInfoArray` 不够，顶层必须有 `url` 字段。
-2. **视频消息有两个媒体地址：主文件和缩略图**。回调转存时要分别处理，不能只转存主文件。
-3. **lite-chat SDK 没有 `createConversation` 方法**。深历史会话需要通过 `TUIStore.update` 手动注入模拟对象。
-4. **媒体地址优先级**：`oss_url`（转存后）> `content.VideoUrl/Url`（IM 原地址）> `media_url`（兜底）。
-
-### 涉及文件
-
-- `br-app/src/utils/im-history.js` — `imagePayload` 和 `videoPayload` 函数
-- `br-server/app/services/im_callback_service.py` — `ParsedMessage` 新增 `thumbnail_url`
-- `br-server/app/api/routes/im_callback.py` — 视频缩略图转存逻辑
-- `br-server/app/models/im_message.py` — 新增 `thumbnail_oss_url` 字段
-- `br-app/src/TUIKit/components/TUIChat/entry-chat-only.ts` — 模拟会话对象创建
-
-## 聊天窗口向上翻到顶不自动加载，必须点「查看更多」
-
-### 现象
-
-- 会话窗口往上滚到最顶，历史消息不会继续加载，一定要点顶部的「查看更多」才出一页。
-- 无任何报错，纯交互缺陷。
-
-### 根本原因
-
-`message-list/index.vue` 的 `handelScrollListScroll` 只做了一件事：`scrollButtonInstanceRef.value?.judgeScrollOverOneScreen(e)`（判断要不要显示「回到底部」按钮）。滚动位置从来没有被当成加载信号，唯一的加载入口是「查看更多」的 `@click="getHistoryMessageList"`。
-
-### 解决方案
-
-在已有的 throttle 回调里读 `scroll-view` 的滚动位置，到顶就复用同一个加载入口（commit `058d540`）：
-
-```typescript
-const handelScrollListScroll = throttle(
-  function (e: Event) {
-    scrollButtonInstanceRef.value?.judgeScrollOverOneScreen(e);
-    const detail = (e as any).detail || {};
-    const scrollTop = detail.scrollTop || 0;
-    const canLoadMore = !isCompleted.value || (!props.isGroup && dbHasMore.value);
-    if (scrollTop < 50 && canLoadMore && !isLoadingMessage.value) {
-      getHistoryMessageList();
-    }
-  },
-  500,
-  { leading: true },
-);
-```
-
-三个条件缺一不可：`canLoadMore` 沿用「查看更多」的显示条件（SDK 没到头，或单聊且数据库还有更早的），`!isLoadingMessage` 防止一次滚动触发多页。
-
-### 经验教训
-
-1. 小程序 `scroll-view` 的滚动位置在 `e.detail.scrollTop`，不在 `e.target` 上；H5 的写法搬过来会永远读到 0。
-2. 自动加载不要另写一套加载逻辑，复用按钮的入口函数，分页状态（`isCompleted` / `dbHasMore` / `isLoadingMessage`）才只有一份。
-3. 节流用 `{ leading: true }`：第一次滚动立刻响应，后续 500ms 内的抖动被吃掉，手感才不会「滚到顶了还要等一下」。
-
-### 涉及文件
-
-- `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — `handelScrollListScroll`
-
-## 会话列表条目只有昵称，摘要和时间空白
-
-### 现象
-
-- 消息通知「会话」TAB（以及「全部」TAB 的会话入口）里，部分会话只显示对端昵称，下面一行摘要和时间都是空的。
-- 数据库 `im_messages` 里这些会话明明有最后一条消息。
-
-### 根本原因
-
-上一轮为了过滤「SDK 缓存了不属于当前用户的会话」，把 `mergeConversations` 写成**整行采用 SDK 数据**：
-
-```javascript
-// 注释写的是「以 DB 为准」，代码却是整行取 SDK row
-if (peerIM && dbIndex.has(peerIM)) {
-  merged.set(peerIM, row)   // row 是 SDK 行
-}
-```
-
-SDK 的 `conversation.getLastMessage('text')` / `getLastMessage('time')` 在会话刚同步、`lastMessage` 还没落到本地时可能返回空字符串。整行覆盖等于把 DB 里现成的摘要和时间一起丢掉——过滤条件（哪些会话该出现）和字段来源（每个字段信谁）被绑成了一件事。
-
-### 解决方案
-
-改成字段级互补，过滤条件保持不变（commit `058d540`）：
-
-```javascript
-const summary = sdkRow.summary || dbRow.summary || ''
-const rawTime = sdkRow.rawTime || dbRow.last_msg_time || 0
-merged.set(peerIM, {
-  conversationID: sdkRow.conversationID,
-  name: sdkRow.name || dbRow.name || '',
-  avatar: sdkRow.avatar || dbRow.avatar || '',
-  summary,
-  time: sdkRow.time || formatAbsoluteTime(dbRow.last_msg_time),
-  rawTime,
-  unreadCount: sdkRow.unreadCount || 0,   // 未读数是实时状态，只信 SDK（本轮之后改为 max，见后文）
-})
-```
-
-### 经验教训
-
-1. 多数据源合并要分开决定两件事：**哪些行该出现**（过滤）和**每个字段信谁**（兜底）。用「整行取一方」实现过滤，一定会顺手把字段兜底也做死。
-2. 注释和代码不一致时以代码为准。本例注释写着「以 DB 为准」，实际是 SDK 整行覆盖，照着注释排查会找错方向。
-3. SDK 的 getter（`getLastMessage('text')`）不是同步可靠的快照，会话列表刚同步完时可能为空，凡是展示字段都要有第二来源。
-
-### 涉及文件
-
-- `br-app/src/pages-sub/notifications/index.vue` — `mergeConversations`
-
-## 会话摘要显示 [TUIEmoji_Guffaw] 而不是 [大笑]
-
-### 报错信息
-
-显示层面（「全部」和「会话」两个 TAB 的摘要）：
-
-```
-[TUIEmoji_Guffaw][TUIEmoji_Speechless]
-```
-
-修复过程中先后撞到的两个运行时错误：
-
-```
-Error: module 'TUIKit/components/TUIChat/emoji-config/locales/zh_cn.js' is not defined,
-require args is '../../TUIKit/components/TUIChat/emoji-config/locales/zh_cn.js'
-
-Error: module 'TUIKit/components/TUIChat/emoji-config/index.js' is not defined,
-require args is '../../TUIKit/components/TUIChat/emoji-config/index.js'
-```
-
-以及 IM 初始化失败时同样是 key：
-
-```
-IM init failed: IM登录超时(15000ms)
-```
-
-### 根本原因
-
-1. **表情在传输和落库时都是 key**。TUIKit 只在聊天页渲染消息时用 `emoji-config` 把 `[TUIEmoji_*]` 换成图片；会话列表摘要是纯文本，没有这层转换，于是 key 直接露出来。
-2. **两个数据源的格式不一样**：SDK 的 `conversation.getLastMessage('text')` 已经返回中文名（`[大笑]`），而 DB 的 `im_messages.content` 存的是原始 key。只在一个地方转换必然漏掉另一条路径。
-3. **小程序分包隔离**：`pages-sub` 和 `TUIKit` 是两个独立子包，子包之间不能 `require`，编译能过、运行时模块找不到。
-
-### 解决方案
-
-1. 在 `pages-sub` 内新建 `br-app/src/pages-sub/utils/emoji.js`：维护一份 key→中文映射副本（数据来自 `TUIKit/components/TUIChat/emoji-config/locales/zh_cn.ts`，62 条）和替换函数：
-
-```javascript
-const EMOJI_KEY_REG = /\[TUIEmoji_\w+\]/g
-export function transformEmojiKeys(text) {
-  if (!text) return ''
-  return text.replace(EMOJI_KEY_REG, (match) => EMOJI_KEY_TO_CN[match] || match)
-}
-```
-
-2. 转换点放在 `mergeConversations` 里**读到 DB 数据的那两处**，而不是放在 SDK 行上（commit `a54b6fe` → `fdabdae`）：
-
-```javascript
-// SDK + DB 都有的会话：SDK 的 summary 已是中文，只在用到 DB 兜底时转换
-const summary = sdkRow.summary || transformEmojiKeys(dbRow.summary || '')
-
-// 只有 DB 的深历史会话（含 IM 登录超时、消息全部超 7 天）
-summary: transformEmojiKeys(row.summary || ''),
-```
-
-3. `toConversationRow`（SDK 行）**不做转换**——它拿到的已经是中文，再转一次是多余动作。
-
-这样无论 IM 是否初始化成功、会话是否在漫游窗口内，摘要都是中文。
-
-### 走过的弯路（务必避免重复）
-
-| 轮次 | 做法 | 结果 |
-| --- | --- | --- |
-| 1 | 直接 `import` TUIKit 的 `emoji-config/locales/zh_cn` | 跨子包 require，模块未定义 |
-| 2 | 改 `import` `emoji-config/index` | 同样报错，index 内部还会 require 别的 TUIKit 模块 |
-| 3 | 映射复制到本子包，但 `transformEmojiKeys` 放在 `toConversationRow` | 表面修好；IM 超时或深历史走 DB-only 路径时根本不经过它，用户截图仍是 key |
-| 4 | 加日志打印 `rawSummary` 与 `summary` | 才看清 SDK 已是 `[大笑][无语][星星眼]`，未转换的是 DB 分支 |
-
-### 验证
-
-- `npm run build:mp-weixin` 通过，`dist/build/mp-weixin/pages-sub/utils/emoji.js` 存在（同子包内相对路径引用，不再跨包）。
-- 真机：IM 正常、`IM登录超时(15000ms)`、超 7 天深历史三种情况下摘要都显示 `[大笑]`。
-
-### 经验教训
-
-1. **跨子包不能 require**。两个子包都要用的东西放主包 `src/utils/`；本例映射只有 62 条且只服务于摘要，复制到本子包比抽到主包更划算（主包体积敏感，当前 1.15MB）。
-2. **格式归一化要放在每个数据源各自的入口**，不是放在最终渲染前。合并函数有两条分支（SDK+DB、DB-only），只改一条就会在另一条路径上漏。
-3. 别对已经是目标格式的数据再转换一次。先加日志确认数据实际形态，再决定转换点——本例靠日志才发现 SDK 侧早已是中文。
-4. 复制第三方映射表要写清来源文件路径，将来 TUIKit 升级新增表情时知道去哪儿同步。
-
-### 涉及文件
-
-- `br-app/src/pages-sub/utils/emoji.js` — 新增，key→中文映射与 `transformEmojiKeys`
-- `br-app/src/pages-sub/notifications/index.vue` — `mergeConversations` 两处 DB 摘要转换
-
-## 全部消息超过 7 天的会话，进入聊天页一片空白，「查看更多」也点不出消息
-
-### 报错信息
-
-界面无报错：标题栏显示对端昵称，顶部一个「查看更多」，底部输入框，中间全白。控制台：
-
-```
-[TUIChat] Conversation not in SDK, attempting switch: C2Cc904bd6f84a147aeb3272f92616dc156
-GetConversationProfile.getConversationProfile conversationID:C2Cc904bd6f84a147aeb3272f92616dc156 isNewConversation:true
-LiteChat [getConversationList] getConversationList success
-TUIConversationService.init, getConversationList count:0 isSyncCompleted:true
-```
-
-### 根本原因
-
-**两条加载路径同时是死的**：
-
-1. 引擎 `chat-uikit-engine-lite` 的 `onCurrentConversationIDUpdated()` 监听 `currentConversationID`，切会话时会自动 `getMessageList()`。这种会话在 SDK 里一条漫游消息都没有，返回 `messageList: []` + `isCompleted: true`。
-2. 组件的数据库翻页第一行就把空列表挡死了：
-
-```typescript
-const earliestTime = messageList.value?.[0]?.time;
-if (!earliestTime) return;   // 空列表没有游标 → 数据库一页都不取
-```
-
-3. 「查看更多」的路由条件是 `isCompleted && !isGroup` 才走数据库。首次点击时 `isCompleted` 还是 false，走 SDK 又拿到空；等 `isCompleted` 变 true 后再点，就撞上第 2 条的 `return`。按钮永远点不出东西。
-4. 附带一个会把入口永久锁死的问题：`TUIChatService.getMessageList()` 在 `chat.isReady()` 为 false 时是 **reject**，而调用处只有 `.then()` 没有 `.catch()`，`isLoadingMessage` 卡在 true，之后所有点击和滚动都被开头的 `if (isLoadingMessage.value) return` 挡掉。
-
-### 解决方案
-
-commit `82df23d`，全部在 `message-list/index.vue`：
-
-1. **进入页面即自动取数据库最近一页**，触发点选引擎的状态信号而不是猜延时：
-
-```typescript
-function onChatCompletedUpdated(flag: boolean) {
-  isCompleted.value = flag;
-  // 全部消息都超出 SDK 漫游窗口时，引擎只会给回空列表
-  if (flag && !props.isGroup && !TUIStore.getData(StoreName.CHAT, 'messageList')?.length) {
-    loadDatabaseHistoryPage();
-  }
-}
-```
-
-2. **游标兜底到「现在」**。后端 `before` 是严格小于（`msg_time < before`），所以当前时间正好取到最近一页：
-
-```typescript
-async function loadDatabaseHistoryPage(cursor?: number) {
-  const earliestTime =
-    cursor ||
-    TUIStore.getData(StoreName.CHAT, 'messageList')?.[0]?.time ||
-    Math.floor(Date.now() / 1000);
-```
-
-3. **空判断和游标都读 store，不读组件 ref**。引擎是先 `updateMessageList` 再 `update(isCompleted)`，读 `TUIStore.getData` 与引擎同一份事实，不受 Vue watcher 时序影响；读组件 ref 有可能拿到上一个会话的残留列表，游标就错了。
-4. `getHistoryMessageList()` 补 `.catch(() => { isLoadingMessage.value = false })`，SDK 不可用时按钮还能再点。
-5. `onMounted` 补一次 `currentConversationID.value = TUIStore.getData(StoreName.CONV, 'currentConversationID') || ''`：会话可能在本组件挂载前就已切换，watcher 补不上这一次，否则 `fetchImHistoryPage('')` 直接返回空页并把 `dbHasMore` 置 false，连按钮都消失。
-6. 整页都是不可重建类型时的重试，带上本页最早时间做游标：`loadDatabaseHistoryPage(Math.min(...page.messages.map(row => row.msg_time)))`。原来无参递归时游标不变，会**原地打转无限取同一页**。
-
-### 验证
-
-- `npm run build:mp-weixin` 通过，主包 1.15MB、子包布局校验通过。
-- 编译产物断言：`Date.now()/1e3` 兜底、`.catch(()=>{O.value=!1})` 复位、`isCompleted` 触发器 `!t||f.isGroup||(getData(CHAT,"messageList")?.length)||te()` 均在 `dist/build/mp-weixin/TUIKit/components/TUIChat/message-list/index.js` 中。
-- 真机由使用者确认：进入该会话即出现最近一页消息，继续上滑能翻页。
-
-### 经验教训
-
-1. 「翻页游标来自列表第一条」这个前提在**空列表**时不成立，而深历史会话恰恰就是空列表。凡是游标式分页都要想清楚第一页从哪儿起。
-2. 自动加载的触发点要用引擎已有的状态信号（`isCompleted` 置真 + 列表为空），不要靠 `setTimeout` 猜 SDK 什么时候返回。
-3. 判断「SDK 有没有给消息」要读 store 而不是组件 ref：引擎更新 store 和 Vue watcher 回写 ref 之间有时序差，跨会话时 ref 还可能是上一个会话的数据。
-4. **任何在 `.then()` 里复位 loading 标志的写法都必须配 `.catch()`**，否则一次失败就把入口永久锁死，表现为「点了没反应」而不是报错。
-5. 递归重试翻页必须推进游标，否则是无限循环；这类 bug 只在「整页都不可重建」时才触发，平时看不出来。
-
-### 涉及文件
-
-- `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — `onChatCompletedUpdated`、`loadDatabaseHistoryPage`、`getHistoryMessageList`、`onMounted`
-
-## 会话未读数只统计 SDK，超出 7 天漫游窗口的未读不显示
-
-### 现象
-
-- 「全部」TAB 的会话入口红点、「会话」TAB 的未读角标，只反映 SDK 漫游窗口内的未读。
-- 深历史会话（SDK 里没有、只有 DB 有）即使库里有未读消息，角标也永远是 0。
-
-### 根本原因
-
-1. 前端未读数的唯一来源是 `conversation.unreadCount`（SDK）；`mergeConversations` 的 DB-only 分支更是硬编码 `unreadCount: 0`。
-2. 后端 `GET /api/v1/chat/conversations` 从来没返回未读数字段——尽管 `im_messages.is_read` 一直由 `C2C.CallbackAfterMsgReport` 回调（`apply_msg_report()`，按 `msg_time <= LastReadTime` 置位）在维护。数据早就有，只是没被统计和下发。
-
-### 解决方案
-
-**后端**（commit `da25391`，`br-server/app/api/routes/chat.py`）：一条分组聚合拿到所有对端的未读数，避免在已有的 per-peer 循环里再加一次查询：
-
-```python
-unread_result = await db.execute(
-    select(
-        ImMessage.im_from_account.label("peer_account"),
-        func.count(ImMessage.id).label("unread_count"),
-    )
-    .where(
-        ImMessage.im_to_account == self_account,
-        ImMessage.is_read.is_(False),
-    )
-    .group_by(ImMessage.im_from_account)
-)
-unread_counts = {row.peer_account: row.unread_count for row in unread_result}
-```
-
-每个会话返回 `"unread_count": unread_counts.get(peer_account, 0)`。口径是**对端发给我且未读**，自己发出的消息不计入。
-
-**前端**（`mergeConversations`）：
-
-```javascript
-// SDK + DB 都有的会话
-unreadCount: Math.max(sdkRow.unreadCount || 0, dbRow.unread_count || 0),
-// 只有 DB 的深历史会话
-unreadCount: row.unread_count || 0,
-```
-
-**为什么是 max 而不是相加**：两边统计的是同一批未读消息（DB 的 `is_read` 就是 SDK 已读上报回写的），相加会翻倍。取较大值既保留 SDK 的实时值，又能补上 SDK 已丢弃的深历史未读——正常情况下 DB 未读 ≥ SDK 未读，因为 DB 不受 7 天窗口限制。
-
-两个 TAB 共用同一份 `conversations`，`conversationSummary.hasUnread`（`list.some(item => item.unreadCount > 0)`）自动跟着生效，不需要分别改。
-
-### 验证
-
-- `pytest tests/test_im_callback_sync.py::TestConversationListAPI` → 8 passed，含新增 3 个：只计未读来信（自己发的不计）、已读回执回写后归零、只有发出消息的用户未读为 0。
-- `npm run build:mp-weixin` 通过；产物断言两处 `unread_count` 都在（`Math.max(u.unreadCount||0,a.unread_count||0)` 与 `unreadCount:u.unread_count||0`）。
-
-### 已知前提
-
-- **依赖 IM 控制台开启「单聊消息已读上报之后回调」**。没开的话 `is_read` 永不置位，红点会一直清不掉。
-- 后端要重新部署才生效。
-
-### 经验教训
-
-1. 未读这类「状态计数」在两个数据源里是**同一批事实的两种视图**，合并用 `max` 而不是 `sum`；先想清楚两边统计的是不是同一批对象，再决定合并算子。
-2. DB 侧统计未读必须限定方向（`im_to_account == 自己`），否则把自己发出的消息也算成未读。
-3. 字段早就在库里（`is_read`）不等于功能就有了；排查「数量不对」先确认接口到底返没返这个字段。
-
-### 涉及文件
-
-- `br-server/app/api/routes/chat.py` — `get_conversation_list` 新增未读聚合与 `unread_count`
-- `br-server/tests/test_im_callback_sync.py` — `TestConversationListAPI` 新增 3 个未读数测试
-- `br-app/src/pages-sub/notifications/index.vue` — `mergeConversations` 两处未读数合并
+- 数值 `scroll-top` 被原生 `scroll-view` **clamp 到 `maxScroll`（即底部）**，永远不滚出内容外，首点即正确。
+- **递增哨兵**保证每次设值都不同：手动滚动后 ref 不跟随原生位置，同值重设不触发滚动，
+  递增确保每次点击/每条新消息都能重新触发滚底。
+- 末条变化 watcher（初次加载/收到新消息）与 `scrollToLatestMessage` 统一走 `scrollToBottom()`。
+- 删除 `scrollAnchorID` / `setAnchor` / `scheduleAnchorClear` / `anchorClearTimer`
+  及模板 `:scroll-into-view` 绑定和各处清锚点代码（定位原消息 `scrollToTargetMessage`
+  本就用数值测量，不受影响）。
+
+---
+
+## 验证方式与边界
+
+### 已执行
+- **源码断言**：`node scripts/verify-im-history.js`（深历史重建契约 + 原子前插 + 滚底哨兵 + 无 `scroll-into-view` 绑定）。
+- **聊天相关断言**：`verify-chat-read-gate.mjs`、`verify-chat-read-on-visible.js`、
+  `verify-tuikit-cleanup.js`、`verify-media-send-diagnostics.js` 均通过。
+- **双端构建**：`npm run build:mp-weixin`（含分包布局校验，主包 1.16MB）、`npm run build:h5` 均成功。
+- **编译产物核对**：mp-weixin `message-list/index.wxml` 已无 `scroll-into-view`，
+  `scroll-top="{{i}}"`、`scroll-anchoring="{{true}}"` 保留；`index.js` 滚底为 `P.value=1e9+ ++F` 递增哨兵。
+- **H5 冒烟**：本地静态服务打开首页，TUIKit 引擎正常加载（LiteChat 1.6.22 / Engine-Lite 1.0.7 / UniversalAPI 2.4.1），
+  无 JS/Vue 运行时错误；仅后端未启动的预期 `ERR_CONNECTION_REFUSED`（`localhost:8000/api/v1/*`）。
+
+### 边界（如实说明）
+- 会话窗口需 **IM 登录 + 后端运行 + 超 7 天历史会话**才能真机复现，
+  本轮无法在认证态小程序真机运行时逐一点验按钮交互，滚底修复以**源码断言 + 双端构建 + 编译产物核对**为准。
+- `verify-im-history-merge.mjs`（引擎级合并行为）因 `im-history.js` 早前引入 `@/` 别名 TS 依赖，
+  裸 Node 无法解析而失败，属**既有问题**，与本轮滚动改动无关。
+
+## 关键经验
+1. 小程序 `scroll-into-view` 是「元素顶部对齐视口顶部」，**不是**「滚到元素可见」：
+   锚末条会滚出内容外白屏，锚旧首条会在前插时前跳超一屏。滚底/锚定优先用数值 `scroll-top`（原生 clamp）。
+2. 数值 `scroll-top` 同值重设不触发，手动滚动后 ref 不跟随原生位置 → 用**递增哨兵**强制重触发。
+3. 消除前插过渡帧的本质是**原子化**：插入前预测量批次高度（离屏镜像），列表与目标 `scroll-top` 同一次 setData。
+4. 小程序 `scrollOffset` 不返回 `scrollHeight`，内容总高需测包裹层；spinner 移出内容流避免干扰高度核算。
+5. 平台差异：`scroll-anchoring` webview 仅 iOS、Skyline 3.6.2+ 默认开；安卓 webview 需 CSS `overflow-anchor`。

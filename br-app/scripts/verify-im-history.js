@@ -66,10 +66,18 @@ assert.ok(
     && /nextTick\(\(\) => autoFillViewport\(\)\)/.test(list),
   '缺少不足一屏自动续拉逻辑',
 )
-// 前插历史不再用 scroll-into-view 锚旧首条：小程序原生 scroll-view 会在前插子节点布局前就执行
-// scroll-into-view，锚到旧位置导致视口被前插内容顶到超一屏外。改用确定性的「高度差补偿 scroll-top」。
-assert.ok(!/setAnchor\(oldFirst\)/.test(list), '前插仍用 scroll-into-view 锚旧首条，小程序会前跳超一屏')
-assert.ok(/setAnchor\(newLast\)/.test(list), '末条变化（初次加载/新消息）仍应锚末条滚底')
+// 滚动统一用数值 scroll-top（原生 clamp 到最大滚动位置）。scroll-into-view 会把目标「顶部」
+// 对齐视口顶部：锚旧首条会在前插时前跳超一屏，锚末条会在末条不足一屏时滚过内容末尾白屏。
+assert.ok(!/:scroll-into-view=/.test(list), '仍绑定 scroll-into-view，锚末条会滚出内容外白屏')
+assert.ok(!/setAnchor\(/.test(list), '仍残留 scroll-into-view 锚点机制')
+assert.ok(
+  /const scrollToBottom = \(\) => \{\s*scrollTop\.value = 1e9 \+ \(\+\+bottomScrollSeq\)/.test(list),
+  '滚底未用递增哨兵 scroll-top（同值重设不触发，手动滚动后 ref 不跟随原生位置）',
+)
+assert.ok(
+  /if \(!\(scrollButtonInstanceRef\.value\?\.isScrollButtonVisible && lastFlow === 'in'\)\) \{\s*scrollToBottom\(\)/.test(list),
+  '末条变化（初次加载/新消息）未走数值滚底',
+)
 assert.ok(
   /async function measureScroll\(\)/.test(list)
     && /getBoundingClientRect\('#messageScrollContent'/.test(list)

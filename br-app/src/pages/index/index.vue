@@ -242,7 +242,7 @@
       </view>
 
       <!-- Bottom spacing for tab bar -->
-      <view style="height: 120rpx;" />
+      <view class="bottom-space" />
     </scroll-view>
   </view>
 </template>
@@ -595,8 +595,18 @@ export default {
 
 /* Content */
 .content {
-  height: calc(100vh - var(--status-bar-height, 44px) - 88rpx - 100rpx);
+  height: calc(100vh - var(--status-bar-height, 44px) - 88rpx);
 }
+
+.bottom-space {
+  height: 24rpx;
+}
+
+/* #ifdef H5 */
+.bottom-space {
+  height: calc(50px + env(safe-area-inset-bottom) + 24rpx);
+}
+/* #endif */
 
 /* Banner */
 .banner-section {

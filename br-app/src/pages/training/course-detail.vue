@@ -263,11 +263,17 @@
 
     <!-- 底部操作栏 -->
     <view class="bottom-bar">
-      <view class="fav-btn" @tap="onToggleFav">
-        <text :class="['heart-icon', { active: isFav }]">♥</text>
+      <view class="action-ico" @tap="onToggleFav">
+        <view :class="['action-ico-badge', 'badge-fav', { active: isFav }]">
+          <view :class="['icon', isFav ? 'icon-heart-filled' : 'icon-heart', 'action-ico-icon']" />
+        </view>
+        <text :class="['action-ico-text', { active: isFav }]">关注</text>
       </view>
-      <view class="fav-btn" @tap="onOpenCS">
-        <text class="cs-icon">🎧</text>
+      <view class="action-ico" @tap="onOpenCS">
+        <view class="action-ico-badge badge-cs">
+          <view class="icon icon-headset action-ico-icon" />
+        </view>
+        <text class="action-ico-text">客服</text>
       </view>
       <view class="bottom-price">
         <text class="bottom-price-label">单课时</text>
@@ -1197,8 +1203,8 @@ export default {
   display: flex;
   align-items: center;
   gap: 18rpx;
-  padding: 18rpx 28rpx;
-  padding-bottom: calc(18rpx + env(safe-area-inset-bottom));
+  padding: 16rpx 28rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.98);
   border-top: 1rpx solid rgba(45, 52, 54, 0.06);
   box-shadow: $shadow-bottom;
@@ -1206,40 +1212,81 @@ export default {
   z-index: 100;
 }
 
-.fav-btn {
-  width: 88rpx;
-  height: 88rpx;
+.action-ico {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 96rpx;
+  padding: 6rpx 8rpx;
+  border-radius: 20rpx;
+  cursor: pointer;
+}
+
+.action-ico-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
   border-radius: 50%;
-  border: 2rpx solid $border-color;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: $white;
+  border: 2rpx solid transparent;
+  transition: transform 0.2s $ease-out, background-color 0.2s $ease-out,
+    border-color 0.2s $ease-out, box-shadow 0.2s $ease-out;
 }
 
-.heart-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56rpx;
-  height: 56rpx;
-  font-size: 50rpx;
-  line-height: 56rpx;
-  color: $white;
-  -webkit-text-stroke: 3rpx $text-muted;
-  font-family: Arial, Helvetica, sans-serif;
-  transform: translateY(1rpx);
+.action-ico:active .action-ico-badge {
+  transform: scale(0.9);
 }
 
-.heart-icon.active {
+.badge-fav {
+  background: $bg-color;
+  border-color: rgba(45, 52, 54, 0.05);
+}
+
+.badge-fav .action-ico-icon {
+  color: $text-secondary;
+}
+
+.badge-fav.active {
+  background: $danger-light;
+  border-color: rgba(255, 107, 107, 0.2);
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 107, 0.18);
+}
+
+.badge-fav.active .action-ico-icon {
   color: $danger;
-  -webkit-text-stroke-color: $danger;
 }
 
-.cs-icon {
-  font-size: 44rpx;
+.badge-cs {
+  background: $primary-soft;
+  border-color: rgba(79, 110, 247, 0.1);
+}
+
+.badge-cs .action-ico-icon {
+  color: $primary;
+}
+
+.action-ico:active .badge-cs {
+  background: $primary-light;
+}
+
+.action-ico-icon {
+  font-size: 34rpx;
+}
+
+.action-ico-text {
+  font-size: 20rpx;
   line-height: 1;
+  color: $text-secondary;
+  font-weight: 500;
+  letter-spacing: 0.3rpx;
+  transition: color 0.2s $ease-out;
+}
+
+.action-ico-text.active {
+  color: $danger;
+  font-weight: 600;
 }
 
 .bottom-price {

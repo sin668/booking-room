@@ -128,11 +128,15 @@
     <!-- 底部操作栏：关注 + 客服（平台客服）+ 立即联系/编辑 -->
     <view v-if="loaded" class="action-bar">
       <view class="action-ico" @tap="onToggleFav">
-        <text :class="['fav-heart', { active: isFav }]">♥</text>
-        <text class="action-ico-text">关注</text>
+        <view :class="['action-ico-badge', 'badge-fav', { active: isFav }]">
+          <view :class="['icon', isFav ? 'icon-heart-filled' : 'icon-heart', 'action-ico-icon']" />
+        </view>
+        <text :class="['action-ico-text', { active: isFav }]">关注</text>
       </view>
       <view class="action-ico" @tap="onOpenCS">
-        <text class="cs-emoji">🎧</text>
+        <view class="action-ico-badge badge-cs">
+          <view class="icon icon-headset action-ico-icon" />
+        </view>
         <text class="action-ico-text">客服</text>
       </view>
       <view v-if="isOwner" class="action-primary" @tap="goEdit">
@@ -749,10 +753,10 @@ export default {
 .action-bar {
   display: flex;
   align-items: center;
-  gap: 28rpx;
+  gap: 18rpx;
   flex-shrink: 0;
-  padding: 18rpx 28rpx;
-  padding-bottom: calc(18rpx + env(safe-area-inset-bottom));
+  padding: 16rpx 28rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(12rpx);
   border-top: 2rpx solid $border-soft;
@@ -763,40 +767,77 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4rpx;
+  gap: 8rpx;
+  min-width: 96rpx;
+  padding: 6rpx 8rpx;
+  border-radius: 20rpx;
   cursor: pointer;
-  padding: 8rpx;
-  border-radius: 12rpx;
-  transition: all 0.2s ease;
 }
 
-.action-ico:active {
-  background: $primary-soft;
-  transform: scale(0.95);
+.action-ico-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  border: 2rpx solid transparent;
+  transition: transform 0.2s $ease-out, background-color 0.2s $ease-out,
+    border-color 0.2s $ease-out, box-shadow 0.2s $ease-out;
 }
 
-.fav-heart {
-  font-size: 40rpx;
-  line-height: 1;
-  color: $white;
-  -webkit-text-stroke: 2rpx $text-muted;
-  font-family: Arial, Helvetica, sans-serif;
+.action-ico:active .action-ico-badge {
+  transform: scale(0.9);
 }
 
-.fav-heart.active {
+.badge-fav {
+  background: $bg-color;
+  border-color: rgba(45, 52, 54, 0.05);
+}
+
+.badge-fav .action-ico-icon {
+  color: $text-secondary;
+}
+
+.badge-fav.active {
+  background: $danger-light;
+  border-color: rgba(255, 107, 107, 0.2);
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 107, 0.18);
+}
+
+.badge-fav.active .action-ico-icon {
   color: $danger;
-  -webkit-text-stroke-color: $danger;
 }
 
-.cs-emoji {
-  font-size: 36rpx;
-  line-height: 1;
+.badge-cs {
+  background: $primary-soft;
+  border-color: rgba(79, 110, 247, 0.1);
+}
+
+.badge-cs .action-ico-icon {
+  color: $primary;
+}
+
+.action-ico:active .badge-cs {
+  background: $primary-light;
+}
+
+.action-ico-icon {
+  font-size: 34rpx;
 }
 
 .action-ico-text {
-  font-size: 18rpx;
-  color: $text-muted;
+  font-size: 20rpx;
+  line-height: 1;
+  color: $text-secondary;
   font-weight: 500;
+  letter-spacing: 0.3rpx;
+  transition: color 0.2s $ease-out;
+}
+
+.action-ico-text.active {
+  color: $danger;
+  font-weight: 600;
 }
 
 .action-primary {

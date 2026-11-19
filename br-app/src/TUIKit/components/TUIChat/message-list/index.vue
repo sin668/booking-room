@@ -33,9 +33,10 @@
         class="tui-message-list"
         scroll-y="true"
         :scroll-top="scrollTop"
-        :scroll-into-view="`tui-${historyFirstMessageID}`"
+        :scroll-into-view="`tui-${scrollAnchorID}`"
         @scroll="handelScrollListScroll"
       >
+        <div id="messageScrollContent">
         <div
           v-if="isLoadingMessage"
           class="message-more message-loading"
@@ -170,6 +171,7 @@
             />
           </div>
         </li>
+        </div>
       </scroll-view>
       <!-- scroll button -->
       <ScrollButton
@@ -303,17 +305,17 @@ const isCompleted = ref(false);
 const dbHasMore = ref(true);
 const currentConversationID = ref('');
 const toggleID = ref('');
-const scrollTop = ref(5000); // The initial number of messages is 15, and the maximum message height is 300.
+const scrollTop = ref(0);
 const TYPES = ref(TUIChatEngine.TYPES);
 const isLoadingMessage = ref(false);
 const isLongpressing = ref(false);
 const blinkMessageIDList = ref<string[]>([]);
 const messageTarget = ref<IMessageModel>();
 const scrollButtonInstanceRef = ref<InstanceType<typeof ScrollButton>>();
-const historyFirstMessageID = ref<string>('');
-// 只有列表最末条消息真正变化（初次加载/新消息）时才滚到底；前插历史、已读回执、表情回应等
-// 原地更新不再触发滚底，避免加载更多或预览返回时跳底再跳回造成白屏闪烁
-let lastRenderedLastMessageID = '';
+// 统一 scroll-into-view 锚点：前插历史锚旧首条、滚底锚末条。必须与消息列表同一次 setData 下发，
+// 小程序原生 scroll-view 才会在渲染后定位；等 nextTick 另发一次会早于/晚于渲染造成前跳或白屏
+const scrollAnchorID = ref<string>('');
+let anchorClearTimer: any = null;
 // 自动续拉防抖：上一轮续拉没有新增消息时停止，避免原地打转刷接口
 let autoFillLastCount = -1;
 const isShowSimpleMessageList = ref<boolean>(false);
@@ -330,22 +332,65 @@ const isShowReadUserStatusPanel = ref<boolean>(false);
 const reSendDialogShow = ref(false);
 const resendMessageData = ref();
 
+function scheduleAnchorClear() {
+  if (anchorClearTimer) clearTimeout(anchorClearTimer);
+  anchorClearTimer = setTimeout(() => {
+    scrollAnchorID.value = '';
+    anchorClearTimer = null;
+  }, 600);
+}
+
+/** 设置 scroll-into-view 锚点；force 时先清空再设以强制同值重触发。 */
+function setAnchor(messageID: string, force = false) {
+  if (!messageID) return;
+  if (force && scrollAnchorID.value === messageID) {
+    scrollAnchorID.value = '';
+    nextTick(() => {
+      scrollAnchorID.value = messageID;
+      scheduleAnchorClear();
+    });
+    return;
+  }
+  scrollAnchorID.value = messageID;
+  scheduleAnchorClear();
+}
+
 const scrollToBottom = () => {
-  scrollTop.value += 300;
-  // Solve the issue where swiping to the bottom for the first time after packaging Uniapp into an app has a delay,
-  // which can be set to 300 ms.
-  const timer = setTimeout(() => {
-    scrollTop.value += 1;
-    clearTimeout(timer);
-  }, 300);
+  const last = messageList.value?.[messageList.value?.length - 1];
+  // 锚末条：原生 scroll-view 会 clamp 到最大滚动位置即底部，避免盲增 scroll-top 滚出内容外白屏
+  setAnchor(last?.ID || '', true);
 };
+
+// 锚定必须与消息列表在同一次 flush/setData 内下发：小程序原生 scroll-view 渲染后才定位。
+// 前插历史锚旧首条（视口不动）；末条变化（初次加载/新消息）锚末条滚底；原地更新不锚定。
+watch(
+  () => {
+    const list = messageList.value;
+    return [list?.[0]?.ID || '', list?.[list.length - 1]?.ID || ''];
+  },
+  ([newFirst, newLast], [oldFirst, oldLast]) => {
+    if (messageTarget.value) return;
+    if (isLoadingMessage.value && oldFirst && newFirst !== oldFirst) {
+      setAnchor(oldFirst);
+    } else if (newLast && newLast !== oldLast) {
+      const lastFlow = messageList.value?.[messageList.value.length - 1]?.flow;
+      if (!(scrollButtonInstanceRef.value?.isScrollButtonVisible && lastFlow === 'in')) {
+        setAnchor(newLast);
+      }
+    }
+  },
+);
 
 const onCurrentConversationIDUpdated = (conversationID: string) => {
   currentConversationID.value = conversationID;
   // 切会话时引擎会清空 CHAT store 的消息列表，数据库翻页状态一并重置
   dbHasMore.value = true;
-  lastRenderedLastMessageID = '';
   autoFillLastCount = -1;
+  scrollAnchorID.value = '';
+  if (anchorClearTimer) {
+    clearTimeout(anchorClearTimer);
+    anchorClearTimer = null;
+  }
   if (isEnabledMessageReadReceiptGlobal()) {
     const { groupProfile }
       = TUIStore.getConversationModel(conversationID) || {};
@@ -392,6 +437,11 @@ onUnmounted(() => {
   observer?.disconnect();
   observer = null;
 
+  if (anchorClearTimer) {
+    clearTimeout(anchorClearTimer);
+    anchorClearTimer = null;
+  }
+
   uni.$off('scroll-to-bottom');
 
   if (Object.keys(audioPlayedMapping.value).length > 0) {
@@ -432,18 +482,9 @@ async function onMessageListUpdated(list: IMessageModel[]) {
       message.vueForRenderKey = `${message.ID}`;
       return message;
     });
-  const newLastMessage = messageList.value?.[messageList.value?.length - 1];
-  const newLastMessageID = newLastMessage?.ID || '';
-  const isBottomMessageChanged = newLastMessageID !== lastRenderedLastMessageID;
-  lastRenderedLastMessageID = newLastMessageID;
   if (messageTarget.value) {
     // scroll to target message
     scrollAndBlinkMessage(messageTarget.value);
-  } else if (isBottomMessageChanged && !isLoadingMessage.value && !(scrollButtonInstanceRef.value?.isScrollButtonVisible && newLastMessage?.flow === 'in')) {
-    // scroll to bottom
-    nextTick(() => {
-      scrollToBottom();
-    });
   }
   if (isEnabledMessageReadReceiptGlobal()) {
     nextTick(() => bindIntersectionObserver());
@@ -452,22 +493,8 @@ async function onMessageListUpdated(list: IMessageModel[]) {
   nextTick(() => autoFillViewport());
 }
 
-async function scrollToLatestMessage() {
-  try {
-    const { scrollHeight } = await getScrollInfo(
-      '#messageScrollList',
-      'messageList',
-    );
-    if (scrollHeight) {
-      scrollTop.value === scrollHeight
-        ? (scrollTop.value = scrollHeight + 1)
-        : (scrollTop.value = scrollHeight);
-    } else {
-      scrollToBottom();
-    }
-  } catch (error) {
-    scrollToBottom();
-  }
+function scrollToLatestMessage() {
+  scrollToBottom();
 }
 
 async function onMessageSourceUpdated(message: IMessageModel) {
@@ -505,17 +532,13 @@ const getHistoryMessageList = () => {
     return;
   }
   isLoadingMessage.value = true;
-  const currentFirstMessageID = messageList.value?.[0]?.ID || '';
   TUIChatService.getMessageList().then(() => {
-    nextTick(() => {
-      historyFirstMessageID.value = currentFirstMessageID;
-      const timer = setTimeout(() => {
-        historyFirstMessageID.value = '';
-        isLoadingMessage.value = false;
-        clearTimeout(timer);
-        autoFillViewport();
-      }, 300);
-    });
+    // 锚定由 watcher 在与列表同帧内完成；这里只负责复位加载态与续拉
+    const timer = setTimeout(() => {
+      isLoadingMessage.value = false;
+      clearTimeout(timer);
+      autoFillViewport();
+    }, 300);
   }).catch(() => {
     // SDK 不可用时若不复位，自动加载就永久卡住了
     isLoadingMessage.value = false;
@@ -530,9 +553,10 @@ async function autoFillViewport() {
   const count = messageList.value?.length || 0;
   if (count === autoFillLastCount) return;
   try {
-    const { scrollHeight } = await getScrollInfo('#messageScrollList', 'messageList');
+    // 小程序 scrollOffset 不返回 scrollHeight，改测内容包裹层高度
+    const { height: contentHeight } = await getBoundingClientRect('#messageScrollContent', 'messageList');
     const { height } = await getBoundingClientRect('#messageScrollList', 'messageList');
-    if (scrollHeight && height && scrollHeight <= height + 10) {
+    if (contentHeight && height && contentHeight <= height + 10) {
       autoFillLastCount = count;
       getHistoryMessageList();
     }
@@ -549,7 +573,6 @@ async function loadDatabaseHistoryPage(cursor?: number) {
     TUIStore.getData(StoreName.CHAT, 'messageList')?.[0]?.time ||
     Math.floor(Date.now() / 1000);
   isLoadingMessage.value = true;
-  const currentFirstMessageID = messageList.value?.[0]?.ID || '';
   try {
     const page = await fetchImHistoryPage(currentConversationID.value, earliestTime);
     dbHasMore.value = page.hasMore;
@@ -591,15 +614,12 @@ async function loadDatabaseHistoryPage(cursor?: number) {
     }
     // unshift 合并：按 ID 去重、前插、重排，且不会触发已读上报
     TUIChatService.updateMessageList(messages as any, 'unshift');
-    nextTick(() => {
-      historyFirstMessageID.value = currentFirstMessageID;
-      const timer = setTimeout(() => {
-        historyFirstMessageID.value = '';
-        isLoadingMessage.value = false;
-        clearTimeout(timer);
-        autoFillViewport();
-      }, 300);
-    });
+    // 锚定由 watcher 在与列表同帧内完成；这里只负责复位加载态与续拉
+    const timer = setTimeout(() => {
+      isLoadingMessage.value = false;
+      clearTimeout(timer);
+      autoFillViewport();
+    }, 300);
   } catch (e: any) {
     isLoadingMessage.value = false;
     Toast({

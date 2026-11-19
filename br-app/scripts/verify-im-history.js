@@ -66,11 +66,14 @@ assert.ok(
     && /nextTick\(\(\) => autoFillViewport\(\)\)/.test(list),
   '缺少不足一屏自动续拉逻辑',
 )
-// 只有最末条消息变化才滚底，前插历史/已读回执等原地更新不跳底，避免加载更多白屏闪烁
+// 锚定与列表同帧下发（小程序原生 scroll-view 渲染后定位）：前插锚旧首条、末条变化锚末条滚底，
+// 原地更新不锚定；且不再盲增 scroll-top（滚出内容外会整屏白屏）
 assert.ok(
-  /isBottomMessageChanged && !isLoadingMessage\.value/.test(list),
-  '滚底未加「最末条消息变化」守卫，加载更多会跳底闪烁',
+  /setAnchor\(oldFirst\)/.test(list) && /setAnchor\(newLast\)/.test(list),
+  '缺少与列表同帧的 scroll-into-view 锚定（前插锚旧首条/滚底锚末条）',
 )
+assert.ok(!/scrollTop\.value \+= 300/.test(list), '仍盲增 scroll-top，小程序会滚出内容外白屏')
+assert.ok(/#messageScrollContent/.test(list), '缺少内容包裹层，小程序无法测内容高度做自动续拉')
 const conversationSwitch = list.match(/const onCurrentConversationIDUpdated = \([^)]*\) => \{[\s\S]*?\n\};/)
 assert.ok(conversationSwitch && /dbHasMore\.value = true/.test(conversationSwitch[0]), '切会话未重置数据库翻页状态')
 

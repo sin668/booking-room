@@ -228,6 +228,7 @@ export default {
     return {
       statusBarHeight: 0,
       teacherId: null,
+      entryRoomId: null,
       teacher: {},
       courses: [],
       isFav: false,
@@ -266,6 +267,7 @@ export default {
 
     if (options.teacher_id) {
       this.teacherId = Number(options.teacher_id)
+      this.entryRoomId = options.room_id ? Number(options.room_id) : null
       this.isFav = isTeacherFollowed(this.teacherId)
       this.loadData()
       this.loadReviews()
@@ -378,8 +380,11 @@ export default {
 
     onBackToCourses() {
       const rooms = this.teacher.rooms || []
+      const entry = this.entryRoomId ? rooms.find((r) => r.id === this.entryRoomId) : null
       const room =
-        rooms.find((r) => r.room_type === 'training' || r.room_type === 'comprehensive') || rooms[0]
+        entry ||
+        rooms.find((r) => r.room_type === 'training' || r.room_type === 'comprehensive') ||
+        rooms[0]
       if (room) {
         uni.navigateTo({ url: `/pages/booking/detail?room_id=${room.id}` })
       } else {

@@ -457,8 +457,9 @@ export default {
 
     onTeacherTap() {
       if (!this.teacher || !this.teacher.id) return
+      const roomId = this.course.room && this.course.room.id
       uni.navigateTo({
-        url: `/pages-sub/teacher/profile?teacher_id=${this.teacher.id}`,
+        url: `/pages-sub/teacher/profile?teacher_id=${this.teacher.id}${roomId ? `&room_id=${roomId}` : ''}`,
       })
     },
 

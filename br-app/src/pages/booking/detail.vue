@@ -596,7 +596,7 @@ export default {
     onTeacherTap(teacher) {
       if (!teacher || !teacher.id) return
       uni.navigateTo({
-        url: `/pages-sub/teacher/profile?teacher_id=${teacher.id}`,
+        url: `/pages-sub/teacher/profile?teacher_id=${teacher.id}&room_id=${this.roomId}`,
       })
     },
 

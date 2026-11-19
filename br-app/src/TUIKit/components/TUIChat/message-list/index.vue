@@ -32,6 +32,7 @@
         id="messageScrollList"
         class="tui-message-list"
         scroll-y="true"
+        :scroll-anchoring="true"
         :scroll-top="scrollTop"
         :scroll-into-view="`tui-${scrollAnchorID}`"
         @scroll="handelScrollListScroll"
@@ -312,8 +313,10 @@ const isLongpressing = ref(false);
 const blinkMessageIDList = ref<string[]>([]);
 const messageTarget = ref<IMessageModel>();
 const scrollButtonInstanceRef = ref<InstanceType<typeof ScrollButton>>();
-// 统一 scroll-into-view 锚点：前插历史锚旧首条、滚底锚末条。必须与消息列表同一次 setData 下发，
-// 小程序原生 scroll-view 才会在渲染后定位；等 nextTick 另发一次会早于/晚于渲染造成前跳或白屏
+// scroll-into-view 锚点只用于「滚到末条」（初次加载/收到新消息/定位原消息）。
+// 前插历史不再用它：小程序原生 scroll-view 会在前插子节点布局前就执行 scroll-into-view，
+// 锚到旧首条的旧位置（≈顶部），前插内容随后把视口往下顶，表现为跳到超一屏、需往下拉。
+// 前插改用确定性的「高度差补偿 scroll-top」，见 anchorPrepend。
 const scrollAnchorID = ref<string>('');
 let anchorClearTimer: any = null;
 // 自动续拉防抖：上一轮续拉没有新增消息时停止，避免原地打转刷接口
@@ -361,18 +364,16 @@ const scrollToBottom = () => {
   setAnchor(last?.ID || '', true);
 };
 
-// 锚定必须与消息列表在同一次 flush/setData 内下发：小程序原生 scroll-view 渲染后才定位。
-// 前插历史锚旧首条（视口不动）；末条变化（初次加载/新消息）锚末条滚底；原地更新不锚定。
+// 末条变化（初次加载/收到新消息）才滚底；前插历史末条不变，这里不触发，
+// 前插后的视口复位由 anchorPrepend 用高度差补偿 scroll-top 完成。
 watch(
   () => {
     const list = messageList.value;
-    return [list?.[0]?.ID || '', list?.[list.length - 1]?.ID || ''];
+    return list?.[list.length - 1]?.ID || '';
   },
-  ([newFirst, newLast], [oldFirst, oldLast]) => {
+  (newLast, oldLast) => {
     if (messageTarget.value) return;
-    if (isLoadingMessage.value && oldFirst && newFirst !== oldFirst) {
-      setAnchor(oldFirst);
-    } else if (newLast && newLast !== oldLast) {
+    if (newLast && newLast !== oldLast) {
       const lastFlow = messageList.value?.[messageList.value.length - 1]?.flow;
       if (!(scrollButtonInstanceRef.value?.isScrollButtonVisible && lastFlow === 'in')) {
         setAnchor(newLast);
@@ -380,6 +381,40 @@ watch(
     }
   },
 );
+
+interface ScrollMeasure { top: number; height: number; vp: number }
+
+/** 测当前滚动位置、内容总高与视口高。小程序 scrollOffset 不返回 scrollHeight，内容高改测包裹层。 */
+async function measureScroll(): Promise<ScrollMeasure | null> {
+  try {
+    const content = await getBoundingClientRect('#messageScrollContent', 'messageList');
+    const view = await getBoundingClientRect('#messageScrollList', 'messageList');
+    const { scrollTop } = await getScrollInfo('#messageScrollList', 'messageList');
+    return { top: scrollTop || 0, height: content?.height || 0, vp: view?.height || 0 };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 前插历史后复位视口：目标 scrollTop = 原 scrollTop + 内容高度差，使原首条停在原来的视觉位置。
+ * 这是全平台一致的确定性补偿，不依赖 scroll-into-view 的渲染时序；iOS/Skyline 的原生
+ * scroll-anchoring 若已自动补偿，本式算出的目标值与之相同，再设一次也幂等不会二次跳动。
+ * 加载前内容不足一屏（初次加载/自动续拉）时改为滚到底看最新消息。
+ */
+function anchorPrepend(before: ScrollMeasure | null, after: ScrollMeasure | null) {
+  if (!before || !after) return;
+  const delta = after.height - before.height;
+  if (delta <= 0) return;
+  // 清掉 scroll-into-view 锚点，避免与 scroll-top 抢占滚动
+  scrollAnchorID.value = '';
+  if (anchorClearTimer) {
+    clearTimeout(anchorClearTimer);
+    anchorClearTimer = null;
+  }
+  const target = before.height <= before.vp + 10 ? after.height : before.top + delta;
+  scrollTo(target);
+}
 
 const onCurrentConversationIDUpdated = (conversationID: string) => {
   currentConversationID.value = conversationID;
@@ -524,7 +559,7 @@ function onChatCompletedUpdated(flag: boolean) {
   }
 }
 
-const getHistoryMessageList = () => {
+const getHistoryMessageList = async () => {
   if (isLoadingMessage.value) return;
   if (isCompleted.value && !props.isGroup) {
     // SDK 漫游窗口到头（免费版只有 7 天），更早的历史改读本系统数据库落库的消息镜像
@@ -532,17 +567,19 @@ const getHistoryMessageList = () => {
     return;
   }
   isLoadingMessage.value = true;
-  TUIChatService.getMessageList().then(() => {
-    // 锚定由 watcher 在与列表同帧内完成；这里只负责复位加载态与续拉
-    const timer = setTimeout(() => {
-      isLoadingMessage.value = false;
-      clearTimeout(timer);
-      autoFillViewport();
-    }, 300);
-  }).catch(() => {
+  // 前插前先量一次（含加载态 spinner），前插渲染后再量一次，高度差即本批历史占位
+  const before = await measureScroll();
+  try {
+    await TUIChatService.getMessageList();
+    await nextTick();
+    const after = await measureScroll();
+    anchorPrepend(before, after);
+    isLoadingMessage.value = false;
+    autoFillViewport();
+  } catch {
     // SDK 不可用时若不复位，自动加载就永久卡住了
     isLoadingMessage.value = false;
-  });
+  }
 };
 
 /** 内容不足一屏时自动往前续拉，直到铺满视口或没有更多历史，免去手点「查看更多」。 */
@@ -566,13 +603,15 @@ async function autoFillViewport() {
 }
 
 /** 向数据库取比当前最早一条更早的一页消息，按 SDK 消息结构前插到消息列表。 */
-async function loadDatabaseHistoryPage(cursor?: number) {
+async function loadDatabaseHistoryPage(cursor?: number, before?: ScrollMeasure | null) {
   // 游标取列表最早一条；SDK 一条都没给时（深历史会话）没有游标可用，用当前时间取最近一页
   const earliestTime =
     cursor ||
     TUIStore.getData(StoreName.CHAT, 'messageList')?.[0]?.time ||
     Math.floor(Date.now() / 1000);
   isLoadingMessage.value = true;
+  // 递归续取时沿用首次量到的基准，保证高度差补偿对齐用户触发加载那一刻的视口
+  if (before === undefined) before = await measureScroll();
   try {
     const page = await fetchImHistoryPage(currentConversationID.value, earliestTime);
     dbHasMore.value = page.hasMore;
@@ -606,7 +645,7 @@ async function loadDatabaseHistoryPage(cursor?: number) {
     if (!messages.length) {
       // 整页都是不支持重建的类型：带上本页最早时间继续往前取，否则游标不变会原地打转
       if (page.hasMore) {
-        loadDatabaseHistoryPage(Math.min(...page.messages.map(row => row.msg_time)));
+        loadDatabaseHistoryPage(Math.min(...page.messages.map(row => row.msg_time)), before);
         return;
       }
       isLoadingMessage.value = false;
@@ -614,12 +653,12 @@ async function loadDatabaseHistoryPage(cursor?: number) {
     }
     // unshift 合并：按 ID 去重、前插、重排，且不会触发已读上报
     TUIChatService.updateMessageList(messages as any, 'unshift');
-    // 锚定由 watcher 在与列表同帧内完成；这里只负责复位加载态与续拉
-    const timer = setTimeout(() => {
-      isLoadingMessage.value = false;
-      clearTimeout(timer);
-      autoFillViewport();
-    }, 300);
+    // 前插渲染后按高度差补偿 scroll-top，使原首条停在原位，不闪不跳
+    await nextTick();
+    const after = await measureScroll();
+    anchorPrepend(before, after);
+    isLoadingMessage.value = false;
+    autoFillViewport();
   } catch (e: any) {
     isLoadingMessage.value = false;
     Toast({

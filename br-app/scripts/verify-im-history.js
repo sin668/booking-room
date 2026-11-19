@@ -66,12 +66,33 @@ assert.ok(
     && /nextTick\(\(\) => autoFillViewport\(\)\)/.test(list),
   '缺少不足一屏自动续拉逻辑',
 )
-// 锚定与列表同帧下发（小程序原生 scroll-view 渲染后定位）：前插锚旧首条、末条变化锚末条滚底，
-// 原地更新不锚定；且不再盲增 scroll-top（滚出内容外会整屏白屏）
+// 前插历史不再用 scroll-into-view 锚旧首条：小程序原生 scroll-view 会在前插子节点布局前就执行
+// scroll-into-view，锚到旧位置导致视口被前插内容顶到超一屏外。改用确定性的「高度差补偿 scroll-top」。
+assert.ok(!/setAnchor\(oldFirst\)/.test(list), '前插仍用 scroll-into-view 锚旧首条，小程序会前跳超一屏')
+assert.ok(/setAnchor\(newLast\)/.test(list), '末条变化（初次加载/新消息）仍应锚末条滚底')
 assert.ok(
-  /setAnchor\(oldFirst\)/.test(list) && /setAnchor\(newLast\)/.test(list),
-  '缺少与列表同帧的 scroll-into-view 锚定（前插锚旧首条/滚底锚末条）',
+  /async function measureScroll\(\)/.test(list)
+    && /getBoundingClientRect\('#messageScrollContent'/.test(list)
+    && /getScrollInfo\('#messageScrollList'/.test(list),
+  '缺少前插前后测量内容高度与滚动位置的 measureScroll',
 )
+assert.ok(
+  /function anchorPrepend\(/.test(list)
+    && /const delta = after\.height - before\.height/.test(list)
+    && /before\.top \+ delta/.test(list),
+  '缺少按高度差补偿 scroll-top 的 anchorPrepend（目标=原 scrollTop+高度差）',
+)
+// 两条加载路径都必须在渲染后接入补偿，而不是交给 watcher 同帧 scroll-into-view
+assert.ok(
+  /await TUIChatService\.getMessageList\(\)[\s\S]*?anchorPrepend\(before, after\)/.test(list),
+  'SDK 翻页路径未接入前插高度差补偿',
+)
+assert.ok(
+  /updateMessageList\(messages as any,\s*'unshift'\)[\s\S]*?anchorPrepend\(before, after\)/.test(list),
+  '数据库深历史路径未接入前插高度差补偿',
+)
+// iOS/Skyline 原生 scroll-anchoring 作为免闪第一道防线（安卓 webview 由高度差补偿兜底）
+assert.ok(/:scroll-anchoring="true"/.test(list), 'scroll-view 未开启原生 scroll-anchoring')
 assert.ok(!/scrollTop\.value \+= 300/.test(list), '仍盲增 scroll-top，小程序会滚出内容外白屏')
 assert.ok(/#messageScrollContent/.test(list), '缺少内容包裹层，小程序无法测内容高度做自动续拉')
 const conversationSwitch = list.match(/const onCurrentConversationIDUpdated = \([^)]*\) => \{[\s\S]*?\n\};/)

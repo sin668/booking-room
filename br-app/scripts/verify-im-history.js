@@ -78,21 +78,33 @@ assert.ok(
 )
 assert.ok(
   /function anchorPrepend\(/.test(list)
-    && /const delta = after\.height - before\.height/.test(list)
+    && /const delta = afterHeight - before\.height/.test(list)
     && /before\.top \+ delta/.test(list),
   '缺少按高度差补偿 scroll-top 的 anchorPrepend（目标=原 scrollTop+高度差）',
 )
+// 渲染后只补测一次内容高（单查询），把兜底补偿过渡压到最短
+assert.ok(
+  /async function measureContentHeight\(\)/.test(list)
+    && /const afterHeight = await measureContentHeight\(\)/.test(list),
+  '前插后未用单查询 measureContentHeight 补测内容高',
+)
 // 两条加载路径都必须在渲染后接入补偿，而不是交给 watcher 同帧 scroll-into-view
 assert.ok(
-  /await TUIChatService\.getMessageList\(\)[\s\S]*?anchorPrepend\(before, after\)/.test(list),
+  /await TUIChatService\.getMessageList\(\)[\s\S]*?anchorPrepend\(before, afterHeight\)/.test(list),
   'SDK 翻页路径未接入前插高度差补偿',
 )
 assert.ok(
-  /updateMessageList\(messages as any,\s*'unshift'\)[\s\S]*?anchorPrepend\(before, after\)/.test(list),
+  /updateMessageList\(messages as any,\s*'unshift'\)[\s\S]*?anchorPrepend\(before, afterHeight\)/.test(list),
   '数据库深历史路径未接入前插高度差补偿',
 )
-// iOS/Skyline 原生 scroll-anchoring 作为免闪第一道防线（安卓 webview 由高度差补偿兜底）
+// iOS/Skyline 原生 scroll-anchoring 作为免闪第一道防线
 assert.ok(/:scroll-anchoring="true"/.test(list), 'scroll-view 未开启原生 scroll-anchoring')
+// 安卓 webview：开启内部滚动容器的 overflow-anchor，让浏览器原生锚定原子接管前插，消除先跳后拉回
+assert.ok(
+  /overflow-anchor: auto !important/.test(list)
+    && /:deep\(\.wx-scroll-view\)/.test(list),
+  '未覆盖 scroll-view 内部滚动容器的 overflow-anchor，安卓前插仍会先跳后拉回',
+)
 assert.ok(!/scrollTop\.value \+= 300/.test(list), '仍盲增 scroll-top，小程序会滚出内容外白屏')
 assert.ok(/#messageScrollContent/.test(list), '缺少内容包裹层，小程序无法测内容高度做自动续拉')
 const conversationSwitch = list.match(/const onCurrentConversationIDUpdated = \([^)]*\) => \{[\s\S]*?\n\};/)

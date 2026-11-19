@@ -396,15 +396,25 @@ async function measureScroll(): Promise<ScrollMeasure | null> {
   }
 }
 
+/** 前插渲染后只补测一次内容总高（单查询），把兜底补偿的过渡压到最短。 */
+async function measureContentHeight(): Promise<number> {
+  try {
+    const rect = await getBoundingClientRect('#messageScrollContent', 'messageList');
+    return rect?.height || 0;
+  } catch {
+    return 0;
+  }
+}
+
 /**
  * 前插历史后复位视口：目标 scrollTop = 原 scrollTop + 内容高度差，使原首条停在原来的视觉位置。
- * 这是全平台一致的确定性补偿，不依赖 scroll-into-view 的渲染时序；iOS/Skyline 的原生
- * scroll-anchoring 若已自动补偿，本式算出的目标值与之相同，再设一次也幂等不会二次跳动。
- * 加载前内容不足一屏（初次加载/自动续拉）时改为滚到底看最新消息。
+ * 这是全平台一致的确定性兜底，不依赖 scroll-into-view 的渲染时序；iOS/Skyline 的原生
+ * scroll-anchoring 与安卓 webview 的 overflow-anchor 若已原子补偿，本式算出的目标值与之相同，
+ * 再设一次也幂等不会二次跳动。加载前内容不足一屏（初次加载/自动续拉）时改为滚到底看最新。
  */
-function anchorPrepend(before: ScrollMeasure | null, after: ScrollMeasure | null) {
-  if (!before || !after) return;
-  const delta = after.height - before.height;
+function anchorPrepend(before: ScrollMeasure | null, afterHeight: number) {
+  if (!before || !afterHeight) return;
+  const delta = afterHeight - before.height;
   if (delta <= 0) return;
   // 清掉 scroll-into-view 锚点，避免与 scroll-top 抢占滚动
   scrollAnchorID.value = '';
@@ -412,7 +422,7 @@ function anchorPrepend(before: ScrollMeasure | null, after: ScrollMeasure | null
     clearTimeout(anchorClearTimer);
     anchorClearTimer = null;
   }
-  const target = before.height <= before.vp + 10 ? after.height : before.top + delta;
+  const target = before.height <= before.vp + 10 ? afterHeight : before.top + delta;
   scrollTo(target);
 }
 
@@ -572,8 +582,8 @@ const getHistoryMessageList = async () => {
   try {
     await TUIChatService.getMessageList();
     await nextTick();
-    const after = await measureScroll();
-    anchorPrepend(before, after);
+    const afterHeight = await measureContentHeight();
+    anchorPrepend(before, afterHeight);
     isLoadingMessage.value = false;
     autoFillViewport();
   } catch {
@@ -655,8 +665,8 @@ async function loadDatabaseHistoryPage(cursor?: number, before?: ScrollMeasure |
     TUIChatService.updateMessageList(messages as any, 'unshift');
     // 前插渲染后按高度差补偿 scroll-top，使原首条停在原位，不闪不跳
     await nextTick();
-    const after = await measureScroll();
-    anchorPrepend(before, after);
+    const afterHeight = await measureContentHeight();
+    anchorPrepend(before, afterHeight);
     isLoadingMessage.value = false;
     autoFillViewport();
   } catch (e: any) {
@@ -932,6 +942,16 @@ defineExpose({
 </script>
 <style lang="scss" scoped src="./style/index.scss"></style>
 <style lang="scss" scoped>
+// 让浏览器原生滚动锚定接管前插：微信 scroll-view 内部滚动容器默认关闭 overflow-anchor，
+// 安卓 webview 下前插历史会先画一帧错位再被补偿拉回。开启后浏览器在同一次渲染内原子保持视口，
+// 不闪不跳；iOS/Skyline 由 scroll-anchoring 属性负责，二者与高度差兜底补偿幂等共存。
+.tui-message-list {
+  :deep(.wx-scroll-view),
+  :deep(.uni-scroll-view) {
+    overflow-anchor: auto !important;
+  }
+}
+
 .message-loading {
   display: flex;
   justify-content: center;

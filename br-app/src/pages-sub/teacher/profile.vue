@@ -377,7 +377,14 @@ export default {
     },
 
     onBackToCourses() {
-      uni.switchTab({ url: '/pages/training/index' })
+      const rooms = this.teacher.rooms || []
+      const room =
+        rooms.find((r) => r.room_type === 'training' || r.room_type === 'comprehensive') || rooms[0]
+      if (room) {
+        uni.navigateTo({ url: `/pages/booking/detail?room_id=${room.id}` })
+      } else {
+        uni.switchTab({ url: '/pages/training/index' })
+      }
     },
 
     onOpenCS() {

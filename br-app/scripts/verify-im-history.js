@@ -43,7 +43,7 @@ assert.ok(/readReceiptInfo: \{/.test(history), '重建消息缺少 readReceiptIn
 const list = read('src/TUIKit/components/TUIChat/message-list/index.vue')
 assert.ok(!/applyChatMediaUrls/.test(list), '消息列表仍在调用已删除的媒体地址替换')
 assert.ok(
-  /TUIChatService\.updateMessageList\(messages as any,\s*'unshift'\)/.test(list),
+  /TUIChatService\.updateMessageList\(batch as any,\s*'unshift'\)/.test(list),
   "深历史未通过 updateMessageList(..., 'unshift') 注入",
 )
 // SDK 窗口未到头时仍归 SDK 翻页，只有到头才转数据库
@@ -93,9 +93,37 @@ assert.ok(
   /await TUIChatService\.getMessageList\(\)[\s\S]*?anchorPrepend\(before, afterHeight\)/.test(list),
   'SDK 翻页路径未接入前插高度差补偿',
 )
+// 数据库深历史路径：插入前离屏镜像预测量批次高度，再原子前插（前插+scroll-top 同一次 setData），
+// 第一帧即定位正确，彻底消除「先画错位帧再拉回」的过渡
 assert.ok(
-  /updateMessageList\(messages as any,\s*'unshift'\)[\s\S]*?anchorPrepend\(before, afterHeight\)/.test(list),
-  '数据库深历史路径未接入前插高度差补偿',
+  /async function measureBatchHeight\(/.test(list)
+    && /measureMessages\.value = batch/.test(list)
+    && /getBoundingClientRect\('#measureMirror'/.test(list),
+  '缺少插入前的离屏镜像预测量 measureBatchHeight',
+)
+assert.ok(
+  /id="measureMirror"/.test(list) && /v-for="\(item, index\) in measureMessages"/.test(list),
+  '缺少离屏镜像容器或其批次渲染',
+)
+assert.ok(
+  /function commitPrepend\(/.test(list)
+    && /scrollTop\.value = before\.height <= before\.vp \+ 10[\s\S]*?before\.top \+ delta/.test(list)
+    && /measureMessages\.value = \[\][\s\S]*?TUIChatService\.updateMessageList\(batch as any,\s*'unshift'\)/.test(list),
+  'commitPrepend 未在同一次 flush 内先设 scroll-top 再清镜像并前插（原子前插）',
+)
+assert.ok(
+  /const delta = await measureBatchHeight\(messages\)[\s\S]*?commitPrepend\(messages, before, delta\)[\s\S]*?await verifyPrepend\(before, delta\)/.test(list),
+  '数据库深历史路径未走「预测量→原子前插→安全网」流程',
+)
+// 安全网仅在真实位置明显偏离时微调，原子前插到位则不动（无额外绘制）
+assert.ok(
+  /async function verifyPrepend\(/.test(list) && /Math\.abs\(\(actualTop \|\| 0\) - ideal\) > 40/.test(list),
+  '缺少原子前插后的位置校验安全网 verifyPrepend',
+)
+// spinner 移出内容流改为覆盖层，前插高度差核算不受其干扰
+assert.ok(
+  /class="message-loading-overlay"/.test(list) && !/class="message-more message-loading"/.test(list),
+  '加载指示仍在内容流内，会干扰前插高度差核算',
 )
 // iOS/Skyline 原生 scroll-anchoring 作为免闪第一道防线
 assert.ok(/:scroll-anchoring="true"/.test(list), 'scroll-view 未开启原生 scroll-anchoring')

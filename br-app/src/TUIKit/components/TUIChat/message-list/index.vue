@@ -38,12 +38,6 @@
         @scroll="handelScrollListScroll"
       >
         <div id="messageScrollContent">
-        <div
-          v-if="isLoadingMessage"
-          class="message-more message-loading"
-        >
-          <span class="message-loading-spinner" />
-        </div>
         <li
           v-for="(item, index) in messageList"
           :id="`tui-${item.ID}`"
@@ -174,6 +168,114 @@
         </li>
         </div>
       </scroll-view>
+      <!-- 加载指示覆盖在消息区顶部，不占内容高度，避免干扰前插高度差核算 -->
+      <div
+        v-if="isLoadingMessage"
+        class="message-loading-overlay"
+      >
+        <span class="message-loading-spinner" />
+      </div>
+      <!-- 离屏镜像：插入前预测量这批历史的高度，使「前插 + scroll-top 补偿」同一次 setData 生效，
+           第一帧即定位正确，彻底消除先画错位帧再拉回的过渡。visibility:hidden 保留布局可测高。 -->
+      <div
+        id="measureMirror"
+        class="measure-mirror"
+        aria-hidden="true"
+      >
+        <li
+          v-for="(item, index) in measureMessages"
+          :key="'measure-' + item.ID"
+          :class="'message-li ' + item.flow"
+        >
+          <MessageTimestamp
+            :currTime="item.time"
+            :prevTime="index > 0 ? measureMessages[index - 1].time : 0"
+          />
+          <div class="message-item">
+            <MessageTip
+              v-if="item.type === TYPES.MSG_GRP_TIP || isCreateGroupCustomMessage(item)"
+              :content="item.getMessageContent()"
+            />
+            <div
+              v-else-if="!item.isRevoked && !isPluginMessage(item)"
+              class="message-bubble-container"
+            >
+              <MessageBubble
+                :messageItem="deepCopy(item)"
+                :content="item.getMessageContent()"
+                :isAudioPlayed="true"
+                :blinkMessageIDList="[]"
+                :isMultipleSelectMode="false"
+                :multipleSelectedMessageIDList="[]"
+              >
+                <MessageText
+                  v-if="item.type === TYPES.MSG_TEXT"
+                  :content="item.getMessageContent()"
+                  :messageItem="item"
+                />
+                <ProgressMessage
+                  v-else-if="item.type === TYPES.MSG_IMAGE"
+                  :content="item.getMessageContent()"
+                  :messageItem="deepCopy(item)"
+                >
+                  <MessageImage
+                    :content="item.getMessageContent()"
+                    :messageItem="item"
+                  />
+                </ProgressMessage>
+                <ProgressMessage
+                  v-else-if="item.type === TYPES.MSG_VIDEO"
+                  :content="item.getMessageContent()"
+                  :messageItem="deepCopy(item)"
+                >
+                  <MessageVideo
+                    :content="item.getMessageContent()"
+                    :messageItem="item"
+                  />
+                </ProgressMessage>
+                <MessageAudio
+                  v-else-if="item.type === TYPES.MSG_AUDIO"
+                  :content="item.getMessageContent()"
+                  :messageItem="item"
+                  :isAudioPlayed="true"
+                  :broadcastNewAudioSrc="''"
+                />
+                <MessageRecord
+                  v-else-if="item.type === TYPES.MSG_MERGER"
+                  :renderData="item.payload"
+                  :messageItem="item"
+                />
+                <MessageFile
+                  v-else-if="item.type === TYPES.MSG_FILE"
+                  :content="item.getMessageContent()"
+                />
+                <MessageFace
+                  v-else-if="item.type === TYPES.MSG_FACE"
+                  :content="item.getMessageContent()"
+                />
+                <MessageLocation
+                  v-else-if="item.type === TYPES.MSG_LOCATION"
+                  :content="item.getMessageContent()"
+                />
+                <MessageCustom
+                  v-else-if="item.type === TYPES.MSG_CUSTOM"
+                  :content="item.getMessageContent()"
+                  :messageItem="item"
+                />
+              </MessageBubble>
+            </div>
+            <MessagePlugin
+              v-else-if="!item.isRevoked && isPluginMessage(item)"
+              :message="item"
+            />
+            <MessageRevoked
+              v-else
+              :isEdit="item.type === TYPES.MSG_TEXT"
+              :messageItem="item"
+            />
+          </div>
+        </li>
+      </div>
       <!-- scroll button -->
       <ScrollButton
         ref="scrollButtonInstanceRef"
@@ -300,6 +402,8 @@ const isOfficial = TUIStore.getData(StoreName.APP, 'isOfficial');
 const thisInstance = getCurrentInstance()?.proxy || getCurrentInstance();
 
 const messageList = ref<IMessageModel[]>();
+// 离屏镜像批次：插入真实列表前先渲染到隐藏镜像量高，供原子前插补偿用
+const measureMessages = ref<IMessageModel[]>([]);
 const multipleSelectedMessageIDList = ref<string[]>([]);
 const isCompleted = ref(false);
 // SDK 漫游到头后是否还有更早的数据库历史可翻；取到空页即置 false，停止自动续拉
@@ -426,11 +530,68 @@ function anchorPrepend(before: ScrollMeasure | null, afterHeight: number) {
   scrollTo(target);
 }
 
+/** 把批次渲染进离屏镜像量高（visibility:hidden 保留布局），得到前插后会增加的内容高度。 */
+async function measureBatchHeight(batch: IMessageModel[]): Promise<number> {
+  if (!batch.length) return 0;
+  measureMessages.value = batch;
+  await nextTick();
+  try {
+    const rect = await getBoundingClientRect('#measureMirror', 'messageList');
+    return rect?.height || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * 原子前插：同一次 flush 内「设目标 scroll-top + 清镜像 + 前插真实列表 + 复位加载态」，
+ * 渲染层在绘制前同时应用列表与滚动位置，第一帧即定位正确，没有先画错位再拉回的过渡帧。
+ * delta 来自插入前的离屏镜像预测量；before 为插入前基准（spinner 已移出内容流，不占高度）。
+ */
+function commitPrepend(batch: IMessageModel[], before: ScrollMeasure | null, delta: number) {
+  scrollAnchorID.value = '';
+  if (anchorClearTimer) {
+    clearTimeout(anchorClearTimer);
+    anchorClearTimer = null;
+  }
+  if (before && delta > 0) {
+    scrollTop.value = before.height <= before.vp + 10
+      ? before.height + delta
+      : before.top + delta;
+  }
+  measureMessages.value = [];
+  TUIChatService.updateMessageList(batch as any, 'unshift');
+  isLoadingMessage.value = false;
+}
+
+/**
+ * 原子前插后的安全网：仅当真实位置与理想位置偏差明显（>40px，如同帧 scroll-top 被旧高度钳制、
+ * 缺尺寸图片加载后大幅撑高）才用 +1px 微 nudging 强制重设复位；阈值内的小残差（原首条时间戳显隐等）
+ * 忽略，避免再产生一次可见滚动。原子前插已到位时本函数不动，无额外绘制。
+ */
+async function verifyPrepend(before: ScrollMeasure | null, delta: number) {
+  if (!before) return;
+  await nextTick();
+  try {
+    const actualHeight = await measureContentHeight();
+    const { scrollTop: actualTop } = await getScrollInfo('#messageScrollList', 'messageList');
+    if (!actualHeight) return;
+    const actualDelta = actualHeight - before.height;
+    const ideal = before.height <= before.vp + 10 ? actualHeight : before.top + actualDelta;
+    if (Math.abs((actualTop || 0) - ideal) > 40) {
+      scrollTop.value = ideal + 1;
+    }
+  } catch {
+    // 测量失败不强行复位
+  }
+}
+
 const onCurrentConversationIDUpdated = (conversationID: string) => {
   currentConversationID.value = conversationID;
   // 切会话时引擎会清空 CHAT store 的消息列表，数据库翻页状态一并重置
   dbHasMore.value = true;
   autoFillLastCount = -1;
+  measureMessages.value = [];
   scrollAnchorID.value = '';
   if (anchorClearTimer) {
     clearTimeout(anchorClearTimer);
@@ -661,13 +822,12 @@ async function loadDatabaseHistoryPage(cursor?: number, before?: ScrollMeasure |
       isLoadingMessage.value = false;
       return;
     }
-    // unshift 合并：按 ID 去重、前插、重排，且不会触发已读上报
-    TUIChatService.updateMessageList(messages as any, 'unshift');
-    // 前插渲染后按高度差补偿 scroll-top，使原首条停在原位，不闪不跳
-    await nextTick();
-    const afterHeight = await measureContentHeight();
-    anchorPrepend(before, afterHeight);
-    isLoadingMessage.value = false;
+    // 插入前先用离屏镜像量出这批历史的高度，再原子前插：前插与 scroll-top 补偿同一次 setData，
+    // 第一帧即定位正确，彻底消除「先画错位帧再拉回」的过渡（unshift 按 ID 去重、不上报已读）
+    const delta = await measureBatchHeight(messages);
+    commitPrepend(messages, before, delta);
+    // 安全网：仅在真实位置明显偏离时微调，原子前插已到位则不动
+    await verifyPrepend(before, delta);
     autoFillViewport();
   } catch (e: any) {
     isLoadingMessage.value = false;
@@ -952,21 +1112,48 @@ defineExpose({
   }
 }
 
-.message-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 8px 0;
-  cursor: default;
+// 覆盖层与离屏镜像都以消息区为定位上下文
+.tui-chat-main {
+  position: relative;
+}
 
-  &-spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(153, 153, 153, 0.25);
-    border-top-color: #999;
-    border-radius: 50%;
-    animation: tui-message-loading-spin 0.8s linear infinite;
-  }
+// 加载指示：浮在消息区顶部中央的圆形 pill，不占内容高度，前插高度差核算不受其干扰
+.message-loading-overlay {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+
+.message-loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(153, 153, 153, 0.25);
+  border-top-color: #999;
+  border-radius: 50%;
+  animation: tui-message-loading-spin 0.8s linear infinite;
+}
+
+// 离屏镜像：与真实列表同宽（left/right:0 撑满消息区），visibility:hidden 保留布局以便测高，
+// 绝对定位脱离文档流、z-index:-1 沉底，不影响真实列表布局与可见渲染
+.measure-mirror {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: -1;
 }
 
 @keyframes tui-message-loading-spin {

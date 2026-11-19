@@ -70,9 +70,15 @@ assert.ok(
 // 对齐视口顶部：锚旧首条会在前插时前跳超一屏，锚末条会在末条不足一屏时滚过内容末尾白屏。
 assert.ok(!/:scroll-into-view=/.test(list), '仍绑定 scroll-into-view，锚末条会滚出内容外白屏')
 assert.ok(!/setAnchor\(/.test(list), '仍残留 scroll-into-view 锚点机制')
+// 滚底必须等渲染落定后量「内容总高 - 视口高」精确落到 maxScroll：盲设超大值赌原生 clamp，
+// 会在与 resetMessageSource 重渲染同帧时按旧高度钳制滚出内容外，首点白屏、再点才正确。
 assert.ok(
-  /const scrollToBottom = \(\) => \{\s*scrollTop\.value = 1e9 \+ \(\+\+bottomScrollSeq\)/.test(list),
-  '滚底未用递增哨兵 scroll-top（同值重设不触发，手动滚动后 ref 不跟随原生位置）',
+  /async function scrollToBottom\(\)/.test(list)
+    && /await nextTick\(\)/.test(list)
+    && /const nudge = bottomScrollSeq\+\+ % 2/.test(list)
+    && /Math\.max\(0, ch - vh\) \+ nudge/.test(list)
+    && /scrollTop\.value = target/.test(list),
+  '滚底未等渲染落定后量真实 maxScroll 精确落底（同帧盲设超大值会按旧高度钳制滚出内容外白屏）',
 )
 assert.ok(
   /if \(!\(scrollButtonInstanceRef\.value\?\.isScrollButtonVisible && lastFlow === 'in'\)\) \{\s*scrollToBottom\(\)/.test(list),

@@ -416,10 +416,11 @@ const isLongpressing = ref(false);
 const blinkMessageIDList = ref<string[]>([]);
 const messageTarget = ref<IMessageModel>();
 const scrollButtonInstanceRef = ref<InstanceType<typeof ScrollButton>>();
-// 滚底统一用数值 scroll-top：原生 scroll-view 会把它 clamp 到最大滚动位置（即底部），
-// 不会滚出内容外。不用 scroll-into-view 锚末条——它把末条「顶部」对齐视口顶部，
-// 末条高度不足一屏时会滚过内容末尾，出现整屏白屏，再点一次才恢复。
-// 递增哨兵保证每次设值都不同：手动滚动后 ref 不跟随原生位置，同值重设不会触发滚动。
+// 滚底必须「精确落到最大滚动位置」，不能盲设超大值赌原生 clamp：
+// 点击「回到最新位置」会先 resetMessageSource 触发重渲染，若同帧设 scroll-top=超大值，
+// 原生 scroll-view 会在内容布局落定前按旧高度钳制，滚出内容外 → 首点白屏、再点才正确。
+// 故等 nextTick 渲染落定后量「内容总高 - 视口高」得到真实 maxScroll 直接设值，数学上不会滚出内容外。
+// 不用 scroll-into-view 锚末条：它把末条顶部对齐视口顶部，末条不足一屏时同样滚过内容末尾白屏。
 let bottomScrollSeq = 0;
 // 自动续拉防抖：上一轮续拉没有新增消息时停止，避免原地打转刷接口
 let autoFillLastCount = -1;
@@ -437,9 +438,26 @@ const isShowReadUserStatusPanel = ref<boolean>(false);
 const reSendDialogShow = ref(false);
 const resendMessageData = ref();
 
-const scrollToBottom = () => {
-  scrollTop.value = 1e9 + (++bottomScrollSeq);
-};
+async function scrollToBottom() {
+  // 等 resetMessageSource 等引发的重渲染落定，再量真实布局，避免按旧高度钳制滚出内容外
+  await nextTick();
+  // 交替 0/1：手动滚动后 ref 不跟随原生位置，连续两次设值必须不同才会重触发滚动
+  const nudge = bottomScrollSeq++ % 2;
+  let target = 1e9 + nudge; // 兜底：测量失败时用大值由原生 clamp 到底
+  try {
+    const content = await getBoundingClientRect('#messageScrollContent', 'messageList');
+    const view = await getBoundingClientRect('#messageScrollList', 'messageList');
+    const ch = content?.height || 0;
+    const vh = view?.height || 0;
+    if (ch > 0 && vh > 0) {
+      // 精确最大滚动位置 = 内容总高 - 视口高，即底部；+nudge 仍在 clamp 范围内不会白屏
+      target = Math.max(0, ch - vh) + nudge;
+    }
+  } catch {
+    // 测量失败保留兜底大值
+  }
+  scrollTop.value = target;
+}
 
 // 末条变化（初次加载/收到新消息）才滚底；前插历史末条不变，这里不触发，
 // 前插后的视口复位由 anchorPrepend 用高度差补偿 scroll-top 完成。

@@ -1289,37 +1289,37 @@ await verifyPrepend(before, delta);                 // 仅明显偏差才微调�
 
 ### 根本原因
 
-分两层，第二层才是「首点白屏、再点正确」的真凶：
+分三层，逐层剥开才找到「首点整片白屏、再点正确」的真凶：
 
-1. **锚末条过冲**：最初滚底用 `scroll-into-view` 锚末条（`setAnchor(last.ID, true)`）。`scroll-into-view` 把末条**顶部**对齐视口**顶部**，末条不足一屏时 `scrollTop = 内容总高 - 末条高 > maxScroll = 内容总高 - 视口高`，滚过内容末尾白屏。
-2. **同帧按旧高度钳制**（改数值哨兵后仍白屏的原因）：点击按钮会先 `resetMessageSource()` → 触发 `messageSource` watch → 消息列表**重渲染**；而 `scrollToBottom()` 在**同一帧**把 `scroll-top` 设成超大值（`1e9`）。小程序原生 `scroll-view` 在内容布局落定前就应用这个值，按**旧的内容高度**钳制，落点滚出当前内容外 → 首点白屏。第二次点击时布局已稳定，钳制才落到正确底部。所以「盲设超大值赌原生 clamp」在与重渲染同帧时不可靠。
+1. **锚末条过冲**：最初滚底用 `scroll-into-view` 锚末条（`setAnchor(last.ID, true)`）。它把末条**顶部**对齐视口**顶部**，末条不足一屏时 `scrollTop = 内容总高 - 末条高 > maxScroll`，滚过内容末尾白屏。
+2. **同帧按旧高度钳制**：改数值哨兵后仍白屏。点击按钮先 `resetMessageSource()` 触发重渲染，`scrollToBottom()` 同帧设超大值，原生 scroll-view 在布局落定前按**旧内容高度**钳制，落点滚出内容外。
+3. **测量失败回退盲设超大值**（精确测量版仍整片白屏的真凶）：小程序 `getScrollInfo` 走 `scrollOffset`，**只返回 scrollTop/scrollLeft，不返回 scrollHeight**；首点时若布局未就绪，`getBoundingClientRect` 量到高度 0，代码回退盲设 `1e9` → 滚出内容外**整片白屏**（截图状态）。第二次点击布局已稳定、测量成功才落对。
 
 ### 解决方案
 
-两步演进，最终落到**精确测量落底**：
+三步演进，最终落到**闭环自校正落底，且彻底移除盲设超大值回退**：
 
-- 第一步（commit `48dd947`）：移除整套 `scroll-into-view` 锚点机制（`scrollAnchorID` / `setAnchor` / `scheduleAnchorClear` / `anchorClearTimer` 及模板绑定），滚底改数值 `scroll-top`。解决「锚末条过冲」，但盲设 `1e9` 仍受同帧旧高度钳制影响。
-- 第二步（本次彻底修复）：`scrollToBottom` 改为 **`await nextTick()` 等渲染落定 → 量「内容总高 − 视口高」得到真实 `maxScroll` → 直接设这个精确值**。它就是底部，数学上不可能滚出内容外，与重渲染同帧也不再按旧高度钳制：
+- 第一步（`48dd947`）：移除整套 `scroll-into-view` 锚点机制，滚底改数值 `scroll-top`。
+- 第二步（`e880c24`）：等渲染落定后量「内容总高 − 视口高」精确设值；但保留「测量失败回退 `1e9`」，仍会整片白屏。
+- 第三步（本次彻底修复）：`scrollToBottom` 改**闭环**——设值后**回读原生实际 scrollTop**，与理想 `maxScroll` 偏差明显就自动再设一次（把用户「再点一次」在百毫秒内自动完成）；**量不到真实高度时只等待重试、绝不盲设超大值**，从根上杜绝滚出内容外：
 
 ```typescript
 let bottomScrollSeq = 0;
 async function scrollToBottom() {
-  await nextTick();                       // 等 resetMessageSource 引发的重渲染落定
-  const nudge = bottomScrollSeq++ % 2;    // 交替 0/1：连续两次设值不同才重触发
-  let target = 1e9 + nudge;               // 兜底：测量失败时用大值由原生 clamp
-  try {
-    const content = await getBoundingClientRect('#messageScrollContent', 'messageList');
-    const view = await getBoundingClientRect('#messageScrollList', 'messageList');
-    const ch = content?.height || 0;
-    const vh = view?.height || 0;
-    if (ch > 0 && vh > 0) {
-      target = Math.max(0, ch - vh) + nudge;  // 精确最大滚动位置 = 底部
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await nextTick();                          // 等重渲染落定再量真实布局
+    const m = await measureScroll();           // { top, height, vp }
+    if (m && m.height && m.vp) {               // 量不到绝不盲设超大值
+      const ideal = Math.max(0, m.height - m.vp);
+      if (attempt > 0 && Math.abs(m.top - ideal) <= 8) break;  // 已落底收敛退出
+      scrollTop.value = ideal + (bottomScrollSeq++ % 2);       // 交替 nudge 重触发
     }
-  } catch { /* 测量失败保留兜底大值 */ }
-  scrollTop.value = target;
+    await new Promise(r => setTimeout(r, 60)); // 等原生应用滚动/布局落定再回读
+  }
 }
 ```
 
+- 设值永不超过量到的 `maxScroll`，数学上不可能滚出内容外；闭环回读保证首点落偏也被自动纠正。
 - 末条变化 watcher（初次加载/收到新消息）与 `scrollToLatestMessage` 统一走 `scrollToBottom()`。
 - 初次加载「不足一屏」的落底由前插路径 `commitPrepend` 的 `before.height + delta` 分支负责，与本函数无竞态。
 - 定位原消息 `scrollToTargetMessage` 本就用数值测量，不受影响。
@@ -1327,14 +1327,15 @@ async function scrollToBottom() {
 ### 经验教训
 
 1. `scroll-into-view` 锚末条 ≠ 滚到底：末条不足一屏时滚过内容末尾白屏。
-2. **盲设超大 `scroll-top` 赌原生 clamp 不可靠**：与重渲染同帧时原生按旧内容高度钳制，会滚出内容外。要**等渲染落定后量真实 `maxScroll = 内容总高 − 视口高` 精确设值**，才是确定性落底。
-3. 数值 `scroll-top` 同值重设不触发、手动滚动后 ref 不跟随原生位置 → 用交替 `nudge`（`seq++ % 2`）保证连续设值不同以重触发，且 `+1` 仍在 clamp 范围内不会白屏。
-4. 「首点失败、再点成功」这类症状几乎一定是**两次点击之间有状态/布局落定**，要往「同帧竞态、按旧布局计算」方向查，而不是只盯着滚动 API 本身。
+2. **盲设超大 `scroll-top` 赌原生 clamp 是白屏根源**：无论同帧旧高度钳制还是测量失败回退，超大值都会滚出内容外。必须**只设量到的真实 `maxScroll`**，量不到就重试而非盲设。
+3. 小程序 `getScrollInfo`(scrollOffset) **不返回 scrollHeight**，内容总高只能测包裹层 `getBoundingClientRect`；首点布局未就绪时量到 0，要有重试而非回退超大值。
+4. 「首点失败、再点成功」= 两次点击之间有状态/布局落定 → 用**闭环回读自校正**把第二次点击自动化，而不是赌单次设值时机。
+5. 数值 `scroll-top` 同值重设不触发、手动滚动后 ref 不跟随原生位置 → 交替 `nudge`（`seq++ % 2`）保证重触发，`+1` 仍在 clamp 范围内。
 
 ### 涉及文件
 
-- `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — `scrollToBottom`（精确测量落底）/ 末条 watcher / 移除 `scroll-into-view` 锚点机制
-- `br-app/scripts/verify-im-history.js` — 精确落底 + 无 `scroll-into-view` 绑定断言
+- `br-app/src/TUIKit/components/TUIChat/message-list/index.vue` — `scrollToBottom`（闭环自校正、无盲设回退）/ 末条 watcher / 移除 `scroll-into-view` 锚点机制
+- `br-app/scripts/verify-im-history.js` — 闭环落底 + 无 `scroll-into-view` 绑定断言
 
 ## 关闭图片/视频预览后跳回最新消息
 
@@ -1362,7 +1363,7 @@ async function scrollToBottom() {
 - **源码断言**：`node scripts/verify-im-history.js`（深历史重建契约 + 原子前插 + 滚底哨兵 + 无 `scroll-into-view` 绑定）。
 - **聊天相关断言**：`verify-chat-read-gate.mjs`、`verify-chat-read-on-visible.js`、`verify-tuikit-cleanup.js`、`verify-media-send-diagnostics.js` 均通过。
 - **双端构建**：`npm run build:mp-weixin`（含分包布局校验，主包 1.16MB）、`npm run build:h5` 均成功。
-- **编译产物核对**：mp-weixin `message-list/index.wxml` 已无 `scroll-into-view`，`scroll-top="{{i}}"`、`scroll-anchoring="{{true}}"` 保留；`index.js` 滚底为 `await nextTick → 量 #messageScrollContent/#messageScrollList 高 → Math.max(0, ch-vh)+nudge` 精确落底。
+- **编译产物核对**：mp-weixin `message-list/index.wxml` 已无 `scroll-into-view`，`scroll-top="{{i}}"`、`scroll-anchoring="{{true}}"` 保留；`index.js` 滚底为 3 轮闭环（`nextTick → measureScroll → 量到才设 Math.max(0,h-vp)+nudge → 回读偏差>8 自动重设`），**全文无 `1e9` 盲设残留**。
 - **H5 冒烟**：本地静态服务打开首页，TUIKit 引擎正常加载（LiteChat 1.6.22 / Engine-Lite 1.0.7 / UniversalAPI 2.4.1），无 JS/Vue 运行时错误；仅后端未启动的预期 `ERR_CONNECTION_REFUSED`（`localhost:8000/api/v1/*`）。
 
 ### 边界（如实说明）

@@ -416,11 +416,11 @@ const isLongpressing = ref(false);
 const blinkMessageIDList = ref<string[]>([]);
 const messageTarget = ref<IMessageModel>();
 const scrollButtonInstanceRef = ref<InstanceType<typeof ScrollButton>>();
-// 滚底必须「精确落到最大滚动位置」，不能盲设超大值赌原生 clamp：
-// 点击「回到最新位置」会先 resetMessageSource 触发重渲染，若同帧设 scroll-top=超大值，
-// 原生 scroll-view 会在内容布局落定前按旧高度钳制，滚出内容外 → 首点白屏、再点才正确。
-// 故等 nextTick 渲染落定后量「内容总高 - 视口高」得到真实 maxScroll 直接设值，数学上不会滚出内容外。
-// 不用 scroll-into-view 锚末条：它把末条顶部对齐视口顶部，末条不足一屏时同样滚过内容末尾白屏。
+// 滚底用「闭环自校正」：量真实 maxScroll 设值后回读原生实际位置，偏差明显就自动再设一次，
+// 把用户「再点一次才正确」的第二次点击在百毫秒内自动完成。覆盖首点落偏的全部情形：
+// 与 resetMessageSource 重渲染同帧按旧高度钳制、scroll-anchoring 抢占、同值重设不触发。
+// 设值永不超过量到的 maxScroll，数学上不可能滚出内容外白屏；不用 scroll-into-view 锚末条
+// （它把末条顶部对齐视口顶部，末条不足一屏时滚过内容末尾白屏）。
 let bottomScrollSeq = 0;
 // 自动续拉防抖：上一轮续拉没有新增消息时停止，避免原地打转刷接口
 let autoFillLastCount = -1;
@@ -439,24 +439,21 @@ const reSendDialogShow = ref(false);
 const resendMessageData = ref();
 
 async function scrollToBottom() {
-  // 等 resetMessageSource 等引发的重渲染落定，再量真实布局，避免按旧高度钳制滚出内容外
-  await nextTick();
-  // 交替 0/1：手动滚动后 ref 不跟随原生位置，连续两次设值必须不同才会重触发滚动
-  const nudge = bottomScrollSeq++ % 2;
-  let target = 1e9 + nudge; // 兜底：测量失败时用大值由原生 clamp 到底
-  try {
-    const content = await getBoundingClientRect('#messageScrollContent', 'messageList');
-    const view = await getBoundingClientRect('#messageScrollList', 'messageList');
-    const ch = content?.height || 0;
-    const vh = view?.height || 0;
-    if (ch > 0 && vh > 0) {
-      // 精确最大滚动位置 = 内容总高 - 视口高，即底部；+nudge 仍在 clamp 范围内不会白屏
-      target = Math.max(0, ch - vh) + nudge;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // 等 resetMessageSource 等引发的重渲染落定再量真实布局
+    await nextTick();
+    const m = await measureScroll();
+    // 仅在量到真实高度时设值；量不到（布局未就绪）绝不盲设超大值，避免滚出内容外白屏
+    if (m && m.height && m.vp) {
+      const ideal = Math.max(0, m.height - m.vp);
+      // 回读已落底：收敛退出，不再产生额外滚动与绘制
+      if (attempt > 0 && Math.abs(m.top - ideal) <= 8) break;
+      // 交替 0/1 保证连续两次设值不同以重触发；+1 仍在 clamp 范围内不会白屏
+      scrollTop.value = ideal + (bottomScrollSeq++ % 2);
     }
-  } catch {
-    // 测量失败保留兜底大值
+    // 等原生应用滚动 / 布局落定，下一轮才能回读到真实位置或量到高度
+    await new Promise(resolve => setTimeout(resolve, 60));
   }
-  scrollTop.value = target;
 }
 
 // 末条变化（初次加载/收到新消息）才滚底；前插历史末条不变，这里不触发，

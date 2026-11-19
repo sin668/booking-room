@@ -18,6 +18,8 @@
       </view>
     </view>
 
+    <view class="bottom-space" />
+
     <view class="bottom-bar">
       <button class="open-btn" :disabled="userStore.isVip" @tap="handleOpenVip">
         {{ userStore.isVip ? '已是超级会员' : '立即开通 - 充值100元起' }}
@@ -160,6 +162,10 @@ export default {
   font-size: 24rpx;
   line-height: 34rpx;
   color: $text-secondary;
+}
+
+.bottom-space {
+  height: calc(160rpx + env(safe-area-inset-bottom));
 }
 
 .bottom-bar {

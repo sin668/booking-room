@@ -141,7 +141,7 @@
         </view>
 
         <!-- Bottom spacing for fixed bar -->
-        <view style="height: 140rpx;" />
+        <view class="bottom-space" />
       </template>
     </scroll-view>
 
@@ -1303,6 +1303,10 @@ export default {
 }
 
 /* Fixed bottom bar */
+.bottom-space {
+  height: calc(160rpx + env(safe-area-inset-bottom));
+}
+
 .bottom-bar {
   position: fixed;
   bottom: 0;

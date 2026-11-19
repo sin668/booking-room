@@ -142,7 +142,7 @@
       </view>
 
       <!-- Bottom spacing for fixed bar -->
-      <view :style="{ height: (selectedSeat && !isViewMode) ? '240rpx' : '40rpx' }" />
+      <view :class="['bottom-space', { 'with-bar': selectedSeat && !isViewMode }]" />
     </scroll-view>
 
     <!-- Fixed bottom bar -->
@@ -957,6 +957,14 @@ export default {
 }
 
 /* Fixed bottom bar */
+.bottom-space {
+  height: 40rpx;
+}
+
+.bottom-space.with-bar {
+  height: calc(248rpx + env(safe-area-inset-bottom));
+}
+
 .bottom-bar {
   position: fixed;
   bottom: 0;

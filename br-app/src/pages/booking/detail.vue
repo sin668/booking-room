@@ -355,7 +355,7 @@
         <text class="loading-text">正在同步座位状态</text>
       </view>
 
-      <view style="height: 140rpx;" />
+      <view class="bottom-space" />
     </scroll-view>
 
     <view class="bottom-bar">
@@ -1536,6 +1536,10 @@ export default {
 .loading-text {
   font-size: 26rpx;
   color: $text-muted;
+}
+
+.bottom-space {
+  height: calc(160rpx + env(safe-area-inset-bottom));
 }
 
 .bottom-bar {

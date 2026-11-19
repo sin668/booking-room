@@ -258,7 +258,7 @@
       </view>
 
       <!-- 底部留白 -->
-      <view style="height: 140rpx;" />
+      <view class="bottom-space" />
     </scroll-view>
 
     <!-- 底部操作栏 -->
@@ -1196,6 +1196,10 @@ export default {
 }
 
 /* === 底部操作栏 === */
+.bottom-space {
+  height: calc(160rpx + env(safe-area-inset-bottom));
+}
+
 .bottom-bar {
   position: fixed;
   bottom: 0;

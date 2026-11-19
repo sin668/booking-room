@@ -190,7 +190,7 @@
       </view>
 
       <!-- 底部占位 -->
-      <view style="height: 180rpx;" />
+      <view class="bottom-space" />
     </scroll-view>
 
     <!-- 底部操作栏：关注 + 客服（平台客服）+ 返回培训室 -->
@@ -1002,6 +1002,10 @@ export default {
 }
 
 /* === 底部操作栏 === */
+.bottom-space {
+  height: calc(160rpx + env(safe-area-inset-bottom));
+}
+
 .bottom-bar {
   position: fixed;
   bottom: 0;

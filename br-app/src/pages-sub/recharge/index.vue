@@ -642,7 +642,7 @@ export default {
 }
 
 .bottom-safe {
-  height: 184rpx;
+  height: calc(160rpx + env(safe-area-inset-bottom));
 }
 
 .bottom-bar {

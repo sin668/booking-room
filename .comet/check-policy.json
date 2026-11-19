@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "argv": [".venv/bin/python", "-m", "pytest", "tests/test_data_scope.py", "-q"],
+  "argv": [".venv/bin/python", "-m", "pytest", "tests/test_cs_edu_follow.py", "-q"],
   "cwd": "br-server",
   "files": [
     "br-server/app",

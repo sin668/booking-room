@@ -15,7 +15,7 @@ assert.ok(
 )
 const fetchPage = im.match(/export async function fetchImHistoryPage\(([^)]*)\)/)
 assert.ok(fetchPage, 'im.js 缺少 fetchImHistoryPage')
-assert.strictEqual(fetchPage[1].replace(/\s+/g, ''), 'conversationID,before,limit=20')
+assert.strictEqual(fetchPage[1].replace(/\s+/g, ''), 'conversationID,before,limit=50')
 // 本系统只落库单聊，群会话 ID 不能打到历史接口
 assert.ok(/conversationID\.indexOf\('C2C'\)\s*!==\s*0/.test(im), 'fetchImHistoryPage 未排除群会话')
 assert.ok(/before/.test(im.match(/getChatMessages\(conversationID\.slice\(3\), \{[^}]*\}\)/)[0]),
@@ -25,8 +25,9 @@ const history = read('src/utils/im-history.js')
 const typeMap = history.match(/const ELEMENT_TO_TYPE = \{([\s\S]*?)\n\}/)
 assert.ok(typeMap, 'im-history.js 缺少类型映射表')
 const types = [...typeMap[1].matchAll(/^\s*(\w+):/gm)].map(m => m[1])
-assert.deepStrictEqual(types, ['text', 'image', 'sound', 'face', 'custom'], '可重建类型集合变化')
-assert.ok(!/video|MSG_FILE/.test(typeMap[1]), '视频/文件缺少 payload 契约，不应重建')
+assert.deepStrictEqual(types, ['text', 'image', 'sound', 'video', 'face', 'custom'], '可重建类型集合变化')
+assert.ok(!/MSG_FILE/.test(typeMap[1]), '文件缺少 payload 契约，不应重建')
+assert.ok(/function videoPayload/.test(history), '视频重建缺少 payload 构造函数')
 // ID 用 MsgKey：与 SDK 消息不同源，靠游标分区就不会重复上屏
 assert.ok(/ID:\s*row\.msg_key/.test(history), '重建消息未使用 MsgKey 作为 ID')
 // 回调只落 SendMsgResult==0，历史消息一律是发送成功
@@ -51,12 +52,24 @@ assert.ok(
   '未先判断 SDK 漫游是否到头',
 )
 assert.ok(
-  /const earliestTime = messageList\.value\?\.\[0\]\?\.time/.test(list),
+  /const earliestTime =[\s\S]*?cursor \|\|[\s\S]*?'messageList'\)\?\.\[0\]\?\.time/.test(list),
   '数据库游标未取当前最早一条消息的时间',
 )
+// 不再手点「查看更多」：顶部滚动自动加载 + 不足一屏自动续拉，铺满视口为止
+assert.ok(!/@click="getHistoryMessageList"/.test(list), '消息列表仍残留手点「查看更多」按钮')
 assert.ok(
-  /v-if="!isCompleted \|\| \(!isGroup && dbHasMore\)"/.test(list),
-  '「查看更多」按钮未同时考虑 SDK 与数据库两个来源',
+  /scrollTop < 50 && canLoadMore && !isLoadingMessage\.value/.test(list),
+  '滚动到顶部未自动加载更早历史',
+)
+assert.ok(
+  /async function autoFillViewport\(\)/.test(list)
+    && /nextTick\(\(\) => autoFillViewport\(\)\)/.test(list),
+  '缺少不足一屏自动续拉逻辑',
+)
+// 只有最末条消息变化才滚底，前插历史/已读回执等原地更新不跳底，避免加载更多白屏闪烁
+assert.ok(
+  /isBottomMessageChanged && !isLoadingMessage\.value/.test(list),
+  '滚底未加「最末条消息变化」守卫，加载更多会跳底闪烁',
 )
 const conversationSwitch = list.match(/const onCurrentConversationIDUpdated = \([^)]*\) => \{[\s\S]*?\n\};/)
 assert.ok(conversationSwitch && /dbHasMore\.value = true/.test(conversationSwitch[0]), '切会话未重置数据库翻页状态')

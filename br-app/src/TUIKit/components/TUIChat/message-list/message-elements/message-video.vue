@@ -38,6 +38,8 @@ const props = withDefaults(
 
 function handlerVideoPlay() {
   const encodedUrl = encodeURIComponent(props.content.url);
+  // 跳转视频播放页会触发聊天页 onHide/onShow，先标记预览中，避免会话被 reset 后回到最新消息
+  uni.$emit('media-preview-start');
   uni.navigateTo({
     url: `/TUIKit/components/TUIChat/video-play?videoUrl=${encodedUrl}`,
   });

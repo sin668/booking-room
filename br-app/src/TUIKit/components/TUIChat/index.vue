@@ -102,6 +102,8 @@ const pageConversationID = ref('');
 let releasedOnHide = false;
 // 区分 onHide 场景：打开系统选择器（相册/相机）时不调 reset()，避免清空会话和消息列表
 let isChoosingMedia = false;
+// 打开图片/视频预览时同样不清空会话，返回后保持原消息列表与滚动位置，而不是重新拉到最新消息
+let isPreviewingMedia = false;
 
 onLoad((options) => {
   pageConversationID.value = (options && options.conversationID) || '';
@@ -113,13 +115,16 @@ onLoad((options) => {
   uni.$on('choosing-media-end', () => {
     isChoosingMedia = false;
   });
+  uni.$on('media-preview-start', () => {
+    isPreviewingMedia = true;
+  });
 });
 
 onHide(() => {
   if (releasedOnHide) return;
   releasedOnHide = true;
-  // 打开系统选择器时不调 reset()，避免清空会话导致发送方看不到新消息
-  if (!isChoosingMedia) {
+  // 打开系统选择器或图片/视频预览时不调 reset()，避免清空会话导致返回后回到最新消息
+  if (!isChoosingMedia && !isPreviewingMedia) {
     reset();
   }
 });
@@ -127,6 +132,11 @@ onHide(() => {
 onShow(() => {
   if (!releasedOnHide) return;
   releasedOnHide = false;
+  // 从图片/视频预览返回：会话未被清空，保持原消息列表与滚动位置，无需重新 initChat
+  if (isPreviewingMedia) {
+    isPreviewingMedia = false;
+    return;
+  }
   // 如果是从媒体选择器返回，会话未被清空，不需要重新 initChat
   if (!isChoosingMedia && pageConversationID.value) {
     initChat({ conversationID: pageConversationID.value });
@@ -141,6 +151,7 @@ onUnload(() => {
   // 清理事件监听
   uni.$off('choosing-media-start');
   uni.$off('choosing-media-end');
+  uni.$off('media-preview-start');
   // Whether logout is decided by yourself  when the page is unloaded. The default is false.
   logout(false).then(() => {
     // Handle success result from promise.then when you set true.

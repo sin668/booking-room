@@ -36,13 +36,12 @@
         :scroll-into-view="`tui-${historyFirstMessageID}`"
         @scroll="handelScrollListScroll"
       >
-        <p
-          v-if="!isCompleted || (!isGroup && dbHasMore)"
-          class="message-more"
-          @click="getHistoryMessageList"
+        <div
+          v-if="isLoadingMessage"
+          class="message-more message-loading"
         >
-          {{ TUITranslateService.t("TUIChat.查看更多") }}
-        </p>
+          <span class="message-loading-spinner" />
+        </div>
         <li
           v-for="(item, index) in messageList"
           :id="`tui-${item.ID}`"
@@ -300,7 +299,7 @@ const thisInstance = getCurrentInstance()?.proxy || getCurrentInstance();
 const messageList = ref<IMessageModel[]>();
 const multipleSelectedMessageIDList = ref<string[]>([]);
 const isCompleted = ref(false);
-// SDK 漫游到头后是否还有更早的数据库历史可翻；点过一次取到空页就收起「查看更多」
+// SDK 漫游到头后是否还有更早的数据库历史可翻；取到空页即置 false，停止自动续拉
 const dbHasMore = ref(true);
 const currentConversationID = ref('');
 const toggleID = ref('');
@@ -312,6 +311,11 @@ const blinkMessageIDList = ref<string[]>([]);
 const messageTarget = ref<IMessageModel>();
 const scrollButtonInstanceRef = ref<InstanceType<typeof ScrollButton>>();
 const historyFirstMessageID = ref<string>('');
+// 只有列表最末条消息真正变化（初次加载/新消息）时才滚到底；前插历史、已读回执、表情回应等
+// 原地更新不再触发滚底，避免加载更多或预览返回时跳底再跳回造成白屏闪烁
+let lastRenderedLastMessageID = '';
+// 自动续拉防抖：上一轮续拉没有新增消息时停止，避免原地打转刷接口
+let autoFillLastCount = -1;
 const isShowSimpleMessageList = ref<boolean>(false);
 const simpleMessageListRenderMessageID = ref<string>();
 const audioPlayedMapping = ref<Record<string, boolean>>({});
@@ -340,6 +344,8 @@ const onCurrentConversationIDUpdated = (conversationID: string) => {
   currentConversationID.value = conversationID;
   // 切会话时引擎会清空 CHAT store 的消息列表，数据库翻页状态一并重置
   dbHasMore.value = true;
+  lastRenderedLastMessageID = '';
+  autoFillLastCount = -1;
   if (isEnabledMessageReadReceiptGlobal()) {
     const { groupProfile }
       = TUIStore.getConversationModel(conversationID) || {};
@@ -427,10 +433,13 @@ async function onMessageListUpdated(list: IMessageModel[]) {
       return message;
     });
   const newLastMessage = messageList.value?.[messageList.value?.length - 1];
+  const newLastMessageID = newLastMessage?.ID || '';
+  const isBottomMessageChanged = newLastMessageID !== lastRenderedLastMessageID;
+  lastRenderedLastMessageID = newLastMessageID;
   if (messageTarget.value) {
     // scroll to target message
     scrollAndBlinkMessage(messageTarget.value);
-  } else if (!isLoadingMessage.value && !(scrollButtonInstanceRef.value?.isScrollButtonVisible && newLastMessage?.flow === 'in')) {
+  } else if (isBottomMessageChanged && !isLoadingMessage.value && !(scrollButtonInstanceRef.value?.isScrollButtonVisible && newLastMessage?.flow === 'in')) {
     // scroll to bottom
     nextTick(() => {
       scrollToBottom();
@@ -439,6 +448,8 @@ async function onMessageListUpdated(list: IMessageModel[]) {
   if (isEnabledMessageReadReceiptGlobal()) {
     nextTick(() => bindIntersectionObserver());
   }
+  // 内容不足一屏时自动续拉历史，避免消息很少就停在顶部
+  nextTick(() => autoFillViewport());
 }
 
 async function scrollToLatestMessage() {
@@ -502,13 +513,33 @@ const getHistoryMessageList = () => {
         historyFirstMessageID.value = '';
         isLoadingMessage.value = false;
         clearTimeout(timer);
-      }, 500);
+        autoFillViewport();
+      }, 300);
     });
   }).catch(() => {
-    // SDK 不可用时若不复位，「查看更多」就永久点不动了
+    // SDK 不可用时若不复位，自动加载就永久卡住了
     isLoadingMessage.value = false;
   });
 };
+
+/** 内容不足一屏时自动往前续拉，直到铺满视口或没有更多历史，免去手点「查看更多」。 */
+async function autoFillViewport() {
+  if (isLoadingMessage.value) return;
+  const canLoadMore = !isCompleted.value || (!props.isGroup && dbHasMore.value);
+  if (!canLoadMore) return;
+  const count = messageList.value?.length || 0;
+  if (count === autoFillLastCount) return;
+  try {
+    const { scrollHeight } = await getScrollInfo('#messageScrollList', 'messageList');
+    const { height } = await getBoundingClientRect('#messageScrollList', 'messageList');
+    if (scrollHeight && height && scrollHeight <= height + 10) {
+      autoFillLastCount = count;
+      getHistoryMessageList();
+    }
+  } catch {
+    // 测量失败时不强行续拉
+  }
+}
 
 /** 向数据库取比当前最早一条更早的一页消息，按 SDK 消息结构前插到消息列表。 */
 async function loadDatabaseHistoryPage(cursor?: number) {
@@ -522,7 +553,10 @@ async function loadDatabaseHistoryPage(cursor?: number) {
   try {
     const page = await fetchImHistoryPage(currentConversationID.value, earliestTime);
     dbHasMore.value = page.hasMore;
-    if (!page.messages.length) return;
+    if (!page.messages.length) {
+      isLoadingMessage.value = false;
+      return;
+    }
     const conversationModel: any =
       TUIStore.getConversationModel(currentConversationID.value) || {};
     const selfProfile: any = TUIStore.getData(StoreName.USER, 'userProfile') || {};
@@ -550,7 +584,9 @@ async function loadDatabaseHistoryPage(cursor?: number) {
       // 整页都是不支持重建的类型：带上本页最早时间继续往前取，否则游标不变会原地打转
       if (page.hasMore) {
         loadDatabaseHistoryPage(Math.min(...page.messages.map(row => row.msg_time)));
+        return;
       }
+      isLoadingMessage.value = false;
       return;
     }
     // unshift 合并：按 ID 去重、前插、重排，且不会触发已读上报
@@ -559,16 +595,17 @@ async function loadDatabaseHistoryPage(cursor?: number) {
       historyFirstMessageID.value = currentFirstMessageID;
       const timer = setTimeout(() => {
         historyFirstMessageID.value = '';
+        isLoadingMessage.value = false;
         clearTimeout(timer);
-      }, 500);
+        autoFillViewport();
+      }, 300);
     });
   } catch (e: any) {
+    isLoadingMessage.value = false;
     Toast({
       message: e?.message || '加载更早消息失败',
       type: TOAST_TYPE.ERROR,
     });
-  } finally {
-    isLoadingMessage.value = false;
   }
 }
 
@@ -651,6 +688,8 @@ const handleImagePreview = (index: number) => {
     }
     return false;
   });
+  // 原生图片预览会触发页面 onHide/onShow，先标记预览中，避免会话被 reset 后重新拉到最新消息
+  uni.$emit('media-preview-start');
   uni.previewImage({
     current: imageMessageIndex.indexOf(index),
     urls: imageMessageList.map(message => message.payload.imageInfoArray?.[2].url),
@@ -833,3 +872,27 @@ defineExpose({
 });
 </script>
 <style lang="scss" scoped src="./style/index.scss"></style>
+<style lang="scss" scoped>
+.message-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+  cursor: default;
+
+  &-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(153, 153, 153, 0.25);
+    border-top-color: #999;
+    border-radius: 50%;
+    animation: tui-message-loading-spin 0.8s linear infinite;
+  }
+}
+
+@keyframes tui-message-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

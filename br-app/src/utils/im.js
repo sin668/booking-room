@@ -132,7 +132,7 @@ export async function resetIM() {
 
 // 深历史：IM 云端单聊只漫游 7 天（免费版），更早的消息只能读本系统由服务端回调落库的镜像。
 // 会话 ID 形如 C2C<imAccount>，群聊本系统暂未落库，直接返回空页。
-export async function fetchImHistoryPage(conversationID, before, limit = 20) {
+export async function fetchImHistoryPage(conversationID, before, limit = 50) {
   if (!conversationID || conversationID.indexOf('C2C') !== 0) {
     return { messages: [], hasMore: false }
   }

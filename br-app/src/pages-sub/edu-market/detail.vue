@@ -766,10 +766,10 @@ export default {
 .action-ico {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8rpx;
-  min-width: 96rpx;
-  padding: 6rpx 8rpx;
+  min-width: 88rpx;
+  padding: 6rpx 0;
   border-radius: 20rpx;
   cursor: pointer;
 }
@@ -827,6 +827,8 @@ export default {
 }
 
 .action-ico-text {
+  width: 64rpx;
+  text-align: center;
   font-size: 20rpx;
   line-height: 1;
   color: $text-secondary;

@@ -1370,3 +1370,85 @@ async function scrollToBottom() {
 
 - 会话窗口需 **IM 登录 + 后端运行 + 超 7 天历史会话**才能真机复现，本轮无法在认证态小程序真机运行时逐一点验按钮交互，滚底修复以**源码断言 + 双端构建 + 编译产物核对**为准。
 - `verify-im-history-merge.mjs`（引擎级合并行为）因 `im-history.js` 早前引入 `@/` 别名 TS 依赖，裸 Node 无法解析而失败，属**既有问题**，与本轮滚动改动无关。
+
+# IM 登录偶发超时与首次进入会话慢专项（2026-11-20）
+
+## 进入会话偶发「IM init failed: IM登录超时(15000ms)」
+
+### 报错信息
+
+- 有时候进入会话窗口弹 `消息服务初始化失败：IM登录超时(15000ms)`（控制台 `IM init failed: IM登录超时(15000ms)`），返回重进又正常。
+- 与本文第一节「生产环境域名白名单」不同：白名单已配齐（29 个 socket + 4 个 request 域名），此处是**白名单正确下的偶发超时**，调试/生产都可能出现。
+
+### 根本原因
+
+`TUILogin.login` 有两个关键行为（见 `@tencentcloud/tui-core-lite` 源码）：
+
+1. **每次调用都 `this.chat = create(...)` 新建一个 chat 实例**，并在 `SDK_READY`（`sdkStateReady`）事件触发后 login promise 才 resolve。
+2. SDK 自带断线/网络重连（`_onNetworkStatusChange`），冷启动时 WebSocket 握手（DNS + TLS + `getconninfo`）在移动网络下偶尔超过 15s，但**实例往往几秒后就自行就绪**。
+
+旧 `ensureIM` 用 `withTimeout(TUILogin.login(...), 15000)` **单次硬超时**：
+
+- 握手一超过 15s 就 `reject` → 返回 false → 弹「IM登录超时」，**丢弃了一个即将就绪的实例**（误报）。
+- 失败后 `initPromise = null`、`imInitialized = false`，但被放弃的 login 仍可能在 16~20s 后让 SDK 就绪。下次进入 `ensureIM` 见 `imInitialized` 为假，**又调一次 `TUILogin.login` 新建实例**，与旧实例互相抢占连接，进一步加剧偶发超时与状态不一致（`isIMReady()` 说谎）。
+
+### 解决方案
+
+`br-app/src/utils/im.js` 把单次硬超时改为**韧性登录** `loginResilient`：
+
+- **握手超时不放弃实例**：`catch` 后若 `TUILogin.getContext().chat` 已建立，改 `waitChatReady(chat, 15s)` 等它就绪——`SDK_READY` 事件优先、`isReady()` 轮询兜底（事件可能在订阅前已触发）。SDK 后台重连成功即采纳，不再误报。
+- **入口复用已就绪实例**：`ensureIM` 顶部先查 `ctx.chat.isReady()`，已就绪直接 `TUIChatEngine.login` 采纳并置 `imInitialized`，**省去重新取凭证与新建 login**；`loginResilient` 每轮开头同样先复用就绪实例。
+- **有限重试**：实例始终不就绪才重新 login，最多 `LOGIN_MAX_ATTEMPTS = 2` 次，避免无限重连 churn。
+- **离线快速失败**：重试前与等就绪前用 `uni.getNetworkType` 判 `none`，无网络立即抛「网络不可用，请检查网络后重试」，不空等满预算。
+
+```javascript
+async function loginResilient(sdkAppID, user_id, user_sig) {
+  let lastErr = null
+  for (let attempt = 0; attempt < LOGIN_MAX_ATTEMPTS; attempt++) {
+    if (TUILogin.getContext()?.chat?.isReady?.()) return        // 复用已就绪实例
+    if (attempt > 0 && (await getNetworkType()) === 'none') throw new Error('网络不可用，请检查网络后重试')
+    try {
+      await withTimeout(TUILogin.login({ SDKAppID: sdkAppID, userID: user_id, userSig: user_sig }), LOGIN_HANDSHAKE_TIMEOUT, 'IM登录')
+      return
+    } catch (e) {
+      lastErr = e
+      const chat = TUILogin.getContext()?.chat
+      if (chat) {
+        if ((await getNetworkType()) === 'none') throw new Error('网络不可用，请检查网络后重试')
+        try { await waitChatReady(chat, LOGIN_READY_TIMEOUT); return } catch (e2) { lastErr = e2 }
+      }
+    }
+  }
+  throw lastErr || new Error('IM登录失败')
+}
+```
+
+## 第一次进入会话窗口加载慢，好一会才出现消息
+
+### 报错信息
+
+- 首次点进会话，先卡在「正在连接...」loading，过好一会消息才渲染；慢网络下甚至弹「消息服务初始化超时，请返回重试」。
+
+### 根本原因
+
+1. **`initChat` 就绪预算短于登录预算**：旧 `entry-chat-only.ts` 用 `setInterval` 每 200ms 轮询 `chat.isReady()`，上限 `maxRetries = 25`（**仅 5s**），而登录握手预算 15s。直接进会话页（未经 `openCSChat` 预热）或预热失败时，登录还在连接，`initChat` 5s 就放弃报「初始化超时」——**比登录成功还早**。
+2. **未主动拉起登录**：`initChat` 只被动等 `chat.isReady()`，直接导航进会话页时若没人调过 `ensureIM`，SDK 根本不会开始登录。
+3. **导航前阻塞登录**：`openCSChat` 先 `await ensureIM()`（showLoading）才 `navigateTo`，预热失败/在途时用户干等整段凭证+登录耗时才看到页面壳。预热成功时本应秒进，但旧单次登录易超时（见上一节），预热常失败 → 退化为冷启动阻塞。
+
+### 解决方案
+
+- **`initChat` 事件驱动 + 预算对齐 + 主动拉起登录**（`entry-chat-only.ts`）：未就绪时先 `ensureIM()` 拉起登录；用 `SDK_READY` 事件即时切会话、200ms 轮询兜底（实例尚未创建时在轮询里再挂事件）；就绪上限提到 `CHAT_READY_TIMEOUT = 35000`，与登录重试预算（握手 15s + 等就绪 15s + 重试）对齐，不再 5s 早退。
+- **预热更可靠**：上一节韧性登录让 `App.onLaunch` / 登录成功时的 `ensureIM()` 预热更容易成功并缓存 `imInitialized`，进入会话直接命中缓存秒开；即便预热在途，`ensureIM` 返回同一个 `initPromise` 不重复登录。
+
+### 涉及文件
+
+- `br-app/src/utils/im.js` — `loginResilient` / `waitChatReady` / `getNetworkType` / `ensureIM` 入口采纳已就绪实例
+- `br-app/src/TUIKit/components/TUIChat/entry-chat-only.ts` — `initChat` 事件驱动就绪、35s 预算对齐、主动 `ensureIM`
+- `br-app/scripts/verify-im-login.js` — 源码断言 + vm 注入 mock 行为自检（晚到就绪采纳 / 离线快失败 / 已就绪不重复 login）
+
+### 本轮验证方式与边界
+
+- **行为自检**：`node scripts/verify-im-login.js` 把真实 `im.js` 去 import/export 后在 `vm` 注入 mock（计时器加速 1000×），验证三条契约全部通过：①login 永不 resolve 但实例 20ms 后就绪 → `ensureIM` 成功且只 login 一次；②离线 → 快速失败给「网络不可用」；③入口已就绪 → 不取凭证、不 login 直接采纳。
+- **源码断言**：`verify-im-login.js` 同时断言韧性登录结构、`initChat` 35s 预算与事件驱动、无 5s 旧上限残留；`verify-im-history.js` 无回归。
+- **双端构建**：`npm run build:mp-weixin`（含分包布局校验）、`npm run build:h5` 均成功；编译产物核对韧性登录与 35s 预算已落地。
+- **边界（如实说明）**：偶发超时需**真实移动网络冷启动 + IM 登录 + 后端**才能真机复现，本轮无法在认证态小程序真机点验「偶发」时序，修复以**行为自检 + 源码断言 + 双端构建 + 编译产物核对**为准；`verify-im-history-merge.mjs` 既有 `@/` 别名解析失败与本轮无关。

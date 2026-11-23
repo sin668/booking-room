@@ -9,11 +9,13 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.booking_status import BookingStatus, resolve_course_status
+from app.core.im import to_im_user_id
 from app.models.booking import Booking
 from app.models.course import Course
 from app.models.course_lesson import CourseLesson
 from app.models.course_schedule import CourseSchedule
 from app.models.lesson_schedule import LessonSchedule
+from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.models.coupon import Coupon, UserCoupon
 from app.models.user import User
@@ -60,7 +62,7 @@ class CourseBookingService:
         """
         # 使用 JOIN 一次性获取课程和排课信息（仅固定班课排课，取最早一条）
         result = await db.execute(
-            select(Course, CourseSchedule, Teacher)
+            select(Course, CourseSchedule, Teacher, StudyRoom)
             .outerjoin(
                 CourseSchedule,
                 and_(
@@ -70,6 +72,7 @@ class CourseBookingService:
                 ),
             )
             .outerjoin(Teacher, CourseSchedule.teacher_id == Teacher.id)
+            .outerjoin(StudyRoom, Course.room_id == StudyRoom.id)
             .where(Course.id == course_id)
             .order_by(CourseSchedule.created_at.asc())
             .limit(1)
@@ -78,7 +81,7 @@ class CourseBookingService:
         if row is None:
             return None
         
-        course, schedule, teacher = row
+        course, schedule, teacher, study_room = row
 
         lessons_result = await db.execute(
             select(CourseLesson)
@@ -99,6 +102,12 @@ class CourseBookingService:
             "status": course.status,
             "tags": course.tags,
             "room_id": course.room_id,
+            # 客服会话目标：与课程详情口径一致，取所属教室创建人的 IM 用户 ID
+            "creator_username": (
+                to_im_user_id(study_room.created_by)
+                if study_room and study_room.created_by
+                else None
+            ),
             # 从排课表获取价格信息
             "price": schedule.price if schedule else 0,
             "custom_price": schedule.custom_price if schedule else 0,

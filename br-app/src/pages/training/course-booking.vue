@@ -175,9 +175,17 @@
 
         <!-- Schedule: Custom -->
         <view v-if="scheduleType === 'custom'" class="card schedule-card">
-          <view class="section-header">
-            <view class="section-bar" />
-            <text class="section-title">选择上课时间</text>
+          <view class="schedule-header">
+            <view class="section-header">
+              <view class="section-bar" />
+              <text class="section-title">选择上课时间</text>
+            </view>
+            <view class="cs-entry" @tap="onOpenCS">
+              <view class="cs-icon-wrap">
+                <view class="icon icon-headset cs-icon" />
+              </view>
+              <text class="cs-text">联系客服</text>
+            </view>
           </view>
 
           <!-- Weekday selector -->
@@ -402,6 +410,7 @@ import { getBalance } from '@/api/wallet'
 import { getAvailableCouponsForBooking } from '@/api/coupons'
 import { formatMoney, formatCourseSchedule, formatCourseStartDate } from '@/utils/formatters'
 import { ensureLogin } from '@/utils/auth'
+import { openCSChat } from '@/utils/customerService'
 import {
   PAYMENT_POLL_INTERVAL,
   PAYMENT_POLL_MAX_ATTEMPTS,
@@ -798,6 +807,9 @@ export default {
       this.loadAvailableCoupons()
     },
 
+    onOpenCS() {
+      openCSChat(this.courseInfo.creator_username)
+    },
 
     selectPaymentMethod(method) {
       this.paymentMethod = method
@@ -1525,6 +1537,47 @@ function money(value) {
 }
 
 /* Custom schedule time picker */
+.schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.schedule-header .section-header {
+  margin-bottom: 0;
+}
+
+.cs-entry {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.cs-entry:active {
+  opacity: 0.7;
+}
+
+.cs-icon-wrap {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 10rpx;
+  background: $primary-soft;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cs-icon {
+  font-size: 26rpx;
+  color: $primary;
+}
+
+.cs-text {
+  font-size: 24rpx;
+  color: $primary;
+}
+
 .weekday-scroll {
   margin-bottom: 16rpx;
 }

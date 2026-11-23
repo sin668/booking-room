@@ -208,7 +208,7 @@
               <text class="action-btn-text pay-action-text">去支付</text>
             </view>
             <view
-              v-if="order.payment_status === 'pending' && order.status !== 'cancelled'"
+              v-if="order.payment_status === 'pending' && order.status !== 'cancelled' && order.status !== 'in_progress'"
               :class="['action-btn', 'cancel-action-btn', { disabled: cancellingOrderId === order.id }]"
               @tap.stop="confirmCancelBooking(order)"
             >
@@ -231,7 +231,7 @@
               <text class="action-btn-text">查看课程</text>
             </view>
             <view
-              v-if="(order.can_cancel === true || order.status === 'pending_confirm') && order.payment_status !== 'pending' && !(isCourseBooking(order) && order.status === 'pending_start')"
+              v-if="(order.can_cancel === true || order.status === 'pending_confirm') && order.status !== 'in_progress' && order.payment_status !== 'pending' && !(isCourseBooking(order) && order.status === 'pending_start')"
               :class="['action-btn', 'cancel-action-btn', { disabled: cancellingOrderId === order.id }]"
               @tap.stop="confirmCancelBooking(order)"
             >

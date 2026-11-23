@@ -3,7 +3,7 @@
     <!-- Custom Navigation Bar -->
     <view class="nav-bar">
       <view class="nav-back" @tap="goBack">
-        <text class="nav-back-icon">‹</text>
+        <view class="nav-back-arrow" />
       </view>
       <text class="nav-title">预约课程</text>
       <view class="nav-placeholder" />
@@ -1009,17 +1009,20 @@ function money(value) {
 }
 
 .nav-back {
-  width: 64rpx;
-  height: 64rpx;
+  width: 72rpx;
+  height: 72rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.nav-back-icon {
-  font-size: 44rpx;
-  color: $text-primary;
-  line-height: 1;
+/* 与订单列表 /pages-sub/orders/index 的返回箭头保持一致的尺寸 */
+.nav-back-arrow {
+  width: 20rpx;
+  height: 20rpx;
+  border-left: 4rpx solid $text-primary;
+  border-bottom: 4rpx solid $text-primary;
+  transform: rotate(45deg);
 }
 
 .nav-title {

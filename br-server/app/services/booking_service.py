@@ -432,10 +432,8 @@ async def list_bookings(
     # 查询课程预约相关数据
     course_booking_ids = {b.id for b in bookings if getattr(b, "booking_type", None) == "course"}
     course_map: dict[int, str] = {}  # course_id -> course_name
-    course_schedule_map: dict[int, str] = {}  # course_id -> schedule
-    course_start_date_map: dict[int, date | None] = {}  # course_id -> start_date
-    course_end_date_map: dict[int, date | None] = {}  # course_id -> end_date
-    course_teacher_map: dict[int, int | None] = {}  # course_id -> teacher_id
+    schedule_by_course: dict[int, CourseSchedule] = {}  # course_id -> 最早创建的排课（旧订单回退口径）
+    schedule_by_id: dict[int, CourseSchedule] = {}  # schedule_id -> 排课（订单绑定口径）
     teacher_map: dict[int, dict] = {}  # teacher_id -> {name, avatar}
     lesson_map: dict[int, list[str]] = {}  # booking_id -> lesson_titles
     lesson_schedule_map: dict[int, list[LessonScheduleBrief]] = {}  # booking_id -> lesson_schedules (filtered by booking.lesson_ids)
@@ -453,15 +451,10 @@ async def list_bookings(
                 .order_by(CourseSchedule.course_id, CourseSchedule.created_at)
             )
             schedule_list = list(schedules_result.scalars().all())
-            schedule_by_course: dict[int, CourseSchedule] = {}
+            schedule_by_id = {s.id: s for s in schedule_list}
             for s in schedule_list:
                 if s.course_id not in schedule_by_course:
                     schedule_by_course[s.course_id] = s
-            for cid, sched in schedule_by_course.items():
-                course_schedule_map[cid] = sched.time_slots
-                course_teacher_map[cid] = sched.teacher_id
-                course_start_date_map[cid] = sched.start_date
-                course_end_date_map[cid] = sched.end_date
             
             # 查询教师信息
             teacher_ids = {s.teacher_id for s in schedule_list if s.teacher_id is not None}
@@ -571,14 +564,20 @@ async def list_bookings(
             resp.course_id = b.course_id
             resp.course_name = course_map.get(b.course_id) if b.course_id else None
             resp.lesson_titles = lesson_map.get(b.id)
-            resp.schedule = course_schedule_map.get(b.course_id) if b.course_id else None
-            start_d = course_start_date_map.get(b.course_id) if b.course_id else None
+            # 排课信息优先取订单绑定的 schedule_id，避免同课程多排课（含进行中/已结课旧班）
+            # 的开课日期、每周时段、老师串入展示；旧订单无 schedule_id 时回退最早创建的排课
+            bound_schedule_id = getattr(b, "schedule_id", None)
+            sched = schedule_by_id.get(bound_schedule_id) if bound_schedule_id else None
+            if sched is None and b.course_id:
+                sched = schedule_by_course.get(b.course_id)
+            resp.schedule = sched.time_slots if sched else None
+            start_d = sched.start_date if sched else None
             # 1V1 定制订单的开课日期取用户预约时选择的日期（bookings.date），
             # 避免同一课程下固定班课排课的开课日期混淆定制订单展示
             if getattr(b, "schedule_type", None) == "custom" and getattr(b, "date", None):
                 start_d = b.date
             resp.start_date = start_d.isoformat() if start_d else None
-            end_d = course_end_date_map.get(b.course_id) if b.course_id else None
+            end_d = sched.end_date if sched else None
             resp.end_date = end_d.isoformat() if end_d else None
             # started: start_date <= today (Asia/Shanghai)
             resp.started = (start_d <= today) if start_d else None
@@ -589,12 +588,11 @@ async def list_bookings(
             # 订单课时类型（fixed 固定班课 / custom 1V1 定制），前端据此展示"定制"标签
             resp.schedule_type = getattr(b, "schedule_type", None)
             # 设置教师信息
-            if b.course_id and b.course_id in course_teacher_map:
-                teacher_id = course_teacher_map[b.course_id]
-                if teacher_id and teacher_id in teacher_map:
-                    teacher_info = teacher_map[teacher_id]
-                    resp.teacher_name = teacher_info["name"]
-                    resp.teacher_avatar = teacher_info["avatar"]
+            teacher_id = sched.teacher_id if sched else None
+            if teacher_id and teacher_id in teacher_map:
+                teacher_info = teacher_map[teacher_id]
+                resp.teacher_name = teacher_info["name"]
+                resp.teacher_avatar = teacher_info["avatar"]
             items.append(resp)
         else:
             items.append(_build_booking_response(b, seat_map.get(b.seat_id), room_map.get(b.room_id)))

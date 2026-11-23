@@ -1173,16 +1173,16 @@ export default {
 
 /* In-progress status dot & badge */
 .dot-in_progress {
-  background: $primary;
-  box-shadow: 0 0 0 8rpx rgba(79, 110, 247, 0.1);
+  background: $success;
+  box-shadow: 0 0 0 8rpx rgba(7, 193, 96, 0.1);
 }
 
 .badge-in_progress {
-  background: $primary-light;
+  background: $success-light;
 }
 
 .badge-in_progress .status-badge-text {
-  color: $primary;
+  color: $success;
 }
 
 /* Bottom row: duration + price */

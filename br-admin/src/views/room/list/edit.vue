@@ -141,6 +141,9 @@
               <n-text v-if="mapStatusText" depth="3" class="text-xs">
                 {{ mapStatusText }}
               </n-text>
+              <n-text v-if="searchHint" type="warning" class="text-xs">
+                {{ searchHint }}
+              </n-text>
             </div>
           </n-space>
         </n-card>
@@ -355,6 +358,7 @@
   const mapSearchResults = ref<RoomMapSuggestion[]>([]);
   const mapSearching = ref(false);
   const mapStatusText = ref('');
+  const searchHint = ref('');
   let mapSdkPromise: Promise<any> | null = null;
   let mapInstance: any = null;
   let markerInstance: any = null;
@@ -548,34 +552,48 @@
     mapStatusText.value = '地图加载中…';
     try {
       const sdk = await loadMapSdk();
+      const el = mapContainer.value;
+      // 等一帧再建图，确保 v-if 插入的容器已完成布局
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      if (!el || !el.clientWidth || !el.clientHeight) {
+        mapStatusText.value = '地图容器尺寸异常，请收起后重新展开地图';
+        return;
+      }
       const center = hasCoordinates.value
         ? new sdk.LatLng(Number(formValues.latitude), Number(formValues.longitude))
         : new sdk.LatLng(DEFAULT_MAP_CENTER.latitude, DEFAULT_MAP_CENTER.longitude);
-      mapInstance = new sdk.Map(mapContainer.value, {
+      mapInstance = new sdk.Map(el, {
         center,
         zoom: hasCoordinates.value ? 16 : 12,
         viewMode: '2D',
       });
-      markerInstance = new sdk.MultiMarker({
-        map: mapInstance,
-        styles: {
-          marker: new sdk.MarkerStyle({
-            width: 25,
-            height: 35,
-            anchor: { x: 16, y: 32 },
-            src: MARKER_SRC,
-          }),
-        },
-        geometries: hasCoordinates.value
-          ? [
-              {
-                id: 'target',
-                styleId: 'marker',
-                position: new sdk.LatLng(Number(formValues.latitude), Number(formValues.longitude)),
-              },
-            ]
-          : [],
-      });
+      try {
+        markerInstance = new sdk.MultiMarker({
+          map: mapInstance,
+          styles: {
+            marker: new sdk.MarkerStyle({
+              width: 25,
+              height: 35,
+              anchor: { x: 16, y: 32 },
+              src: MARKER_SRC,
+            }),
+          },
+          geometries: hasCoordinates.value
+            ? [
+                {
+                  id: 'target',
+                  styleId: 'marker',
+                  position: new sdk.LatLng(
+                    Number(formValues.latitude),
+                    Number(formValues.longitude)
+                  ),
+                },
+              ]
+            : [],
+        });
+      } catch {
+        // 标记失败不影响选点，坐标仍可正常回填
+      }
       mapInstance.on('click', (event: any) => {
         const latitude = Number(event?.latLng?.getLat?.() ?? event?.latLng?.lat);
         const longitude = Number(event?.latLng?.getLng?.() ?? event?.latLng?.lng);
@@ -589,9 +607,16 @@
       mapStatusText.value = hasCoordinates.value
         ? '点击地图可重新选点'
         : '点击地图任意位置即可选点';
-    } catch {
-      mapStatusText.value = '地图加载失败：请检查 VITE_TENCENT_MAP_KEY 与网络';
+      window.setTimeout(() => {
+        if (mapInstance && mapContainer.value && !mapContainer.value.querySelector('canvas')) {
+          mapStatusText.value =
+            '地图未能渲染，请确认该 Key 已开通「Web端(JS API)」并配置正确的域名白名单';
+        }
+      }, 3000);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : '';
       destroyMap();
+      mapStatusText.value = `地图加载失败：${detail || '请检查 VITE_TENCENT_MAP_KEY 与网络'}`;
     }
   }
 
@@ -643,15 +668,31 @@
     }
   }
 
-  async function searchPlaces(keyword: string): Promise<RoomMapSuggestion[]> {
+  function describeMapError(status?: number, message?: string) {
+    if (status === 120 || status === 121) {
+      return '该 Key 今日调用量已达上限，可点击地图选点或稍后再试';
+    }
+    if (status === 199) {
+      return '该 Key 未开启 WebServiceAPI';
+    }
+    if (status === 110 || status === 111 || status === 112 || status === 113) {
+      return '该 Key 未授权此服务或来源，请检查腾讯位置服务的服务勾选与鉴权方式';
+    }
+    return message || '';
+  }
+
+  async function searchPlaces(
+    keyword: string
+  ): Promise<{ items: RoomMapSuggestion[]; error: string }> {
     const sdk = (window as any).TMap;
+    let sdkError = '';
     if (sdk?.service?.Suggestion) {
       try {
         const result = await new sdk.service.Suggestion({ pageSize: 10 }).getSuggestions({
           keyword,
         });
         if (result?.status === 0) {
-          return (result?.data || [])
+          const items = (result?.data || [])
             .map((item: any) => ({
               title: String(item.title || ''),
               address: String(item.address || ''),
@@ -662,16 +703,20 @@
               (item: RoomMapSuggestion) =>
                 item.title && Number.isFinite(item.latitude) && Number.isFinite(item.longitude)
             );
+          return { items, error: '' };
         }
-      } catch {
+        sdkError = describeMapError(result?.status, result?.message);
+      } catch (error: any) {
         // 浏览器直连被拒绝时退回服务端转发
+        sdkError = describeMapError(error?.status, error?.message);
       }
     }
     try {
       const result = await suggestRoomLocations(keyword);
-      return result?.items || [];
+      const items = result?.items || [];
+      return { items, error: items.length ? '' : sdkError };
     } catch {
-      return [];
+      return { items: [], error: sdkError || '搜索服务暂不可用' };
     }
   }
 
@@ -682,10 +727,12 @@
     }
     mapSearching.value = true;
     mapSearchResults.value = [];
+    searchHint.value = '';
     try {
-      mapSearchResults.value = await searchPlaces(keyword);
-      if (!mapSearchResults.value.length) {
-        mapStatusText.value = '未找到匹配地点，可直接点击地图选点';
+      const { items, error } = await searchPlaces(keyword);
+      mapSearchResults.value = items;
+      if (!items.length) {
+        searchHint.value = error ? `搜索失败：${error}` : '未找到匹配地点，可直接点击地图选点';
       }
     } finally {
       mapSearching.value = false;
@@ -719,6 +766,7 @@
     markerInstance = null;
     mapSearchResults.value = [];
     mapStatusText.value = '';
+    searchHint.value = '';
   }
 
   function handlePublishChange(value: boolean) {

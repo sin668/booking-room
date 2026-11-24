@@ -8,10 +8,12 @@ from app.schemas.study_room import (
     RoomAdminListResponse,
     RoomAdminResponse,
     RoomCreate,
+    RoomMapSuggestionResponse,
+    RoomReverseGeocodeResponse,
     RoomStatusUpdate,
     RoomUpdate,
 )
-from app.services import study_room_service
+from app.services import study_room_service, tencent_map_service
 from app.services.data_scope import creator_id, ensure_writable
 
 router = APIRouter(
@@ -48,6 +50,34 @@ async def create_room(
     context: AdminContext | None = Depends(get_current_admin),
 ) -> RoomAdminResponse:
     return await study_room_service.create_room(db, data.model_dump(), created_by=creator_id(context))
+
+
+@router.get(
+    "/geocode/suggest",
+    response_model=RoomMapSuggestionResponse,
+    dependencies=[Depends(require_admin_permission("room:view"))],
+)
+async def suggest_room_location(
+    keyword: str = Query(..., min_length=1, max_length=50),
+) -> RoomMapSuggestionResponse:
+    """服务端转发腾讯位置服务搜索，避免浏览器端 WebServiceAPI 鉴权失败。"""
+    return RoomMapSuggestionResponse(
+        items=await tencent_map_service.suggest_places(keyword)
+    )
+
+
+@router.get(
+    "/geocode/reverse",
+    response_model=RoomReverseGeocodeResponse,
+    dependencies=[Depends(require_admin_permission("room:view"))],
+)
+async def reverse_room_location(
+    latitude: float = Query(..., ge=-90, le=90),
+    longitude: float = Query(..., ge=-180, le=180),
+) -> RoomReverseGeocodeResponse:
+    return RoomReverseGeocodeResponse(
+        address=await tencent_map_service.reverse_geocode(latitude, longitude)
+    )
 
 
 @router.get("/{room_id}", response_model=RoomAdminResponse, dependencies=[Depends(require_admin_permission("room:view"))])

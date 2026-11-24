@@ -86,6 +86,7 @@ class Settings(BaseSettings):
     # Tencent Location Service (用于学习室地址地理编码)
     TENCENT_MAP_KEY: str = ""
     TENCENT_MAP_GEOCODE_URL: str = "https://apis.map.qq.com/ws/geocoder/v1/"
+    TENCENT_MAP_SUGGESTION_URL: str = "https://apis.map.qq.com/ws/place/v1/suggestion/"
     TENCENT_MAP_GEOCODE_TIMEOUT_SECONDS: float = 5.0
 
     model_config = {"env_file": ".env"}

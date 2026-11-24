@@ -322,3 +322,47 @@ async def test_public_room_detail_includes_null_coordinates(client, db_session):
     assert data["latitude"] is None
     assert data["longitude"] is None
 
+
+
+@pytest.mark.asyncio
+async def test_suggest_room_location_uses_server_service(admin_client, monkeypatch):
+    from app.services import tencent_map_service
+
+    async def fake_suggest(keyword: str):
+        assert keyword == "光谷大道"
+        return [
+            {
+                "title": "光谷大道",
+                "address": "湖北省武汉市洪山区",
+                "latitude": 30.5051,
+                "longitude": 114.4101,
+            }
+        ]
+
+    monkeypatch.setattr(tencent_map_service, "suggest_places", fake_suggest)
+
+    response = await admin_client.get(
+        "/api/v1/admin/rooms/geocode/suggest", params={"keyword": "光谷大道"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["items"][0]["title"] == "光谷大道"
+
+
+@pytest.mark.asyncio
+async def test_reverse_room_location_uses_server_service(admin_client, monkeypatch):
+    from app.services import tencent_map_service
+
+    async def fake_reverse(latitude: float, longitude: float):
+        assert (latitude, longitude) == (30.5051, 114.4101)
+        return "湖北省武汉市洪山区光谷大道"
+
+    monkeypatch.setattr(tencent_map_service, "reverse_geocode", fake_reverse)
+
+    response = await admin_client.get(
+        "/api/v1/admin/rooms/geocode/reverse",
+        params={"latitude": 30.5051, "longitude": 114.4101},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["address"] == "湖北省武汉市洪山区光谷大道"

@@ -18,6 +18,14 @@ for _table in Base.metadata.tables.values():
             _column.type = JSON()
 
 
+@pytest.fixture(autouse=True)
+def _disable_tencent_map(monkeypatch):
+    """本地 .env 可能配置真实 key，测试默认不发起腾讯地图请求。"""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "TENCENT_MAP_KEY", "", raising=False)
+
+
 @pytest.fixture(scope="session")
 def event_loop():
     """Create a session-scoped event loop for async tests."""

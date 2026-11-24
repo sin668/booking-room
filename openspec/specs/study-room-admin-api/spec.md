@@ -107,3 +107,19 @@
 - **WHEN** 管理员发送 `PATCH /api/v1/admin/rooms/1/status/`，body 为 `{"status": "invalid"}`
 - **THEN** 返回 HTTP 422
 
+
+### Requirement: Room map geocode proxy admin API
+系统 SHALL 提供 `GET /api/v1/admin/rooms/geocode/suggest` 与 `GET /api/v1/admin/rooms/geocode/reverse` 两个接口，由服务端使用 `TENCENT_MAP_KEY` 请求腾讯位置服务，避免浏览器端 WebServiceAPI 鉴权（如 IP 白名单）限制。
+
+#### Scenario: Suggest places by keyword
+- **WHEN** 管理员发送 `GET /api/v1/admin/rooms/geocode/suggest?keyword=光谷大道`
+- **THEN** 返回 HTTP 200，`items` 为 `{title, address, latitude, longitude}` 列表
+- **AND** 未配置 key 或腾讯接口失败时返回 `items: []`，不返回 5xx
+
+#### Scenario: Reverse geocode coordinates
+- **WHEN** 管理员发送 `GET /api/v1/admin/rooms/geocode/reverse?latitude=30.5051&longitude=114.4101`
+- **THEN** 返回 HTTP 200，`address` 为解析出的地址；解析失败时为 `null`
+
+#### Scenario: Invalid coordinates
+- **WHEN** `latitude` 超出 `[-90, 90]` 或 `longitude` 超出 `[-180, 180]`
+- **THEN** 返回 HTTP 422

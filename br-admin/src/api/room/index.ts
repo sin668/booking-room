@@ -81,6 +81,21 @@ export interface CityItem {
   province: string;
 }
 
+export interface RoomMapSuggestion {
+  title: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface RoomMapSuggestionResult {
+  items: RoomMapSuggestion[];
+}
+
+export interface RoomReverseGeocodeResult {
+  address: string | null;
+}
+
 // --- Common meta for admin API calls ---
 // --- API Functions ---
 export function getRoomList(params?: RoomListParams) {
@@ -107,4 +122,16 @@ export function toggleRoomStatus(id: number, status: 'open' | 'closed') {
 }
 export function getCityList() {
   return Alova.Get<CityItem[]>('/v1/cities', { meta: ADMIN_NATIVE_META });
+}
+export function suggestRoomLocations(keyword: string) {
+  return Alova.Get<RoomMapSuggestionResult>('/v1/admin/rooms/geocode/suggest', {
+    params: { keyword },
+    meta: ADMIN_NATIVE_META,
+  });
+}
+export function reverseRoomGeocode(latitude: number, longitude: number) {
+  return Alova.Get<RoomReverseGeocodeResult>('/v1/admin/rooms/geocode/reverse', {
+    params: { latitude, longitude },
+    meta: ADMIN_NATIVE_META,
+  });
 }

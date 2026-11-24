@@ -94,3 +94,18 @@ class RoomAdminListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class RoomMapSuggestion(BaseModel):
+    title: str
+    address: str
+    latitude: float
+    longitude: float
+
+
+class RoomMapSuggestionResponse(BaseModel):
+    items: list[RoomMapSuggestion]
+
+
+class RoomReverseGeocodeResponse(BaseModel):
+    address: str | None = None

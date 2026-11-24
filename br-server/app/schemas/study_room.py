@@ -11,6 +11,8 @@ class StudyRoomResponse(BaseModel):
     cover_image: str | None
     environment_images: list[str] | None = None
     address: str
+    latitude: float | None = None
+    longitude: float | None = None
     city_id: int | None = None
     city_name: str | None = None
     business_hours: str | None
@@ -32,6 +34,8 @@ class StudyRoomListResponse(BaseModel):
 class RoomCreate(BaseModel):
     name: str = Field(..., max_length=100)
     address: str = Field(..., max_length=255)
+    latitude: float | None = Field(None, ge=-90, le=90)
+    longitude: float | None = Field(None, ge=-180, le=180)
     description: str | None = Field(None, max_length=1000)
     cover_image: str | None = Field(None, max_length=512)
     environment_images: list[str] = Field(default_factory=list, max_length=5)
@@ -45,6 +49,8 @@ class RoomCreate(BaseModel):
 class RoomUpdate(BaseModel):
     name: str | None = Field(None, max_length=100)
     address: str | None = Field(None, max_length=255)
+    latitude: float | None = Field(None, ge=-90, le=90)
+    longitude: float | None = Field(None, ge=-180, le=180)
     description: str | None = Field(None, max_length=1000)
     cover_image: str | None = Field(None, max_length=512)
     environment_images: list[str] | None = Field(None, max_length=5)
@@ -66,6 +72,8 @@ class RoomAdminResponse(BaseModel):
     cover_image: str | None
     environment_images: list[str] | None = None
     address: str
+    latitude: float | None = None
+    longitude: float | None = None
     city_id: int | None = None
     city_name: str | None = None
     business_hours: str | None

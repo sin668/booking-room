@@ -83,6 +83,11 @@ class Settings(BaseSettings):
     IM_REST_API_BASE_URL: str = "https://adminapisgp.im.qcloud.com/v4"  # 新加坡区域; 国内用 console.tim.qq.com, 备用 adminapi.my-imcloud.com
     IM_CALLBACK_TOKEN: str = ""  # 控制台第三方回调 Token；为空时回调接口一律拒绝处理（不落库）
 
+    # Tencent Location Service (用于学习室地址地理编码)
+    TENCENT_MAP_KEY: str = ""
+    TENCENT_MAP_GEOCODE_URL: str = "https://apis.map.qq.com/ws/geocoder/v1/"
+    TENCENT_MAP_GEOCODE_TIMEOUT_SECONDS: float = 5.0
+
     model_config = {"env_file": ".env"}
 
     @property

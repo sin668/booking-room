@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING
 import uuid
 
@@ -22,6 +23,8 @@ class StudyRoom(Base):
         JSON, nullable=True, comment="环境图片 URL 列表，最多 5 张"
     )
     address: Mapped[str] = mapped_column(String(255), nullable=False)
+    latitude: Mapped[Decimal | None] = mapped_column(Numeric(10, 7), nullable=True)
+    longitude: Mapped[Decimal | None] = mapped_column(Numeric(10, 7), nullable=True)
     city_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("cities.id"), nullable=True
     )

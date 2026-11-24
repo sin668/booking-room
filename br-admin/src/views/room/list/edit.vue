@@ -5,14 +5,18 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <n-button text @click="goBack">
-            <template #icon><n-icon><ArrowLeftOutlined /></n-icon></template>
+            <template #icon
+              ><n-icon><ArrowLeftOutlined /></n-icon
+            ></template>
           </n-button>
           <h2 class="text-lg font-semibold m-0">{{ isEdit ? '编辑学习室' : '新建学习室' }}</h2>
         </div>
         <n-space>
           <n-button @click="goBack">取消</n-button>
           <n-button type="primary" :loading="saving" @click="handleSave">
-            <template #icon><n-icon><SaveOutlined /></n-icon></template>
+            <template #icon
+              ><n-icon><SaveOutlined /></n-icon
+            ></template>
             保存学习室
           </n-button>
         </n-space>
@@ -41,10 +45,11 @@
               </n-form-item-gi>
               <n-form-item-gi :span="2" label="地址" path="address">
                 <n-input
-                  v-model:value="formValues.address"
+                  :value="formValues.address"
                   placeholder="请输入详细地址"
                   :maxlength="255"
                   show-count
+                  @update:value="handleAddressChange"
                 />
               </n-form-item-gi>
               <n-form-item-gi label="所在城市" path="city_id">
@@ -75,6 +80,52 @@
               </n-form-item-gi>
             </n-grid>
           </n-form>
+        </n-card>
+
+        <!-- 地址定位 -->
+        <n-card :bordered="false" class="shadow-sm">
+          <template #header>
+            <div class="flex items-center gap-2">
+              <n-icon color="#4F6EF7"><EnvironmentOutlined /></n-icon>
+              <span class="text-sm font-bold">地址定位</span>
+            </div>
+          </template>
+          <n-space vertical :size="12">
+            <div class="flex items-center gap-3 flex-wrap">
+              <n-button
+                v-if="mapKeyConfigured"
+                secondary
+                type="primary"
+                @click="showMapPicker = !showMapPicker"
+              >
+                {{ showMapPicker ? '收起地图' : '在地图上选点' }}
+              </n-button>
+              <n-text v-if="hasCoordinates" depth="3" class="text-xs">
+                已选：{{ formValues.latitude?.toFixed(6) }},
+                {{ formValues.longitude?.toFixed(6) }}
+              </n-text>
+              <n-text v-else depth="3" class="text-xs"> 未选点；保存时将按地址自动解析坐标 </n-text>
+              <n-button
+                v-if="hasCoordinates"
+                text
+                type="error"
+                size="small"
+                @click="clearCoordinates"
+              >
+                清除坐标
+              </n-button>
+            </div>
+            <n-text v-if="!mapKeyConfigured" depth="3" class="text-xs">
+              未配置 VITE_TENCENT_MAP_KEY，地图选点不可用；可只填写地址，由后端自动解析。
+            </n-text>
+            <iframe
+              v-if="mapKeyConfigured && showMapPicker"
+              :src="mapPickerUrl"
+              title="腾讯地图选点"
+              class="w-full rounded"
+              style="height: 420px; border: 0"
+            />
+          </n-space>
         </n-card>
 
         <!-- 封面图片 -->
@@ -124,18 +175,8 @@
             </div>
           </template>
           <div class="flex flex-wrap gap-3">
-            <div
-              v-for="(image, index) in environmentImages"
-              :key="image"
-              class="env-image-item"
-            >
-              <n-image
-                :src="image"
-                width="120"
-                height="90"
-                object-fit="cover"
-                preview-disabled
-              />
+            <div v-for="(image, index) in environmentImages" :key="image" class="env-image-item">
+              <n-image :src="image" width="120" height="90" object-fit="cover" preview-disabled />
               <n-button
                 class="env-image-remove"
                 size="tiny"
@@ -143,7 +184,9 @@
                 circle
                 @click="removeEnvironmentImage(index)"
               >
-                <template #icon><n-icon><CloseOutlined /></n-icon></template>
+                <template #icon
+                  ><n-icon><CloseOutlined /></n-icon
+                ></template>
               </n-button>
             </div>
             <n-upload
@@ -201,7 +244,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, onMounted, reactive, ref } from 'vue';
+  import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import type { FormInst, FormRules, UploadFileInfo } from 'naive-ui';
   import {
@@ -214,6 +257,7 @@
     SettingOutlined,
     CloseOutlined,
     PlusOutlined,
+    EnvironmentOutlined,
   } from '@vicons/antd';
   import {
     createRoom,
@@ -229,6 +273,8 @@
   interface RoomFormValues {
     name: string;
     address: string;
+    latitude: number | null;
+    longitude: number | null;
     description: string;
     cover_image: string;
     business_hours: string;
@@ -260,6 +306,8 @@
   const formValues = reactive<RoomFormValues>({
     name: '',
     address: '',
+    latitude: null,
+    longitude: null,
     description: '',
     cover_image: '',
     business_hours: '',
@@ -270,18 +318,39 @@
   const environmentImages = ref<string[]>([]);
   const isPublished = ref(true);
 
+  const TENCENT_MAP_KEY = String(import.meta.env.VITE_TENCENT_MAP_KEY || '').trim();
+  const mapKeyConfigured = computed(() => Boolean(TENCENT_MAP_KEY));
+  const showMapPicker = ref(false);
+  const hasCoordinates = computed(
+    () => formValues.latitude !== null && formValues.longitude !== null
+  );
+  const mapPickerUrl = computed(() => {
+    const params = new URLSearchParams({
+      search: '1',
+      type: '0',
+      key: TENCENT_MAP_KEY,
+      referer: 'booking-room-admin',
+    });
+    return `https://apis.map.qq.com/tools/locpicker?${params.toString()}`;
+  });
+
   const rules: FormRules = {
     name: { required: true, message: '请输入名称', trigger: ['blur', 'input'] },
     address: { required: true, message: '请输入地址', trigger: ['blur', 'input'] },
   };
 
   onMounted(async () => {
+    window.addEventListener('message', handleMapPickerMessage);
     // 进入编辑页时移除列表 tab，让编辑页接管标签位置
     removeTab((t) => t.name === 'room_list');
     await loadCityOptions();
     if (roomId.value) {
       await loadRoom(roomId.value);
     }
+  });
+
+  onBeforeUnmount(() => {
+    window.removeEventListener('message', handleMapPickerMessage);
   });
 
   // 安全移除匹配的标签页（仅 splice，不影响导航主流程）
@@ -322,6 +391,8 @@
       const detail = await getRoomById(id);
       formValues.name = detail.name;
       formValues.address = detail.address;
+      formValues.latitude = detail.latitude ?? null;
+      formValues.longitude = detail.longitude ?? null;
       formValues.description = detail.description ?? '';
       formValues.cover_image = detail.cover_image ?? '';
       formValues.business_hours = detail.business_hours ?? '';
@@ -394,6 +465,36 @@
     environmentImages.value.splice(index, 1);
   }
 
+  // 手动修改地址后旧坐标失效，交由保存时的地理编码重新解析
+  function handleAddressChange(value: string) {
+    formValues.address = value;
+    formValues.latitude = null;
+    formValues.longitude = null;
+  }
+
+  function clearCoordinates() {
+    formValues.latitude = null;
+    formValues.longitude = null;
+  }
+
+  function handleMapPickerMessage(event: MessageEvent) {
+    const data = event.data;
+    if (!data || data.module !== 'locationPicker') {
+      return;
+    }
+    const latitude = Number(data.latlng?.lat);
+    const longitude = Number(data.latlng?.lng);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+    formValues.latitude = latitude;
+    formValues.longitude = longitude;
+    if (data.poiaddress) {
+      formValues.address = data.poiaddress;
+    }
+    showMapPicker.value = false;
+  }
+
   function handlePublishChange(value: boolean) {
     isPublished.value = value;
   }
@@ -413,6 +514,8 @@
       const payload = {
         name: formValues.name,
         address: formValues.address,
+        latitude: formValues.latitude,
+        longitude: formValues.longitude,
         description: formValues.description || '',
         cover_image: formValues.cover_image || '',
         environment_images: environmentImages.value,

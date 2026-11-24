@@ -14,9 +14,34 @@ from app.schemas.study_room import (
     StudyRoomResponse,
 )
 from app.services.data_scope import readonly_creators, scope_condition
+from app.services.tencent_map_service import geocode_address
 
 MAX_PAGE_SIZE = 50
 DEFAULT_PAGE_SIZE = 10
+
+
+async def _resolve_city_name(db: AsyncSession, city_id: int | None) -> str | None:
+    if city_id is None:
+        return None
+    result = await db.execute(select(City.name).where(City.id == city_id))
+    return result.scalar_one_or_none()
+
+
+def _has_coordinates(data: dict) -> bool:
+    return data.get("latitude") is not None and data.get("longitude") is not None
+
+
+async def _apply_geocode_fallback(db: AsyncSession, data: dict) -> None:
+    """Fill missing coordinates from the address; never raises."""
+    if _has_coordinates(data):
+        return
+    address = (data.get("address") or "").strip()
+    if not address:
+        return
+    city_name = await _resolve_city_name(db, data.get("city_id"))
+    coordinates = await geocode_address(address, city_name)
+    if coordinates:
+        data["latitude"], data["longitude"] = coordinates
 
 
 async def list_study_rooms(
@@ -186,6 +211,8 @@ async def admin_get_room(db: AsyncSession, room_id: int, viewer=None) -> RoomAdm
 
 async def create_room(db: AsyncSession, data: dict, created_by=None) -> RoomAdminResponse:
     """Create a new study room."""
+    data = dict(data)
+    await _apply_geocode_fallback(db, data)
     room = StudyRoom(**data, created_by=created_by)
     db.add(room)
     await db.commit()
@@ -204,8 +231,13 @@ async def update_room(
     if room is None:
         raise ValueError(f"Room {room_id} not found")
 
+    data = dict(data)
+    if "address" in data:
+        await _apply_geocode_fallback(db, data)
+
     for key, value in data.items():
-        if value is not None:
+        # 坐标允许显式传 null 清除；其余字段沿用“忽略 None”的既有语义
+        if key in ("latitude", "longitude") or value is not None:
             setattr(room, key, value)
 
     await db.commit()

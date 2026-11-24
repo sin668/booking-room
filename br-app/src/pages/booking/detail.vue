@@ -63,11 +63,11 @@
           </view>
         </view>
 
-        <view class="info-row">
+        <view class="info-row" @tap="handleAddressTap">
           <view class="icon icon-location info-icon primary" />
           <view class="info-main">
             <text class="info-text">{{ displayAddress }}</text>
-            <text class="info-sub">距您约1.2km</text>
+            <text class="info-sub">{{ addressHint }}</text>
           </view>
           <view class="icon icon-arrow-right info-arrow" />
         </view>
@@ -408,6 +408,7 @@ import { fetchBookingRoom } from '@/services/bookingPageService'
 import { buildStarChars, formatCourseSchedule, formatCourseStartDate, formatRelativeDay } from '@/utils/formatters'
 import { isLoggedIn, ensureLogin } from '@/utils/auth'
 import { openCSChat } from '@/utils/customerService'
+import { formatDistance, haversineDistance } from '@/utils/distance'
 
 const SCHEDULE_TRUNCATE_THRESHOLD = 12
 
@@ -430,6 +431,7 @@ export default {
       loading: true,
       expandedScheduleIds: {},
       isFav: false,
+      distanceText: '',
       scrollIntoView: '',
       reviewCount: 0,
       reviews: [],
@@ -467,6 +469,24 @@ export default {
     displayAddress() {
       const address = this.room.address || '茂南区光谷大道88号3楼'
       return this.room.city_name ? `${this.room.city_name} ${address}` : address
+    },
+
+    hasRoomCoordinates() {
+      const latitude = Number(this.room.latitude)
+      const longitude = Number(this.room.longitude)
+      return (
+        Number.isFinite(latitude) &&
+        Number.isFinite(longitude) &&
+        latitude !== 0 &&
+        longitude !== 0
+      )
+    },
+
+    addressHint() {
+      if (this.distanceText) return this.distanceText
+      return this.hasRoomCoordinates
+        ? '点击查看地图 / 导航'
+        : '位置暂未配置，点击复制地址'
     },
 
     ratingText() {
@@ -620,10 +640,61 @@ export default {
         const data = await fetchBookingRoom(this.roomId)
         this.room = data || {}
         this.isFav = false
+        this.loadRealDistance()
         await this.loadFollowStatus()
       } catch {
         // room stays empty
       }
+    },
+
+    // 真实距离依赖用户授权定位；拒绝/失败/无坐标时保持空，由地址行展示降级文案
+    loadRealDistance() {
+      this.distanceText = ''
+      if (!this.hasRoomCoordinates) return
+      uni.getLocation({
+        type: 'gcj02',
+        success: (location) => {
+          const meters = haversineDistance(
+            location.latitude,
+            location.longitude,
+            this.room.latitude,
+            this.room.longitude
+          )
+          this.distanceText = formatDistance(meters)
+        },
+        fail: () => {
+          this.distanceText = ''
+        },
+      })
+    },
+
+    handleAddressTap() {
+      if (!this.hasRoomCoordinates) {
+        uni.setClipboardData({
+          data: this.displayAddress,
+          success: () => {
+            uni.showToast({ title: '位置暂未配置，已复制地址', icon: 'none' })
+          },
+        })
+        return
+      }
+      const latitude = Number(this.room.latitude)
+      const longitude = Number(this.room.longitude)
+      // #ifdef H5
+      window.open(
+        `https://uri.amap.com/marker?position=${longitude},${latitude}&name=${encodeURIComponent(
+          this.roomName
+        )}&address=${encodeURIComponent(this.displayAddress)}&coordinate=gaode&callnative=1`
+      )
+      return
+      // #endif
+      uni.openLocation({
+        latitude,
+        longitude,
+        name: this.roomName,
+        address: this.displayAddress,
+        scale: 18,
+      })
     },
 
     async loadSeatStats() {

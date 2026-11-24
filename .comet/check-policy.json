@@ -1,12 +1,22 @@
 {
   "version": 1,
-  "argv": [".venv/bin/python", "-m", "pytest", "tests/test_cs_edu_follow.py", "-q"],
-  "cwd": "br-server",
+  "argv": [
+    "sh",
+    "-c",
+    "cd br-server && .venv/bin/python -m pytest tests/test_admin_room_routes.py tests/test_tencent_map_service.py tests/test_study_room_admin_service.py -q && cd ../br-admin && pnpm build >/dev/null 2>&1 && cd ../br-app && npm run test:distance && npm run build:mp-weixin >/dev/null 2>&1 && npm run build:h5 >/dev/null 2>&1"
+  ],
+  "cwd": ".",
   "files": [
     "br-server/app",
+    "br-server/alembic",
+    "br-server/scripts",
     "br-server/tests",
-    "br-server/pyproject.toml",
-    "br-server/.env"
+    "br-server/.env.example",
+    "br-admin/src",
+    "br-admin/package.json",
+    "br-app/src",
+    "br-app/scripts",
+    "br-app/package.json"
   ],
   "env": ["PATH", "HOME", "NODE_ENV", "NODE_OPTIONS"],
   "git": "none",

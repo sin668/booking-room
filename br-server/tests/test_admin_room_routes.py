@@ -194,3 +194,131 @@ async def test_admin_toggle_room_status_invalid(admin_client, sample_room):
 async def test_admin_unauthorized(unauth_client):
     resp = await unauth_client.get(BASE_URL)
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_admin_create_room_with_coordinates(admin_client, monkeypatch):
+    async def unexpected_geocode(*args, **kwargs):
+        raise AssertionError("显式坐标不应触发地理编码")
+
+    monkeypatch.setattr(
+        "app.services.study_room_service.geocode_address", unexpected_geocode
+    )
+    resp = await admin_client.post(
+        BASE_URL,
+        json={
+            "name": "带坐标自习室",
+            "address": "北京市海淀区",
+            "latitude": 39.9042,
+            "longitude": 116.4074,
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["latitude"] == pytest.approx(39.9042)
+    assert data["longitude"] == pytest.approx(116.4074)
+
+
+@pytest.mark.asyncio
+async def test_admin_create_room_geocode_fallback(admin_client, monkeypatch):
+    async def fake_geocode(address, city_name=None):
+        assert address == "上海市黄浦区"
+        return 31.2304, 121.4737
+
+    monkeypatch.setattr("app.services.study_room_service.geocode_address", fake_geocode)
+    resp = await admin_client.post(
+        BASE_URL, json={"name": "地理编码自习室", "address": "上海市黄浦区"}
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["latitude"] == pytest.approx(31.2304)
+    assert data["longitude"] == pytest.approx(121.4737)
+
+
+@pytest.mark.asyncio
+async def test_admin_create_room_geocode_failure_keeps_null(admin_client, monkeypatch):
+    async def failing_geocode(address, city_name=None):
+        return None
+
+    monkeypatch.setattr("app.services.study_room_service.geocode_address", failing_geocode)
+    resp = await admin_client.post(
+        BASE_URL, json={"name": "无坐标自习室", "address": "无法解析的地址"}
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["latitude"] is None
+    assert data["longitude"] is None
+
+
+@pytest.mark.asyncio
+async def test_admin_create_room_rejects_invalid_coordinates(admin_client):
+    resp = await admin_client.post(
+        BASE_URL,
+        json={"name": "越界自习室", "address": "地址", "latitude": 100, "longitude": 200},
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_admin_update_room_coordinates(admin_client, sample_room):
+    resp = await admin_client.put(
+        f"{BASE_URL}/{sample_room.id}",
+        json={"latitude": 23.1291, "longitude": 113.2644},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["latitude"] == pytest.approx(23.1291)
+    assert data["longitude"] == pytest.approx(113.2644)
+
+
+@pytest.mark.asyncio
+async def test_admin_update_address_geocode_fallback(admin_client, sample_room, monkeypatch):
+    async def fake_geocode(address, city_name=None):
+        assert address == "广州市天河区"
+        return 23.1355, 113.3612
+
+    monkeypatch.setattr("app.services.study_room_service.geocode_address", fake_geocode)
+    resp = await admin_client.put(
+        f"{BASE_URL}/{sample_room.id}", json={"address": "广州市天河区"}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["latitude"] == pytest.approx(23.1355)
+    assert data["longitude"] == pytest.approx(113.3612)
+
+
+@pytest.mark.asyncio
+async def test_admin_update_room_clears_coordinates(admin_client, db_session):
+    room = StudyRoom(
+        name="有坐标自习室",
+        address="地址",
+        latitude=Decimal("23.1291000"),
+        longitude=Decimal("113.2644000"),
+        min_price=Decimal("10.00"),
+    )
+    db_session.add(room)
+    await db_session.commit()
+    await db_session.refresh(room)
+
+    resp = await admin_client.put(
+        f"{BASE_URL}/{room.id}", json={"latitude": None, "longitude": None}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["latitude"] is None
+    assert data["longitude"] is None
+
+
+@pytest.mark.asyncio
+async def test_public_room_detail_includes_null_coordinates(client, db_session):
+    room = StudyRoom(name="公开自习室", address="公开地址", min_price=Decimal("10.00"))
+    db_session.add(room)
+    await db_session.commit()
+    await db_session.refresh(room)
+
+    resp = await client.get(f"/api/v1/rooms/{room.id}")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["latitude"] is None
+    assert data["longitude"] is None
+

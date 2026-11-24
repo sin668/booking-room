@@ -22,7 +22,14 @@
     },
     "usingComponents": true,
     "lazyCodeLoading": "requiredComponents",
-    "permission": {}
+    "permission": {
+      "scope.userLocation": {
+        "desc": "用于计算您与学习室的距离"
+      }
+    },
+    "requiredPrivateInfos": [
+      "getLocation"
+    ]
   },
   "h5": {
     "devServer": {

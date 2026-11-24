@@ -11,6 +11,8 @@ export interface RoomItem {
   cover_image: string | null;
   environment_images: string[] | null;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
   city_id: number | null;
   city_name: string | null;
   business_hours: string | null;
@@ -34,6 +36,8 @@ export interface RoomListResult {
 export interface RoomFormParams {
   name: string;
   address: string;
+  latitude?: number | null;
+  longitude?: number | null;
   description?: string | null;
   cover_image?: string | null;
   environment_images?: string[];
@@ -47,6 +51,8 @@ export interface RoomFormParams {
 export interface RoomUpdateParams {
   name?: string;
   address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   description?: string | null;
   cover_image?: string | null;
   environment_images?: string[];

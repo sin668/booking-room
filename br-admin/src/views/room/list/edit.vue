@@ -25,15 +25,21 @@
 
     <n-spin :show="loading">
       <div class="max-w-3xl mx-auto w-full space-y-4 py-4">
-        <!-- 基本信息 -->
-        <n-card :bordered="false" class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2">
-              <n-icon color="#4F6EF7"><InfoCircleOutlined /></n-icon>
-              <span class="text-sm font-bold">基本信息</span>
-            </div>
-          </template>
-          <n-form :model="formValues" :rules="rules" ref="formRef" label-placement="top">
+        <n-form
+          ref="formRef"
+          :model="formValues"
+          :rules="rules"
+          label-placement="top"
+          class="space-y-4"
+        >
+          <!-- 基本信息 -->
+          <n-card :bordered="false" class="shadow-sm">
+            <template #header>
+              <div class="flex items-center gap-2">
+                <n-icon color="#4F6EF7"><InfoCircleOutlined /></n-icon>
+                <span class="text-sm font-bold">基本信息</span>
+              </div>
+            </template>
             <n-grid :cols="2" :x-gap="16">
               <n-form-item-gi :span="2" label="名称" path="name">
                 <n-input
@@ -41,15 +47,6 @@
                   placeholder="请输入学习室名称"
                   :maxlength="100"
                   show-count
-                />
-              </n-form-item-gi>
-              <n-form-item-gi :span="2" label="地址" path="address">
-                <n-input
-                  :value="formValues.address"
-                  placeholder="请输入详细地址"
-                  :maxlength="255"
-                  show-count
-                  @update:value="handleAddressChange"
                 />
               </n-form-item-gi>
               <n-form-item-gi label="所在城市" path="city_id">
@@ -79,74 +76,90 @@
                 />
               </n-form-item-gi>
             </n-grid>
-          </n-form>
-        </n-card>
+          </n-card>
 
-        <!-- 地址定位 -->
-        <n-card :bordered="false" class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2">
-              <n-icon color="#4F6EF7"><EnvironmentOutlined /></n-icon>
-              <span class="text-sm font-bold">地址定位</span>
-            </div>
-          </template>
-          <n-space vertical :size="12">
-            <div class="flex items-center gap-3 flex-wrap">
-              <n-button v-if="mapKeyConfigured" secondary type="primary" @click="toggleMapPicker">
-                {{ showMapPicker ? '收起地图' : '在地图上选点' }}
-              </n-button>
-              <n-text v-if="hasCoordinates" depth="3" class="text-xs">
-                已选：{{ formValues.latitude?.toFixed(6) }},
-                {{ formValues.longitude?.toFixed(6) }}
-              </n-text>
-              <n-text v-else depth="3" class="text-xs"> 未选点；保存时将按地址自动解析坐标 </n-text>
-              <n-button
-                v-if="hasCoordinates"
-                text
-                type="error"
-                size="small"
-                @click="clearCoordinates"
-              >
-                清除坐标
-              </n-button>
-            </div>
-            <n-text v-if="!mapKeyConfigured" depth="3" class="text-xs">
-              未配置 VITE_TENCENT_MAP_KEY，地图选点不可用；可只填写地址，由后端自动解析。
-            </n-text>
-            <div v-if="mapKeyConfigured && showMapPicker" class="map-picker">
-              <div class="map-picker-search">
-                <n-input
-                  v-model:value="mapKeyword"
-                  placeholder="搜索地点（可选）"
-                  clearable
-                  @keyup.enter="handleMapSearch"
-                />
-                <n-button secondary type="primary" :loading="mapSearching" @click="handleMapSearch">
-                  搜索
+          <!-- 地址定位 -->
+          <n-card :bordered="false" class="shadow-sm">
+            <template #header>
+              <div class="flex items-center gap-2">
+                <n-icon color="#4F6EF7"><EnvironmentOutlined /></n-icon>
+                <span class="text-sm font-bold">地址定位</span>
+              </div>
+            </template>
+            <n-space vertical :size="12">
+              <div class="flex items-center gap-3 flex-wrap">
+                <n-button v-if="mapKeyConfigured" secondary type="primary" @click="toggleMapPicker">
+                  {{ showMapPicker ? '收起地图' : '在地图上选点' }}
+                </n-button>
+                <n-text v-if="hasCoordinates" depth="3" class="text-xs">
+                  已选：{{ formValues.latitude?.toFixed(6) }},
+                  {{ formValues.longitude?.toFixed(6) }}
+                </n-text>
+                <n-text v-else depth="3" class="text-xs">
+                  未选点；保存时将按地址自动解析坐标
+                </n-text>
+                <n-button
+                  v-if="hasCoordinates"
+                  text
+                  type="error"
+                  size="small"
+                  @click="clearCoordinates"
+                >
+                  清除坐标
                 </n-button>
               </div>
-              <div v-if="mapSearchResults.length" class="map-picker-results">
-                <button
-                  v-for="(item, index) in mapSearchResults"
-                  :key="`${item.title}-${index}`"
-                  type="button"
-                  class="map-picker-result"
-                  @click="selectSearchResult(item)"
-                >
-                  <span class="map-picker-result-title">{{ item.title }}</span>
-                  <span class="map-picker-result-address">{{ item.address }}</span>
-                </button>
+              <n-text v-if="!mapKeyConfigured" depth="3" class="text-xs">
+                未配置 VITE_TENCENT_MAP_KEY，地图选点不可用；可只填写地址，由后端自动解析。
+              </n-text>
+              <div v-if="mapKeyConfigured && showMapPicker" class="map-picker">
+                <div class="map-picker-search">
+                  <n-input
+                    v-model:value="mapKeyword"
+                    placeholder="搜索地点（可选）"
+                    clearable
+                    @keyup.enter="handleMapSearch"
+                  />
+                  <n-button
+                    secondary
+                    type="primary"
+                    :loading="mapSearching"
+                    @click="handleMapSearch"
+                  >
+                    搜索
+                  </n-button>
+                </div>
+                <div v-if="mapSearchResults.length" class="map-picker-results">
+                  <button
+                    v-for="(item, index) in mapSearchResults"
+                    :key="`${item.title}-${index}`"
+                    type="button"
+                    class="map-picker-result"
+                    @click="selectSearchResult(item)"
+                  >
+                    <span class="map-picker-result-title">{{ item.title }}</span>
+                    <span class="map-picker-result-address">{{ item.address }}</span>
+                  </button>
+                </div>
+                <div ref="mapContainer" class="map-picker-canvas" />
+                <n-text v-if="mapStatusText" depth="3" class="text-xs">
+                  {{ mapStatusText }}
+                </n-text>
+                <n-text v-if="searchHint" type="warning" class="text-xs">
+                  {{ searchHint }}
+                </n-text>
               </div>
-              <div ref="mapContainer" class="map-picker-canvas" />
-              <n-text v-if="mapStatusText" depth="3" class="text-xs">
-                {{ mapStatusText }}
-              </n-text>
-              <n-text v-if="searchHint" type="warning" class="text-xs">
-                {{ searchHint }}
-              </n-text>
-            </div>
-          </n-space>
-        </n-card>
+              <n-form-item label="地址" path="address">
+                <n-input
+                  :value="formValues.address"
+                  placeholder="点击地图选点自动回填，或手动填写详细地址"
+                  :maxlength="255"
+                  show-count
+                  @update:value="handleAddressChange"
+                />
+              </n-form-item>
+            </n-space>
+          </n-card>
+        </n-form>
 
         <!-- 封面图片 -->
         <n-card :bordered="false" class="shadow-sm">
@@ -752,8 +765,12 @@
 
   // 逆地址解析走服务端，避免浏览器端 WebServiceAPI 鉴权受限
   // key 按域名白名单鉴权时浏览器直连可用；按授权 IP 鉴权时只有服务端请求可用
-  async function resolveAddress(latitude: number, longitude: number): Promise<string | null> {
+  async function resolveAddress(
+    latitude: number,
+    longitude: number
+  ): Promise<{ address: string | null; error: string }> {
     const sdk = (window as any).TMap;
+    let error = '';
     if (sdk?.service?.Geocoder) {
       try {
         const result = await new sdk.service.Geocoder().getAddress({
@@ -763,27 +780,37 @@
           const address =
             result?.result?.formatted_addresses?.recommend || result?.result?.address;
           if (address) {
-            return String(address);
+            return { address: String(address), error: '' };
           }
+        } else {
+          error = describeMapError(result?.status, result?.message);
         }
-      } catch {
+      } catch (err: any) {
         // 浏览器直连被拒绝时退回服务端转发
+        error = describeMapError(err?.status, err?.message);
       }
     }
     try {
       const result = await reverseRoomGeocode(latitude, longitude);
-      return result?.address || null;
+      if (result?.address) {
+        return { address: result.address, error: '' };
+      }
     } catch {
-      return null;
+      // 服务端转发同样失败，保留浏览器端的失败原因
     }
+    return {
+      address: null,
+      error: error || '该 Key 可能未开启 WebServiceAPI 或今日调用量已达上限',
+    };
   }
 
   async function reverseGeocode(latitude: number, longitude: number) {
-    const address = await resolveAddress(latitude, longitude);
+    const { address, error } = await resolveAddress(latitude, longitude);
     if (address) {
       formValues.address = address;
+      formRef.value?.restoreValidation?.();
     } else {
-      mapStatusText.value = '已选坐标；未能解析地址，可手动填写';
+      mapStatusText.value = `已选坐标；未能解析地址（${error}），可手动填写`;
     }
   }
 
@@ -875,6 +902,7 @@
     }
     if (item.address || item.title) {
       formValues.address = item.address || item.title;
+      formRef.value?.restoreValidation?.();
     }
     mapStatusText.value = '已选择搜索结果，可继续点击地图微调';
   }

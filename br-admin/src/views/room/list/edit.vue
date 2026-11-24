@@ -92,12 +92,7 @@
           </template>
           <n-space vertical :size="12">
             <div class="flex items-center gap-3 flex-wrap">
-              <n-button
-                v-if="mapKeyConfigured"
-                secondary
-                type="primary"
-                @click="showMapPicker = !showMapPicker"
-              >
+              <n-button v-if="mapKeyConfigured" secondary type="primary" @click="toggleMapPicker">
                 {{ showMapPicker ? '收起地图' : '在地图上选点' }}
               </n-button>
               <n-text v-if="hasCoordinates" depth="3" class="text-xs">
@@ -118,13 +113,35 @@
             <n-text v-if="!mapKeyConfigured" depth="3" class="text-xs">
               未配置 VITE_TENCENT_MAP_KEY，地图选点不可用；可只填写地址，由后端自动解析。
             </n-text>
-            <iframe
-              v-if="mapKeyConfigured && showMapPicker"
-              :src="mapPickerUrl"
-              title="腾讯地图选点"
-              class="w-full rounded"
-              style="height: 420px; border: 0"
-            />
+            <div v-if="mapKeyConfigured && showMapPicker" class="map-picker">
+              <div class="map-picker-search">
+                <n-input
+                  v-model:value="mapKeyword"
+                  placeholder="搜索地点（可选）"
+                  clearable
+                  @keyup.enter="handleMapSearch"
+                />
+                <n-button secondary type="primary" :loading="mapSearching" @click="handleMapSearch">
+                  搜索
+                </n-button>
+              </div>
+              <div v-if="mapSearchResults.length" class="map-picker-results">
+                <button
+                  v-for="(item, index) in mapSearchResults"
+                  :key="`${item.title}-${index}`"
+                  type="button"
+                  class="map-picker-result"
+                  @click="selectSearchResult(item)"
+                >
+                  <span class="map-picker-result-title">{{ item.title }}</span>
+                  <span class="map-picker-result-address">{{ item.address }}</span>
+                </button>
+              </div>
+              <div ref="mapContainer" class="map-picker-canvas" />
+              <n-text v-if="mapStatusText" depth="3" class="text-xs">
+                {{ mapStatusText }}
+              </n-text>
+            </div>
           </n-space>
         </n-card>
 
@@ -244,7 +261,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+  import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import type { FormInst, FormRules, UploadFileInfo } from 'naive-ui';
   import {
@@ -324,15 +341,28 @@
   const hasCoordinates = computed(
     () => formValues.latitude !== null && formValues.longitude !== null
   );
-  const mapPickerUrl = computed(() => {
-    const params = new URLSearchParams({
-      search: '1',
-      type: '0',
-      key: TENCENT_MAP_KEY,
-      referer: 'booking-room-admin',
-    });
-    return `https://apis.map.qq.com/tools/locpicker?${params.toString()}`;
-  });
+
+  interface MapSearchResult {
+    title: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+  }
+
+  const DEFAULT_MAP_CENTER = { latitude: 23.1291, longitude: 113.2644 };
+  const MARKER_SRC =
+    'data:image/svg+xml;charset=UTF-8,' +
+    encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="35" viewBox="0 0 25 35"><path fill="#4F6EF7" d="M12.5 0C5.6 0 0 5.6 0 12.5 0 21.9 12.5 35 12.5 35S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0z"/><circle cx="12.5" cy="12.5" r="4.5" fill="#fff"/></svg>'
+    );
+  const mapContainer = ref<HTMLDivElement | null>(null);
+  const mapKeyword = ref('');
+  const mapSearchResults = ref<MapSearchResult[]>([]);
+  const mapSearching = ref(false);
+  const mapStatusText = ref('');
+  let mapSdkPromise: Promise<any> | null = null;
+  let mapInstance: any = null;
+  let markerInstance: any = null;
 
   const rules: FormRules = {
     name: { required: true, message: '请输入名称', trigger: ['blur', 'input'] },
@@ -340,7 +370,6 @@
   };
 
   onMounted(async () => {
-    window.addEventListener('message', handleMapPickerMessage);
     // 进入编辑页时移除列表 tab，让编辑页接管标签位置
     removeTab((t) => t.name === 'room_list');
     await loadCityOptions();
@@ -350,7 +379,7 @@
   });
 
   onBeforeUnmount(() => {
-    window.removeEventListener('message', handleMapPickerMessage);
+    destroyMap();
   });
 
   // 安全移除匹配的标签页（仅 splice，不影响导航主流程）
@@ -475,24 +504,197 @@
   function clearCoordinates() {
     formValues.latitude = null;
     formValues.longitude = null;
+    markerInstance?.setGeometries?.([]);
   }
 
-  function handleMapPickerMessage(event: MessageEvent) {
-    const data = event.data;
-    if (!data || data.module !== 'locationPicker') {
+  function loadMapSdk(): Promise<any> {
+    const existing = (window as any).TMap;
+    if (existing) {
+      return Promise.resolve(existing);
+    }
+    if (!mapSdkPromise) {
+      mapSdkPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `https://map.qq.com/api/gljs?v=1.exp&libraries=service&key=${encodeURIComponent(
+          TENCENT_MAP_KEY
+        )}`;
+        script.async = true;
+        script.onload = () => {
+          const sdk = (window as any).TMap;
+          if (sdk) {
+            resolve(sdk);
+          } else {
+            reject(new Error('腾讯地图 SDK 加载异常'));
+          }
+        };
+        script.onerror = () => reject(new Error('腾讯地图 SDK 加载失败'));
+        document.head.appendChild(script);
+      }).catch((error) => {
+        mapSdkPromise = null;
+        throw error;
+      });
+    }
+    return mapSdkPromise;
+  }
+
+  function toggleMapPicker() {
+    showMapPicker.value = !showMapPicker.value;
+    if (showMapPicker.value) {
+      nextTick(() => initMap());
+    } else {
+      destroyMap();
+    }
+  }
+
+  async function initMap() {
+    if (!mapContainer.value || mapInstance) {
       return;
     }
-    const latitude = Number(data.latlng?.lat);
-    const longitude = Number(data.latlng?.lng);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-      return;
+    mapStatusText.value = '地图加载中…';
+    try {
+      const sdk = await loadMapSdk();
+      const center = hasCoordinates.value
+        ? new sdk.LatLng(Number(formValues.latitude), Number(formValues.longitude))
+        : new sdk.LatLng(DEFAULT_MAP_CENTER.latitude, DEFAULT_MAP_CENTER.longitude);
+      mapInstance = new sdk.Map(mapContainer.value, {
+        center,
+        zoom: hasCoordinates.value ? 16 : 12,
+        viewMode: '2D',
+      });
+      markerInstance = new sdk.MultiMarker({
+        map: mapInstance,
+        styles: {
+          marker: new sdk.MarkerStyle({
+            width: 25,
+            height: 35,
+            anchor: { x: 16, y: 32 },
+            src: MARKER_SRC,
+          }),
+        },
+        geometries: hasCoordinates.value
+          ? [
+              {
+                id: 'target',
+                styleId: 'marker',
+                position: new sdk.LatLng(Number(formValues.latitude), Number(formValues.longitude)),
+              },
+            ]
+          : [],
+      });
+      mapInstance.on('click', (event: any) => {
+        const latitude = Number(event?.latLng?.getLat?.() ?? event?.latLng?.lat);
+        const longitude = Number(event?.latLng?.getLng?.() ?? event?.latLng?.lng);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          return;
+        }
+        applyMapCoordinates(latitude, longitude);
+        mapStatusText.value = '已选坐标，可继续点击地图微调';
+        reverseGeocode(latitude, longitude);
+      });
+      mapStatusText.value = hasCoordinates.value
+        ? '点击地图可重新选点'
+        : '点击地图任意位置即可选点';
+    } catch {
+      mapStatusText.value = '地图加载失败：请检查 VITE_TENCENT_MAP_KEY 的域名白名单或网络';
+      destroyMap();
     }
+  }
+
+  function applyMapCoordinates(latitude: number, longitude: number) {
     formValues.latitude = latitude;
     formValues.longitude = longitude;
-    if (data.poiaddress) {
-      formValues.address = data.poiaddress;
+    const sdk = (window as any).TMap;
+    if (sdk && markerInstance) {
+      markerInstance.updateGeometries([
+        { id: 'target', styleId: 'marker', position: new sdk.LatLng(latitude, longitude) },
+      ]);
     }
-    showMapPicker.value = false;
+  }
+
+  async function reverseGeocode(latitude: number, longitude: number) {
+    const sdk = (window as any).TMap;
+    if (!sdk?.service?.Geocoder) {
+      return;
+    }
+    try {
+      const result = await new sdk.service.Geocoder().getAddress({
+        location: new sdk.LatLng(latitude, longitude),
+      });
+      const address =
+        result?.result?.formatted_addresses?.recommend || result?.result?.address || '';
+      if (address) {
+        formValues.address = address;
+      }
+    } catch {
+      mapStatusText.value = '已选坐标；地址自动回填需开通 WebServiceAPI，可手动填写地址';
+    }
+  }
+
+  async function handleMapSearch() {
+    const keyword = mapKeyword.value.trim();
+    if (!keyword) {
+      return;
+    }
+    const sdk = (window as any).TMap;
+    if (!sdk?.service?.Suggestion) {
+      mapStatusText.value =
+        '搜索需在腾讯位置服务控制台为该 Key 开通 WebServiceAPI；当前可直接点击地图选点';
+      return;
+    }
+    mapSearching.value = true;
+    mapSearchResults.value = [];
+    try {
+      const result = await new sdk.service.Suggestion({ pageSize: 10 }).getSuggestions({
+        keyword,
+      });
+      mapSearchResults.value = (result?.data || [])
+        .map((item: any) => ({
+          title: String(item.title || ''),
+          address: String(item.address || ''),
+          latitude: Number(item.location?.lat),
+          longitude: Number(item.location?.lng),
+        }))
+        .filter(
+          (item: MapSearchResult) =>
+            item.title && Number.isFinite(item.latitude) && Number.isFinite(item.longitude)
+        );
+      if (!mapSearchResults.value.length) {
+        mapStatusText.value = '未找到匹配地点，可直接点击地图选点';
+      }
+    } catch {
+      mapStatusText.value =
+        '搜索需在腾讯位置服务控制台为该 Key 开通 WebServiceAPI；当前可直接点击地图选点';
+    } finally {
+      mapSearching.value = false;
+    }
+  }
+
+  function selectSearchResult(item: MapSearchResult) {
+    const sdk = (window as any).TMap;
+    mapSearchResults.value = [];
+    mapKeyword.value = item.title;
+    applyMapCoordinates(item.latitude, item.longitude);
+    if (sdk) {
+      mapInstance?.setCenter?.(new sdk.LatLng(item.latitude, item.longitude));
+    }
+    if (item.address || item.title) {
+      formValues.address = item.address || item.title;
+    }
+    mapStatusText.value = '已选择搜索结果，可继续点击地图微调';
+  }
+
+  function destroyMap() {
+    try {
+      markerInstance?.setMap?.(null);
+      markerInstance?.destroy?.();
+      mapInstance?.destroy?.();
+    } catch {
+      // 忽略地图销毁异常
+    }
+    mapInstance = null;
+    markerInstance = null;
+    mapSearchResults.value = [];
+    mapStatusText.value = '';
   }
 
   function handlePublishChange(value: boolean) {
@@ -558,6 +760,63 @@
 </script>
 
 <style scoped lang="less">
+  .map-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .map-picker-search {
+    display: flex;
+    gap: 8px;
+  }
+
+  .map-picker-results {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+  }
+
+  .map-picker-result {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    width: 100%;
+    padding: 8px 12px;
+    border: 0;
+    border-bottom: 1px solid #f3f4f6;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &:hover {
+      background: #f5f7ff;
+    }
+  }
+
+  .map-picker-result-title {
+    font-size: 13px;
+    color: #111827;
+  }
+
+  .map-picker-result-address {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  .map-picker-canvas {
+    width: 100%;
+    height: 420px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
   .env-image-item {
     position: relative;
     width: 120px;

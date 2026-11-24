@@ -360,8 +360,13 @@
   const mapStatusText = ref('');
   const searchHint = ref('');
   let mapSdkPromise: Promise<any> | null = null;
+  let map2dPromise: Promise<any> | null = null;
   let mapInstance: any = null;
   let markerInstance: any = null;
+  // WebGL 不可用时（浏览器关闭硬件加速等）降级到腾讯 2D 版 JS API
+  let mapMode: 'gl' | '2d' = 'gl';
+  let map2dInstance: any = null;
+  let marker2dInstance: any = null;
 
   const rules: FormRules = {
     name: { required: true, message: '请输入名称', trigger: ['blur', 'input'] },
@@ -504,6 +509,7 @@
     formValues.latitude = null;
     formValues.longitude = null;
     markerInstance?.setGeometries?.([]);
+    marker2dInstance?.setVisible?.(false);
   }
 
   function loadMapSdk(): Promise<any> {
@@ -536,6 +542,49 @@
     return mapSdkPromise;
   }
 
+  function supportsWebGL(): boolean {
+    try {
+      const canvas = document.createElement('canvas');
+      return Boolean(canvas.getContext('webgl2') || canvas.getContext('webgl'));
+    } catch {
+      return false;
+    }
+  }
+
+  function load2dSdk(): Promise<any> {
+    const existing = (window as any).qq;
+    if (existing?.maps?.Map) {
+      return Promise.resolve(existing);
+    }
+    if (!map2dPromise) {
+      map2dPromise = new Promise((resolve, reject) => {
+        const callbackName = '__initTencentMap2d';
+        const timer = window.setTimeout(
+          () => reject(new Error('腾讯地图 2D SDK 加载超时')),
+          12000
+        );
+        (window as any)[callbackName] = () => {
+          window.clearTimeout(timer);
+          resolve((window as any).qq);
+        };
+        const script = document.createElement('script');
+        script.src = `https://map.qq.com/api/js?v=2.exp&key=${encodeURIComponent(
+          TENCENT_MAP_KEY
+        )}&callback=${callbackName}`;
+        script.async = true;
+        script.onerror = () => {
+          window.clearTimeout(timer);
+          reject(new Error('腾讯地图 2D SDK 加载失败'));
+        };
+        document.head.appendChild(script);
+      }).catch((error) => {
+        map2dPromise = null;
+        throw error;
+      });
+    }
+    return map2dPromise;
+  }
+
   function toggleMapPicker() {
     showMapPicker.value = !showMapPicker.value;
     if (showMapPicker.value) {
@@ -546,10 +595,14 @@
   }
 
   async function initMap() {
-    if (!mapContainer.value || mapInstance) {
+    if (!mapContainer.value || mapInstance || map2dInstance) {
       return;
     }
     mapStatusText.value = '地图加载中…';
+    if (!supportsWebGL()) {
+      await initMap2d();
+      return;
+    }
     try {
       const sdk = await loadMapSdk();
       const el = mapContainer.value;
@@ -616,13 +669,79 @@
     } catch (error) {
       const detail = error instanceof Error ? error.message : '';
       destroyMap();
-      mapStatusText.value = `地图加载失败：${detail || '请检查 VITE_TENCENT_MAP_KEY 与网络'}`;
+      // GL 版依赖 WebGL，部分浏览器（关闭硬件加速、远程桌面等）取不到绘图上下文
+      try {
+        await initMap2d();
+      } catch {
+        destroyMap();
+        mapStatusText.value = `地图加载失败：${detail || '请检查 VITE_TENCENT_MAP_KEY 与网络'}`;
+      }
     }
+  }
+
+  // 2D 版 JS API 不依赖 WebGL，作为 GL 版不可用时的降级方案
+  async function initMap2d() {
+    const el = mapContainer.value;
+    if (!el || map2dInstance) {
+      return;
+    }
+    mapStatusText.value = '地图加载中…';
+    const qq = await load2dSdk();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    if (!el.clientWidth || !el.clientHeight) {
+      mapStatusText.value = '地图容器尺寸异常，请收起后重新展开地图';
+      return;
+    }
+    el.id = el.id || 'room-map-picker-canvas';
+    const center = hasCoordinates.value
+      ? new qq.maps.LatLng(Number(formValues.latitude), Number(formValues.longitude))
+      : new qq.maps.LatLng(DEFAULT_MAP_CENTER.latitude, DEFAULT_MAP_CENTER.longitude);
+    map2dInstance = new qq.maps.Map(el, { center, zoom: hasCoordinates.value ? 16 : 12 });
+    mapMode = '2d';
+    if (hasCoordinates.value) {
+      marker2dInstance = new qq.maps.Marker({
+        position: center,
+        map: map2dInstance,
+      });
+    }
+    qq.maps.event.addListener(map2dInstance, 'click', (event: any) => {
+      const latitude = Number(event?.latLng?.getLat?.());
+      const longitude = Number(event?.latLng?.getLng?.());
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        return;
+      }
+      applyMapCoordinates(latitude, longitude);
+      mapStatusText.value = '已选坐标，可继续点击地图微调（当前为 2D 地图）';
+      void reverseGeocode(latitude, longitude);
+    });
+    mapStatusText.value = hasCoordinates.value
+      ? '点击地图可重新选点（当前为 2D 地图）'
+      : '点击地图任意位置即可选点（当前为 2D 地图）';
+    window.setTimeout(() => {
+      if (map2dInstance && el && !el.querySelector('img, canvas')) {
+        mapStatusText.value =
+          '地图未能渲染，请确认该 Key 已开通「Web端(JS API)」并配置正确的域名白名单';
+      }
+    }, 3000);
   }
 
   function applyMapCoordinates(latitude: number, longitude: number) {
     formValues.latitude = latitude;
     formValues.longitude = longitude;
+    if (mapMode === '2d') {
+      const qq = (window as any).qq;
+      if (!qq?.maps) {
+        return;
+      }
+      const position = new qq.maps.LatLng(latitude, longitude);
+      if (marker2dInstance) {
+        marker2dInstance.setPosition(position);
+        marker2dInstance.setVisible(true);
+      } else if (map2dInstance) {
+        marker2dInstance = new qq.maps.Marker({ position, map: map2dInstance });
+      }
+      return;
+    }
     const sdk = (window as any).TMap;
     if (sdk && markerInstance) {
       markerInstance.updateGeometries([
@@ -744,7 +863,13 @@
     mapSearchResults.value = [];
     mapKeyword.value = item.title;
     applyMapCoordinates(item.latitude, item.longitude);
-    if (sdk) {
+    if (mapMode === '2d') {
+      const qq = (window as any).qq;
+      if (qq?.maps && map2dInstance) {
+        map2dInstance.setCenter(new qq.maps.LatLng(item.latitude, item.longitude));
+        map2dInstance.setZoom(16);
+      }
+    } else if (sdk) {
       mapInstance?.setCenter?.(new sdk.LatLng(item.latitude, item.longitude));
       mapInstance?.setZoom?.(16);
     }
@@ -762,8 +887,15 @@
     } catch {
       // 忽略地图销毁异常
     }
+    try {
+      marker2dInstance?.setMap?.(null);
+    } catch {
+      // 忽略 2D 标记销毁异常
+    }
     mapInstance = null;
     markerInstance = null;
+    map2dInstance = null;
+    marker2dInstance = null;
     mapSearchResults.value = [];
     mapStatusText.value = '';
     searchHint.value = '';

@@ -22,7 +22,7 @@ br-admin SHALL 提供自习室列表页面（路由 `/room/list`），展示所�
 - **THEN** 跳转到 `/room/list/{room_id}/seats`
 
 ### Requirement: Create study room form
-br-admin SHALL 提供新建自习室表单（路由 `/room/create`）。表单字段包含：名称（必填）、描述（textarea）、封面图片（图片上传）、地址（必填）、营业时间（时间范围选择器）、最低价格（数字输入，单位元）、地图选点（可选）。封面图片上传 SHALL 调用统一 OSS 图片上传客户端，上传成功后将 OSS URL 写入 `cover_image`。地图选点 SHALL 使用腾讯位置服务 JavaScript API GL 内嵌地图，点击地图任意位置即回填 GCJ-02 的 `latitude`、`longitude`；地点搜索与地址自动回填依赖该 Key 的 WebServiceAPI 权限，未开通时 MUST NOT 阻塞选点，并给出可点击地图选点的提示。已配置 key 时展示选点入口，未配置 key 时隐藏入口并给出提示。提交时 SHALL 携带坐标字段。提交成功后跳转回列表页。
+br-admin SHALL 提供新建自习室表单（路由 `/room/create`）。表单字段包含：名称（必填）、描述（textarea）、封面图片（图片上传）、地址（必填）、营业时间（时间范围选择器）、最低价格（数字输入，单位元）、地图选点（可选）。封面图片上传 SHALL 调用统一 OSS 图片上传客户端，上传成功后将 OSS URL 写入 `cover_image`。地图选点 SHALL 使用腾讯位置服务选点组件，选中后回填 GCJ-02 的 `latitude`、`longitude`，并在已配置 key 时展示选点入口、未配置 key 时隐藏入口并给出提示。提交时 SHALL 携带坐标字段。提交成功后跳转回列表页。
 
 #### Scenario: Successful creation
 - **WHEN** 管理员填写表单并点击提交，所有必填字段已填写
@@ -34,14 +34,9 @@ br-admin SHALL 提供新建自习室表单（路由 `/room/create`）。表单�
 
 #### Scenario: Pick location on map
 - **GIVEN** 已配置 `VITE_TENCENT_MAP_KEY`
-- **WHEN** 管理员点击「在地图上选点」并点击地图任意位置
-- **THEN** 表单回填该位置的 `latitude`、`longitude`，并在表单中展示已选坐标
+- **WHEN** 管理员点击「在地图上选点」并选中一个 POI
+- **THEN** 表单回填该 POI 的 `latitude`、`longitude`，并在表单中展示已选坐标
 - **AND** 提交请求体包含 `latitude`、`longitude`
-
-#### Scenario: Search unavailable without WebServiceAPI
-- **GIVEN** 腾讯 Key 未开通 WebServiceAPI
-- **WHEN** 管理员在地图选点中使用地点搜索
-- **THEN** 页面提示搜索需开通 WebServiceAPI，且不阻塞地图点击选点
 
 #### Scenario: Map key not configured
 - **GIVEN** 未配置 `VITE_TENCENT_MAP_KEY`

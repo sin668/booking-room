@@ -598,6 +598,40 @@
     return map2dPromise;
   }
 
+  // 腾讯 WebServiceAPI 不支持 CORS，浏览器直连只能走 JSONP
+  let jsonpSeq = 0;
+  function tencentJsonp(url: string, params: Record<string, string | number>): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const callbackName = `__txMapJsonp${++jsonpSeq}`;
+      const script = document.createElement('script');
+      let timer = 0;
+      const cleanup = () => {
+        window.clearTimeout(timer);
+        delete (window as any)[callbackName];
+        script.remove();
+      };
+      timer = window.setTimeout(() => {
+        cleanup();
+        reject(new Error('腾讯地图接口请求超时'));
+      }, 8000);
+      (window as any)[callbackName] = (data: any) => {
+        cleanup();
+        resolve(data);
+      };
+      const query = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => query.set(key, String(value)));
+      query.set('output', 'jsonp');
+      query.set('callback', callbackName);
+      script.src = `${url}?${query.toString()}`;
+      script.async = true;
+      script.onerror = () => {
+        cleanup();
+        reject(new Error('腾讯地图接口请求失败'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
   function toggleMapPicker() {
     showMapPicker.value = !showMapPicker.value;
     if (showMapPicker.value) {
@@ -606,7 +640,6 @@
       destroyMap();
     }
   }
-
   async function initMap() {
     if (!mapContainer.value || mapInstance || map2dInstance) {
       return;
@@ -763,7 +796,7 @@
     }
   }
 
-  // 逆地址解析走服务端，避免浏览器端 WebServiceAPI 鉴权受限
+  // 逆地址解析优先浏览器直连（GL 的 service 模块或 JSONP），失败再走服务端转发
   // key 按域名白名单鉴权时浏览器直连可用；按授权 IP 鉴权时只有服务端请求可用
   async function resolveAddress(
     latitude: number,
@@ -788,6 +821,25 @@
       } catch (err: any) {
         // 浏览器直连被拒绝时退回服务端转发
         error = describeMapError(err?.status, err?.message);
+      }
+    } else {
+      // 2D 模式没有 service 模块，直接用 WebServiceAPI 的 JSONP 逆解析
+      try {
+        const data = await tencentJsonp('https://apis.map.qq.com/ws/geocoder/v1/', {
+          location: `${latitude},${longitude}`,
+          key: TENCENT_MAP_KEY,
+        });
+        if (data?.status === 0) {
+          const address =
+            data?.result?.formatted_addresses?.recommend || data?.result?.address;
+          if (address) {
+            return { address: String(address), error: '' };
+          }
+        } else {
+          error = describeMapError(data?.status, data?.message);
+        }
+      } catch {
+        // 直连失败时继续走服务端转发
       }
     }
     try {
@@ -855,6 +907,32 @@
       } catch (error: any) {
         // 浏览器直连被拒绝时退回服务端转发
         sdkError = describeMapError(error?.status, error?.message);
+      }
+    } else {
+      // 2D 模式没有 service 模块，直接用 WebServiceAPI 的 JSONP 搜索
+      try {
+        const data = await tencentJsonp('https://apis.map.qq.com/ws/place/v1/suggestion/', {
+          keyword,
+          key: TENCENT_MAP_KEY,
+          page_size: 10,
+        });
+        if (data?.status === 0) {
+          const items = (data?.data || [])
+            .map((item: any) => ({
+              title: String(item.title || ''),
+              address: String(item.address || ''),
+              latitude: Number(item.location?.lat),
+              longitude: Number(item.location?.lng),
+            }))
+            .filter(
+              (item: RoomMapSuggestion) =>
+                item.title && Number.isFinite(item.latitude) && Number.isFinite(item.longitude)
+            );
+          return { items, error: '' };
+        }
+        sdkError = describeMapError(data?.status, data?.message);
+      } catch {
+        // 直连失败时继续走服务端转发
       }
     }
     try {

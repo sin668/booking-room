@@ -184,7 +184,7 @@
               <text :class="['type-label', typeMeta(item.type).tone]">{{ typeMeta(item.type).label }}</text>
             </view>
             <view class="right-wrap">
-              <text class="time-text">{{ formatTime(item.created_at) }}</text>
+              <text class="time-text">{{ formatNotificationTime(item.created_at) }}</text>
               <view v-if="!item.is_read" class="unread-dot" />
             </view>
           </view>
@@ -218,6 +218,7 @@ import {
 import { getChatConversations } from '@/api/chat'
 import { NOTIFICATION_TYPE_CONFIGS, NOTIFICATION_TYPE_MAP, getNotificationPreferenceField } from '@/pages-sub/utils/notificationTypes'
 import { isLoggedIn } from '@/utils/auth'
+import { formatNotificationTime } from '@/utils/formatters'
 import { ensureIM } from '@/utils/im'
 import { transformEmojiKeys } from '../utils/emoji'
 
@@ -628,24 +629,6 @@ function typeMeta(type) {
     icon: '通',
     tone: 'default',
   }
-}
-
-function formatTime(value) {
-  if (!value) return ''
-  const date = new Date(String(value).replace(/-/g, '/'))
-  if (Number.isNaN(date.getTime())) return String(value).slice(0, 16)
-
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  if (diff >= 0 && diff < 60 * 1000) return '刚刚'
-  if (diff >= 0 && diff < 60 * 60 * 1000) return `${Math.floor(diff / (60 * 1000))}分钟前`
-  if (diff >= 0 && diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / (60 * 60 * 1000))}小时前`
-
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-  return `${month}-${day} ${hour}:${minute}`
 }
 
 function formatAbsoluteTime(timestamp) {

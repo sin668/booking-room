@@ -41,6 +41,42 @@ export function formatDateSlash(value) {
   return String(value).slice(0, 10).replace(/-/g, '/')
 }
 
+const BEIJING_TIME_OFFSET_MS = 8 * 60 * 60 * 1000
+
+function parseNotificationTimestamp(value) {
+  const text = String(value || '').trim()
+  if (!text) return null
+  if (/(?:Z|[+-]\d{2}:?\d{2})$/i.test(text)) {
+    const parsed = Date.parse(text)
+    return Number.isNaN(parsed) ? null : parsed
+  }
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/)
+  if (!match) return null
+  return Date.UTC(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+    Number(match[4]),
+    Number(match[5]),
+    Number(match[6] || 0),
+  )
+}
+
+// 后端 created_at 为不带时区的 UTC 字符串，按 UTC 解析后固定按北京时间展示，不依赖设备时区
+export function formatNotificationTime(value) {
+  const timestamp = parseNotificationTimestamp(value)
+  if (timestamp === null) return String(value || '').slice(0, 16).replace('T', ' ')
+
+  const diff = Date.now() - timestamp
+  if (diff >= 0 && diff < 60 * 1000) return '刚刚'
+  if (diff >= 0 && diff < 60 * 60 * 1000) return `${Math.floor(diff / (60 * 1000))}分钟前`
+  if (diff >= 0 && diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / (60 * 60 * 1000))}小时前`
+
+  const beijing = new Date(timestamp + BEIJING_TIME_OFFSET_MS)
+  const pad = (number) => String(number).padStart(2, '0')
+  return `${pad(beijing.getUTCMonth() + 1)}-${pad(beijing.getUTCDate())} ${pad(beijing.getUTCHours())}:${pad(beijing.getUTCMinutes())}`
+}
+
 export function formatRoomMinPrice(room) {
   const price = Number(room?.min_price ?? room?.minPrice)
   if (!Number.isFinite(price) || price <= 0) return ''

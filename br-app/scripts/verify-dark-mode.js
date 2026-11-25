@@ -30,6 +30,9 @@ if (!/themeStore\.init\(\)/.test(appVue)) failures.push('App.vue 未初始化主
 const mainJs = read('src/main.js')
 if (!/mixin\(themeMixin\)/.test(mainJs)) failures.push('main.js 未注册 theme mixin')
 
+const themeMixin = read('src/utils/theme.js')
+if (!/onMounted\(\)[\s\S]*init\(\)/.test(themeMixin)) failures.push('theme mixin 未在页面 onMounted 重新应用原生配色')
+
 const themeStore = read('src/store/modules/theme.js')
 ;['setNavigationBarColor', 'setTabBarStyle', 'theme_mode'].forEach((needle) => {
   if (!themeStore.includes(needle)) failures.push(`theme store 缺少 ${needle}`)

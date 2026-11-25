@@ -6,7 +6,7 @@ CSS 自定义属性 + 页面根节点主题类 + SCSS 变量间接引用。
 2. `App.vue` 全局样式定义 `page { --token: 浅色值 }` 与 `.theme-dark { --token: 深色值 }`。
 3. 每个页面根节点 `<view class="page">` 追加 `:class="themeClass"`，变量在页面子树内被覆盖。
 4. `theme` store 同步读取 `theme_mode`，切换时写 storage 并调用 `uni.setNavigationBarColor`、`uni.setTabBarStyle`、`uni.setBackgroundColor`。
-5. 全局 `themeMixin` 提供 `themeClass`，在 `main.js` 注册。
+5. 全局 `themeMixin` 提供 `themeClass`，在 `main.js` 注册；各页面 `onMounted` 时重新应用原生配色，因为 `setNavigationBarColor` 只对当前页面生效。
 
 ## Token
 

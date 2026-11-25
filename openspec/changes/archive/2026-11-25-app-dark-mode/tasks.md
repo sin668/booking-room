@@ -20,4 +20,4 @@
 - [x] 4.1 `npm run build:mp-weixin` 通过 <!-- comet-task:0bb7f376-448d-4662-bd57-7769c552a1c8 -->
 - [x] 4.2 `npm run build:h5` 通过 <!-- comet-task:4be04360-5648-4008-b2e4-5acc7fa81479 -->
 - [x] 4.3 `npm run test:dark-mode` 通过；`npm run test:scripts` 的存量失败（HEAD 同样失败）已记录，不计入本变更 <!-- comet-task:d4173493-d465-49f9-aa4f-9c0650f707cf -->
-- [ ] 4.4 提交并推送 origin main <!-- comet-task:3aaa28d0-3106-4467-bc53-6fe2f22e39a0 -->
+- [x] 4.4 提交并推送 origin main <!-- comet-task:3aaa28d0-3106-4467-bc53-6fe2f22e39a0 -->

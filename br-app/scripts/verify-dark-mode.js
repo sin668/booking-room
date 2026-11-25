@@ -22,6 +22,7 @@ if (/\$white:\s*var\(/.test(uniScss)) failures.push('$white 必须是字面量�
 
 const appVue = read('src/App.vue')
 if (!/\.theme-dark\s*\{[\s\S]*--bg-color/.test(appVue)) failures.push('App.vue 缺少 .theme-dark 深色变量')
+if (!/\.theme-dark\s*\{[\s\S]*display:\s*flow-root/.test(appVue)) failures.push('App.vue 的 .theme-dark 缺少 display: flow-root，首个子元素外边距折叠会露出 page 浅色背景')
 tokens.forEach((token) => {
   if (!new RegExp(`${token}\\s*:`).test(appVue)) failures.push(`App.vue 未定义 ${token}`)
 })

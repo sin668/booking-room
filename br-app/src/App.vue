@@ -82,6 +82,8 @@ page {
 
   background-color: var(--bg-color);
   color: var(--text-primary);
+  /* 自成 BFC：首个子元素的上外边距不再折叠到 page 外，避免深色下顶部露出 page 浅色背景 */
+  display: flow-root;
 }
 
 /* 底部导航文字加粗 */

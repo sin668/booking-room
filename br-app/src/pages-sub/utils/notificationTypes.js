@@ -22,8 +22,8 @@ export const NOTIFICATION_TYPE_CONFIGS = [
   {
     key: 'report',
     label: '报告',
-    settingLabel: '学习周报',
-    settingDescription: '每周一推送上周学习总结',
+    settingLabel: '学习月报',
+    settingDescription: '每周一推送本月学习总结',
     iconText: '报',
     colorClass: 'green-soft',
     color: '#22c55e',

@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     BOOKING_CLEANUP_INTERVAL_SECONDS: int = 60
     ORDER_STATUS_CHECK_INTERVAL_SECONDS: int = 300  # 订单状态检查间隔（秒），默认5分钟
     SCHEDULE_STATUS_CHECK_TIME: str = "00:00"  # 排课状态检查每日运行时间（HH:MM，Asia/Shanghai）
+    MONTHLY_STUDY_REPORT_ENABLED: bool = True  # 学习月报定时任务开关
+    MONTHLY_STUDY_REPORT_DAY_OF_WEEK: str = "mon"  # 学习月报执行星期（mon~sun）
+    MONTHLY_STUDY_REPORT_TIME: str = "09:00"  # 学习月报执行时间（HH:MM，Asia/Shanghai）
     SCHEDULER_LOG_ENABLED: bool = True  # 定时任务日志总开关
 
     # WeChat Pay

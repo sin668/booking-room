@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import cast
 from uuid import UUID
 
@@ -24,6 +24,7 @@ from app.schemas.notification import (
     NotificationTypeValue,
     NotificationUnreadSummaryResponse,
 )
+from app.schemas.study_record import StudyRecordSummaryResponse
 from app.utils.geo import haversine_distance_meters
 
 
@@ -54,6 +55,10 @@ BOOKING_DEFAULT_TARGET_URL = "/pages-sub/orders/index"
 
 ACTIVITY_BROADCAST_TARGET_URL = "/pages-sub/activity/detail?id={activity_id}"
 ACTIVITY_BROADCAST_BATCH_SIZE = 500
+
+MONTHLY_STUDY_REPORT_TITLE = "本月学习报告已生成"
+MONTHLY_STUDY_REPORT_TARGET_TYPE = "monthly_study_report"
+MONTHLY_STUDY_REPORT_TARGET_URL = "/pages-sub/study-record/index"
 
 
 def _validate_type(type_value: str) -> NotificationTypeValue:
@@ -328,6 +333,40 @@ class NotificationService:
             booking, BOOKING_COMPLETED_TITLE, content
         )
 
+    async def notify_monthly_study_report(
+        self,
+        user_id: UUID,
+        month: date,
+        summary: StudyRecordSummaryResponse,
+    ) -> dict | None:
+        target_id = f"{month.year}-{month.month:02d}"
+        title = MONTHLY_STUDY_REPORT_TITLE
+        if await self._notification_exists(
+            user_id,
+            NotificationType.REPORT.value,
+            MONTHLY_STUDY_REPORT_TARGET_TYPE,
+            target_id,
+            title,
+        ):
+            return None
+        content = (
+            f"您本月已累计学习 {summary.monthly_hours:.2f} 小时，"
+            f"完成学习 {summary.monthly_bookings} 次，"
+            f"连续学习 {summary.max_streak_days} 天，"
+            f"总累计学习 {summary.total_hours:.2f} 小时。"
+        )
+        return await self.send_notification(
+            NotificationCreate(
+                user_id=user_id,
+                type=NotificationType.REPORT.value,
+                title=title,
+                content=content,
+                target_url=MONTHLY_STUDY_REPORT_TARGET_URL,
+                target_type=MONTHLY_STUDY_REPORT_TARGET_TYPE,
+                target_id=target_id,
+            )
+        )
+
     async def broadcast_activity(self, activity) -> int:
         title = (activity.title or "")[:100]
         if not title:
@@ -400,7 +439,13 @@ class NotificationService:
     ) -> dict | None:
         user_id = UUID(str(booking.user_id))
         resolved_target_id = target_id or str(booking.id)
-        if await self._booking_notification_exists(user_id, title, resolved_target_id):
+        if await self._notification_exists(
+            user_id,
+            NotificationType.BOOKING.value,
+            BOOKING_TARGET_TYPE,
+            resolved_target_id,
+            title,
+        ):
             return None
         return await self.send_notification(
             NotificationCreate(
@@ -414,18 +459,20 @@ class NotificationService:
             )
         )
 
-    async def _booking_notification_exists(
+    async def _notification_exists(
         self,
         user_id: UUID,
-        title: str,
+        type_value: str,
+        target_type: str,
         target_id: str,
+        title: str,
     ) -> bool:
         stmt = (
             select(Notification.id)
             .where(
                 Notification.user_id == user_id,
-                Notification.type == NotificationType.BOOKING.value,
-                Notification.target_type == BOOKING_TARGET_TYPE,
+                Notification.type == type_value,
+                Notification.target_type == target_type,
                 Notification.target_id == target_id,
                 Notification.title == title,
             )

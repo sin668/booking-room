@@ -192,6 +192,40 @@ async def _schedule_status_check_loop() -> None:
             pass
 
 
+async def _monthly_study_report_job() -> None:
+    """学习月报定时任务：每周一统计用户本月学习数据并发送报告通知"""
+    from app.services.monthly_study_report_scheduler import send_monthly_study_reports
+    try:
+        stats = await send_monthly_study_reports()
+        if settings.SCHEDULER_LOG_ENABLED:
+            logger.info(
+                "[学习月报定时任务] 扫描 %d 个用户，发送 %d 条，跳过 %d 个，失败 %d 个",
+                stats["total_scanned"], stats["sent"], stats["skipped"], stats["failed"],
+            )
+    except Exception:
+        logger.exception("Monthly study report job failed")
+        raise
+
+
+async def _monthly_study_report_loop() -> None:
+    """Fallback weekly runner for monthly study report without APScheduler."""
+    from app.services.monthly_study_report_scheduler import (
+        next_monthly_study_report_run,
+        parse_monthly_study_report_schedule,
+    )
+
+    tz = ZoneInfo("Asia/Shanghai")
+    day_of_week, hour, minute = parse_monthly_study_report_schedule()
+    while True:
+        now = datetime.now(tz)
+        target = next_monthly_study_report_run(now, day_of_week, hour, minute)
+        await asyncio.sleep((target - now).total_seconds())
+        try:
+            await _monthly_study_report_job()
+        except Exception:
+            pass
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: startup and shutdown events."""
@@ -222,6 +256,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             id="schedule_status_check",
             replace_existing=True,
         )
+        monthly_report_enabled = bool(
+            getattr(settings, "MONTHLY_STUDY_REPORT_ENABLED", True)
+        )
+        if monthly_report_enabled:
+            from app.services.monthly_study_report_scheduler import (
+                parse_monthly_study_report_schedule,
+            )
+
+            _report_day, _report_hour, _report_minute = (
+                parse_monthly_study_report_schedule()
+            )
+            scheduler.add_job(
+                _monthly_study_report_job,
+                "cron",
+                day_of_week=_report_day,
+                hour=_report_hour,
+                minute=_report_minute,
+                timezone=ZoneInfo("Asia/Shanghai"),
+                id="monthly_study_report",
+                replace_existing=True,
+            )
         scheduler.start()
         app.state.scheduler = scheduler
         logger.info(
@@ -236,6 +291,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             "Schedule status check scheduler started: daily at %02d:%02d (Asia/Shanghai)",
             _hour, _minute,
         )
+        if monthly_report_enabled:
+            logger.info(
+                "Monthly study report scheduler started: weekly on %s at %02d:%02d (Asia/Shanghai)",
+                _report_day, _report_hour, _report_minute,
+            )
+        else:
+            logger.info("Monthly study report scheduler disabled by configuration")
     else:
         fallback_task = asyncio.create_task(_booking_payment_reconciliation_loop())
         app.state.booking_cleanup_fallback_task = fallback_task
@@ -258,6 +320,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             "apscheduler is not installed; daily at %s (Asia/Shanghai)",
             settings.SCHEDULE_STATUS_CHECK_TIME,
         )
+        if getattr(settings, "MONTHLY_STUDY_REPORT_ENABLED", True):
+            monthly_report_fallback_task = asyncio.create_task(
+                _monthly_study_report_loop()
+            )
+            app.state.monthly_study_report_fallback_task = monthly_report_fallback_task
+            logger.warning(
+                "Monthly study report using asyncio fallback: "
+                "apscheduler is not installed; weekly on %s at %s (Asia/Shanghai)",
+                settings.MONTHLY_STUDY_REPORT_DAY_OF_WEEK,
+                settings.MONTHLY_STUDY_REPORT_TIME,
+            )
     yield
     # Shutdown
     if scheduler is not None:
@@ -277,6 +350,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         schedule_status_fallback_task.cancel()
         with suppress(asyncio.CancelledError):
             await schedule_status_fallback_task
+    monthly_report_fallback_task = getattr(
+        app.state, "monthly_study_report_fallback_task", None
+    )
+    if monthly_report_fallback_task is not None:
+        monthly_report_fallback_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await monthly_report_fallback_task
     await close_redis()
 
 

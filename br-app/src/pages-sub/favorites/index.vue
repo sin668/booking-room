@@ -299,11 +299,11 @@ export default {
   computed: {
     tabs() {
       return [
-        { key: 'room', label: '关注自习室' },
-        { key: 'training', label: '关注培训室' },
-        { key: 'course', label: '关注课程' },
-        { key: 'teacher', label: '关注教师' },
-        { key: 'listing', label: '关注供需' },
+        { key: 'room', label: '自习室' },
+        { key: 'training', label: '培训室' },
+        { key: 'course', label: '课程' },
+        { key: 'teacher', label: '教师' },
+        { key: 'listing', label: '教培信息' },
       ]
     },
   },

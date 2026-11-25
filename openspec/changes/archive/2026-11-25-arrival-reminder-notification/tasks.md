@@ -22,4 +22,4 @@
 - [x] 4.1 后端 pytest 相关用例通过
 - [x] 4.2 br-app 距离单测与 mp-weixin / h5 构建通过
 - [x] 4.3 消息列表点击跳转核对（target_url 优先、类型兜底）
-- [ ] 4.4 提交并推送 origin main
+- [x] 4.4 提交并推送 origin main

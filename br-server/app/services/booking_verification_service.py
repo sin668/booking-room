@@ -31,6 +31,7 @@ from app.schemas.booking_verification import (
     BookingVerificationTokenResponse,
     VerifiableBookingListResponse,
 )
+from app.services.notification_service import NotificationService
 
 VERIFICATION_TOKEN_PURPOSE = "booking_verification"
 VERIFICATION_AUDIENCE = "booking-verification"
@@ -292,6 +293,9 @@ async def confirm_verification(
 
     await db.flush()
     booking, seat, room, user = await _load_payload_booking(db, payload)
+
+    if booking.status == BookingStatus.COMPLETED:
+        await NotificationService(db).notify_booking_completed(booking)
 
     return BookingVerificationConfirmResponse(
         booking=_build_booking_summary(booking, seat, room, user),

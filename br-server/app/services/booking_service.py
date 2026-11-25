@@ -56,6 +56,7 @@ from app.domain.booking_status import (
 )
 from app.services import coupon_service
 from app.services.data_scope import booking_scope_condition, readonly_creators
+from app.services.notification_service import NotificationService
 from app.services.booking_cancellation_policy import (
     booking_now,
     calculate_cancellation_policy,
@@ -128,6 +129,18 @@ def _sync_booking_completion(booking: Booking, now: datetime | None = None) -> b
     return False
 
 
+async def _sync_booking_completion_with_notification(
+    db: AsyncSession,
+    booking: Booking,
+    now: datetime | None = None,
+) -> bool:
+    if not _sync_booking_completion(booking, now):
+        return False
+    await db.flush()
+    await NotificationService(db).notify_booking_completed(booking)
+    return True
+
+
 async def _sync_user_booking_completions(
     db: AsyncSession,
     user_id: uuid.UUID,
@@ -141,11 +154,15 @@ async def _sync_user_booking_completions(
             Booking.booking_type != "course",
         )
     )
-    changed = False
+    changed_bookings = []
     for booking in result.scalars().all():
-        changed = _sync_booking_completion(booking, now) or changed
-    if changed:
+        if _sync_booking_completion(booking, now):
+            changed_bookings.append(booking)
+    if changed_bookings:
         await db.flush()
+        service = NotificationService(db)
+        for booking in changed_bookings:
+            await service.notify_booking_completed(booking)
 
 
 def _can_cancel_booking(booking: Booking, now: datetime | None = None) -> bool:
@@ -343,6 +360,9 @@ async def create_booking(
         coupon_service.mark_coupon_used(user_coupon, booking.id)
 
     await db.flush()
+
+    if balance_payment:
+        await NotificationService(db).notify_booking_paid(booking)
 
     return _build_booking_response(booking, seat, room)
 
@@ -678,7 +698,7 @@ async def get_booking(
     if booking is None or booking.user_id != str(user_id):
         raise BookingNotFoundError("预约不存在")
 
-    if _sync_booking_completion(booking):
+    if await _sync_booking_completion_with_notification(db, booking):
         await db.flush()
 
     # 课程预约订单 seat_id 为 NULL（不占座），用 scalar_one_or_none 避免 NoResultFound
@@ -703,7 +723,7 @@ async def cancel_booking(
     if booking is None or booking.user_id != str(user_id):
         raise BookingNotFoundError("预约不存在")
 
-    if _sync_booking_completion(booking):
+    if await _sync_booking_completion_with_notification(db, booking):
         await db.flush()
         raise BookingCancellationNotAllowedError("预约已开始不可取消")
 
@@ -734,7 +754,7 @@ async def cancel_booking(
         start_time=booking.start_time,
     )
     if not policy.can_cancel:
-        _sync_booking_completion(booking)
+        await _sync_booking_completion_with_notification(db, booking)
         await db.flush()
         raise BookingCancellationNotAllowedError("预约已开始不可取消")
 
@@ -856,6 +876,7 @@ async def pay_pending_booking(
         setattr(wallet_transaction, "payment_status", "paid")
         db.add(wallet_transaction)
         await db.flush()
+        await NotificationService(db).notify_booking_paid(booking)
     else:
         booking.payment_method = "wechat"
         booking.payment_provider = "wechat"

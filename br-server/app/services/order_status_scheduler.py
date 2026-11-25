@@ -6,7 +6,7 @@
   开课日期统一取第一课时日期（first_lesson.lesson_date），定制订单与固定班课口径一致
 """
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, time, timedelta
 
 from sqlalchemy import select, and_
 from app.models.booking import Booking
@@ -19,9 +19,12 @@ from app.domain.booking_status import (
     resolve_course_transition,
     resolve_seat_transition,
 )
+from app.services.notification_service import NotificationService
 from app.utils.timezone import booking_now
 
 logger = logging.getLogger(__name__)
+
+START_REMINDER_WINDOW_MINUTES = 15
 
 
 async def check_and_update_order_statuses() -> dict:
@@ -59,9 +62,16 @@ async def check_and_update_order_statuses() -> dict:
         for booking in bookings:
             try:
                 if booking.booking_type == "seat":
+                    await _maybe_notify_seat_start_reminder(session, booking, now)
                     await _process_seat_booking(session, booking, now, stats)
                 elif booking.booking_type == "course":
-                    await _process_course_booking(session, booking, today, stats)
+                    lessons = await _load_booking_lessons(session, booking)
+                    await _maybe_notify_course_start_reminder(
+                        session, booking, lessons, now
+                    )
+                    await _process_course_booking(
+                        session, booking, today, stats, lessons
+                    )
             except Exception:
                 if settings.SCHEDULER_LOG_ENABLED:
                     logger.exception(f"Error processing booking {booking.id}")
@@ -97,6 +107,8 @@ async def _process_seat_booking(session, booking: Booking, now: datetime, stats:
     if transition.new_status is not None:
         booking.status = transition.new_status.value
         stats[transition.stat_key] += 1
+        if transition.new_status == BookingStatus.COMPLETED:
+            await NotificationService(session).notify_booking_completed(booking)
         if settings.SCHEDULER_LOG_ENABLED:
             if transition.stat_key == "seat_started":
                 logger.info("Seat booking %d: pending → confirmed (started)", booking.id)
@@ -104,7 +116,13 @@ async def _process_seat_booking(session, booking: Booking, now: datetime, stats:
                 logger.info("Seat booking %d: confirmed → completed (ended)", booking.id)
 
 
-async def _process_course_booking(session, booking: Booking, today: date, stats: dict):
+async def _process_course_booking(
+    session,
+    booking: Booking,
+    today: date,
+    stats: dict,
+    lessons: list[LessonSchedule] | None = None,
+):
     """处理培训课程预约订单
 
     状态转换：
@@ -112,40 +130,8 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
     - confirmed + today > 最后一课时日期 → completed
     - confirmed + 需要推进高亮 → 更新 highlighted_lesson_id
     """
-    if not booking.lesson_ids:
-        return
-
-    # 查询该订单的课时安排（按 sort_order 排序）
-    # 优先按订单关联的排课记录（schedule_id）精确查询，避免同一课程下
-    # 多个排课（固定班课/多个定制排课）的相同 lesson_id 记录互相混入；
-    # 旧订单无 schedule_id 时回退按 course_id + lesson_ids 查询
-    if booking.schedule_id:
-        result = await session.execute(
-            select(LessonSchedule)
-            .where(
-                and_(
-                    LessonSchedule.schedule_id == booking.schedule_id,
-                    LessonSchedule.lesson_id.in_(booking.lesson_ids),
-                )
-            )
-            .order_by(LessonSchedule.sort_order)
-        )
-    else:
-        fallback_conditions = [
-            CourseSchedule.course_id == booking.course_id,
-            LessonSchedule.lesson_id.in_(booking.lesson_ids),
-        ]
-        # 旧订单无 schedule_id 时，按订单排课类型过滤排课记录，
-        # 避免同课程 fixed/custom 排课的相同 lesson_id 记录互相混入
-        if booking.schedule_type:
-            fallback_conditions.append(CourseSchedule.schedule_type == booking.schedule_type)
-        result = await session.execute(
-            select(LessonSchedule)
-            .join(CourseSchedule, LessonSchedule.schedule_id == CourseSchedule.id)
-            .where(and_(*fallback_conditions))
-            .order_by(LessonSchedule.sort_order)
-        )
-    lessons = result.scalars().all()
+    if lessons is None:
+        lessons = await _load_booking_lessons(session, booking)
 
     if not lessons:
         if settings.SCHEDULER_LOG_ENABLED:
@@ -176,6 +162,7 @@ async def _process_course_booking(session, booking: Booking, today: date, stats:
         if transition.new_status == BookingStatus.COMPLETED:
             # 当前日期超过最后一门课时的日期 → 已完成
             booking.highlighted_lesson_id = None
+            await NotificationService(session).notify_booking_completed(booking)
             if settings.SCHEDULER_LOG_ENABLED:
                 logger.info(f"Course booking {booking.id}: confirmed → completed (all lessons done)")
         elif settings.SCHEDULER_LOG_ENABLED:
@@ -210,3 +197,86 @@ def _update_highlight(booking: Booking, lessons, today: date, stats: dict):
         stats["course_highlight_updated"] += 1
         if settings.SCHEDULER_LOG_ENABLED:
             logger.info(f"Course booking {booking.id}: highlight moved to lesson {target_lesson.lesson_id}")
+
+
+async def _load_booking_lessons(session, booking: Booking) -> list[LessonSchedule]:
+    """查询订单关联课时（按 sort_order 排序）。
+
+    优先按订单关联的排课记录（schedule_id）精确查询，避免同一课程下
+    多个排课（固定班课/多个定制排课）的相同 lesson_id 记录互相混入；
+    旧订单无 schedule_id 时回退按 course_id + lesson_ids 查询。
+    """
+    if not booking.lesson_ids:
+        return []
+
+    if booking.schedule_id:
+        result = await session.execute(
+            select(LessonSchedule)
+            .where(
+                and_(
+                    LessonSchedule.schedule_id == booking.schedule_id,
+                    LessonSchedule.lesson_id.in_(booking.lesson_ids),
+                )
+            )
+            .order_by(LessonSchedule.sort_order)
+        )
+    else:
+        fallback_conditions = [
+            CourseSchedule.course_id == booking.course_id,
+            LessonSchedule.lesson_id.in_(booking.lesson_ids),
+        ]
+        # 旧订单无 schedule_id 时，按订单排课类型过滤排课记录，
+        # 避免同课程 fixed/custom 排课的相同 lesson_id 记录互相混入
+        if booking.schedule_type:
+            fallback_conditions.append(
+                CourseSchedule.schedule_type == booking.schedule_type
+            )
+        result = await session.execute(
+            select(LessonSchedule)
+            .join(CourseSchedule, LessonSchedule.schedule_id == CourseSchedule.id)
+            .where(and_(*fallback_conditions))
+            .order_by(LessonSchedule.sort_order)
+        )
+    return list(result.scalars().all())
+
+
+def _is_within_reminder_window(start_at: datetime | None, now: datetime) -> bool:
+    if start_at is None:
+        return False
+    return now < start_at <= now + timedelta(minutes=START_REMINDER_WINDOW_MINUTES)
+
+
+def _lesson_start_at(lesson: LessonSchedule) -> datetime | None:
+    slot = (lesson.lesson_time_slot or "").strip()
+    if not slot:
+        return None
+    start_part = slot.split("-", 1)[0].strip()
+    try:
+        hour_str, minute_str = start_part.split(":", 1)
+        return datetime.combine(
+            lesson.lesson_date, time(int(hour_str), int(minute_str))
+        )
+    except (TypeError, ValueError):
+        return None
+
+
+async def _maybe_notify_seat_start_reminder(
+    session, booking: Booking, now: datetime
+) -> None:
+    if not booking.date or not booking.start_time:
+        return
+    start_at = datetime.combine(booking.date, booking.start_time)
+    if _is_within_reminder_window(start_at, now):
+        await NotificationService(session).notify_booking_start_soon(booking)
+
+
+async def _maybe_notify_course_start_reminder(
+    session,
+    booking: Booking,
+    lessons: list[LessonSchedule],
+    now: datetime,
+) -> None:
+    service = NotificationService(session)
+    for lesson in lessons:
+        if _is_within_reminder_window(_lesson_start_at(lesson), now):
+            await service.notify_booking_start_soon(booking, lesson)

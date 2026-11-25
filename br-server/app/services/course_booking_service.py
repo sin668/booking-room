@@ -25,6 +25,7 @@ from app.schemas.course_booking import (
     CourseBookingResponse,
 )
 from app.services import coupon_service
+from app.services.notification_service import NotificationService
 from app.core.config import settings
 from app.utils.time_slots import build_time_slots_from_date
 from app.utils.timezone import CHINA_TIMEZONE, booking_now
@@ -579,6 +580,9 @@ class CourseBookingService:
             coupon_service.mark_coupon_used(user_coupon, booking.id)
 
         await db.flush()
+
+        if balance_payment:
+            await NotificationService(db).notify_booking_paid(booking)
 
         return CourseBookingResponse(
             booking_id=booking.id,

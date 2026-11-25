@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timedelta
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.booking import Booking
+from app.models.course import Course
+from app.models.lesson_schedule import LessonSchedule
 from app.models.notification import Notification, NotificationPreference, NotificationType
 from app.models.study_room import StudyRoom
+from app.models.user import User
 from app.schemas.notification import (
     ArrivalReminderResponse,
     NotificationCreate,
@@ -40,6 +45,15 @@ _DEFAULT_TARGET_URLS = {
 ARRIVAL_REMINDER_DISTANCE_METERS = 500
 ARRIVAL_REMINDER_DEDUPE_HOURS = 24
 ARRIVAL_REMINDER_TARGET_URL = "/pages-sub/qrcode/index"
+
+BOOKING_PAID_TITLE = "预约成功通知"
+BOOKING_START_REMINDER_TITLE = "预约开始提醒"
+BOOKING_COMPLETED_TITLE = "离店核销完成"
+BOOKING_TARGET_TYPE = "booking"
+BOOKING_DEFAULT_TARGET_URL = "/pages-sub/orders/index"
+
+ACTIVITY_BROADCAST_TARGET_URL = "/pages-sub/activity/detail?id={activity_id}"
+ACTIVITY_BROADCAST_BATCH_SIZE = 500
 
 
 def _validate_type(type_value: str) -> NotificationTypeValue:
@@ -290,6 +304,169 @@ class NotificationService:
             distance=rounded_distance,
             notification=notification,
         ).model_dump()
+
+    async def notify_booking_paid(self, booking: Booking) -> dict | None:
+        content = await self._booking_message_content(booking, stage="paid")
+        return await self._send_booking_notification(booking, BOOKING_PAID_TITLE, content)
+
+    async def notify_booking_start_soon(
+        self,
+        booking: Booking,
+        lesson: LessonSchedule | None = None,
+    ) -> dict | None:
+        content = await self._booking_message_content(
+            booking, stage="start", lesson=lesson
+        )
+        target_id = f"{booking.id}-{lesson.lesson_id}" if lesson else str(booking.id)
+        return await self._send_booking_notification(
+            booking, BOOKING_START_REMINDER_TITLE, content, target_id=target_id
+        )
+
+    async def notify_booking_completed(self, booking: Booking) -> dict | None:
+        content = await self._booking_message_content(booking, stage="completed")
+        return await self._send_booking_notification(
+            booking, BOOKING_COMPLETED_TITLE, content
+        )
+
+    async def broadcast_activity(self, activity) -> int:
+        title = (activity.title or "")[:100]
+        if not title:
+            return 0
+        content = (activity.description or activity.title or "")[:1000]
+        target_id = str(activity.id)
+
+        existing = await self._db.execute(
+            select(Notification.id)
+            .where(
+                Notification.type == NotificationType.ACTIVITY.value,
+                Notification.target_type == "activity",
+                Notification.target_id == target_id,
+                Notification.title == title,
+                Notification.content == content,
+            )
+            .limit(1)
+        )
+        if existing.scalar_one_or_none() is not None:
+            return 0
+
+        user_stmt = (
+            select(User.id)
+            .outerjoin(
+                NotificationPreference,
+                NotificationPreference.user_id == User.id,
+            )
+            .where(
+                User.user_source == "app",
+                User.status != "deleted",
+                or_(
+                    NotificationPreference.id.is_(None),
+                    NotificationPreference.activity_enabled.is_(True),
+                ),
+            )
+        )
+        user_ids = list((await self._db.execute(user_stmt)).scalars().all())
+        if not user_ids:
+            return 0
+
+        target_url = ACTIVITY_BROADCAST_TARGET_URL.format(activity_id=activity.id)
+        for start in range(0, len(user_ids), ACTIVITY_BROADCAST_BATCH_SIZE):
+            chunk = user_ids[start : start + ACTIVITY_BROADCAST_BATCH_SIZE]
+            await self._db.execute(
+                insert(Notification),
+                [
+                    {
+                        "id": uuid.uuid4(),
+                        "user_id": user_id,
+                        "type": NotificationType.ACTIVITY.value,
+                        "title": title,
+                        "content": content,
+                        "target_url": target_url,
+                        "target_type": "activity",
+                        "target_id": target_id,
+                        "is_read": False,
+                    }
+                    for user_id in chunk
+                ],
+            )
+        return len(user_ids)
+
+    async def _send_booking_notification(
+        self,
+        booking: Booking,
+        title: str,
+        content: str,
+        *,
+        target_id: str | None = None,
+    ) -> dict | None:
+        user_id = UUID(str(booking.user_id))
+        resolved_target_id = target_id or str(booking.id)
+        if await self._booking_notification_exists(user_id, title, resolved_target_id):
+            return None
+        return await self.send_notification(
+            NotificationCreate(
+                user_id=user_id,
+                type=NotificationType.BOOKING.value,
+                title=title,
+                content=content[:1000],
+                target_url=BOOKING_DEFAULT_TARGET_URL,
+                target_type=BOOKING_TARGET_TYPE,
+                target_id=resolved_target_id,
+            )
+        )
+
+    async def _booking_notification_exists(
+        self,
+        user_id: UUID,
+        title: str,
+        target_id: str,
+    ) -> bool:
+        stmt = (
+            select(Notification.id)
+            .where(
+                Notification.user_id == user_id,
+                Notification.type == NotificationType.BOOKING.value,
+                Notification.target_type == BOOKING_TARGET_TYPE,
+                Notification.target_id == target_id,
+                Notification.title == title,
+            )
+            .limit(1)
+        )
+        return (await self._db.execute(stmt)).scalar_one_or_none() is not None
+
+    async def _booking_message_content(
+        self,
+        booking: Booking,
+        *,
+        stage: str,
+        lesson: LessonSchedule | None = None,
+    ) -> str:
+        if booking.course_id:
+            course = await self._db.get(Course, booking.course_id)
+            course_name = course.name if course else "课程"
+            if stage == "start":
+                slot = (lesson.lesson_time_slot or "").strip() if lesson else ""
+                suffix = f"（{slot}）" if slot else ""
+                return f"你预约的课程「{course_name}」即将开始{suffix}，请提前做好准备。"
+            if stage == "completed":
+                return f"你预约的课程「{course_name}」已完成，欢迎再次报名。"
+            return f"你预约的课程「{course_name}」已支付成功，可前往我的订单查看。"
+
+        room = await self._db.get(StudyRoom, booking.room_id) if booking.room_id else None
+        room_name = room.name if room else "学习室"
+        if stage == "start":
+            start_text = booking.start_time.strftime("%H:%M") if booking.start_time else ""
+            return f"你预约的「{room_name}」将于 {start_text} 开始，请提前到店。"
+        if stage == "completed":
+            return f"「{room_name}」本次使用已结束，欢迎再次预约。"
+        date_text = booking.date.isoformat() if booking.date else ""
+        if booking.start_time and booking.end_time:
+            period = (
+                f"{booking.start_time.strftime('%H:%M')}-"
+                f"{booking.end_time.strftime('%H:%M')}"
+            )
+        else:
+            period = ""
+        return f"你预约的「{room_name}」{date_text} {period} 已支付成功，请按时到店。"
 
     async def _get_or_create_preference_model(
         self,

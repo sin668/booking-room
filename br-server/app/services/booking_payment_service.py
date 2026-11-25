@@ -26,6 +26,7 @@ from app.models.study_room import StudyRoom
 from app.models.user import User
 from app.schemas.booking import PaymentStatusResponse
 from app.services import coupon_service
+from app.services.notification_service import NotificationService
 from app.services.wechat_pay_client import (
     WechatPayConfigError,
     WechatPayDecryptError,
@@ -174,6 +175,7 @@ class BookingPaymentService:
         booking.paid_at = self._parse_wechat_success_time(notify.get("success_time")) or datetime.now()
         booking.next_payment_check_at = None
         await self._db.flush()
+        await NotificationService(self._db).notify_booking_paid(booking)
         return {"code": "SUCCESS", "message": "success"}
 
     async def reconcile_pending_payments(self, *, now: datetime | None = None) -> int:
@@ -313,6 +315,8 @@ class BookingPaymentService:
             booking.transaction_id = trade.get("transaction_id")
             booking.paid_at = self._parse_wechat_success_time(trade.get("success_time")) or now
             booking.next_payment_check_at = None
+            await self._db.flush()
+            await NotificationService(self._db).notify_booking_paid(booking)
             return
 
         booking.payment_check_count = int(booking.payment_check_count or 0) + 1

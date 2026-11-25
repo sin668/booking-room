@@ -1,3 +1,4 @@
+import logging
 import math
 import uuid
 from dataclasses import dataclass
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.activity import Activity, ActivityCoupon
 from app.models.coupon import Coupon, UserCoupon
 from app.services.data_scope import readonly_creators, scope_condition
+from app.services.notification_service import NotificationService
 from app.schemas.activity import (
     ActivityAdminResponse,
     ActivityCouponAdminResponse,
@@ -23,6 +25,9 @@ from app.schemas.activity import (
 
 
 from app.utils.timezone import CHINA_TIMEZONE
+
+
+logger = logging.getLogger(__name__)
 
 
 class ActivityCouponError(ValueError):
@@ -309,6 +314,30 @@ async def _validate_publishable_activity_coupons(db: AsyncSession, activity_id: 
             raise ActivityCouponPublishError("每人限领数量必须大于 0")
 
 
+async def _broadcast_activity_if_published(
+    db: AsyncSession, activity: Activity
+) -> None:
+    """已上架且有关联卡券时群发活动消息；群发失败不阻断活动保存。"""
+    if not activity.is_active:
+        return
+    has_coupon = (
+        await db.execute(
+            select(ActivityCoupon.id)
+            .where(ActivityCoupon.activity_id == activity.id)
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    if has_coupon is None:
+        return
+    try:
+        async with db.begin_nested():
+            await NotificationService(db).broadcast_activity(activity)
+    except Exception:
+        logger.exception(
+            "Activity broadcast notification failed: activity_id=%s", activity.id
+        )
+
+
 async def list_active_activities(db: AsyncSession) -> list[Activity]:
     """Return all active activities ordered by sort_order ascending."""
     result = await db.execute(
@@ -389,6 +418,7 @@ async def create_activity(db: AsyncSession, data: dict, created_by=None) -> Acti
         await _validate_publishable_activity_coupons(db, activity.id)
     await db.flush()
     await db.refresh(activity)
+    await _broadcast_activity_if_published(db, activity)
     return _activity_to_admin_response(activity, await _load_activity_coupon_rows(db, activity.id))
 
 
@@ -406,6 +436,7 @@ async def update_activity(db: AsyncSession, activity: Activity, data: dict) -> A
         await _validate_publishable_activity_coupons(db, activity.id)
     await db.flush()
     await db.refresh(activity)
+    await _broadcast_activity_if_published(db, activity)
     return _activity_to_admin_response(activity, await _load_activity_coupon_rows(db, activity.id))
 
 

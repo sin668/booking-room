@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- 自定义导航栏 -->
     <view class="nav-bar">
       <text class="nav-title">培训课程</text>
@@ -687,7 +687,7 @@ onReachBottom(() => {
   height: 62rpx;
   padding: 0 24rpx;
   border-radius: 36rpx;
-  background: $white;
+  background: $surface;
   border: 1rpx solid $border-soft;
   box-shadow: $shadow-sm;
 }
@@ -707,7 +707,7 @@ onReachBottom(() => {
 }
 
 .search-placeholder {
-  color: #C8C9CB;
+  color: $text-muted;
 }
 
 .search-clear {
@@ -821,7 +821,7 @@ onReachBottom(() => {
 }
 
 .banner-cta {
-  background: $white;
+  background: $surface;
   border-radius: 999rpx;
   padding: 8rpx 22rpx;
   margin-top: 16rpx;
@@ -889,7 +889,7 @@ onReachBottom(() => {
   min-height: 268rpx;
   flex-shrink: 0;
   overflow: hidden;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .room-cover {
@@ -1194,7 +1194,7 @@ onReachBottom(() => {
 
 .htag-hot {
   background: rgba(255, 71, 87, 0.1);
-  color: #FF4757;
+  color: $danger;
 }
 
 .htag-new {
@@ -1290,7 +1290,7 @@ onReachBottom(() => {
 
 .hot-schedule-dot {
   font-size: 18rpx;
-  color: #DDE2E6;
+  color: $text-muted;
 }
 
 .hot-course-status {
@@ -1372,7 +1372,7 @@ onReachBottom(() => {
   min-height: 244rpx;
   flex-shrink: 0;
   overflow: hidden;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .course-cover {
@@ -1396,7 +1396,7 @@ onReachBottom(() => {
 
 .badge-hot {
   background: rgba(255, 255, 255, 0.94);
-  color: #FF4757;
+  color: $danger;
 }
 
 .badge-new {
@@ -1529,7 +1529,7 @@ onReachBottom(() => {
 
 .course-dot {
   font-size: 20rpx;
-  color: #DDE2E6;
+  color: $text-muted;
 }
 
 .course-location-icon {
@@ -1642,7 +1642,7 @@ onReachBottom(() => {
   width: 236rpx;
   min-height: 244rpx;
   flex-shrink: 0;
-  background: linear-gradient(90deg, #F0F1F5 25%, #F7F8FA 50%, #F0F1F5 75%);
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface-soft) 50%, var(--surface-muted) 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.4s ease-in-out infinite;
 }
@@ -1659,7 +1659,7 @@ onReachBottom(() => {
 .skeleton-line {
   height: 22rpx;
   border-radius: 8rpx;
-  background: linear-gradient(90deg, #F0F1F5 25%, #F7F8FA 50%, #F0F1F5 75%);
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface-soft) 50%, var(--surface-muted) 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.4s ease-in-out infinite;
 }

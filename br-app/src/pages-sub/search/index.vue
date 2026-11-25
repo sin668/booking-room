@@ -1,7 +1,7 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- Status bar spacer -->
-    <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
+    <view :style="{ height: statusBarHeight + 'px', background: 'var(--surface)' }" />
 
     <!-- Nav bar -->
     <view class="nav-bar">
@@ -246,7 +246,7 @@ function goTeacherDetail(teacher) {
   align-items: center;
   height: 88rpx;
   padding: 0 28rpx;
-  background: #fff;
+  background: $surface;
   position: relative;
 }
 
@@ -261,8 +261,8 @@ function goTeacherDetail(teacher) {
 .nav-back-arrow {
   width: 20rpx;
   height: 20rpx;
-  border-left: 4rpx solid #2D3436;
-  border-bottom: 4rpx solid #2D3436;
+  border-left: 4rpx solid $text-primary;
+  border-bottom: 4rpx solid $text-primary;
   transform: rotate(45deg);
 }
 
@@ -272,7 +272,7 @@ function goTeacherDetail(teacher) {
   transform: translateX(-50%);
   font-size: 32rpx;
   font-weight: 600;
-  color: #2D3436;
+  color: $text-primary;
 }
 
 .search-header {
@@ -366,7 +366,7 @@ function goTeacherDetail(teacher) {
 .empty-icon,
 .hint-icon {
   font-size: 80rpx;
-  color: #ccd2dc;
+  color: $text-muted;
 }
 
 .empty-title,

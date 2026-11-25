@@ -1,24 +1,26 @@
-// Colors
-$primary: #4F6EF7;
-$primary-light: #E8EDFF;
+// Colors — 语义色通过 CSS 变量间接引用，浅色值定义在 App.vue 的 page，深色值由 .theme-dark 覆盖
+$primary: var(--primary);
+$primary-light: var(--primary-light);
 $primary-dark: #3A56D4;
-$primary-soft: #F2F5FF;
+$primary-soft: var(--primary-soft);
 $purple: #6C5CE7;
 $orange: #FF8C00;
-$orange-light: #FFF3E0;
-$bg-color: #F5F6FA;
-$bg-warm: #F8FAFF;
-$surface: #ffffff;
-$surface-soft: #FAFBFF;
-$text-primary: #2D3436;
-$text-secondary: #636E72;
-$text-muted: #B2BEC3;
-$border-color: #e5e7eb;
-$border-soft: rgba(79, 110, 247, 0.08);
+$orange-light: var(--orange-light);
+$bg-color: var(--bg-color);
+$bg-warm: var(--bg-warm);
+$bg-hero: var(--bg-hero);
+$surface: var(--surface);
+$surface-soft: var(--surface-soft);
+$surface-muted: var(--surface-muted);
+$text-primary: var(--text-primary);
+$text-secondary: var(--text-secondary);
+$text-muted: var(--text-muted);
+$border-color: var(--border-color);
+$border-soft: var(--border-soft);
 $white: #ffffff;
-$success: #07C160;
+$success: var(--success);
 $success-light: rgba(7, 193, 96, 0.1);
-$danger: #FF6B6B;
+$danger: var(--danger);
 $danger-light: rgba(255, 107, 107, 0.12);
 
 // Sizes
@@ -37,7 +39,7 @@ $shadow-bottom: 0 -8rpx 24rpx rgba(45, 52, 54, 0.06);
 
 // Gradients
 $gradient-primary: linear-gradient(135deg, #4F6EF7 0%, #6C5CE7 100%);
-$gradient-soft: linear-gradient(180deg, #FFFFFF 0%, #F8FAFF 100%);
+$gradient-soft: linear-gradient(180deg, var(--surface) 0%, var(--bg-warm) 100%);
 $gradient-card: linear-gradient(135deg, rgba(79, 110, 247, 0.08) 0%, rgba(108, 92, 231, 0.06) 100%);
 
 // Motion

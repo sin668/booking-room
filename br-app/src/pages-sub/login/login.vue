@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- 装饰背景 -->
     <view class="deco deco-1"></view>
     <view class="deco deco-2"></view>
@@ -629,7 +629,7 @@ function openAgreement(type) {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #fff 0, $bg-warm 360rpx, $bg-color 100%);
+  background: linear-gradient(180deg, $surface 0, $bg-warm 360rpx, $bg-color 100%);
   position: relative;
   overflow: hidden;
 }
@@ -713,7 +713,7 @@ function openAgreement(type) {
   transform: translateX(-50%);
   width: 6rpx;
   height: 8rpx;
-  background: $white;
+  background: $surface;
   border-radius: 2rpx 2rpx 0 0;
 }
 
@@ -1047,7 +1047,7 @@ function openAgreement(type) {
   background: rgba(7, 193, 96, 0.08);
 }
 .social-wechat .social-icon-text {
-  color: #07C160;
+  color: $success;
 }
 .social-apple {
   background: rgba(0, 0, 0, 0.04);

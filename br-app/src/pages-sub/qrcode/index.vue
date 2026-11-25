@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view v-if="loading && !verification" class="state-card top-state">
       <view class="loading-spinner" />
       <text class="state-title">正在生成学习码</text>
@@ -357,7 +357,7 @@ onUnmounted(() => {
 .info-card,
 .link-card,
 .state-card {
-  background: $white;
+  background: $surface;
   border-radius: 28rpx;
   box-shadow: $shadow-sm;
 }
@@ -559,7 +559,7 @@ onUnmounted(() => {
   margin-top: 12rpx;
   padding: 18rpx;
   border-radius: 16rpx;
-  background: #f5f6fa;
+  background: $bg-color;
   font-size: 22rpx;
   line-height: 1.45;
   color: $text-secondary;
@@ -627,7 +627,7 @@ onUnmounted(() => {
 }
 
 .state-mark.warning {
-  background: #fff4e5;
+  background: rgba(245, 158, 11, 0.14);
   color: #e67900;
 }
 

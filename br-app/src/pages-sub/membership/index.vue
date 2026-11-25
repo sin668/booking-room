@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view class="hero">
       <text class="eyebrow">SUPER VIP</text>
       <text class="title">超级会员</text>
@@ -107,7 +107,7 @@ export default {
 .benefit-list {
   margin-top: 32rpx;
   border-radius: 28rpx;
-  background: $white;
+  background: $surface;
   overflow: hidden;
   box-shadow: $shadow-sm;
 }

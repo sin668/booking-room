@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view class="nav-overlay">
       <view :style="{ height: statusBarHeight + 'px' }" />
       <view class="nav-bar">
@@ -882,7 +882,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  background: linear-gradient(180deg, #eef1fb 0, $bg-color 520rpx);
+  background: linear-gradient(180deg, $bg-hero 0, $bg-color 520rpx);
   min-height: 100vh;
 }
 
@@ -939,7 +939,7 @@ export default {
   width: 10rpx;
   height: 10rpx;
   border-radius: 50%;
-  background: $white;
+  background: $surface;
 }
 
 .nav-share-dot.top {
@@ -962,7 +962,7 @@ export default {
   height: 3rpx;
   width: 22rpx;
   border-radius: 3rpx;
-  background: $white;
+  background: $surface;
   transform-origin: left center;
 }
 
@@ -990,7 +990,7 @@ export default {
   position: relative;
   height: 480rpx;
   overflow: hidden;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .hero-image {
@@ -1338,7 +1338,7 @@ export default {
   border-radius: 24rpx;
   overflow: hidden;
   flex-shrink: 0;
-  background: #eef1fb;
+  background: $bg-hero;
   box-shadow: $shadow-card;
   border: 1rpx solid rgba(255, 255, 255, 0.8);
 }
@@ -1568,7 +1568,7 @@ export default {
 }
 
 .review-star-off {
-  color: #dfe6e9;
+  color: $text-muted;
 }
 
 .review-time {
@@ -1761,7 +1761,7 @@ export default {
   height: 92rpx;
   border-radius: 44rpx;
   border: 2rpx solid $border-color;
-  background: $white;
+  background: $surface;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2015,7 +2015,7 @@ export default {
 }
 
 .ctag-hot .tag-text {
-  color: #FF4757;
+  color: $danger;
   font-size: 20rpx;
 }
 
@@ -2137,7 +2137,7 @@ export default {
 
 .schedule-dot {
   font-size: 18rpx;
-  color: #DDE2E6;
+  color: $text-muted;
 }
 
 .schedule-status {

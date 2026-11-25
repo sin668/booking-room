@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view v-if="viewState === 'loading'" class="state-card">
       <view class="loading-spinner" />
       <text class="state-title">正在读取预约</text>
@@ -318,7 +318,7 @@ onLoad((options) => {
 .state-card,
 .detail-card,
 .status-banner {
-  background: $white;
+  background: $surface;
   border-radius: 28rpx;
   box-shadow: $shadow-sm;
 }
@@ -362,7 +362,7 @@ onLoad((options) => {
 }
 
 .state-mark.warning {
-  background: #fff4e5;
+  background: rgba(245, 158, 11, 0.14);
   color: #e67900;
 }
 
@@ -390,7 +390,7 @@ onLoad((options) => {
   margin-top: 34rpx;
   padding: 24rpx;
   border-radius: 18rpx;
-  background: #f5f6fa;
+  background: $bg-color;
 }
 
 .success-room,
@@ -419,11 +419,11 @@ onLoad((options) => {
 }
 
 .status-banner.warning {
-  background: linear-gradient(135deg, #fff7e8 0%, #ffffff 100%);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, var(--surface) 100%);
 }
 
 .status-banner.neutral {
-  background: $white;
+  background: $surface;
 }
 
 .status-title,
@@ -596,7 +596,7 @@ onLoad((options) => {
 }
 
 .retry-btn {
-  background: $white;
+  background: $surface;
   color: $primary;
   box-shadow: $shadow-sm;
 }
@@ -605,14 +605,14 @@ onLoad((options) => {
   margin: 24rpx 30rpx 0;
   padding: 24rpx;
   border-radius: 18rpx;
-  background: #fff7e8;
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .admin-token-card {
   margin-top: 24rpx;
   padding: 28rpx;
   border-radius: 24rpx;
-  background: $white;
+  background: $surface;
   box-shadow: $shadow-sm;
 }
 
@@ -627,7 +627,7 @@ onLoad((options) => {
   height: 82rpx;
   padding: 0 22rpx;
   border-radius: 16rpx;
-  background: #f5f6fa;
+  background: $bg-color;
   font-size: 26rpx;
   color: $text-primary;
   box-sizing: border-box;

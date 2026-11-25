@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view class="search-header">
       <view class="search-box">
         <view class="icon icon-search search-icon" />
@@ -162,7 +162,7 @@ export default {
   top: 0;
   z-index: 10;
   padding: 20rpx 28rpx;
-  background: #fff;
+  background: $surface;
   box-shadow: 0 1rpx 0 rgba(0, 0, 0, 0.04);
 }
 
@@ -221,7 +221,7 @@ export default {
   justify-content: center;
   height: 72rpx;
   border-radius: 16rpx;
-  background: #fff;
+  background: $surface;
   border: 1rpx solid rgba(79, 110, 247, 0.08);
   box-shadow: $shadow-sm;
 }
@@ -260,7 +260,7 @@ export default {
 .city-list {
   overflow: hidden;
   border-radius: 20rpx;
-  background: #fff;
+  background: $surface;
   box-shadow: $shadow-sm;
 }
 

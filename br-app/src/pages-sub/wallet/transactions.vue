@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <scroll-view
       class="content-scroll"
       scroll-y
@@ -501,7 +501,7 @@ export default {
   margin: 28rpx 32rpx 0;
   padding: 8rpx;
   border-radius: 999rpx;
-  background: $white;
+  background: $surface;
   display: flex;
   box-shadow: $shadow-sm;
 }
@@ -547,7 +547,7 @@ export default {
   min-height: 150rpx;
   padding: 28rpx;
   border-radius: $radius-lg;
-  background: $white;
+  background: $surface;
   box-shadow: $shadow-sm;
   display: flex;
   gap: 20rpx;
@@ -704,7 +704,7 @@ export default {
 .state-card {
   min-height: 420rpx;
   border-radius: $radius-lg;
-  background: $white;
+  background: $surface;
   box-shadow: $shadow-sm;
   display: flex;
   flex-direction: column;
@@ -784,7 +784,7 @@ export default {
 .skeleton-icon,
 .skeleton-line,
 .skeleton-amount {
-  background: #eef1f6;
+  background: $surface-muted;
   border-radius: 999rpx;
 }
 

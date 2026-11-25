@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view v-if="loading && !summary" class="loading-state">
       <view class="loading-spinner" />
       <text class="loading-text">加载中...</text>

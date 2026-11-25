@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <scroll-view class="content-scroll" scroll-y>
       <view class="balance-card">
         <view class="balance-header">
@@ -453,7 +453,7 @@ export default {
 .amount-btn {
   height: 96rpx;
   border-radius: 24rpx;
-  background: $white;
+  background: $surface;
   border: 2rpx solid transparent;
   display: flex;
   align-items: center;
@@ -492,7 +492,7 @@ export default {
   margin: 32rpx 32rpx 0;
   padding: 32rpx;
   border-radius: 32rpx;
-  background: $white;
+  background: $surface;
   box-shadow: 0 6rpx 20rpx rgba(45, 52, 54, 0.04);
 }
 
@@ -651,7 +651,7 @@ export default {
   right: 0;
   bottom: 0;
   padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
-  background: $white;
+  background: $surface;
   box-shadow: 0 -4rpx 20rpx rgba(45, 52, 54, 0.06);
 }
 

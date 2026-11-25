@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view class="nav-bar">
       <view class="nav-back press-effect" @tap="goBack">
         <text class="nav-back-text">‹</text>
@@ -514,6 +514,7 @@ import { changePassword, deactivateAccount, getAccountSecuritySummary } from '@/
 import { getNotificationPreferences, updateNotificationPreferences } from '@/api/notifications'
 import { uploadImage } from '@/pages-sub/api/upload'
 import { useUserStore } from '@/store/modules/user'
+import { useThemeStore } from '@/store/modules/theme'
 import {
   formatDeactivationRiskReasons,
   formatWechatBindingStatus,
@@ -529,6 +530,7 @@ export default {
   data() {
     return {
       userStore: useUserStore(),
+      themeStore: useThemeStore(),
       notificationTypes: NOTIFICATION_TYPE_CONFIGS,
       notifications: {
         booking: true,
@@ -538,7 +540,6 @@ export default {
       },
       notificationPreferencesLoading: false,
       savingNotificationPreferenceKey: '',
-      darkMode: false,
       cacheSize: '23.6 MB',
       showEmailSheet: false,
       emailDraft: '',
@@ -609,6 +610,14 @@ export default {
     }
   },
   computed: {
+    darkMode: {
+      get() {
+        return this.themeStore.isDark
+      },
+      set(value) {
+        this.themeStore.setMode(value ? 'dark' : 'light')
+      },
+    },
     displayNickname() {
       return this.userStore.nickname || '学习达人'
     },
@@ -1334,8 +1343,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: $white;
-  border-bottom: 1rpx solid rgba(229, 231, 235, 0.9);
+  background: $surface;
+  border-bottom: 1rpx solid $border-color;
 }
 
 .nav-back,
@@ -1371,7 +1380,7 @@ export default {
 .profile-card,
 .section-card {
   margin: 24rpx 32rpx 0;
-  background: $white;
+  background: $surface;
   border-radius: 32rpx;
   box-shadow: $shadow-sm;
 }
@@ -1426,7 +1435,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 4rpx solid $white;
+  border: 4rpx solid $surface;
 }
 
 .camera-text {
@@ -1496,7 +1505,7 @@ export default {
 }
 
 .section-title {
-  color: #9ca3af;
+  color: $text-muted;
   font-size: 24rpx;
   font-weight: 700;
 }
@@ -1544,7 +1553,7 @@ export default {
 
 .chevron {
   flex-shrink: 0;
-  color: #d1d5db;
+  color: $text-muted;
   font-size: 38rpx;
   line-height: 38rpx;
 }
@@ -1564,19 +1573,19 @@ export default {
   font-weight: 700;
 }
 
-.orange { background: #fff7ed; color: #f97316; }
+.orange { background: rgba(249, 115, 22, 0.12); color: #f97316; }
 .green { background: rgba(7, 193, 96, 0.1); color: $success; }
 .blue { background: rgba(79, 110, 247, 0.1); color: $primary; }
-.red { background: #fef2f2; color: #f87171; }
-.blue-soft { background: #eff6ff; color: #3b82f6; }
-.purple-soft { background: #f5f3ff; color: #8b5cf6; }
-.green-soft { background: #f0fdf4; color: #22c55e; }
-.yellow-soft { background: #fefce8; color: #eab308; }
-.indigo-soft { background: #eef2ff; color: #6366f1; }
-.cyan-soft { background: #ecfeff; color: #06b6d4; }
-.teal-soft { background: #f0fdfa; color: #14b8a6; }
-.gray-soft { background: #f3f4f6; color: #6b7280; }
-.danger-text { color: #f87171; }
+.red { background: rgba(255, 107, 107, 0.12); color: $danger; }
+.blue-soft { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+.purple-soft { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+.green-soft { background: rgba(34, 197, 94, 0.12); color: $success; }
+.yellow-soft { background: rgba(234, 179, 8, 0.12); color: #eab308; }
+.indigo-soft { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+.cyan-soft { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
+.teal-soft { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
+.gray-soft { background: $surface-muted; color: $text-secondary; }
+.danger-text { color: $danger; }
 
 .status-pill {
   padding: 4rpx 16rpx;
@@ -1584,7 +1593,7 @@ export default {
 }
 
 .status-pill.success {
-  background: #f0fdf4;
+  background: rgba(34, 197, 94, 0.12);
 }
 
 .status-pill.primary {
@@ -1592,16 +1601,16 @@ export default {
 }
 
 .status-pill.warning {
-  background: #fef3c7;
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .status-pill-text {
   font-size: 22rpx;
 }
 
-.success-text { color: #22c55e; }
+.success-text { color: $success; }
 .primary-text { color: $primary; }
-.warning-text { color: #d97706; }
+.warning-text { color: #f59e0b; }
 
 .setting-copy {
   flex: 1;
@@ -1625,7 +1634,7 @@ export default {
   height: 52rpx;
   padding: 4rpx;
   border-radius: 26rpx;
-  background: #d1d5db;
+  background: $text-muted;
   transition: background 0.2s ease;
   box-sizing: border-box;
 }
@@ -1663,8 +1672,8 @@ export default {
   height: 96rpx;
   line-height: 96rpx;
   border-radius: 28rpx;
-  color: #f87171;
-  background: $white;
+  color: $danger;
+  background: $surface;
   font-size: 28rpx;
   font-weight: 700;
   box-shadow: 0 8rpx 28rpx rgba(225, 112, 85, 0.16);
@@ -1697,7 +1706,7 @@ export default {
   width: 100%;
   padding: 20rpx 40rpx 56rpx;
   border-radius: 40rpx 40rpx 0 0;
-  background: $white;
+  background: $surface;
   box-sizing: border-box;
 }
 
@@ -1705,7 +1714,7 @@ export default {
   width: 80rpx;
   height: 8rpx;
   border-radius: 999rpx;
-  background: #e5e7eb;
+  background: $border-color;
   margin: 0 auto 32rpx;
 }
 
@@ -1731,7 +1740,7 @@ export default {
   margin-top: 36rpx;
   padding: 0 28rpx;
   border-radius: 20rpx;
-  background: #f7f8fb;
+  background: $surface-muted;
   color: $text-primary;
   font-size: 30rpx;
   box-sizing: border-box;
@@ -1760,7 +1769,7 @@ export default {
   line-height: 92rpx;
   margin-top: 36rpx;
   border-radius: 24rpx;
-  background: #07c160;
+  background: $success;
   color: $white;
   font-size: 28rpx;
   font-weight: 800;
@@ -1775,7 +1784,7 @@ export default {
   margin-top: 24rpx;
   padding: 20rpx 24rpx;
   border-radius: 18rpx;
-  background: #fef2f2;
+  background: rgba(255, 107, 107, 0.12);
 }
 
 .bind-error-text {
@@ -1799,7 +1808,7 @@ export default {
   height: 92rpx;
   padding: 0 24rpx;
   border-radius: 20rpx;
-  background: #f7f8fb;
+  background: $surface-muted;
   color: $text-primary;
   font-size: 28rpx;
   box-sizing: border-box;
@@ -1818,7 +1827,7 @@ export default {
   gap: 14rpx;
   padding: 18rpx 20rpx;
   border-radius: 18rpx;
-  background: #fef2f2;
+  background: rgba(255, 107, 107, 0.12);
 }
 
 .risk-dot {
@@ -1827,7 +1836,7 @@ export default {
   line-height: 32rpx;
   border-radius: 16rpx;
   text-align: center;
-  background: #f87171;
+  background: $danger;
   color: $white;
   font-size: 22rpx;
   font-weight: 800;
@@ -1846,11 +1855,11 @@ export default {
   margin-top: 28rpx;
   padding: 20rpx 24rpx;
   border-radius: 18rpx;
-  background: #f0fdf4;
+  background: rgba(34, 197, 94, 0.12);
 }
 
 .deactivation-ready-text {
-  color: #16a34a;
+  color: $success;
   font-size: 24rpx;
   line-height: 34rpx;
 }
@@ -1862,7 +1871,7 @@ export default {
   margin-top: 20rpx;
   padding: 0 24rpx;
   border-radius: 20rpx;
-  background: #f7f8fb;
+  background: $surface-muted;
   box-sizing: border-box;
 }
 
@@ -1918,7 +1927,7 @@ export default {
 }
 
 .sheet-cancel {
-  background: #f3f4f6;
+  background: $surface-muted;
   color: $text-secondary;
 }
 
@@ -1928,7 +1937,7 @@ export default {
 }
 
 .sheet-confirm.danger {
-  background: #f87171;
+  background: $danger;
 }
 
 .press-effect:active {
@@ -1948,14 +1957,14 @@ export default {
   justify-content: space-between;
   padding: 24rpx 28rpx;
   border-radius: 16rpx;
-  background: #f9fafb;
+  background: $surface-muted;
   border: 2rpx solid transparent;
   transition: all 0.2s ease;
 }
 
 .gender-option.active {
-  background: rgba($primary, 0.08);
-  border-color: rgba($primary, 0.3);
+  background: rgba(79, 110, 247, 0.16);
+  border-color: rgba(79, 110, 247, 0.3);
 }
 
 .gender-option-text {
@@ -1983,7 +1992,7 @@ export default {
 .birthday-picker {
   margin-top: 24rpx;
   padding: 24rpx 28rpx;
-  background: #f9fafb;
+  background: $surface-muted;
   border-radius: 16rpx;
   border: 2rpx solid $border-soft;
 }
@@ -2003,7 +2012,7 @@ export default {
   min-height: 160rpx;
   margin-top: 24rpx;
   padding: 20rpx 24rpx;
-  background: #f9fafb;
+  background: $surface-muted;
   border-radius: 16rpx;
   border: 2rpx solid $border-soft;
   font-size: 28rpx;

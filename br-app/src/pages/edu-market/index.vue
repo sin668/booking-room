@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- 自定义导航栏 -->
     <view class="nav-bar">
       <text class="nav-title">教培供需</text>
@@ -648,7 +648,7 @@ onPullDownRefresh(async () => {
   position: relative;
   width: 100%;
   overflow: hidden;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .card-cover-img {
@@ -667,15 +667,15 @@ onPullDownRefresh(async () => {
 }
 
 .ph-tutor {
-  background: linear-gradient(135deg, #E8EDFF 0%, #DCE4FF 100%);
+  background: linear-gradient(135deg, rgba(79, 110, 247, 0.12) 0%, rgba(79, 110, 247, 0.2) 100%);
 }
 
 .ph-training {
-  background: linear-gradient(135deg, #EFEAFF 0%, #E4DCFF 100%);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.2) 100%);
 }
 
 .ph-demand {
-  background: linear-gradient(135deg, #FFF3E0 0%, #FFE8CC 100%);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.22) 100%);
 }
 
 .card-ph-icon {
@@ -934,7 +934,7 @@ onPullDownRefresh(async () => {
 
 .skeleton-cover {
   width: 100%;
-  background: linear-gradient(90deg, #F0F1F5 25%, #F7F8FA 50%, #F0F1F5 75%);
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface-soft) 50%, var(--surface-muted) 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.4s ease-in-out infinite;
 }
@@ -943,7 +943,7 @@ onPullDownRefresh(async () => {
   height: 22rpx;
   margin: 16rpx 18rpx 0;
   border-radius: 8rpx;
-  background: linear-gradient(90deg, #F0F1F5 25%, #F7F8FA 50%, #F0F1F5 75%);
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface-soft) 50%, var(--surface-muted) 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.4s ease-in-out infinite;
 }

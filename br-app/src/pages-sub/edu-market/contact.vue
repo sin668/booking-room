@@ -1,6 +1,6 @@
 <template>
   <!-- #ifdef H5 -->
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view class="phone-section">
       <text class="phone-title">联系发布者</text>
       <text v-if="phone" class="phone-number">{{ phone }}</text>

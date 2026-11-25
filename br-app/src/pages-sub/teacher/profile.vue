@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- 顶部导航 -->
     <view class="nav-overlay">
       <view :style="{ height: statusBarHeight + 'px' }" />
@@ -543,7 +543,7 @@ export default {
   height: 44rpx;
   border-radius: 50%;
   background: $success;
-  border: 4rpx solid $white;
+  border: 4rpx solid $surface;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -976,7 +976,7 @@ export default {
 }
 
 .review-star-off {
-  color: #dfe6e9;
+  color: $text-muted;
 }
 
 .review-avatar-empty {

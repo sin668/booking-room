@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <scroll-view
       class="review-scroll"
       scroll-y

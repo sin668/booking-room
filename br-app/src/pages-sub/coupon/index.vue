@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view class="tabs">
       <view
         v-for="tab in tabs"
@@ -292,7 +292,7 @@ export default {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #fff 0, $bg-warm 180rpx, $bg-color 420rpx);
+  background: linear-gradient(180deg, $surface 0, $bg-warm 180rpx, $bg-color 420rpx);
   display: flex;
   flex-direction: column;
 }
@@ -410,7 +410,7 @@ export default {
 }
 
 .coupon-bar.red {
-  background: #ff6b6b;
+  background: $danger;
 }
 
 .coupon-bar.orange {

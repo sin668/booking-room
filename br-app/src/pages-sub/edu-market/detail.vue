@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- 状态栏 + 导航栏（悬浮在 hero 图上） -->
     <view class="nav-overlay" :style="{ height: statusBarHeight + 'px' }" />
     <view class="nav-bar">
@@ -414,7 +414,7 @@ export default {
 }
 
 .ph-tutor {
-  background: linear-gradient(135deg, $primary-soft 0%, rgba($primary, 0.2) 100%);
+  background: linear-gradient(135deg, $primary-soft 0%, rgba(79, 110, 247, 0.2) 100%);
 }
 
 .ph-training {
@@ -686,7 +686,7 @@ export default {
 
 .publisher-cert-text {
   font-size: 18rpx;
-  color: #92400E;
+  color: #f5a623;
   font-weight: 600;
 }
 
@@ -725,12 +725,12 @@ export default {
 .time-chip {
   padding: 12rpx 24rpx;
   background: $primary-light;
-  border: 2rpx solid rgba($primary, 0.2);
+  border: 2rpx solid rgba(79, 110, 247, 0.2);
   border-radius: 12rpx;
   font-size: 22rpx;
   color: $primary;
   font-weight: 600;
-  box-shadow: 0 2rpx 8rpx rgba($primary, 0.08);
+  box-shadow: 0 2rpx 8rpx rgba(79, 110, 247, 0.08);
 }
 
 /* ── 图片集 ── */
@@ -850,14 +850,14 @@ export default {
   justify-content: center;
   background: $primary;
   border-radius: 999rpx;
-  box-shadow: 0 8rpx 24rpx rgba($primary, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8rpx 24rpx rgba(79, 110, 247, 0.28), inset 0 2rpx 0 rgba(255, 255, 255, 0.2);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-primary:active {
   transform: scale(0.97);
-  box-shadow: 0 4rpx 16rpx rgba($primary, 0.24);
+  box-shadow: 0 4rpx 16rpx rgba(79, 110, 247, 0.24);
 }
 
 .action-primary-text {

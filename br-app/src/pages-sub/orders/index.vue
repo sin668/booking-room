@@ -1,7 +1,7 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- Status bar spacer -->
-    <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
+    <view :style="{ height: statusBarHeight + 'px', background: 'var(--surface)' }" />
 
     <!-- Nav bar -->
     <view class="nav-bar">
@@ -588,7 +588,7 @@ export default {
 <style lang="scss" scoped>
 .page {
   height: 100vh;
-  background: linear-gradient(180deg, #fff 0, $bg-warm 180rpx, $bg-color 420rpx);
+  background: linear-gradient(180deg, $surface 0, $bg-warm 180rpx, $bg-color 420rpx);
   display: flex;
   flex-direction: column;
 }
@@ -598,7 +598,7 @@ export default {
   align-items: center;
   height: 88rpx;
   padding: 0 28rpx;
-  background: #fff;
+  background: $surface;
   position: relative;
 }
 
@@ -613,8 +613,8 @@ export default {
 .nav-back-arrow {
   width: 20rpx;
   height: 20rpx;
-  border-left: 4rpx solid #2D3436;
-  border-bottom: 4rpx solid #2D3436;
+  border-left: 4rpx solid $text-primary;
+  border-bottom: 4rpx solid $text-primary;
   transform: rotate(45deg);
 }
 
@@ -624,7 +624,7 @@ export default {
   transform: translateX(-50%);
   font-size: 32rpx;
   font-weight: 600;
-  color: #2D3436;
+  color: $text-primary;
 }
 
 /* Tabs */

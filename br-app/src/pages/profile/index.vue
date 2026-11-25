@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view v-if="userStore.isLoggedIn" class="profile">
       <view class="profile-header">
         <view class="settings-entry" @tap="navigateTo('/pages-sub/settings/index')">
@@ -676,7 +676,7 @@ export default {
   top: -14rpx;
   height: 14rpx;
   border-radius: 8rpx 8rpx 4rpx 4rpx;
-  background: #00a884;
+  background: $success;
 }
 
 .store-icon::after {
@@ -687,7 +687,7 @@ export default {
   width: 8rpx;
   height: 16rpx;
   border-radius: 4rpx 4rpx 0 0;
-  background: #00a884;
+  background: $success;
 }
 
 /* 评价图标直接用 ★ 字形：仓内无 clip-path 先例，而 ★ 已是全站统一的星级表现 */
@@ -785,7 +785,7 @@ export default {
   width: 8rpx;
   height: 8rpx;
   border-radius: 50%;
-  background: $white;
+  background: $surface;
 }
 
 .ticket-icon::before {

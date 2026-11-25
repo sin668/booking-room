@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- 顶部导航 -->
     <view class="nav-overlay">
       <view :style="{ height: statusBarHeight + 'px' }" />
@@ -407,7 +407,7 @@ export default {
 
 /* Nav bar */
 .nav-overlay {
-  background: #fff;
+  background: $surface;
 }
 
 .nav-bar {
@@ -528,7 +528,7 @@ export default {
   width: 184rpx;
   height: 188rpx;
   flex-shrink: 0;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .room-info {
@@ -627,7 +627,7 @@ export default {
   width: 176rpx;
   height: 176rpx;
   flex-shrink: 0;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .course-cover-ph {
@@ -730,7 +730,7 @@ export default {
   height: 108rpx;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .teacher-avatar-ph {
@@ -960,7 +960,7 @@ export default {
 .skeleton-line-short { width: 35%; }
 
 .skeleton-block {
-  background: linear-gradient(90deg, #eef1fb 0%, #f7f8ff 48%, #eef1fb 100%);
+  background: linear-gradient(90deg, var(--bg-hero) 0%, var(--surface-soft) 48%, var(--bg-hero) 100%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.2s ease-in-out infinite;
   flex-shrink: 0;

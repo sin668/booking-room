@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <scroll-view class="submit-scroll" scroll-y>
       <!-- 已评价：一个订单只能评价一次 -->
       <view v-if="alreadyReviewed" class="state-card">
@@ -916,7 +916,7 @@ export default {
 .star {
   font-size: 56rpx;
   line-height: 1;
-  color: #e1e5ef;
+  color: $text-muted;
   transition: color 0.2s $ease-out;
 }
 
@@ -1019,7 +1019,7 @@ export default {
   margin-top: 20rpx;
   padding: 22rpx;
   box-sizing: border-box;
-  background: #f8f9fc;
+  background: $surface-muted;
   border: 2rpx solid transparent;
   border-radius: $radius-md;
   font-size: 26rpx;
@@ -1346,7 +1346,7 @@ export default {
 }
 
 .submit-btn-off {
-  background: #c7d0f5;
+  background: $primary-light;
   box-shadow: none;
 }
 

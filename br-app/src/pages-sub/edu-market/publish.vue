@@ -1,7 +1,7 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- 状态栏占位 -->
-    <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
+    <view :style="{ height: statusBarHeight + 'px', background: 'var(--surface)' }" />
 
     <!-- 导航栏 -->
     <view class="nav-bar">
@@ -674,7 +674,7 @@ export default {
 }
 
 .field-ph {
-  color: #C8C9CB;
+  color: $text-muted;
 }
 
 .field-textarea {
@@ -736,7 +736,7 @@ export default {
 }
 
 .city-placeholder {
-  color: #C8C9CB;
+  color: $text-muted;
 }
 
 .city-selector-arrow {
@@ -980,7 +980,7 @@ export default {
 
 .submit-btn:active {
   transform: scale(0.97);
-  box-shadow: 0 4rpx 16rpx rgba($primary, 0.24);
+  box-shadow: 0 4rpx 16rpx rgba(79, 110, 247, 0.24);
 }
 
 .submit-btn-off {

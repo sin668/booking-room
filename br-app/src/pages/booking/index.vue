@@ -1,7 +1,7 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- Status bar spacer -->
-    <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
+    <view :style="{ height: statusBarHeight + 'px', background: 'var(--surface)' }" />
     
     <!-- 自定义导航栏 -->
     <view class="nav-bar">
@@ -383,7 +383,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  background: linear-gradient(180deg, #fff 0, $bg-warm 260rpx, $bg-color 520rpx);
+  background: linear-gradient(180deg, $surface 0, $bg-warm 260rpx, $bg-color 520rpx);
   min-height: 100vh;
 }
 
@@ -411,7 +411,7 @@ export default {
 
 .search-section {
   padding: 70rpx 28rpx 28rpx 28rpx;
-  background: linear-gradient(180deg, #fff 0%, $surface-soft 100%);
+  background: linear-gradient(180deg, $surface 0%, $surface-soft 100%);
   box-shadow: 0 1rpx 0 rgba(79, 110, 247, 0.06);
 }
 
@@ -468,7 +468,7 @@ export default {
   width: 43%;
   padding: 0 24rpx;
   border-radius: 36rpx;
-  background: $white;
+  background: $surface;
   border: 1rpx solid $border-soft;
   box-shadow: $shadow-sm;
 }
@@ -526,7 +526,7 @@ export default {
   height: 56rpx;
   padding: 0 22rpx;
   border-radius: 28rpx;
-  background: $white;
+  background: $surface;
   border: 1rpx solid $border-soft;
   box-shadow: $shadow-sm;
   transition: transform 0.18s ease-out, background-color 0.18s ease-out, border-color 0.18s ease-out;
@@ -633,7 +633,7 @@ export default {
   min-height: 244rpx;
   flex-shrink: 0;
   overflow: hidden;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .room-cover {
@@ -818,7 +818,7 @@ export default {
 
 .room-card-skeleton {
   display: flex;
-  background: #fdfdff;
+  background: $surface;
   border-radius: 24rpx;
   overflow: hidden;
   padding: 16rpx;
@@ -829,7 +829,7 @@ export default {
   width: 200rpx;
   height: 160rpx;
   border-radius: 14rpx;
-  background: linear-gradient(90deg, #f5f5f5 25%, #eee 50%, #f5f5f5 75%);
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface-soft) 50%, var(--surface-muted) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -846,7 +846,7 @@ export default {
 .skeleton-line {
   height: 24rpx;
   border-radius: 6rpx;
-  background: linear-gradient(90deg, #f5f5f5 25%, #eee 50%, #f5f5f5 75%);
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface-soft) 50%, var(--surface-muted) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -874,7 +874,7 @@ export default {
 
 .empty-icon {
   font-size: 84rpx;
-  color: #ccd2dc;
+  color: $text-muted;
 }
 
 .empty-title {

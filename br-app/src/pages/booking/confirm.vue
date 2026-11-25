@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <scroll-view class="content" scroll-y>
       <!-- Loading state -->
       <view v-if="pageLoading" class="loading-wrap">
@@ -887,7 +887,7 @@ export default {
 }
 
 .coupon-icon {
-  background: #FFEBEE;
+  background: rgba(255, 107, 107, 0.12);
 }
 
 .balance-icon {
@@ -895,14 +895,14 @@ export default {
 }
 
 .wechat-icon {
-  background: #E8F5E9;
+  background: rgba(34, 197, 94, 0.12);
 }
 
 .ticket-icon {
   width: 34rpx;
   height: 24rpx;
   border-radius: 6rpx;
-  background: #EF5350;
+  background: $danger;
   position: relative;
 }
 
@@ -914,7 +914,7 @@ export default {
   width: 8rpx;
   height: 8rpx;
   border-radius: 50%;
-  background: #fff;
+  background: $surface;
 }
 
 .ticket-icon::before {
@@ -1001,15 +1001,15 @@ export default {
 }
 
 .seat-icon {
-  background: #E8F5E9;
+  background: rgba(34, 197, 94, 0.12);
 }
 
 .date-icon {
-  background: #FFF8E1;
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .clock-icon {
-  background: #F3E5F5;
+  background: rgba(139, 92, 246, 0.12);
 }
 
 .building-icon {
@@ -1027,7 +1027,7 @@ export default {
   width: 6rpx;
   height: 6rpx;
   border-radius: 2rpx;
-  background: $white;
+  background: $surface;
   left: 8rpx;
   box-shadow: 12rpx 0 0 $white;
 }
@@ -1414,7 +1414,7 @@ export default {
   width: 80rpx;
   height: 8rpx;
   border-radius: 4rpx;
-  background: #E0E0E0;
+  background: $border-color;
   margin-bottom: 48rpx;
 }
 
@@ -1542,7 +1542,7 @@ export default {
   font-size: 38rpx;
   line-height: 1;
   color: $text-muted;
-  background: #F8F9FA;
+  background: $surface-muted;
 }
 
 .sheet-coupon-list {

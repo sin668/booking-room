@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <scroll-view class="content" scroll-y>
       <!-- Zone tabs -->
       <view class="zone-section">
@@ -453,7 +453,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  background: linear-gradient(180deg, #fff 0, $bg-warm 260rpx, $bg-color 520rpx);
+  background: linear-gradient(180deg, $surface 0, $bg-warm 260rpx, $bg-color 520rpx);
   min-height: 100vh;
   position: relative;
 }
@@ -604,8 +604,8 @@ export default {
 }
 
 .time-slot.disabled {
-  background: #F0F0F0;
-  border-color: #F0F0F0;
+  background: $surface-muted;
+  border-color: $border-color;
 }
 
 .time-slot-range {
@@ -636,7 +636,7 @@ export default {
 .time-slot.disabled .time-slot-start,
 .time-slot.disabled .time-slot-end,
 .time-slot.disabled .time-slot-sep {
-  color: #ccc;
+  color: $text-muted;
   text-decoration: line-through;
 }
 
@@ -791,7 +791,7 @@ export default {
 .desk-line {
   flex: 1;
   height: 1rpx;
-  border-top: 2rpx dashed #D0D0D0;
+  border-top: 2rpx dashed $border-color;
 }
 
 .desk-text {
@@ -824,7 +824,7 @@ export default {
 
 .seat.available {
   background: $success-light;
-  border: 2rpx solid #66BB6A;
+  border: 2rpx solid $success;
 }
 
 .seat.available:active {
@@ -838,13 +838,13 @@ export default {
 }
 
 .seat.occupied {
-  background: #F2F3F5;
-  border: 2rpx solid #E0E0E0;
+  background: $surface-muted;
+  border: 2rpx solid $border-color;
 }
 
 .seat.vip {
   background: $orange-light;
-  border: 2rpx solid #FFB74D;
+  border: 2rpx solid #f59e0b;
 }
 
 .seat.vip:active {
@@ -858,7 +858,7 @@ export default {
 
 .seat-number {
   font-size: 18rpx;
-  color: #388E3C;
+  color: $success;
 }
 
 .seat.selected .seat-number {
@@ -866,7 +866,7 @@ export default {
 }
 
 .seat.occupied .seat-number {
-  color: #BDBDBD;
+  color: $text-muted;
 }
 
 .seat.vip .seat-number {
@@ -879,7 +879,7 @@ export default {
   left: 50%;
   width: 140%;
   height: 2rpx;
-  background: #ccc;
+  background: $text-muted;
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 
@@ -927,8 +927,8 @@ export default {
 }
 
 .legend-dot.available {
-  background: #E8F5E9;
-  border: 2rpx solid #66BB6A;
+  background: rgba(34, 197, 94, 0.12);
+  border: 2rpx solid $success;
 }
 
 .legend-dot.selected {
@@ -937,13 +937,13 @@ export default {
 }
 
 .legend-dot.occupied {
-  background: #F0F0F0;
-  border: 2rpx solid #F0F0F0;
+  background: $surface-muted;
+  border: 2rpx solid $border-color;
 }
 
 .legend-dot.vip {
-  background: #FFF3E0;
-  border: 2rpx solid #FFB74D;
+  background: rgba(245, 158, 11, 0.14);
+  border: 2rpx solid #f59e0b;
 }
 
 .legend-dot.booked {

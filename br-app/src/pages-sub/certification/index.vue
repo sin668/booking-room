@@ -1,7 +1,7 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- Status bar spacer -->
-    <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
+    <view :style="{ height: statusBarHeight + 'px', background: 'var(--surface)' }" />
 
     <!-- Nav bar -->
     <view class="nav-bar">
@@ -274,7 +274,7 @@ export default {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: #F5F6FA;
+  background: $bg-color;
 }
 
 .nav-bar {
@@ -282,7 +282,7 @@ export default {
   align-items: center;
   height: 88rpx;
   padding: 0 28rpx;
-  background: #fff;
+  background: $surface;
   position: relative;
 }
 
@@ -297,8 +297,8 @@ export default {
 .nav-back-arrow {
   width: 20rpx;
   height: 20rpx;
-  border-left: 4rpx solid #2D3436;
-  border-bottom: 4rpx solid #2D3436;
+  border-left: 4rpx solid $text-primary;
+  border-bottom: 4rpx solid $text-primary;
   transform: rotate(45deg);
 }
 
@@ -308,7 +308,7 @@ export default {
   transform: translateX(-50%);
   font-size: 32rpx;
   font-weight: 600;
-  color: #2D3436;
+  color: $text-primary;
 }
 
 .content {
@@ -362,7 +362,7 @@ export default {
 }
 
 .cert-card {
-  background: #fff;
+  background: $surface;
   border-radius: 24rpx;
   padding: 32rpx;
   margin-bottom: 24rpx;
@@ -412,7 +412,7 @@ export default {
 }
 
 .real-name-icon .cert-icon-inner {
-  color: #07C160;
+  color: $success;
 }
 
 .education-icon .cert-icon-inner {
@@ -420,7 +420,7 @@ export default {
 }
 
 .teacher-icon .cert-icon-inner {
-  color: #4F6EF7;
+  color: $primary;
 }
 
 .cert-info {
@@ -431,7 +431,7 @@ export default {
 .cert-name {
   font-size: 28rpx;
   font-weight: 600;
-  color: #2D3436;
+  color: $text-primary;
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -440,7 +440,7 @@ export default {
 
 .cert-requirement {
   font-size: 22rpx;
-  color: #999;
+  color: $text-muted;
   display: block;
   margin-top: 4rpx;
   overflow: hidden;
@@ -455,7 +455,7 @@ export default {
 }
 
 .badge-none {
-  background: #4F6EF7;
+  background: $primary;
 }
 
 .badge-none .cert-badge-text {
@@ -475,7 +475,7 @@ export default {
 }
 
 .badge-approved .cert-badge-text {
-  color: #07C160;
+  color: $success;
 }
 
 .badge-rejected {
@@ -483,7 +483,7 @@ export default {
 }
 
 .badge-rejected .cert-badge-text {
-  color: #FF6B6B;
+  color: $danger;
 }
 
 .cert-badge-text {
@@ -495,7 +495,7 @@ export default {
 .cert-detail {
   margin-top: 24rpx;
   padding-top: 24rpx;
-  border-top: 1rpx solid #F0F0F0;
+  border-top: 1rpx solid $border-color;
 }
 
 .detail-row {
@@ -507,12 +507,12 @@ export default {
 
 .detail-label {
   font-size: 24rpx;
-  color: #999;
+  color: $text-muted;
 }
 
 .detail-value {
   font-size: 24rpx;
-  color: #2D3436;
+  color: $text-primary;
 }
 
 .cert-rejection {
@@ -524,7 +524,7 @@ export default {
 
 .rejection-text {
   font-size: 24rpx;
-  color: #FF6B6B;
+  color: $danger;
 }
 
 .permission-section {
@@ -534,13 +534,13 @@ export default {
 .permission-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #2D3436;
+  color: $text-primary;
   display: block;
   margin-bottom: 20rpx;
 }
 
 .permission-list {
-  background: #fff;
+  background: $surface;
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
@@ -550,7 +550,7 @@ export default {
   display: flex;
   align-items: center;
   padding: 24rpx 28rpx;
-  border-bottom: 1rpx solid #F5F5F5;
+  border-bottom: 1rpx solid $border-color;
 }
 
 .permission-item:last-child {
@@ -585,7 +585,7 @@ export default {
 }
 
 .permission-icon.green .permission-icon-inner {
-  color: #07C160;
+  color: $success;
 }
 
 .permission-icon.orange .permission-icon-inner {
@@ -593,22 +593,22 @@ export default {
 }
 
 .permission-icon.purple .permission-icon-inner {
-  color: #4F6EF7;
+  color: $primary;
 }
 
 .permission-text {
   font-size: 26rpx;
-  color: #2D3436;
+  color: $text-primary;
   flex: 1;
 }
 
 .permission-desc {
   font-size: 22rpx;
-  color: #999;
+  color: $text-muted;
 }
 
 .permission-desc.highlight {
-  color: #4F6EF7;
+  color: $primary;
   font-weight: 500;
 }
 </style>

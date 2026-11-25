@@ -1,6 +1,6 @@
 <template>
-  <view class="page">
-    <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
+  <view class="page" :class="themeClass">
+    <view :style="{ height: statusBarHeight + 'px', background: 'var(--surface)' }" />
     <view class="nav-bar">
       <view class="nav-back" @tap="goBack">
         <view class="nav-back-arrow" />
@@ -103,7 +103,7 @@ export default {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: #F5F6FA;
+  background: $bg-color;
 }
 
 .nav-bar {
@@ -111,7 +111,7 @@ export default {
   align-items: center;
   height: 88rpx;
   padding: 0 28rpx;
-  background: #fff;
+  background: $surface;
   position: relative;
 }
 
@@ -126,8 +126,8 @@ export default {
 .nav-back-arrow {
   width: 20rpx;
   height: 20rpx;
-  border-left: 4rpx solid #2D3436;
-  border-bottom: 4rpx solid #2D3436;
+  border-left: 4rpx solid $text-primary;
+  border-bottom: 4rpx solid $text-primary;
   transform: rotate(45deg);
 }
 
@@ -137,7 +137,7 @@ export default {
   transform: translateX(-50%);
   font-size: 32rpx;
   font-weight: 600;
-  color: #2D3436;
+  color: $text-primary;
 }
 
 .content {
@@ -147,7 +147,7 @@ export default {
 }
 
 .form-card {
-  background: #fff;
+  background: $surface;
   border-radius: 24rpx;
   padding: 32rpx;
   margin-bottom: 24rpx;
@@ -163,7 +163,7 @@ export default {
 
 .form-label {
   font-size: 28rpx;
-  color: #2D3436;
+  color: $text-primary;
   display: block;
   margin-bottom: 16rpx;
   font-weight: 500;
@@ -173,10 +173,10 @@ export default {
   width: 100%;
   height: 88rpx;
   padding: 0 24rpx;
-  background: #F5F6FA;
+  background: $bg-color;
   border-radius: 16rpx;
   font-size: 28rpx;
-  color: #2D3436;
+  color: $text-primary;
   box-sizing: border-box;
 }
 
@@ -203,13 +203,13 @@ export default {
 
 .tip-icon-inner {
   font-size: 20rpx;
-  color: #4F6EF7;
+  color: $primary;
 }
 
 .tip-text {
   flex: 1;
   font-size: 24rpx;
-  color: #666;
+  color: $text-secondary;
   line-height: 1.6;
 }
 

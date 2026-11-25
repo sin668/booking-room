@@ -1,7 +1,7 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- Status bar spacer -->
-    <view :style="{ height: statusBarHeight + 'px', background: '#fff' }" />
+    <view :style="{ height: statusBarHeight + 'px', background: 'var(--surface)' }" />
 
     <!-- Custom nav bar -->
     <view class="nav-bar">
@@ -508,7 +508,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  background: linear-gradient(180deg, #fff 0, $bg-warm 180rpx, $bg-color 420rpx);
+  background: linear-gradient(180deg, $surface 0, $bg-warm 180rpx, $bg-color 420rpx);
   min-height: 100vh;
 }
 
@@ -554,7 +554,7 @@ export default {
   margin: 0 20rpx;
   padding: 0 24rpx;
   border-radius: 36rpx;
-  background: $white;
+  background: $surface;
   border: 1rpx solid $border-soft;
   box-shadow: $shadow-sm;
 }
@@ -603,8 +603,8 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 15rpx;
-  background: #FF4757;
-  border: 2rpx solid #fff;
+  background: $danger;
+  border: 2rpx solid $surface;
 }
 
 .nav-bell-badge-text {
@@ -714,7 +714,7 @@ export default {
 
 .banner-dot.active {
   width: 36rpx;
-  background: #fff;
+  background: $surface;
 }
 
 /* Quick entry */
@@ -890,7 +890,7 @@ export default {
   width: 184rpx;
   height: 188rpx;
   flex-shrink: 0;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .room-info {
@@ -1034,7 +1034,7 @@ export default {
   height: 88rpx;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .teacher-mini-avatar-ph {
@@ -1090,7 +1090,7 @@ export default {
   min-height: 200rpx;
   margin: 0 28rpx;
   border-radius: 22rpx;
-  background: #fff;
+  background: $surface;
 }
 
 .empty-rooms-title {
@@ -1107,7 +1107,7 @@ export default {
 
 .skeleton-block,
 .skeleton-line {
-  background: linear-gradient(90deg, #eef1fb 0%, #f7f8ff 48%, #eef1fb 100%);
+  background: linear-gradient(90deg, var(--bg-hero) 0%, var(--surface-soft) 48%, var(--bg-hero) 100%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.2s ease-in-out infinite;
 }

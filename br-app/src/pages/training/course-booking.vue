@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- Custom Navigation Bar -->
     <view class="nav-bar">
       <view class="nav-back" @tap="goBack">
@@ -1285,7 +1285,7 @@ function money(value) {
 
 .lesson-item.disabled .lesson-checkbox {
   border-color: $border-color;
-  background: #f5f5f5;
+  background: $surface-muted;
 }
 
 .lesson-checkbox {
@@ -1386,7 +1386,7 @@ function money(value) {
 }
 
 .lesson-price-free {
-  color: #43A047;
+  color: $success;
   font-weight: 700;
 }
 
@@ -1635,7 +1635,7 @@ function money(value) {
 .weekday-item.disabled {
   opacity: 0.35;
   pointer-events: none;
-  background: #f5f5f5;
+  background: $surface-muted;
   border-color: $border-soft;
 }
 
@@ -1748,14 +1748,14 @@ function money(value) {
 }
 
 .coupon-icon {
-  background: #FFEBEE;
+  background: rgba(255, 107, 107, 0.12);
 }
 
 .ticket-icon {
   width: 34rpx;
   height: 24rpx;
   border-radius: 6rpx;
-  background: #EF5350;
+  background: $danger;
   position: relative;
 }
 
@@ -1767,7 +1767,7 @@ function money(value) {
   width: 8rpx;
   height: 8rpx;
   border-radius: 50%;
-  background: #fff;
+  background: $surface;
 }
 
 .ticket-icon::before {
@@ -1896,7 +1896,7 @@ function money(value) {
 }
 
 .wechat-icon {
-  background: #E8F5E9;
+  background: rgba(34, 197, 94, 0.12);
 }
 
 .wechat-mark {
@@ -2092,7 +2092,7 @@ function money(value) {
   width: 80rpx;
   height: 8rpx;
   border-radius: 4rpx;
-  background: #E0E0E0;
+  background: $border-color;
   margin-bottom: 48rpx;
 }
 
@@ -2231,7 +2231,7 @@ function money(value) {
   font-size: 38rpx;
   line-height: 1;
   color: $text-muted;
-  background: #F8F9FA;
+  background: $surface-muted;
 }
 
 .sheet-coupon-option {

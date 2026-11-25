@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <scroll-view class="content" scroll-y>
       <view v-if="loading" class="state-wrap">
         <text class="state-text">活动加载中...</text>
@@ -263,7 +263,7 @@ export default {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #fff 0, $bg-warm 220rpx, $bg-color 520rpx);
+  background: linear-gradient(180deg, $surface 0, $bg-warm 220rpx, $bg-color 520rpx);
 }
 
 .content {
@@ -273,7 +273,7 @@ export default {
 .hero-cover {
   width: 100%;
   height: 420rpx;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .header-section,

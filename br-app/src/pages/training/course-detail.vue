@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <!-- 自定义导航栏 -->
     <view class="nav-overlay">
       <view :style="{ height: statusBarHeight + 'px' }" />
@@ -473,7 +473,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  background: linear-gradient(180deg, #eef1fb 0, $bg-color 520rpx);
+  background: linear-gradient(180deg, $bg-hero 0, $bg-color 520rpx);
   min-height: 100vh;
 }
 
@@ -531,7 +531,7 @@ export default {
   width: 10rpx;
   height: 10rpx;
   border-radius: 50%;
-  background: $white;
+  background: $surface;
 }
 
 .nav-share-dot.top { top: 0; right: 2rpx; }
@@ -543,7 +543,7 @@ export default {
   height: 3rpx;
   width: 22rpx;
   border-radius: 3rpx;
-  background: $white;
+  background: $surface;
   transform-origin: left center;
 }
 
@@ -563,7 +563,7 @@ export default {
   position: relative;
   height: 420rpx;
   overflow: hidden;
-  background: #eef1fb;
+  background: $bg-hero;
 }
 
 .hero-image {
@@ -606,7 +606,7 @@ export default {
 }
 
 .tag-hot .tag-text {
-  color: #FF4757;
+  color: $danger;
   font-size: 22rpx;
   font-weight: 500;
 }
@@ -756,7 +756,7 @@ export default {
   height: 36rpx;
   border-radius: 50%;
   background: $success;
-  border: 4rpx solid $white;
+  border: 4rpx solid $surface;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1095,7 +1095,7 @@ export default {
 }
 
 .review-star-off {
-  color: #dfe6e9;
+  color: $text-muted;
 }
 
 .review-avatar-empty {

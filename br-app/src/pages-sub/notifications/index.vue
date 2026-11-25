@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="themeClass">
     <view :style="{ height: statusBarHeight + 'px' }" class="status-spacer" />
 
     <view class="nav-bar">
@@ -657,12 +657,12 @@ function goBack() {
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: #f5f6fa;
-  color: #1f2933;
+  background: $bg-color;
+  color: $text-primary;
 }
 
 .status-spacer {
-  background: #ffffff;
+  background: $surface;
 }
 
 .nav-bar {
@@ -670,7 +670,7 @@ function goBack() {
   align-items: center;
   height: 88rpx;
   padding: 0 28rpx;
-  background: #fff;
+  background: $surface;
   position: relative;
 }
 
@@ -685,8 +685,8 @@ function goBack() {
 .nav-back-arrow {
   width: 20rpx;
   height: 20rpx;
-  border-left: 4rpx solid #2D3436;
-  border-bottom: 4rpx solid #2D3436;
+  border-left: 4rpx solid $text-primary;
+  border-bottom: 4rpx solid $text-primary;
   transform: rotate(45deg);
 }
 
@@ -695,7 +695,7 @@ function goBack() {
   text-align: center;
   font-size: 34rpx;
   font-weight: 700;
-  color: #18212f;
+  color: $text-primary;
 }
 
 .mark-all {
@@ -705,7 +705,7 @@ function goBack() {
   align-items: center;
   justify-content: center;
   border-radius: 28rpx;
-  /*background: #eef3ff;*/
+  /*background: rgba(99, 102, 241, 0.12);*/
 }
 
 .mark-all.disabled {
@@ -715,7 +715,7 @@ function goBack() {
 .mark-all-text {
   font-size: 24rpx;
   font-weight: 600;
-  color: #4f6ef7;
+  color: $primary;
 }
 
 .tabs {
@@ -724,7 +724,7 @@ function goBack() {
   display: flex;
   align-items: center;
   gap: 10rpx;
-  background: #ffffff;
+  background: $surface;
   overflow: hidden;
 }
 
@@ -737,21 +737,21 @@ function goBack() {
   align-items: center;
   justify-content: center;
   border-radius: 34rpx;
-  background: #f4f6fb;
+  background: $surface-muted;
 }
 
 .tab-item.active {
-  background: #edf2ff;
+  background: rgba(99, 102, 241, 0.12);
 }
 
 .tab-text {
   font-size: 24rpx;
   font-weight: 600;
-  color: #667085;
+  color: $text-secondary;
 }
 
 .tab-item.active .tab-text {
-  color: #4f6ef7;
+  color: $primary;
 }
 
 .tab-indicator {
@@ -760,20 +760,20 @@ function goBack() {
   width: 28rpx;
   height: 4rpx;
   border-radius: 4rpx;
-  background: #4f6ef7;
+  background: $primary;
 }
 
 .disabled-hint {
   margin: 20rpx 24rpx 0;
   padding: 18rpx 22rpx;
   border-radius: 16rpx;
-  background: #fff7e8;
-  border: 1rpx solid #ffe1ad;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1rpx solid rgba(245, 158, 11, 0.3);
 }
 
 .disabled-hint-text {
   font-size: 24rpx;
-  color: #ad6800;
+  color: #f5a623;
 }
 
 .content {
@@ -796,7 +796,7 @@ function goBack() {
 .conversation-entry-card {
   margin-bottom: 20rpx;
   border-radius: 18rpx;
-  background: #ffffff;
+  background: $surface;
   box-shadow: 0 12rpx 32rpx rgba(31, 41, 55, 0.06);
   overflow: hidden;
 }
@@ -806,7 +806,7 @@ function goBack() {
   align-items: center;
   justify-content: space-between;
   padding: 22rpx 26rpx;
-  border-bottom: 1rpx solid #f1f3f7;
+  border-bottom: 1rpx solid $border-color;
 }
 
 .conversation-entry-header:active {
@@ -828,13 +828,13 @@ function goBack() {
   margin-bottom: 20rpx;
   padding: 26rpx;
   border-radius: 18rpx;
-  background: #ffffff;
+  background: $surface;
   box-shadow: 0 12rpx 32rpx rgba(31, 41, 55, 0.06);
 }
 
 .notification-card.read {
   box-shadow: none;
-  background: #fbfcff;
+  background: $surface-soft;
 }
 
 .notification-card.pressing {
@@ -878,33 +878,33 @@ function goBack() {
 }
 
 .booking {
-  color: #4f6ef7;
-  background: #edf2ff;
+  color: $primary;
+  background: rgba(99, 102, 241, 0.12);
 }
 
 .activity {
   color: #9b51e0;
-  background: #f3e8ff;
+  background: rgba(139, 92, 246, 0.12);
 }
 
 .report {
   color: #0e9f6e;
-  background: #e7f8f0;
+  background: rgba(34, 197, 94, 0.12);
 }
 
 .arrival {
   color: #f59e0b;
-  background: #fff7e6;
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .conversation {
-  color: #07c160;
-  background: #e7f8ef;
+  color: $success;
+  background: rgba(34, 197, 94, 0.12);
 }
 
 .default {
-  color: #667085;
-  background: #eef2f7;
+  color: $text-secondary;
+  background: $surface-muted;
 }
 
 .right-wrap {
@@ -913,14 +913,14 @@ function goBack() {
 
 .time-text {
   font-size: 22rpx;
-  color: #98a2b3;
+  color: $text-muted;
 }
 
 .unread-dot {
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background: #ff4d4f;
+  background: $danger;
 }
 
 .card-title {
@@ -929,22 +929,22 @@ function goBack() {
   font-size: 31rpx;
   line-height: 42rpx;
   font-weight: 700;
-  color: #1f2933;
+  color: $text-primary;
 }
 
 .card-title.read {
-  color: #667085;
+  color: $text-secondary;
 }
 
 .card-content {
   display: block;
   font-size: 26rpx;
   line-height: 38rpx;
-  color: #4b5563;
+  color: $text-secondary;
 }
 
 .card-content.read {
-  color: #98a2b3;
+  color: $text-muted;
 }
 
 .state-wrap {
@@ -967,17 +967,17 @@ function goBack() {
 }
 
 .empty-icon {
-  background: #eef3ff;
+  background: rgba(99, 102, 241, 0.12);
 }
 
 .error-icon {
-  background: #fff1f0;
+  background: rgba(255, 107, 107, 0.12);
 }
 
 .state-icon-text {
   font-size: 44rpx;
   font-weight: 700;
-  color: #4f6ef7;
+  color: $primary;
 }
 
 .error-icon .state-icon-text {
@@ -988,13 +988,13 @@ function goBack() {
   margin-bottom: 10rpx;
   font-size: 30rpx;
   font-weight: 700;
-  color: #263238;
+  color: $text-primary;
 }
 
 .state-desc {
   margin-bottom: 28rpx;
   font-size: 25rpx;
-  color: #8a94a6;
+  color: $text-secondary;
 }
 
 .retry-btn {
@@ -1004,7 +1004,7 @@ function goBack() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #4f6ef7;
+  background: $primary;
 }
 
 .retry-btn-text {
@@ -1025,7 +1025,7 @@ function goBack() {
 .skeleton-dot,
 .skeleton-line {
   border-radius: 999rpx;
-  background: linear-gradient(90deg, #eef1f6 25%, #f7f8fb 37%, #eef1f6 63%);
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface-soft) 37%, var(--surface-muted) 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
 }
@@ -1068,14 +1068,14 @@ function goBack() {
 
 .load-more-text {
   font-size: 24rpx;
-  color: #98a2b3;
+  color: $text-muted;
 }
 
 .conversation-list {
   margin: 24rpx;
   border-radius: 18rpx;
   overflow: hidden;
-  background: #ffffff;
+  background: $surface;
   box-shadow: 0 12rpx 32rpx rgba(31, 41, 55, 0.06);
 }
 
@@ -1089,7 +1089,7 @@ function goBack() {
 
 .conversation-item + .conversation-item,
 .skeleton-row + .skeleton-row {
-  border-top: 1rpx solid #f1f3f7;
+  border-top: 1rpx solid $border-color;
 }
 
 .conv-avatar {
@@ -1097,7 +1097,7 @@ function goBack() {
   height: 88rpx;
   flex-shrink: 0;
   border-radius: 24rpx;
-  background: #eef2f7;
+  background: $surface-muted;
 }
 
 .conv-entry-avatar {
@@ -1105,7 +1105,7 @@ function goBack() {
   height: 76rpx;
   flex-shrink: 0;
   border-radius: 20rpx;
-  background: #eef2f7;
+  background: $surface-muted;
 }
 
 .conv-main {
@@ -1129,7 +1129,7 @@ function goBack() {
   min-width: 0;
   font-size: 30rpx;
   font-weight: 700;
-  color: #1f2933;
+  color: $text-primary;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -1138,14 +1138,14 @@ function goBack() {
 .conv-time {
   flex-shrink: 0;
   font-size: 22rpx;
-  color: #98a2b3;
+  color: $text-muted;
 }
 
 .conv-summary {
   flex: 1;
   min-width: 0;
   font-size: 26rpx;
-  color: #6b7684;
+  color: $text-secondary;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -1160,7 +1160,7 @@ function goBack() {
   align-items: center;
   justify-content: center;
   border-radius: 17rpx;
-  background: #ff4d4f;
+  background: $danger;
 }
 
 .conv-badge-text {
@@ -1174,7 +1174,7 @@ function goBack() {
   height: 88rpx;
   flex-shrink: 0;
   border-radius: 24rpx;
-  background: linear-gradient(90deg, #eef1f6 25%, #f7f8fb 37%, #eef1f6 63%);
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface-soft) 37%, var(--surface-muted) 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
 }

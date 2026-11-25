@@ -58,16 +58,16 @@ function main() {
   const { formatNotificationTime } = loadModule('src/utils/formatters.js')
 
   // 后端无时区 UTC 字符串：+8 小时且不出现 T
-  assert.equal(formatNotificationTime('2020-11-25T03:08:00'), '11-25 11:08')
-  assert.equal(formatNotificationTime('2020-11-25 03:08:00'), '11-25 11:08')
-  assert.equal(formatNotificationTime('2020-11-25T03:08'), '11-25 11:08')
+  assert.equal(formatNotificationTime('2020-11-25T03:08:00'), '2020-11-25 11:08')
+  assert.equal(formatNotificationTime('2020-11-25 03:08:00'), '2020-11-25 11:08')
+  assert.equal(formatNotificationTime('2020-11-25T03:08'), '2020-11-25 11:08')
 
   // 跨日 +8：UTC 16:30 属于北京次日
-  assert.equal(formatNotificationTime('2020-11-24T16:30:00'), '11-25 00:30')
+  assert.equal(formatNotificationTime('2020-11-24T16:30:00'), '2020-11-25 00:30')
 
   // 已带时区的值不重复偏移
-  assert.equal(formatNotificationTime('2020-11-25T03:08:00Z'), '11-25 11:08')
-  assert.equal(formatNotificationTime('2020-11-25T11:08:00+08:00'), '11-25 11:08')
+  assert.equal(formatNotificationTime('2020-11-25T03:08:00Z'), '2020-11-25 11:08')
+  assert.equal(formatNotificationTime('2020-11-25T11:08:00+08:00'), '2020-11-25 11:08')
 
   // 空值与非法值
   assert.equal(formatNotificationTime(''), '')

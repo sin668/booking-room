@@ -74,7 +74,7 @@ export function formatNotificationTime(value) {
 
   const beijing = new Date(timestamp + BEIJING_TIME_OFFSET_MS)
   const pad = (number) => String(number).padStart(2, '0')
-  return `${pad(beijing.getUTCMonth() + 1)}-${pad(beijing.getUTCDate())} ${pad(beijing.getUTCHours())}:${pad(beijing.getUTCMinutes())}`
+  return `${beijing.getUTCFullYear()}-${pad(beijing.getUTCMonth() + 1)}-${pad(beijing.getUTCDate())} ${pad(beijing.getUTCHours())}:${pad(beijing.getUTCMinutes())}`
 }
 
 export function formatRoomMinPrice(room) {

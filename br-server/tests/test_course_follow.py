@@ -4,6 +4,7 @@ Covers follow/unfollow/list for follow_type=course via /api/v1/room-follows.
 """
 
 import uuid
+from datetime import datetime
 
 import pytest
 from httpx import AsyncClient
@@ -107,6 +108,34 @@ async def test_follow_course_returns_201(
 # ---------------------------------------------------------------------------
 # 重复关注同一课程（幂等）
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_follow_course_with_multiple_schedules_returns_201(
+    auth_client: AsyncClient,
+    db_session: AsyncSession,
+    seed_course_follow_data: dict,
+) -> None:
+    """一门课程有多条排课时关注不报 500，列表只出现一条。"""
+    course = seed_course_follow_data["course"]
+    db_session.add_all([
+        CourseSchedule(course_id=course.id, price=120.0, created_at=datetime(2026, 1, 1)),
+        CourseSchedule(course_id=course.id, price=150.0, created_at=datetime(2026, 2, 1)),
+    ])
+    await db_session.flush()
+
+    response = await auth_client.post(f"/api/v1/room-follows/{course.id}?follow_type=course")
+
+    assert response.status_code == 201
+    # 取最早创建的进行中固定班课价格
+    assert float(response.json()["min_price"]) == 120.0
+
+    list_response = await auth_client.get("/api/v1/room-follows?follow_type=course")
+
+    assert list_response.status_code == 200
+    data = list_response.json()
+    assert data["total"] == 1
+    assert [item["id"] for item in data["items"]] == [course.id]
 
 
 @pytest.mark.asyncio

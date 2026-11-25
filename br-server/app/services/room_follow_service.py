@@ -2,19 +2,21 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import and_, exists, func, or_, select
+from sqlalchemy import exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.city import City
 from app.models.course import Course
-from app.models.course_schedule import CourseSchedule
 from app.models.edu_listing import EduListing
 from app.models.room_follow import RoomFollow
 from app.models.study_room import StudyRoom
 from app.models.teacher import Teacher
 from app.models.teacher_room import TeacherRoom
 from app.schemas.room_follow import FollowedRoomListResponse, FollowedRoomResponse
-from app.services.training_service import _has_in_progress_fixed_schedule
+from app.services.training_service import (
+    _get_first_schedule_for_courses,
+    _has_in_progress_fixed_schedule,
+)
 
 
 def _to_followed_room(
@@ -173,16 +175,8 @@ async def list_followed_rooms(
             .where(*course_filters)
         )
         list_stmt = (
-            select(RoomFollow, Course, CourseSchedule)
+            select(RoomFollow, Course)
             .join(Course, RoomFollow.room_id == Course.id)
-            .outerjoin(
-                CourseSchedule,
-                and_(
-                    Course.id == CourseSchedule.course_id,
-                    CourseSchedule.schedule_type == "fixed",
-                    CourseSchedule.schedule_status == "in_progress",
-                ),
-            )
             .where(*course_filters)
             .order_by(RoomFollow.created_at.desc(), RoomFollow.id.desc())
         )
@@ -198,6 +192,10 @@ async def list_followed_rooms(
         count = (await db.execute(count_stmt)).scalar_one()
 
         result = await db.execute(list_stmt)
+        rows = result.all()
+        schedule_map = await _get_first_schedule_for_courses(
+            db, [course.id for _, course in rows]
+        )
         items = [
             FollowedRoomResponse(
                 id=course.id,
@@ -209,11 +207,13 @@ async def list_followed_rooms(
                 city_name=None,
                 business_hours=None,
                 status=course.status,
-                min_price=schedule.price if schedule else 0,
+                min_price=schedule_map[course.id].price
+                if schedule_map.get(course.id)
+                else 0,
                 room_type="course",
                 followed_at=follow.created_at,
             )
-            for follow, course, schedule in result.all()
+            for follow, course in rows
         ]
         return FollowedRoomListResponse(items=items, total=count)
 
@@ -312,16 +312,12 @@ async def follow_room(
 
     if follow_type == "course":
         # Validate against courses table
-        row = (
-            await db.execute(
-                select(Course, CourseSchedule)
-                .outerjoin(CourseSchedule, Course.id == CourseSchedule.course_id)
-                .where(Course.id == room_id, Course.status == "active")
-            )
-        ).one_or_none()
-        if row is None:
+        course = await db.get(Course, room_id)
+        if course is None or course.status != "active":
             raise ValueError(f"Course {room_id} not found")
-        course, schedule = row
+        # 一门课程可能有多条排课，取第一条进行中的固定班课，避免多行结果抛错
+        schedule_map = await _get_first_schedule_for_courses(db, [course.id])
+        schedule = schedule_map.get(course.id)
         # For course type, create follow record and return basic response
         follow = (
             await db.execute(

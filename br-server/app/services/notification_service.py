@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import cast
 from uuid import UUID
 
@@ -8,7 +8,9 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.notification import Notification, NotificationPreference, NotificationType
+from app.models.study_room import StudyRoom
 from app.schemas.notification import (
+    ArrivalReminderResponse,
     NotificationCreate,
     NotificationListResponse,
     NotificationPreferenceResponse,
@@ -17,6 +19,7 @@ from app.schemas.notification import (
     NotificationTypeValue,
     NotificationUnreadSummaryResponse,
 )
+from app.utils.geo import haversine_distance_meters
 
 
 class NotificationNotFoundError(Exception):
@@ -26,6 +29,17 @@ class NotificationNotFoundError(Exception):
 
 
 _NOTIFICATION_TYPES = {item.value for item in NotificationType}
+
+_DEFAULT_TARGET_URLS = {
+    NotificationType.BOOKING.value: "/pages-sub/orders/index",
+    NotificationType.ACTIVITY.value: "/pages/index/index",
+    NotificationType.REPORT.value: "/pages-sub/study-record/index",
+    NotificationType.ARRIVAL.value: "/pages-sub/qrcode/index",
+}
+
+ARRIVAL_REMINDER_DISTANCE_METERS = 500
+ARRIVAL_REMINDER_DEDUPE_HOURS = 24
+ARRIVAL_REMINDER_TARGET_URL = "/pages-sub/qrcode/index"
 
 
 def _validate_type(type_value: str) -> NotificationTypeValue:
@@ -179,13 +193,28 @@ class NotificationService:
         self,
         data: NotificationCreate,
     ) -> dict:
+        return await self.send_notification(data, respect_preferences=False)
+
+    async def send_notification(
+        self,
+        data: NotificationCreate,
+        *,
+        respect_preferences: bool = True,
+    ) -> dict | None:
+        """公共发送方法：业务节点统一经此创建消息，返回 None 表示按偏好跳过。"""
         type_value = _validate_type(data.type)
+
+        if respect_preferences:
+            preference = await self._get_or_create_preference_model(data.user_id)
+            if not _preference_enabled(preference, type_value):
+                return None
+
         notification = Notification(
             user_id=data.user_id,
             type=type_value,
             title=data.title,
             content=data.content,
-            target_url=data.target_url,
+            target_url=data.target_url or _DEFAULT_TARGET_URLS[type_value],
             target_type=data.target_type,
             target_id=data.target_id,
             is_read=False,
@@ -194,6 +223,73 @@ class NotificationService:
         await self._db.flush()
         await self._db.refresh(notification)
         return NotificationResponse.model_validate(notification).model_dump()
+
+    async def send_arrival_reminder(
+        self,
+        user_id: UUID,
+        room_id: int,
+        latitude: float,
+        longitude: float,
+    ) -> dict:
+        room = await self._db.get(StudyRoom, room_id)
+        if room is None:
+            raise NotificationNotFoundError("Room not found")
+
+        distance = haversine_distance_meters(
+            latitude, longitude, room.latitude, room.longitude
+        )
+        if distance is None:
+            return ArrivalReminderResponse(
+                sent=False, reason="room_without_coordinates"
+            ).model_dump()
+
+        rounded_distance = round(distance, 1)
+        if distance > ARRIVAL_REMINDER_DISTANCE_METERS:
+            return ArrivalReminderResponse(
+                sent=False, reason="too_far", distance=rounded_distance
+            ).model_dump()
+
+        preference = await self._get_or_create_preference_model(user_id)
+        if not _preference_enabled(preference, NotificationType.ARRIVAL.value):
+            return ArrivalReminderResponse(
+                sent=False, reason="disabled", distance=rounded_distance
+            ).model_dump()
+
+        since = datetime.now() - timedelta(hours=ARRIVAL_REMINDER_DEDUPE_HOURS)
+        existing_stmt = (
+            select(Notification.id)
+            .where(
+                Notification.user_id == user_id,
+                Notification.type == NotificationType.ARRIVAL.value,
+                Notification.target_type == "room",
+                Notification.target_id == str(room_id),
+                Notification.created_at >= since,
+            )
+            .limit(1)
+        )
+        existing = await self._db.execute(existing_stmt)
+        if existing.scalar_one_or_none() is not None:
+            return ArrivalReminderResponse(
+                sent=False, reason="already_sent", distance=rounded_distance
+            ).model_dump()
+
+        notification = await self.send_notification(
+            NotificationCreate(
+                user_id=user_id,
+                type=NotificationType.ARRIVAL.value,
+                title="到店签到提醒",
+                content=f"你已到达「{room.name}」附近，可前往我的学习码完成签到。",
+                target_url=ARRIVAL_REMINDER_TARGET_URL,
+                target_type="room",
+                target_id=str(room_id),
+            ),
+            respect_preferences=False,
+        )
+        return ArrivalReminderResponse(
+            sent=True,
+            distance=rounded_distance,
+            notification=notification,
+        ).model_dump()
 
     async def _get_or_create_preference_model(
         self,

@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user_id, get_db
 from app.schemas.notification import (
+    ArrivalReminderRequest,
+    ArrivalReminderResponse,
     NotificationListResponse,
     NotificationPreferenceResponse,
     NotificationPreferenceUpdate,
@@ -87,6 +89,24 @@ async def mark_notification_read(
         return await service.mark_read(
             user_id=user_id,
             notification_id=notification_id,
+        )
+    except NotificationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=exc.detail)
+
+
+@router.post("/arrival-reminder", response_model=ArrivalReminderResponse)
+async def send_arrival_reminder(
+    body: ArrivalReminderRequest,
+    user_id: UUID = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> ArrivalReminderResponse:
+    service = NotificationService(db)
+    try:
+        return await service.send_arrival_reminder(
+            user_id=user_id,
+            room_id=body.room_id,
+            latitude=body.latitude,
+            longitude=body.longitude,
         )
     except NotificationNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=exc.detail)

@@ -68,3 +68,16 @@ class NotificationCreate(BaseModel):
     target_url: str | None = Field(default=None, max_length=512)
     target_type: str | None = Field(default=None, max_length=50)
     target_id: str | None = Field(default=None, max_length=64)
+
+
+class ArrivalReminderRequest(BaseModel):
+    room_id: int = Field(ge=1)
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+
+
+class ArrivalReminderResponse(BaseModel):
+    sent: bool
+    reason: str | None = None
+    distance: float | None = None
+    notification: NotificationResponse | None = None

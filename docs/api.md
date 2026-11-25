@@ -141,6 +141,66 @@ Base URL: `http://localhost:8000`
 - 422: `type` 不在允许范围内
 - 只更新当前用户通知，不得修改其他用户通知
 
+### POST /api/v1/notifications/arrival-reminder
+
+到店签到提醒。客户端在房间详情页定位成功后上报房间与用户坐标；服务端计算直线距离，仅在 500 米内为当前用户创建 `arrival` 类型通知。
+
+**认证：** Bearer Token
+
+**请求体：**
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| room_id | integer | 是 | 房间 ID |
+| latitude | number | 是 | 用户纬度（GCJ-02） |
+| longitude | number | 是 | 用户经度（GCJ-02） |
+
+```json
+{
+  "room_id": 1,
+  "latitude": 30.501,
+  "longitude": 114.3
+}
+```
+
+**响应 200：**
+
+```json
+{
+  "sent": true,
+  "reason": null,
+  "distance": 111.2,
+  "notification": {
+    "id": "11111111-2222-3333-4444-555555555555",
+    "type": "arrival",
+    "title": "到店签到提醒",
+    "content": "你已到达「光谷自习室」附近，可前往我的学习码完成签到。",
+    "target_url": "/pages-sub/qrcode/index",
+    "target_type": "room",
+    "target_id": "1",
+    "is_read": false,
+    "created_at": "2026-11-25T10:00:00",
+    "read_at": null
+  }
+}
+```
+
+未创建通知时返回 `sent=false` 与原因：
+
+| reason | 说明 |
+|--------|------|
+| `too_far` | 距离超过 500 米 |
+| `room_without_coordinates` | 房间未配置经纬度 |
+| `disabled` | 用户关闭了到店提醒偏好 |
+| `already_sent` | 24 小时内已发送过同一房间的到店提醒 |
+
+**失败行为：**
+
+- 401: 未认证或 Token 无效
+- 404: 房间不存在
+- 422: 请求体字段不合法
+- 只依据认证上下文确定消息归属用户，不接受客户端传入 `user_id`
+
 ### GET /api/v1/notifications/preferences
 
 获取当前用户通知偏好。没有偏好记录时返回默认值，四类通知均开启；服务端可同时创建默认偏好记录。

@@ -409,8 +409,10 @@ import { buildStarChars, formatCourseSchedule, formatCourseStartDate, formatRela
 import { isLoggedIn, ensureLogin } from '@/utils/auth'
 import { openCSChat } from '@/utils/customerService'
 import { formatDistance, haversineDistance } from '@/utils/distance'
+import { sendNotification } from '@/utils/notification'
 
 const SCHEDULE_TRUNCATE_THRESHOLD = 12
+const ARRIVAL_REMINDER_DISTANCE_METERS = 500
 
 const REAL_ROOM_PHOTOS = [
   'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800',
@@ -432,6 +434,7 @@ export default {
       expandedScheduleIds: {},
       isFav: false,
       distanceText: '',
+      arrivalNotified: false,
       scrollIntoView: '',
       reviewCount: 0,
       reviews: [],
@@ -661,10 +664,24 @@ export default {
             this.room.longitude
           )
           this.distanceText = formatDistance(meters)
+          this.maybeSendArrivalReminder(meters, location)
         },
         fail: () => {
           this.distanceText = ''
         },
+      })
+    },
+
+    // 到店提醒：一次进入只触发一次，重复访问由后端 24 小时去重兜底
+    maybeSendArrivalReminder(meters, location) {
+      if (this.arrivalNotified || meters === null || meters > ARRIVAL_REMINDER_DISTANCE_METERS) return
+      const roomId = Number(this.roomId)
+      if (!Number.isFinite(roomId)) return
+      this.arrivalNotified = true
+      sendNotification('arrival', {
+        room_id: roomId,
+        latitude: location.latitude,
+        longitude: location.longitude,
       })
     },
 

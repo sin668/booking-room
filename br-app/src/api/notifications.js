@@ -29,3 +29,7 @@ export function updateNotificationPreferences(data) {
     data,
   })
 }
+
+export function sendArrivalReminder(data) {
+  return post('/api/v1/notifications/arrival-reminder', data)
+}

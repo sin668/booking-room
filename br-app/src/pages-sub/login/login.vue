@@ -754,7 +754,7 @@ function openAgreement(type) {
 .tab-bar {
   position: relative;
   display: flex;
-  background: rgba(255, 255, 255, 0.92);
+  background: $surface;
   border-radius: 24rpx;
   padding: 6rpx;
   margin-bottom: 44rpx;
@@ -820,7 +820,7 @@ function openAgreement(type) {
 .input-wrap {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.96);
+  background: $surface;
   border-radius: 24rpx;
   border: 2rpx solid $border-soft;
   padding: 0 28rpx;

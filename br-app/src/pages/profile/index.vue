@@ -525,7 +525,7 @@ export default {
   margin: -34rpx 28rpx 0;
   position: relative;
   z-index: 2;
-  background: rgba(255, 255, 255, 0.98);
+  background: $surface;
   border-radius: 32rpx;
   padding: 28rpx 0;
   box-shadow: $shadow-card;

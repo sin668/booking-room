@@ -518,7 +518,7 @@ export default {
   align-items: center;
   height: 88rpx;
   padding: 0 28rpx;
-  background: rgba(255, 255, 255, 0.96);
+  background: $surface;
   box-shadow: 0 1rpx 0 0 rgba(79, 110, 247, 0.06);
   backdrop-filter: blur(18rpx);
 }
@@ -723,7 +723,7 @@ export default {
   justify-content: space-around;
   margin: 24rpx 28rpx 0;
   padding: 28rpx 8rpx 24rpx;
-  background: rgba(255, 255, 255, 0.9);
+  background: $surface;
   border-radius: 28rpx;
   border: 1rpx solid $border-soft;
   box-shadow: $shadow-sm;

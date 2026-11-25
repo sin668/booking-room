@@ -301,7 +301,7 @@ export default {
   height: 88rpx;
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.96);
+  background: $surface;
   border-top: 1rpx solid rgba(45, 52, 54, 0.04);
   box-shadow: 0 2rpx 10rpx rgba(45, 52, 54, 0.03);
   backdrop-filter: blur(18rpx);

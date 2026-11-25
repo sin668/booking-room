@@ -936,7 +936,7 @@ export default {
   flex-shrink: 0;
   padding: 18rpx 28rpx;
   padding-bottom: calc(18rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.98);
+  background: $surface;
   backdrop-filter: blur(12rpx);
   border-top: 2rpx solid $border-soft;
   box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);

@@ -32,6 +32,7 @@ if (!/mixin\(themeMixin\)/.test(mainJs)) failures.push('main.js 未注册 theme 
 
 const themeMixin = read('src/utils/theme.js')
 if (!/onMounted\(\)[\s\S]*init\(\)/.test(themeMixin)) failures.push('theme mixin 未在页面 onMounted 重新应用原生配色')
+if (!/onShow\(\)[\s\S]*init\(\)/.test(themeMixin)) failures.push('theme mixin 未在页面 onShow 重新应用 TabBar 配色')
 
 const themeStore = read('src/store/modules/theme.js')
 ;['setNavigationBarColor', 'setTabBarStyle', 'theme_mode'].forEach((needle) => {
@@ -53,10 +54,24 @@ const walk = (dir) => {
 walk('src/pages')
 walk('src/pages-sub')
 
+const whiteOverlaySelectors = [
+  '.banner-cta', '.banner-dot', '.settings-dot', '.member-action', '.cover-status', '.course-badge',
+  '.badge-hot', '.badge-new', '.badge-master', '.badge-rec',
+]
+
 pages.forEach((page) => {
-  if (!/<view class="page" :class="themeClass">/.test(read(page))) {
+  const source = read(page)
+  if (!/<view class="page" :class="themeClass">/.test(source)) {
     failures.push(`${page} 根节点缺少 :class="themeClass"`)
   }
+  let selector = ''
+  source.split('\n').forEach((line, index) => {
+    if (/^[.a-zA-Z@#][^{]*\{/.test(line)) selector = line.trim()
+    const isOpaqueWhite = /background:\s*rgba\(255,\s*255,\s*255,\s*0\.(8[5-9]|9\d*)\)/.test(line)
+    if (isOpaqueWhite && !whiteOverlaySelectors.some((name) => selector.startsWith(name))) {
+      failures.push(`${page}:${index + 1} ${selector} 使用高不透明白色背景，应改用 $surface`)
+    }
+  })
 })
 
 if (failures.length) {

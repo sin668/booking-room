@@ -334,7 +334,7 @@ export default {
 
 /* ── 导航 ── */
 .nav-overlay {
-  background: rgba(255, 255, 255, 0.95);
+  background: $surface;
   backdrop-filter: blur(12rpx);
   flex-shrink: 0;
 }
@@ -344,7 +344,7 @@ export default {
   align-items: center;
   height: 88rpx;
   padding: 0 28rpx;
-  background: rgba(255, 255, 255, 0.95);
+  background: $surface;
   backdrop-filter: blur(12rpx);
   position: relative;
   flex-shrink: 0;
@@ -757,7 +757,7 @@ export default {
   flex-shrink: 0;
   padding: 16rpx 28rpx;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.98);
+  background: $surface;
   backdrop-filter: blur(12rpx);
   border-top: 2rpx solid $border-soft;
   box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);

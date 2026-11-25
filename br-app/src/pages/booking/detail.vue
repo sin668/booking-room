@@ -1067,7 +1067,7 @@ export default {
 
 .info-card {
   margin: -42rpx 28rpx 0;
-  background: rgba(255, 255, 255, 0.98);
+  background: $surface;
   border-radius: 32rpx;
   padding: 30rpx;
   box-shadow: $shadow-card;
@@ -1640,7 +1640,7 @@ export default {
   gap: 18rpx;
   padding: 16rpx 28rpx;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.98);
+  background: $surface;
   border-top: 1rpx solid rgba(45, 52, 54, 0.06);
   box-shadow: $shadow-bottom;
   backdrop-filter: blur(18rpx);

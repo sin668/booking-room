@@ -631,7 +631,7 @@ export default {
 .tabs {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.96);
+  background: $surface;
   padding: 0 16rpx;
   height: 88rpx;
   position: sticky;

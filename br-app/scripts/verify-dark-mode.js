@@ -72,6 +72,9 @@ pages.forEach((page) => {
     if (isOpaqueWhite && !whiteOverlaySelectors.some((name) => selector.startsWith(name))) {
       failures.push(`${page}:${index + 1} ${selector} 使用高不透明白色背景，应改用 $surface`)
     }
+    if (/#f5f6fa|rgba\(245,\s*246,\s*250/i.test(line)) {
+      failures.push(`${page}:${index + 1} ${selector} 硬编码浅色背景，应改用语义变量`)
+    }
   })
 })
 

@@ -174,7 +174,7 @@ export default {
   right: 0;
   bottom: 0;
   padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
-  background: rgba(245, 246, 250, 0.96);
+  background: $surface;
 }
 
 .open-btn {

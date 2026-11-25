@@ -16,7 +16,9 @@
       </view> 
       <view class="nav-bell" @tap="onTapBell">
         <view class="icon icon-bell nav-bell-icon" />
-        <view v-if="hasNotification || hasIMUnread" class="nav-bell-dot" />
+        <view v-if="bellUnreadCount > 0" class="nav-bell-badge">
+          <text class="nav-bell-badge-text">{{ bellBadgeText }}</text>
+        </view>
       </view>
     </view>
 
@@ -269,8 +271,8 @@ export default {
     return {
       statusBarHeight: 0,
       refreshing: false,
-      hasNotification: false,
-      hasIMUnread: false,
+      notificationUnread: 0,
+      imUnread: 0,
       imUnreadWatched: false,
       banners: [],
       currentBanner: 0,
@@ -302,6 +304,14 @@ export default {
     this.unwatchIMUnread()
   },
   computed: {
+    bellUnreadCount() {
+      return this.notificationUnread + this.imUnread
+    },
+
+    bellBadgeText() {
+      return this.bellUnreadCount > 99 ? '99+' : String(this.bellUnreadCount)
+    },
+
     cityStore() {
       return useCityStore()
     },
@@ -334,13 +344,13 @@ export default {
     },
 
     onTotalUnreadUpdated(count) {
-      this.hasIMUnread = Number(count || 0) > 0
+      this.imUnread = Number(count || 0)
     },
 
     async loadIMUnread() {
-      // 游客无 IM 会话，跳过；未读会话消息也要点亮铃铛
+      // 游客无 IM 会话，跳过；未读会话消息也要计入铃铛角标
       if (!isLoggedIn()) {
-        this.hasIMUnread = false
+        this.imUnread = 0
         return
       }
       const ok = await ensureIM()
@@ -349,7 +359,7 @@ export default {
         TUIStore.watch(StoreName.CONV, { totalUnreadCount: this.onTotalUnreadUpdated })
         this.imUnreadWatched = true
       }
-      this.hasIMUnread = Number(TUIStore.getData(StoreName.CONV, 'totalUnreadCount') || 0) > 0
+      this.imUnread = Number(TUIStore.getData(StoreName.CONV, 'totalUnreadCount') || 0)
     },
 
     unwatchIMUnread() {
@@ -361,14 +371,14 @@ export default {
     async loadNotificationUnreadSummary() {
       // 游客无消息中心数据，跳过请求避免 401
       if (!isLoggedIn()) {
-        this.hasNotification = false
+        this.notificationUnread = 0
         return
       }
       try {
         const summary = await getNotificationUnreadSummary()
-        this.hasNotification = Number(summary?.total_unread || 0) > 0
+        this.notificationUnread = Number(summary?.total_unread || 0)
       } catch {
-        this.hasNotification = false
+        this.notificationUnread = 0
       }
     },
 
@@ -582,15 +592,26 @@ export default {
   color: $text-primary;
 }
 
-.nav-bell-dot {
+.nav-bell-badge {
   position: absolute;
-  top: 12rpx;
-  right: 14rpx;
-  width: 14rpx;
-  height: 14rpx;
-  border-radius: 50%;
+  top: 2rpx;
+  right: 2rpx;
+  min-width: 30rpx;
+  height: 30rpx;
+  padding: 0 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15rpx;
   background: #FF4757;
   border: 2rpx solid #fff;
+}
+
+.nav-bell-badge-text {
+  font-size: 18rpx;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
 }
 
 /* Content */

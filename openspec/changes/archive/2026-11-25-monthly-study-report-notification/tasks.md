@@ -20,4 +20,4 @@
 
 - [x] 4.1 运行 br-server 相关 pytest 与格式检查
 - [x] 4.2 检查改动范围与文档一致，确认无新增外部 API 或数据库迁移
-- [ ] 4.3 提交并推送 GitHub main
+- [x] 4.3 提交并推送 GitHub main

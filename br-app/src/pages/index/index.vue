@@ -594,8 +594,8 @@ export default {
 
 .nav-bell-badge {
   position: absolute;
-  top: 2rpx;
-  right: 2rpx;
+  top: -6rpx;
+  right: -8rpx;
   min-width: 30rpx;
   height: 30rpx;
   padding: 0 6rpx;

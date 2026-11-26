@@ -24,22 +24,22 @@
       </view>
 
       <view class="stats-card">
-        <view class="stat-item" @tap="navigateTo('/pages-sub/wallet/transactions')">
+        <view class="stat-item wide" @tap="navigateTo('/pages-sub/wallet/transactions')">
           <text class="stat-value">¥{{ walletBalanceText }}</text>
           <text class="stat-label">钱包余额</text>
         </view>
         <view class="stat-divider" />
-        <view class="stat-item" @tap="navigateTo('/pages-sub/checkin/index')">
+        <view class="stat-item narrow" @tap="navigateTo('/pages-sub/checkin/index')">
           <text class="stat-value purple">{{ checkinPoints }}</text>
           <text class="stat-label">积分</text>
         </view>
         <view class="stat-divider" />
-        <view class="stat-item" @tap="navigateTo('/pages-sub/coupon/index')">
+        <view class="stat-item narrow" @tap="navigateTo('/pages-sub/coupon/index')">
           <text class="stat-value orange">{{ availableCouponCount }}</text>
           <text class="stat-label">卡券</text>
         </view>
         <view class="stat-divider" />
-        <view class="stat-item" @tap="navigateTo('/pages-sub/study-record/index')">
+        <view class="stat-item wide" @tap="navigateTo('/pages-sub/study-record/index')">
           <text class="stat-value green">{{ studyHoursText }}</text>
           <text class="stat-label">学习时长</text>
         </view>
@@ -306,7 +306,7 @@ export default {
         getNotificationUnreadSummary(),
         fetchBookingsPage({ page: 1, page_size: 1, status: 'in_progress' }),
         getUserCertifications(),
-        getCheckinSummary(),
+        getCheckinSummary({ month }),
       ])
 
       if (requestId !== this.profileRequestId) return
@@ -568,6 +568,14 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 8rpx;
+}
+
+.stat-item.wide {
+  flex: 1.3;
+}
+
+.stat-item.narrow {
+  flex: 0.8;
 }
 
 .stat-value {

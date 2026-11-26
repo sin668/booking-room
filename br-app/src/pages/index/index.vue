@@ -284,7 +284,7 @@ export default {
       lastCityId: null,
       quickEntries: [
         { label: '钱包充值', iconClass: 'icon-wallet', bgColor: 'rgba(79,110,247,0.1)', color: '#4F6EF7', path: '/pages-sub/recharge/index' },
-        { label: '卡券套餐', iconClass: 'icon-ticket', bgColor: 'rgba(255,165,0,0.1)', color: '#FF8C00', path: '/pages-sub/coupon/index' },
+        { label: '积分签到', iconClass: 'icon-calendar-plus', bgColor: 'rgba(255,165,0,0.1)', color: '#FF8C00', path: '/pages-sub/checkin/index' },
         { label: '学习记录', iconClass: 'icon-book', bgColor: 'rgba(7,193,96,0.1)', color: '#07C160', path: '/pages-sub/study-record/index' },
         { label: '预约订单', iconClass: 'icon-order', bgColor: 'rgba(108,92,231,0.1)', color: '#6C5CE7', path: '/pages-sub/orders/index' },
       ],

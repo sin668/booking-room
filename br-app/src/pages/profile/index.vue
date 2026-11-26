@@ -29,6 +29,11 @@
           <text class="stat-label">钱包余额</text>
         </view>
         <view class="stat-divider" />
+        <view class="stat-item" @tap="navigateTo('/pages-sub/checkin/index')">
+          <text class="stat-value purple">{{ checkinPoints }}</text>
+          <text class="stat-label">积分</text>
+        </view>
+        <view class="stat-divider" />
         <view class="stat-item" @tap="navigateTo('/pages-sub/coupon/index')">
           <text class="stat-value orange">{{ availableCouponCount }}</text>
           <text class="stat-label">卡券</text>
@@ -65,7 +70,7 @@
             <view class="icon icon-fire fire-icon" />
           </view>
           <text class="menu-item-text">每日签到</text>
-          <text class="menu-item-meta">连续签到领积分</text>
+          <text class="menu-item-meta">{{ checkinMetaText }}</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
         <view class="menu-item" @tap="navigateTo('/pages-sub/favorites/index')">
@@ -186,11 +191,14 @@ import { getAllFollowedCategories } from '@/services/followedRooms'
 import { formatAmount, formatMoney } from '@/utils/formatters'
 import { fetchBookingsPage } from '@/services/bookingPageService'
 import { getUserCertifications } from '@/api/certification'
+import { getCheckinSummary } from '@/api/checkin'
 
 export default {
   data() {
     return {
       userStore: useUserStore(),
+      checkinStreak: 0,
+      checkinPoints: 0,
       walletBalance: 0,
       availableCouponCount: 0,
       totalStudyHours: 0,
@@ -234,6 +242,9 @@ export default {
     },
     verifiedCertificationText() {
       return this.verifiedCertificationCount > 0 ? `${this.verifiedCertificationCount}项已认证` : ''
+    },
+    checkinMetaText() {
+      return this.checkinStreak > 0 ? `已连续签到${this.checkinStreak}天` : '今日签到领积分'
     },
   },
   onShow() {
@@ -286,7 +297,7 @@ export default {
     async loadProfileStats() {
       const requestId = ++this.profileRequestId
       const month = this.currentMonthString()
-      const [balanceResult, couponResult, studyResult, , reviewResult, unreadResult, orderResult, certResult] = await Promise.allSettled([
+      const [balanceResult, couponResult, studyResult, , reviewResult, unreadResult, orderResult, certResult, checkinResult] = await Promise.allSettled([
         getBalance(),
         getCoupons('available'),
         getMonthlySummary({ month }),
@@ -295,6 +306,7 @@ export default {
         getNotificationUnreadSummary(),
         fetchBookingsPage({ page: 1, page_size: 1, status: 'in_progress' }),
         getUserCertifications(),
+        getCheckinSummary(),
       ])
 
       if (requestId !== this.profileRequestId) return
@@ -337,6 +349,14 @@ export default {
         this.verifiedCertificationCount = certs.filter(c => ['approved', 'verified'].includes(c.status)).length
       } else {
         this.verifiedCertificationCount = 0
+      }
+
+      if (checkinResult.status === 'fulfilled') {
+        this.checkinStreak = checkinResult.value?.streak || 0
+        this.checkinPoints = checkinResult.value?.points || 0
+      } else {
+        this.checkinStreak = 0
+        this.checkinPoints = 0
       }
     },
     currentMonthString() {
@@ -559,6 +579,10 @@ export default {
 
 .stat-value.orange {
   color: #e67900;
+}
+
+.stat-value.purple {
+  color: $purple;
 }
 
 .stat-value.green {

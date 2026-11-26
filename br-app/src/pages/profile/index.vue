@@ -60,6 +60,14 @@
           <text class="menu-item-meta">查看全部</text>
           <view class="icon icon-arrow-right menu-arrow" />
         </view>
+        <view class="menu-item" @tap="navigateTo('/pages-sub/checkin/index')">
+          <view class="menu-icon orange">
+            <view class="icon icon-fire fire-icon" />
+          </view>
+          <text class="menu-item-text">每日签到</text>
+          <text class="menu-item-meta">连续签到领积分</text>
+          <view class="icon icon-arrow-right menu-arrow" />
+        </view>
         <view class="menu-item" @tap="navigateTo('/pages-sub/favorites/index')">
           <view class="menu-icon teal">
             <view class="store-icon" />
@@ -700,6 +708,11 @@ export default {
 .message-icon {
   font-size: 34rpx;
   color: $primary;
+}
+
+.fire-icon {
+  font-size: 34rpx;
+  color: #ff9500;
 }
 
 .history-icon {

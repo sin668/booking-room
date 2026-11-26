@@ -4204,3 +4204,92 @@ App 用户创建后自动分配 `app_register_user` 角色。
 - 401: 未认证
 - 403: 无权限
 - 404: 用户不存在
+
+---
+
+## 签到
+
+签到相关接口均需用户登录（Bearer Token），日期口径统一使用 `Asia/Shanghai`。
+
+### GET /api/v1/checkin/summary
+
+获取当前用户的签到汇总与指定月份的日历标记。
+
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| month | string | 是 | 月份，格式 `YYYY-MM` |
+
+**响应 200：**
+```json
+{
+  "today": "2026-11-26",
+  "today_signed": false,
+  "streak": 7,
+  "total_days": 129,
+  "points": 185,
+  "makeup_cards": 2,
+  "calendar_mark": [
+    {
+      "date": "2026-11-26",
+      "signed": false,
+      "missed": false,
+      "makeup_eligible": false
+    }
+  ],
+  "missed_dates": ["2026-11-05", "2026-11-18"]
+}
+```
+
+- `streak`：今日已签到时从今日向前统计，否则从昨日向前统计。
+- `missed`：首次签到之后、今日之前且没有签到记录的日期；`makeup_eligible` 仅在其距今日不超过 30 天时为 `true`。
+- `missed_dates`：近 30 天内仍可补签的漏签日期（升序）。
+
+**错误码：**
+- 401: 未认证
+- 422: `month` 缺失或格式错误
+
+---
+
+### POST /api/v1/checkin
+
+完成今日签到。每日固定 +5 积分；连续天数为 7 的倍数时额外 +20 积分；连续天数为 30 的倍数时额外 +1 张补签卡。
+
+**响应 200：**
+```json
+{
+  "summary": { "today": "2026-11-26", "today_signed": true, "streak": 8, "total_days": 130, "points": 190, "makeup_cards": 2, "calendar_mark": [], "missed_dates": [] },
+  "reward_points": 5,
+  "reward_cards": 0,
+  "restored_dates": []
+}
+```
+
+**错误码：**
+- 400: 今日已签到
+- 401: 未认证
+
+---
+
+### POST /api/v1/checkin/makeup
+
+使用补签卡补签近 30 天内的漏签日期。补签不发放积分与连续奖励，连续天数按补签后的记录重新计算。
+
+**请求体：**
+```json
+{
+  "dates": ["2026-11-05", "2026-11-18"]
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| dates | string[] | 是 | 补签日期（YYYY-MM-DD），不可重复，数量不超过剩余补签卡 |
+
+**响应 200：** 与 `POST /api/v1/checkin` 相同结构，`restored_dates` 为本次补签成功的日期（升序）。
+
+**错误码：**
+- 400: 日期重复 / 超出近 30 天 / 早于首次签到 / 已签到 / 今日或未来日期 / 补签卡不足
+- 401: 未认证
+- 422: `dates` 为空或格式错误

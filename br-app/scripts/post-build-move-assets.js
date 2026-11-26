@@ -25,6 +25,7 @@ const TUIKIT_ASSETS_JS = path.join(BUILD_DIR, 'TUIKit/tui-assets.js');
 // 主包里只被 TUIKit 子包引用的 JS，微信开发者工具会报「主包内不应存在主包未使用的 JS 文件」
 const MOVES = [
   { from: 'utils/im-history.js', to: 'TUIKit/utils/im-history.js' },
+  { from: 'api/checkin.js', to: 'pages-sub/api/checkin.js' },
 ];
 
 function main() {

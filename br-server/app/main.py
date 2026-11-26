@@ -37,6 +37,7 @@ from app.api.routes.coupon import router as coupon_router
 from app.api.routes.edu_listing import router as edu_listing_router
 from app.api.routes.booking_verification import router as booking_verification_router
 from app.api.routes.certification import router as certification_router
+from app.api.routes.checkin import router as checkin_router
 from app.api.routes.chat import router as chat_router
 from app.api.routes.im_callback import router as im_callback_router
 from app.api.routes.cities import router as cities_router
@@ -480,6 +481,7 @@ app.include_router(seat_router)
 app.include_router(study_room_router)
 app.include_router(training_router)
 app.include_router(study_record_router)
+app.include_router(checkin_router)
 app.include_router(booking_router)
 app.include_router(course_booking_router)
 app.include_router(booking_verification_router)

@@ -123,6 +123,14 @@
           "style": { "navigationBarTitleText": "学习记录" }
         },
         {
+          "path": "checkin/index",
+          "style": { "navigationBarTitleText": "签到日历" }
+        },
+        {
+          "path": "checkin/makeup",
+          "style": { "navigationBarTitleText": "补签中心" }
+        },
+        {
           "path": "recharge/index",
           "style": { "navigationBarTitleText": "钱包充值" }
         },

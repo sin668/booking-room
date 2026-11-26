@@ -4,6 +4,7 @@ from app.models.admin_role import AdminRole, admin_role_menus, admin_user_roles
 from app.models.admin_setting import SystemSetting
 from app.models.banner import Banner
 from app.models.booking import Booking
+from app.models.checkin import CheckinRecord, UserCheckinStats
 from app.models.city import City
 from app.models.coupon import Coupon, UserCoupon
 from app.models.notification import Notification, NotificationPreference, NotificationType
@@ -30,6 +31,7 @@ __all__ = [
     "AdminRole",
     "Banner",
     "Booking",
+    "CheckinRecord",
     "City",
     "Course",
     "CourseLesson",
@@ -49,6 +51,7 @@ __all__ = [
     "Teacher",
     "TeacherRoom",
     "User",
+    "UserCheckinStats",
     "UserIdentityVerification",
     "UserCoupon",
     "WalletTransaction",

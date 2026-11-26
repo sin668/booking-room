@@ -7,15 +7,13 @@
 
     <template v-else>
       <view class="banner">
-        <view class="banner-orbit" />
-        <view class="banner-left">
-          <text class="banner-label">剩余补签卡</text>
-          <view class="banner-value">
-            <text class="banner-num">{{ summary.makeup_cards }}</text>
-            <text class="banner-unit">张</text>
-          </view>
+        <view class="banner-icon">
+          <view class="icon icon-calendar-plus" />
         </view>
-        <text class="banner-desc">每张补签卡可补签 1 天，仅支持近 30 天内的漏签日期。点击日历中的 ✕ 日期进行选择。</text>
+        <view class="banner-info">
+          <text class="banner-title">{{ bannerTitle }}</text>
+          <text class="banner-desc">每张补签卡可补签 1 天，仅支持近 30 天内的漏签日期。点击日历中的 ✕ 日期进行选择。</text>
+        </view>
       </view>
 
       <view class="card calendar-card">
@@ -23,8 +21,15 @@
           <view class="month-arrow" @tap="changeMonth(-1)">
             <view class="icon icon-arrow-right month-arrow-icon prev" />
           </view>
-          <text class="month-text">{{ monthLabel }}</text>
-          <view class="month-arrow" :class="{ 'month-arrow-disabled': !canGoNext }" @tap="changeMonth(1)">
+          <view class="month-center">
+            <text class="month-text">{{ monthLabel }}</text>
+            <text class="month-sub">本月漏签 {{ missedLeft }} 天</text>
+          </view>
+          <view
+            class="month-arrow"
+            :class="{ 'month-arrow-disabled': !canGoNext }"
+            @tap="changeMonth(1)"
+          >
             <view class="icon icon-arrow-right month-arrow-icon" />
           </view>
         </view>
@@ -35,42 +40,59 @@
 
         <view class="days-grid">
           <view
-            v-for="(cell, index) in calendarCells"
-            :key="index"
+            v-for="cell in calendarCells"
+            :key="cell.date"
             class="day-cell"
-            :class="{
-              'day-cell-today': cell && cell.isToday,
-              'day-cell-selectable': cell && cell.selectable,
-              'day-cell-selected': cell && cell.selected,
-            }"
+            :class="{ 'day-cell-outside': cell.outside, 'day-cell-selectable': cell.selectable }"
             @tap="onCellTap(cell)"
           >
-            <template v-if="cell">
-              <text class="day-num" :class="{ 'day-num-muted': cell.signed || cell.missed }">{{ cell.day }}</text>
-              <text v-if="cell.signed" class="day-mark day-mark-check">✓</text>
-              <text v-else-if="cell.missed" class="day-mark" :class="cell.selectable ? 'day-mark-miss' : 'day-mark-disabled'">✕</text>
-              <text v-else-if="cell.isToday" class="day-mark day-mark-today">签</text>
-            </template>
+            <view
+              class="day-badge"
+              :class="{
+                'day-badge-check': cell.signed,
+                'day-badge-ring': cell.signed && cell.isToday,
+                'day-badge-miss': !cell.signed && cell.missed,
+                'day-badge-selected': !cell.signed && cell.selected,
+                'day-badge-today': !cell.signed && !cell.missed && cell.isToday,
+                'day-badge-future': !cell.signed && !cell.missed && !cell.isToday && cell.future,
+              }"
+            >
+              <view v-if="cell.signed" class="icon icon-check day-badge-icon" />
+              <view v-else-if="cell.missed" class="icon icon-close day-badge-icon" />
+              <text v-else-if="cell.isToday" class="day-badge-text">签</text>
+              <text v-else-if="cell.future" class="day-badge-text">{{ cell.projected }}</text>
+              <text v-else class="day-badge-text day-badge-text-plain">{{ cell.day }}</text>
+            </view>
+            <text
+              class="day-label"
+              :class="{ 'day-label-miss': !cell.signed && cell.missed, 'day-label-today': cell.isToday }"
+            >{{ cell.isToday ? '今天' : cell.label }}</text>
           </view>
         </view>
 
         <view class="legend-row">
           <view class="legend-item">
-            <text class="legend-mark legend-mark-check">✓</text>
+            <view class="legend-badge legend-badge-check">
+              <view class="icon icon-check legend-badge-icon" />
+            </view>
             <text class="legend-text">已签到</text>
           </view>
           <view class="legend-item">
-            <text class="legend-mark legend-mark-miss">✕</text>
+            <view class="legend-badge legend-badge-miss">
+              <view class="icon icon-close legend-badge-icon" />
+            </view>
             <text class="legend-text">可补签</text>
           </view>
           <view class="legend-item">
-            <text class="legend-mark legend-mark-selected">选</text>
-            <text class="legend-text">已选择</text>
+            <view class="legend-badge legend-badge-future">
+              <text class="legend-badge-text">{{ legendProjected }}</text>
+            </view>
+            <text class="legend-text">未开始</text>
           </view>
         </view>
       </view>
 
-      <view class="list-section">
+      <view class="card list-card">
         <view class="list-head">
           <text class="list-title">待补签日期</text>
           <text class="list-summary">{{ listSummary }}</text>
@@ -86,33 +108,33 @@
 
         <view v-else class="pick-list">
           <view
-            v-for="item in missedDates"
+            v-for="(item, index) in missedDates"
             :key="item.date"
             class="pick-row"
             :class="{ 'pick-row-selected': item.selected }"
             @tap="toggleDate(item.date)"
           >
-            <view class="pick-date">
-              <text class="pick-day">{{ item.day }}</text>
-              <text class="pick-month">{{ item.month }}</text>
+            <view class="row-icon">
+              <view class="icon icon-calendar-xmark" />
             </view>
             <view class="pick-info">
-              <text class="pick-weekday">{{ item.weekday }}</text>
-              <text class="pick-desc">{{ item.daysAgo }} 天前漏签</text>
+              <text class="pick-title">{{ item.month }}月{{ item.day }}日</text>
+              <text class="pick-desc">{{ item.weekday }} · 漏签</text>
             </view>
-            <view class="pick-state" :class="{ 'pick-state-selected': item.selected }">
-              <text class="pick-state-text">{{ item.selected ? '已选' : '待补签' }}</text>
-            </view>
+            <text class="row-state" :class="{ 'row-state-selected': item.selected }">
+              {{ item.selected ? '已选择' : '可选择' }}
+            </text>
+            <view v-if="index < missedDates.length - 1" class="pick-divider" />
           </view>
         </view>
-
-        <text class="list-tip">补签成功后，该日期将记为已签到，连续签到天数按补签后的记录重新计算。补签卡可通过连续签到 30 天奖励获得。</text>
       </view>
+
+      <text class="list-tip">补签成功后，该日期将记为已签到，连续签到天数按补签后的记录重新计算。补签卡可通过连续签到 30 天奖励获得。</text>
     </template>
 
     <view class="action-bar">
       <view class="action-left">
-        <text class="action-count">已选 {{ selected.length }} 天</text>
+        <text class="action-count">已选 <text class="action-strong">{{ selected.length }}</text> 天</text>
         <text class="action-sub">剩余补签卡 {{ summary.makeup_cards }} 张</text>
       </view>
       <view
@@ -132,7 +154,7 @@ import { onShow } from '@dcloudio/uni-app'
 import { getCheckinSummary, submitMakeup } from '@/api/checkin'
 import { ensureLogin } from '@/utils/auth'
 
-const weekdays = ['一', '二', '三', '四', '五', '六', '日']
+const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 const weekdayLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
 const loading = ref(false)
@@ -142,6 +164,7 @@ const monthCursor = ref(localMonthKey())
 
 const summary = ref({
   today: '',
+  streak: 0,
   makeup_cards: 0,
   calendar_mark: [],
   missed_dates: [],
@@ -164,8 +187,16 @@ const canSubmit = computed(
   () => selected.value.length > 0 && !submitting.value
 )
 
+const missedLeft = computed(() => (summary.value.missed_dates || []).length)
+
+const bannerTitle = computed(() =>
+  missedLeft.value > 0
+    ? `漏签 ${missedLeft.value} 天，补签可恢复连续签到`
+    : '漏签已全部补签，连续签到已恢复'
+)
+
 const listSummary = computed(() =>
-  missedDates.value.length > 0 ? `共 ${missedDates.value.length} 天` : ''
+  missedLeft.value > 0 ? `共 ${missedLeft.value} 天待补签` : '已全部补签'
 )
 
 const selectedSet = computed(() => new Set(selected.value))
@@ -177,36 +208,61 @@ const missedDates = computed(() => {
     const dateObj = parseDate(dateStr)
     return {
       date: dateStr,
-      day: pad(dateObj.getDate()),
-      month: `${dateObj.getMonth() + 1}月`,
+      day: dateObj.getDate(),
+      month: dateObj.getMonth() + 1,
       weekday: weekdayLabels[dateObj.getDay()],
-      daysAgo: Math.round((parseDate(today) - dateObj) / 86400000),
       selected: selectedSet.value.has(dateStr),
     }
   })
 })
 
+const markMap = computed(() => {
+  const map = new Map()
+  for (const mark of summary.value.calendar_mark || []) {
+    map.set(mark.date, mark)
+  }
+  return map
+})
+
 const calendarCells = computed(() => {
-  const marks = summary.value.calendar_mark || []
-  if (!marks.length) return []
+  if (!summary.value.today) return []
 
-  const firstDay = parseDate(marks[0].date).getDay()
-  const offset = (firstDay + 6) % 7
-  const cells = Array.from({ length: offset }, () => null)
+  const [year, month] = monthCursor.value.split('-').map(Number)
+  const first = new Date(year, month - 1, 1)
+  const offset = (first.getDay() + 6) % 7
+  const today = summary.value.today
+  const cells = []
 
-  for (const mark of marks) {
-    const dateObj = parseDate(mark.date)
+  for (let i = 0; i < 42; i += 1) {
+    const date = new Date(year, month - 1, 1 - offset + i)
+    const dateKey = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+    const mark = markMap.value.get(dateKey)
+    const outside = date.getMonth() !== month - 1
+    const future = dateKey > today
+    const signed = Boolean(mark && mark.signed)
+    const missed = Boolean(mark && mark.missed) && !outside
+
     cells.push({
-      date: mark.date,
-      day: dateObj.getDate(),
-      signed: mark.signed,
-      missed: mark.missed,
-      selectable: mark.makeup_eligible,
-      selected: selectedSet.value.has(mark.date),
-      isToday: mark.date === summary.value.today,
+      date: dateKey,
+      day: date.getDate(),
+      label: `${date.getMonth() + 1}.${date.getDate()}`,
+      outside,
+      signed,
+      missed,
+      selectable: missed && Boolean(mark.makeup_eligible),
+      selected: selectedSet.value.has(dateKey),
+      isToday: dateKey === today,
+      future,
+      projected: future ? projectedStreak(dateKey) : 0,
     })
   }
   return cells
+})
+
+const legendProjected = computed(() => {
+  const last = calendarCells.value[calendarCells.value.length - 1]
+  if (last && last.future) return last.projected
+  return Math.max(summary.value.streak || 0, 1)
 })
 
 function pad(value) {
@@ -225,6 +281,13 @@ function localMonthKey() {
 
 function parseDate(value) {
   return new Date(`${value}T00:00:00`)
+}
+
+function projectedStreak(dateStr) {
+  const diff = Math.round(
+    (parseDate(dateStr) - parseDate(summary.value.today)) / 86400000
+  )
+  return (summary.value.streak || 0) + diff + 1
 }
 
 function errorMessage(error, fallback) {
@@ -299,9 +362,31 @@ onShow(() => {
 
 <style lang="scss" scoped>
 .page {
+  --check-miss-bg: #FFF1F2;
+  --check-miss-border: #FFE4E6;
+  --check-miss-text: #FB7185;
+  --check-future-bg: #FFF6EF;
+  --check-future-border: #FFE3CF;
+  --check-future-text: #FF8A3D;
+  --check-accent-soft: #FFF4EC;
+  --check-banner-bg: #EEF1FF;
+  --check-banner-border: #E0E6FF;
+
   min-height: 100vh;
   background: $bg-color;
-  padding: 24rpx 0 220rpx;
+  padding: 24rpx 0 260rpx;
+
+  &.theme-dark {
+    --check-miss-bg: rgba(251, 113, 133, 0.14);
+    --check-miss-border: rgba(251, 113, 133, 0.3);
+    --check-miss-text: #FF9AAE;
+    --check-future-bg: rgba(255, 138, 61, 0.14);
+    --check-future-border: rgba(255, 138, 61, 0.3);
+    --check-future-text: #FFB07A;
+    --check-accent-soft: rgba(255, 138, 61, 0.16);
+    --check-banner-bg: rgba(79, 110, 247, 0.12);
+    --check-banner-border: rgba(79, 110, 247, 0.24);
+  }
 }
 
 .loading-state {
@@ -332,62 +417,48 @@ onShow(() => {
 }
 
 .banner {
-  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 24rpx;
   margin: 0 32rpx;
-  padding: 34rpx 32rpx;
+  padding: 28rpx 32rpx;
   border-radius: $radius-xl;
-  background: $gradient-primary;
-  overflow: hidden;
-  box-shadow: $shadow-float;
+  background: var(--check-banner-bg);
+  border: 1rpx solid var(--check-banner-border);
 }
 
-.banner-orbit {
-  position: absolute;
-  width: 260rpx;
-  height: 260rpx;
-  right: -90rpx;
-  top: -110rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.banner-left {
-  position: relative;
+.banner-icon {
+  width: 72rpx;
+  height: 72rpx;
+  flex-shrink: 0;
+  border-radius: 24rpx;
+  background: $surface;
+  color: $primary;
   display: flex;
-  flex-direction: column;
-  gap: 6rpx;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  box-shadow: $shadow-sm;
 }
 
-.banner-label {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.75);
+.banner-info {
+  flex: 1;
+  min-width: 0;
 }
 
-.banner-value {
-  display: flex;
-  align-items: baseline;
-  gap: 8rpx;
-}
-
-.banner-num {
-  font-size: 56rpx;
-  line-height: 1;
-  font-weight: 700;
-  color: $white;
-}
-
-.banner-unit {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.8);
+.banner-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $text-primary;
 }
 
 .banner-desc {
-  position: relative;
   display: block;
-  margin-top: 20rpx;
-  font-size: 22rpx;
+  margin-top: 8rpx;
+  font-size: 20rpx;
   line-height: 34rpx;
-  color: rgba(255, 255, 255, 0.78);
+  color: $text-secondary;
 }
 
 .card {
@@ -403,20 +474,19 @@ onShow(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 26rpx;
 }
 
 .month-arrow {
-  width: 60rpx;
-  height: 60rpx;
+  width: 64rpx;
+  height: 64rpx;
   border-radius: 50%;
-  background: $primary-soft;
+  background: $surface-soft;
   display: flex;
   align-items: center;
   justify-content: center;
 
   &:active {
-    background: $border-color;
+    background: $surface-muted;
   }
 }
 
@@ -425,162 +495,218 @@ onShow(() => {
 }
 
 .month-arrow-icon {
-  font-size: 26rpx;
-  color: $text-primary;
+  font-size: 20rpx;
+  color: $text-secondary;
 }
 
 .month-arrow-icon.prev {
   transform: rotate(180deg);
 }
 
+.month-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
 .month-text {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: $text-primary;
+}
+
+.month-sub {
+  font-size: 20rpx;
+  color: $text-muted;
 }
 
 .weekday-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 10rpx;
+  margin: 24rpx 0 8rpx;
+  text-align: center;
 }
 
 .weekday-text {
-  text-align: center;
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: $text-muted;
 }
 
 .days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  row-gap: 8rpx;
+  row-gap: 16rpx;
 }
 
 .day-cell {
-  height: 92rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2rpx;
-  border-radius: 20rpx;
-  border: 1rpx solid transparent;
+  gap: 8rpx;
 }
 
-.day-cell-today {
-  background: $primary-soft;
+.day-cell-outside {
+  opacity: 0.45;
 }
 
 .day-cell-selectable:active {
-  background: $surface-soft;
+  opacity: 0.7;
 }
 
-.day-cell-selected {
-  background: $primary-soft;
-  border-color: $primary;
+.day-badge {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid transparent;
 }
 
-.day-num {
-  font-size: 26rpx;
-  color: $text-primary;
+.day-badge-check {
+  background: $gradient-primary;
+  box-shadow: 0 4rpx 12rpx rgba(79, 110, 247, 0.28);
+  color: $white;
 }
 
-.day-num-muted {
-  color: $text-secondary;
+.day-badge-ring {
+  box-shadow: 0 0 0 4rpx rgba(79, 110, 247, 0.18);
 }
 
-.day-mark {
-  font-size: 20rpx;
+.day-badge-miss {
+  background: var(--check-miss-bg);
+  border-color: var(--check-miss-border);
+  color: var(--check-miss-text);
+}
+
+.day-badge-selected {
+  border: 4rpx solid $primary;
+}
+
+.day-badge-today {
+  background: $surface;
+  border: 4rpx solid $primary;
+  color: $primary;
+}
+
+.day-badge-future {
+  background: var(--check-future-bg);
+  border-color: var(--check-future-border);
+  color: var(--check-future-text);
+}
+
+.day-badge-icon {
+  font-size: 22rpx;
+}
+
+.day-badge-text {
+  font-size: 22rpx;
+  font-weight: 700;
   line-height: 1;
-  font-weight: 600;
 }
 
-.day-mark-check {
-  color: $success;
-}
-
-.day-mark-miss {
-  color: $danger;
-}
-
-.day-mark-disabled {
+.day-badge-text-plain {
+  font-weight: 400;
   color: $text-muted;
-  opacity: 0.4;
 }
 
-.day-mark-today {
+.day-label {
+  font-size: 18rpx;
+  line-height: 1;
+  color: $text-muted;
+}
+
+.day-label-miss {
+  color: var(--check-miss-text);
+}
+
+.day-label-today {
+  font-weight: 600;
   color: $primary;
 }
 
 .legend-row {
   display: flex;
   align-items: center;
-  gap: 36rpx;
-  margin-top: 26rpx;
-  padding-top: 22rpx;
-  border-top: 1rpx solid $bg-color;
+  justify-content: space-between;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid $border-soft;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8rpx;
+  gap: 12rpx;
 }
 
-.legend-mark {
-  font-size: 22rpx;
-  font-weight: 600;
+.legend-badge {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid transparent;
 }
 
-.legend-mark-check {
-  color: $success;
+.legend-badge-check {
+  background: $gradient-primary;
+  color: $white;
 }
 
-.legend-mark-miss {
-  color: $danger;
+.legend-badge-miss {
+  background: var(--check-miss-bg);
+  border-color: var(--check-miss-border);
+  color: var(--check-miss-text);
 }
 
-.legend-mark-selected {
-  color: $primary;
+.legend-badge-future {
+  background: var(--check-future-bg);
+  border-color: var(--check-future-border);
+  color: var(--check-future-text);
+}
+
+.legend-badge-icon {
+  font-size: 14rpx;
+}
+
+.legend-badge-text {
+  font-size: 16rpx;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .legend-text {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: $text-muted;
-}
-
-.list-section {
-  margin: 32rpx 32rpx 0;
 }
 
 .list-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .list-title {
-  font-size: 30rpx;
+  font-size: 26rpx;
   font-weight: 600;
   color: $text-primary;
 }
 
 .list-summary {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: $text-muted;
 }
 
 .empty-state {
-  padding: 60rpx 32rpx;
-  border-radius: $radius-xl;
-  background: $surface;
-  border: 1rpx solid $border-soft;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12rpx;
+  padding: 48rpx 24rpx 40rpx;
 }
 
 .empty-icon {
@@ -610,50 +736,40 @@ onShow(() => {
 .pick-list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
 }
 
 .pick-row {
-  padding: 22rpx 24rpx;
-  border-radius: $radius-lg;
-  background: $surface;
-  border: 1rpx solid $border-soft;
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 20rpx;
+  gap: 24rpx;
+  padding: 20rpx 0;
 
   &:active {
-    background: $surface-soft;
+    opacity: 0.7;
   }
 }
 
-.pick-row-selected {
-  border-color: $primary;
-  background: $primary-soft;
+.pick-divider {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1rpx;
+  background: $border-soft;
 }
 
-.pick-date {
-  width: 96rpx;
-  height: 88rpx;
-  border-radius: 18rpx;
-  background: $bg-color;
+.row-icon {
+  width: 64rpx;
+  height: 64rpx;
+  flex-shrink: 0;
+  border-radius: 16rpx;
+  background: var(--check-miss-bg);
+  color: var(--check-miss-text);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2rpx;
-  flex-shrink: 0;
-}
-
-.pick-day {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: $text-primary;
-}
-
-.pick-month {
-  font-size: 20rpx;
-  color: $text-muted;
+  font-size: 24rpx;
 }
 
 .pick-info {
@@ -661,43 +777,41 @@ onShow(() => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6rpx;
+  gap: 4rpx;
 }
 
-.pick-weekday {
-  font-size: 26rpx;
-  font-weight: 600;
+.pick-title {
+  font-size: 24rpx;
+  font-weight: 500;
   color: $text-primary;
 }
 
 .pick-desc {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: $text-muted;
 }
 
-.pick-state {
-  padding: 8rpx 18rpx;
-  border-radius: 999rpx;
-  background: $danger-light;
-  color: $danger;
+.row-state {
   flex-shrink: 0;
-}
-
-.pick-state-selected {
-  background: $primary;
-  color: $white;
-}
-
-.pick-state-text {
+  padding: 6rpx 18rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid $border-color;
   font-size: 20rpx;
-  font-weight: 600;
+  color: $text-muted;
+}
+
+.row-state-selected {
+  border-color: transparent;
+  background: $primary-soft;
+  font-weight: 500;
+  color: $primary;
 }
 
 .list-tip {
   display: block;
-  margin-top: 22rpx;
+  margin: 32rpx 48rpx 0;
   font-size: 20rpx;
-  line-height: 32rpx;
+  line-height: 34rpx;
   color: $text-muted;
 }
 
@@ -707,26 +821,32 @@ onShow(() => {
   right: 0;
   bottom: 0;
   z-index: 50;
-  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  padding: 24rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
   background: $surface;
   border-top: 1rpx solid $border-soft;
   box-shadow: $shadow-bottom;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 24rpx;
 }
 
 .action-left {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6rpx;
 }
 
 .action-count {
-  font-size: 26rpx;
-  font-weight: 600;
+  font-size: 22rpx;
+  font-weight: 500;
   color: $text-primary;
+}
+
+.action-strong {
+  font-weight: 700;
+  color: $primary;
 }
 
 .action-sub {
@@ -735,11 +855,11 @@ onShow(() => {
 }
 
 .action-btn {
-  min-width: 280rpx;
-  height: 84rpx;
-  padding: 0 32rpx;
-  border-radius: 24rpx;
-  background: $gradient-primary;
+  width: 288rpx;
+  height: 88rpx;
+  flex-shrink: 0;
+  border-radius: 999rpx;
+  background: $primary;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -750,17 +870,12 @@ onShow(() => {
 }
 
 .action-btn-disabled {
-  background: $surface-muted;
-  box-shadow: none;
+  opacity: 0.4;
 }
 
 .action-btn-text {
   font-size: 28rpx;
   font-weight: 600;
   color: $white;
-}
-
-.action-btn-disabled .action-btn-text {
-  color: $text-muted;
 }
 </style>

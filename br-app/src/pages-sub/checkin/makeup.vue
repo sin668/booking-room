@@ -41,9 +41,9 @@
         <view class="days-grid">
           <view
             v-for="cell in calendarCells"
-            :key="cell.date"
+            :key="`${cell.date}-${cell.outside}`"
             class="day-cell"
-            :class="{ 'day-cell-outside': cell.outside, 'day-cell-selectable': cell.selectable }"
+            :class="{ 'day-cell-outside': cell.outside && !cell.signed, 'day-cell-selectable': cell.selectable }"
             @tap="onCellTap(cell)"
           >
             <view
@@ -56,6 +56,7 @@
                 'day-badge-today': !cell.signed && !cell.missed && cell.isToday,
                 'day-badge-future': !cell.signed && !cell.missed && !cell.isToday && cell.future,
               }"
+              :style="cell.signed && cell.outside ? 'opacity: 0.45;' : ''"
             >
               <view v-if="cell.signed" class="icon icon-check day-badge-icon" />
               <view v-else-if="cell.missed" class="icon icon-close day-badge-icon" />
@@ -65,7 +66,11 @@
             </view>
             <text
               class="day-label"
-              :class="{ 'day-label-miss': !cell.signed && cell.missed, 'day-label-today': cell.isToday }"
+              :class="{
+                'day-label-miss': !cell.signed && cell.missed,
+                'day-label-today': cell.isToday,
+                'day-label-outside': cell.outside,
+              }"
             >{{ cell.isToday ? '今天' : cell.label }}</text>
           </view>
         </view>
@@ -172,6 +177,8 @@ const summary = ref({
 })
 
 const makeupSucceeded = ref(false)
+const adjacentMarks = ref([])
+let requestSeq = 0
 
 const monthKey = computed(() => monthCursor.value)
 
@@ -222,6 +229,9 @@ const missedDates = computed(() => {
 
 const markMap = computed(() => {
   const map = new Map()
+  for (const mark of adjacentMarks.value) {
+    map.set(mark.date, mark)
+  }
   for (const mark of summary.value.calendar_mark || []) {
     map.set(mark.date, mark)
   }
@@ -283,6 +293,12 @@ function localMonthKey() {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}`
 }
 
+function shiftMonthKey(key, delta) {
+  const [year, month] = key.split('-').map(Number)
+  const next = new Date(year, month - 1 + delta, 1)
+  return `${next.getFullYear()}-${pad(next.getMonth() + 1)}`
+}
+
 function parseDate(value) {
   return new Date(`${value}T00:00:00`)
 }
@@ -300,16 +316,31 @@ function errorMessage(error, fallback) {
 }
 
 async function loadSummary() {
+  const seq = ++requestSeq
+  const key = monthKey.value
   loading.value = true
   try {
-    summary.value = await getCheckinSummary({ month: monthKey.value })
+    const [current, prev, next] = await Promise.allSettled([
+      getCheckinSummary({ month: key }),
+      getCheckinSummary({ month: shiftMonthKey(key, -1) }),
+      getCheckinSummary({ month: shiftMonthKey(key, 1) }),
+    ])
+    if (seq !== requestSeq) return
+    if (current.status !== 'fulfilled') throw current.reason
+    summary.value = current.value
+    adjacentMarks.value = [
+      ...(prev.status === 'fulfilled' ? prev.value?.calendar_mark || [] : []),
+      ...(next.status === 'fulfilled' ? next.value?.calendar_mark || [] : []),
+    ]
     selected.value = selected.value.filter((date) =>
       (summary.value.missed_dates || []).includes(date)
     )
   } catch (error) {
+    if (seq !== requestSeq) return
+    adjacentMarks.value = []
     uni.showToast({ title: errorMessage(error, '补签数据加载失败'), icon: 'none' })
   } finally {
-    loading.value = false
+    if (seq === requestSeq) loading.value = false
   }
 }
 
@@ -336,9 +367,7 @@ function onCellTap(cell) {
 
 function changeMonth(delta) {
   if (delta > 0 && !canGoNext.value) return
-  const [year, month] = monthCursor.value.split('-').map(Number)
-  const next = new Date(year, month - 1 + delta, 1)
-  monthCursor.value = `${next.getFullYear()}-${pad(next.getMonth() + 1)}`
+  monthCursor.value = shiftMonthKey(monthCursor.value, delta)
   loadSummary()
 }
 
@@ -629,6 +658,10 @@ onShow(() => {
 .day-label-today {
   font-weight: 600;
   color: $primary;
+}
+
+.day-label-outside {
+  opacity: 0.6;
 }
 
 .legend-row {

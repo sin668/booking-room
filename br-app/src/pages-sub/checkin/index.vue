@@ -81,14 +81,15 @@
             v-for="cell in calendarCells"
             :key="cell.date"
             class="day-cell"
-            :class="{ 'day-cell-outside': cell.outside }"
+            :class="{ 'day-cell-outside': cell.outside && !cell.signed }"
             @tap="onCellTap(cell)"
           >
             <view
               class="day-badge"
               :class="{
-                'day-badge-check': cell.signed,
-                'day-badge-ring': cell.signed && cell.isToday,
+                'day-badge-check': cell.signed && !cell.outside,
+                'day-badge-check-outside': cell.signed && cell.outside,
+                'day-badge-ring': cell.signed && cell.isToday && !cell.outside,
                 'day-badge-miss': !cell.signed && cell.missed,
                 'day-badge-today': !cell.signed && !cell.missed && cell.isToday,
                 'day-badge-future': !cell.signed && !cell.missed && !cell.isToday && cell.future,
@@ -102,7 +103,11 @@
             </view>
             <text
               class="day-label"
-              :class="{ 'day-label-miss': !cell.signed && cell.missed, 'day-label-today': cell.isToday }"
+              :class="{
+                'day-label-miss': !cell.signed && cell.missed,
+                'day-label-today': cell.isToday,
+                'day-label-outside': cell.outside,
+              }"
             >{{ cell.isToday ? '今天' : cell.label }}</text>
           </view>
         </view>
@@ -273,6 +278,8 @@ const emptySummary = () => ({
 })
 
 const summary = ref(emptySummary())
+const adjacentMarks = ref([])
+let requestSeq = 0
 
 const monthKey = computed(() => {
   const [year, month] = monthCursor.value.split('-').map(Number)
@@ -327,6 +334,9 @@ const makeupHint = computed(() => {
 
 const markMap = computed(() => {
   const map = new Map()
+  for (const mark of adjacentMarks.value) {
+    map.set(mark.date, mark)
+  }
   for (const mark of summary.value.calendar_mark || []) {
     map.set(mark.date, mark)
   }
@@ -386,6 +396,12 @@ function localMonthKey() {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}`
 }
 
+function shiftMonthKey(key, delta) {
+  const [year, month] = key.split('-').map(Number)
+  const next = new Date(year, month - 1 + delta, 1)
+  return `${next.getFullYear()}-${pad(next.getMonth() + 1)}`
+}
+
 function parseDate(value) {
   return new Date(`${value}T00:00:00`)
 }
@@ -409,14 +425,29 @@ function errorMessage(error, fallback) {
 }
 
 async function loadSummary() {
+  const seq = ++requestSeq
+  const key = monthKey.value
   loading.value = true
   try {
-    summary.value = await getCheckinSummary({ month: monthKey.value })
+    const [current, prev, next] = await Promise.allSettled([
+      getCheckinSummary({ month: key }),
+      getCheckinSummary({ month: shiftMonthKey(key, -1) }),
+      getCheckinSummary({ month: shiftMonthKey(key, 1) }),
+    ])
+    if (seq !== requestSeq) return
+    if (current.status !== 'fulfilled') throw current.reason
+    summary.value = current.value
+    adjacentMarks.value = [
+      ...(prev.status === 'fulfilled' ? prev.value?.calendar_mark || [] : []),
+      ...(next.status === 'fulfilled' ? next.value?.calendar_mark || [] : []),
+    ]
   } catch (error) {
+    if (seq !== requestSeq) return
     summary.value = emptySummary()
+    adjacentMarks.value = []
     uni.showToast({ title: errorMessage(error, '签到数据加载失败'), icon: 'none' })
   } finally {
-    loading.value = false
+    if (seq === requestSeq) loading.value = false
   }
 }
 
@@ -424,7 +455,11 @@ function applySummary(nextSummary) {
   if (nextSummary) {
     summary.value = nextSummary
     if (nextSummary.today) {
-      monthCursor.value = nextSummary.today.slice(0, 7)
+      const todayMonth = nextSummary.today.slice(0, 7)
+      if (todayMonth !== monthCursor.value) {
+        monthCursor.value = todayMonth
+        adjacentMarks.value = []
+      }
     }
   }
 }
@@ -451,9 +486,7 @@ function closeSuccess() {
 
 function changeMonth(delta) {
   if (delta > 0 && !canGoNext.value) return
-  const [year, month] = monthCursor.value.split('-').map(Number)
-  const next = new Date(year, month - 1 + delta, 1)
-  monthCursor.value = `${next.getFullYear()}-${pad(next.getMonth() + 1)}`
+  monthCursor.value = shiftMonthKey(monthCursor.value, delta)
   loadSummary()
 }
 
@@ -482,6 +515,8 @@ onShow(() => {
   --check-future-text: #FF8A3D;
   --check-accent-soft: #FFF4EC;
   --check-track: #F3F4F6;
+  --check-adjacent-bg: rgba(99, 113, 241, 0.42);
+  --check-adjacent-text: rgba(255, 255, 255, 0.92);
 
   min-height: 100vh;
   background: $bg-color;
@@ -496,6 +531,8 @@ onShow(() => {
     --check-future-text: #FFB07A;
     --check-accent-soft: rgba(255, 138, 61, 0.16);
     --check-track: rgba(255, 255, 255, 0.08);
+    --check-adjacent-bg: rgba(124, 138, 255, 0.34);
+    --check-adjacent-text: rgba(255, 255, 255, 0.9);
   }
 }
 
@@ -809,6 +846,11 @@ onShow(() => {
   color: $white;
 }
 
+.day-badge-check-outside {
+  background: var(--check-adjacent-bg);
+  color: var(--check-adjacent-text);
+}
+
 .day-badge-ring {
   box-shadow: 0 0 0 4rpx rgba(79, 110, 247, 0.18);
 }
@@ -859,6 +901,10 @@ onShow(() => {
 .day-label-today {
   font-weight: 600;
   color: $primary;
+}
+
+.day-label-outside {
+  opacity: 0.6;
 }
 
 .legend-row {

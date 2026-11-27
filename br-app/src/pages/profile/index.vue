@@ -244,7 +244,7 @@ export default {
       return this.verifiedCertificationCount > 0 ? `${this.verifiedCertificationCount}项已认证` : ''
     },
     checkinMetaText() {
-      return this.checkinStreak > 0 ? `已连续签到${this.checkinStreak}天` : '今日签到领积分'
+      return this.checkinStreak > 0 ? `已连签${this.checkinStreak}天` : '今日签到领积分'
     },
   },
   onShow() {

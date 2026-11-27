@@ -164,11 +164,14 @@ const monthCursor = ref(localMonthKey())
 
 const summary = ref({
   today: '',
+  today_signed: false,
   streak: 0,
   makeup_cards: 0,
   calendar_mark: [],
   missed_dates: [],
 })
+
+const makeupSucceeded = ref(false)
 
 const monthKey = computed(() => monthCursor.value)
 
@@ -189,15 +192,16 @@ const canSubmit = computed(
 
 const missedLeft = computed(() => (summary.value.missed_dates || []).length)
 
-const bannerTitle = computed(() =>
-  missedLeft.value > 0
-    ? `漏签 ${missedLeft.value} 天，补签可恢复连续签到`
-    : '漏签已全部补签，连续签到已恢复'
-)
+const bannerTitle = computed(() => {
+  if (missedLeft.value > 0) return `漏签 ${missedLeft.value} 天，补签可恢复连续签到`
+  if (makeupSucceeded.value) return '漏签已全部补签，连续签到已恢复'
+  return '太棒了！近30天暂无漏签日期'
+})
 
-const listSummary = computed(() =>
-  missedLeft.value > 0 ? `共 ${missedLeft.value} 天待补签` : '已全部补签'
-)
+const listSummary = computed(() => {
+  if (missedLeft.value > 0) return `共 ${missedLeft.value} 天待补签`
+  return makeupSucceeded.value ? '已全部补签' : ''
+})
 
 const selectedSet = computed(() => new Set(selected.value))
 
@@ -287,7 +291,7 @@ function projectedStreak(dateStr) {
   const diff = Math.round(
     (parseDate(dateStr) - parseDate(summary.value.today)) / 86400000
   )
-  return (summary.value.streak || 0) + diff + 1
+  return (summary.value.streak || 0) + diff + (summary.value.today_signed ? 0 : 1)
 }
 
 function errorMessage(error, fallback) {
@@ -345,6 +349,7 @@ async function onConfirm() {
   try {
     await submitMakeup(selected.value)
     selected.value = []
+    makeupSucceeded.value = true
     await loadSummary()
     uni.showToast({ title: `补签成功，已补签 ${count} 天`, icon: 'none' })
   } catch (error) {

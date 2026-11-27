@@ -79,7 +79,7 @@
         <view class="days-grid">
           <view
             v-for="cell in calendarCells"
-            :key="cell.date"
+            :key="`${cell.date}-${cell.outside}`"
             class="day-cell"
             :class="{ 'day-cell-outside': cell.outside && !cell.signed }"
             @tap="onCellTap(cell)"
@@ -87,13 +87,13 @@
             <view
               class="day-badge"
               :class="{
-                'day-badge-check': cell.signed && !cell.outside,
-                'day-badge-check-outside': cell.signed && cell.outside,
+                'day-badge-check': cell.signed,
                 'day-badge-ring': cell.signed && cell.isToday && !cell.outside,
                 'day-badge-miss': !cell.signed && cell.missed,
                 'day-badge-today': !cell.signed && !cell.missed && cell.isToday,
                 'day-badge-future': !cell.signed && !cell.missed && !cell.isToday && cell.future,
               }"
+              :style="cell.signed && cell.outside ? 'opacity: 0.45;' : ''"
             >
               <view v-if="cell.signed" class="icon icon-check day-badge-icon" />
               <view v-else-if="cell.missed" class="icon icon-close day-badge-icon" />
@@ -515,8 +515,6 @@ onShow(() => {
   --check-future-text: #FF8A3D;
   --check-accent-soft: #FFF4EC;
   --check-track: #F3F4F6;
-  --check-adjacent-bg: rgba(99, 113, 241, 0.42);
-  --check-adjacent-text: rgba(255, 255, 255, 0.92);
 
   min-height: 100vh;
   background: $bg-color;
@@ -531,8 +529,6 @@ onShow(() => {
     --check-future-text: #FFB07A;
     --check-accent-soft: rgba(255, 138, 61, 0.16);
     --check-track: rgba(255, 255, 255, 0.08);
-    --check-adjacent-bg: rgba(124, 138, 255, 0.34);
-    --check-adjacent-text: rgba(255, 255, 255, 0.9);
   }
 }
 
@@ -844,11 +840,6 @@ onShow(() => {
   background: $gradient-primary;
   box-shadow: 0 4rpx 12rpx rgba(79, 110, 247, 0.28);
   color: $white;
-}
-
-.day-badge-check-outside {
-  background: var(--check-adjacent-bg);
-  color: var(--check-adjacent-text);
 }
 
 .day-badge-ring {

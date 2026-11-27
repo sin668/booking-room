@@ -432,7 +432,9 @@ export default {
       lessonScheduleMap: {},  // lesson_id -> date string (YYYY-MM-DD)
 
       // Custom schedule time picker
-      selectedWeekday: 1,
+      // 不默认选中周几：未选择时统一展示「请联系客服」提示，避免不同课程因老师可排课时段
+      // 分布不同而出现「默认展示时间段 / 默认展示提示」的不一致
+      selectedWeekday: null,
       selectedTimeSlot: '',
       teacherAvailableSlots: [],
 
@@ -843,6 +845,11 @@ export default {
       if (this.submitting) return
       if (this.selectedLessonIds.length === 0) {
         uni.showToast({ title: '请至少选择一节课时', icon: 'none' })
+        return
+      }
+      // 1V1私人定制未默认选中周几，下单前必须明确选择上课日期
+      if (this.scheduleType === 'custom' && !this.selectedWeekdayDate) {
+        uni.showToast({ title: '请选择上课日期', icon: 'none' })
         return
       }
       if (this.paymentMethod === 'balance' && this.isBalanceInsufficient) {
